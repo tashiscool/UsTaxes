@@ -1,0 +1,6 @@
+# Test fixtures directory
+# Place test data files here:
+# - IRS Direct File fact graph JSON files
+# - HabuTax INI files
+# - Tax-Calculator policy JSON files
+# - Custom test scenarios

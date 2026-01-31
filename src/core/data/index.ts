@@ -3047,3 +3047,6 @@ export type CostBasisPortfolioDateString = CostBasisPortfolio<string>
 export type EditTaxLotAction = ArrayItemEditAction<TaxLotDateString>
 export type EditStockTransactionAction = ArrayItemEditAction<StockTransactionDateString>
 export type EditInvestmentAction = ArrayItemEditAction<InvestmentDateString>
+
+// Gift tax exports
+export * from './giftTax'

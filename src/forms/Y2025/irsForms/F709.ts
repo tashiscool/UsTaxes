@@ -2,6 +2,20 @@ import F1040Attachment from './F1040Attachment'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { sumFields } from 'ustaxes/core/irsForms/util'
+import {
+  calculateGiftTax,
+  getApplicableCredit,
+  getGiftTaxParameters,
+  calculateTaxableGifts,
+  GiftSchedulePart
+} from 'ustaxes/core/data/giftTax'
+import type {
+  GiftTaxReturn,
+  GiftEntry as GiftEntryType,
+  PriorPeriodGift as PriorPeriodGiftType,
+  DSUESource,
+  GiftTaxParameters
+} from 'ustaxes/core/data/giftTax'
 
 /**
  * Form 709 - United States Gift (and Generation-Skipping Transfer) Tax Return
@@ -10,15 +24,15 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * or who wish to split gifts with their spouse.
  *
  * 2025 Thresholds:
- * - Annual exclusion: $18,000 per donee ($36,000 for split gifts)
+ * - Annual exclusion: $19,000 per donee ($38,000 for split gifts)
  * - Lifetime exclusion: $13,990,000 (unified with estate tax)
  * - Medical/educational exclusion: Unlimited (direct payments)
  *
  * Key Schedules:
  * - Schedule A: Computation of Taxable Gifts
  * - Schedule B: Gifts from Prior Periods
- * - Schedule C: Computation of GST Tax
- * - Schedule D: Computation of GST Tax on Direct Skips
+ * - Schedule C: DSUE Amount and Restored Exclusion
+ * - Schedule D: Computation of GST Tax
  *
  * Due Date: April 15 following the year of the gift (extended with income tax)
  */
@@ -68,9 +82,10 @@ export interface Form709Info {
 }
 
 // 2025 Gift Tax Constants
-const ANNUAL_EXCLUSION_2025 = 18000
-const LIFETIME_EXCLUSION_2025 = 13990000
-const TOP_GIFT_TAX_RATE = 0.40
+const PARAMS_2025 = getGiftTaxParameters(2025)
+const ANNUAL_EXCLUSION_2025 = PARAMS_2025.annualExclusion
+const LIFETIME_EXCLUSION_2025 = PARAMS_2025.basicExclusionAmount
+const TOP_GIFT_TAX_RATE = PARAMS_2025.maxTaxRate
 
 export default class F709 extends F1040Attachment {
   tag: FormTag = 'f709'
@@ -141,19 +156,18 @@ export default class F709 extends F1040Attachment {
 
   // Tax Computation
 
-  // Tentative tax on all gifts (simplified - uses graduated rates)
+  // Tentative tax on all gifts (uses graduated schedule from IRS §2001)
   tentativeTaxOnAllGifts = (): number => {
     const total = this.totalTaxableGifts()
     if (total <= 0) return 0
-    // Simplified: 40% rate (actual uses graduated schedule)
-    return Math.round(total * TOP_GIFT_TAX_RATE)
+    return calculateGiftTax(total, 2025)
   }
 
   // Tax on prior gifts (recomputed at current rates)
   tentativeTaxOnPriorGifts = (): number => {
     const prior = this.totalPriorTaxableGifts()
     if (prior <= 0) return 0
-    return Math.round(prior * TOP_GIFT_TAX_RATE)
+    return calculateGiftTax(prior, 2025)
   }
 
   // Gift tax before credits
@@ -165,9 +179,9 @@ export default class F709 extends F1040Attachment {
   lifetimeExclusion = (): number => LIFETIME_EXCLUSION_2025
 
   unifiedCreditUsed = (): number => {
-    // Credit used = 40% of lifetime exclusion amount used
+    // Credit = tax that would be due on the exclusion amount used
     const exclusionUsed = Math.min(this.totalTaxableGifts(), this.lifetimeExclusion())
-    return Math.round(exclusionUsed * TOP_GIFT_TAX_RATE)
+    return getApplicableCredit(exclusionUsed, 2025)
   }
 
   // Prior unified credit used
@@ -177,7 +191,7 @@ export default class F709 extends F1040Attachment {
 
   // Available unified credit
   availableUnifiedCredit = (): number => {
-    const totalCredit = Math.round(this.lifetimeExclusion() * TOP_GIFT_TAX_RATE)
+    const totalCredit = getApplicableCredit(this.lifetimeExclusion(), 2025)
     return Math.max(0, totalCredit - this.priorUnifiedCreditUsed())
   }
 
@@ -211,10 +225,10 @@ export default class F709 extends F1040Attachment {
     return Math.max(0, LIFETIME_EXCLUSION_2025 - this.priorGSTExemptionUsed())
   }
 
-  // GST tax (40% on non-exempt direct skips)
+  // GST tax (max rate on non-exempt direct skips)
   gstTax = (): number => {
     const taxableSkips = Math.max(0, this.totalDirectSkips() - this.gstExemptionAllocated())
-    return Math.round(taxableSkips * TOP_GIFT_TAX_RATE)
+    return Math.round(taxableSkips * PARAMS_2025.maxTaxRate)
   }
 
   // Total tax due
