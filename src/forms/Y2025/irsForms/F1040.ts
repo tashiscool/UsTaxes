@@ -67,6 +67,8 @@ import F8801 from './F8801'  // Prior Year AMT Credit
 import F2210 from './F2210'  // Underpayment Penalty
 import F4868 from './F4868'  // Extension Request
 import F8839 from './F8839'  // Adoption Credit
+import F1040ES from './F1040ES'  // Estimated Tax for Individuals
+import F2106 from './F2106'  // Employee Business Expenses
 // Phase 2: Medium-Priority Forms
 import ScheduleF from './ScheduleF'  // Farm Income
 import ScheduleH from './ScheduleH'  // Household Employment Taxes
@@ -294,6 +296,8 @@ export default class F1040 extends F1040Base {
   f2210?: F2210  // Underpayment Penalty
   f4868?: F4868  // Extension Request
   f8839?: F8839  // Adoption Credit
+  f1040es?: F1040ES  // Estimated Tax for Individuals
+  f2106?: F2106  // Employee Business Expenses
   // Phase 2: Medium-Priority Forms
   scheduleF?: ScheduleF  // Farm Income
   scheduleH?: ScheduleH  // Household Employment Taxes
@@ -545,6 +549,8 @@ export default class F1040 extends F1040Base {
     this.f2210 = new F2210(this)
     this.f4868 = new F4868(this)
     this.f8839 = new F8839(this)
+    this.f1040es = new F1040ES(this)
+    this.f2106 = new F2106(this)
 
     // Phase 2: Medium-Priority Forms
     this.scheduleF = new ScheduleF(this)
@@ -806,6 +812,8 @@ export default class F1040 extends F1040Base {
       this.f2210,  // Underpayment Penalty
       this.f4868,  // Extension Request
       this.f8839,  // Adoption Credit
+      this.f1040es,  // Estimated Tax for Individuals
+      this.f2106,  // Employee Business Expenses
       // Phase 2: Medium-Priority Forms
       this.scheduleF,  // Farm Income
       this.scheduleH,  // Household Employment Taxes

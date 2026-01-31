@@ -17,6 +17,21 @@ export {
 } from './generic'
 export type { GenericParserConfig, FieldDefinition } from './generic'
 
+// Cryptocurrency parsers
+export { CoinbaseParser, coinbaseParser } from './coinbase'
+export { KrakenParser, krakenParser } from './kraken'
+export {
+  GenericCryptoParser,
+  genericCryptoParser,
+  createGenericCryptoParser,
+  CRYPTO_FIELDS,
+  getRequiredCryptoFields
+} from './generic-crypto'
+export type { CryptoColumnMapping, GenericCryptoParserConfig, CryptoFieldDefinition } from './generic-crypto'
+
+// Crypto types
+export * from './cryptoTypes'
+
 import {
   BrokerageParser,
   BrokerageType,

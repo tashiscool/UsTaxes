@@ -1,0 +1,288 @@
+/* Print-specific styles for UsTaxes */
+
+@media print {
+  /* Hide non-essential elements during printing */
+  nav,
+  .MuiAppBar-root,
+  .MuiDrawer-root,
+  .MuiToolbar-root,
+  .no-print,
+  .print-hide,
+  button:not(.print-show),
+  .MuiButton-root:not(.print-show),
+  .MuiIconButton-root,
+  .MuiFab-root,
+  .MuiSnackbar-root,
+  .MuiDialog-container,
+  .save-indicator,
+  .language-selector,
+  .mobile-nav,
+  footer,
+  .scroll-to-top,
+  .help-button,
+  .feedback-button {
+    display: none !important;
+  }
+
+  /* Reset body and html for printing */
+  html,
+  body {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Main content takes full width */
+  main,
+  .main-content,
+  .MuiContainer-root {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0.5in !important;
+  }
+
+  /* Page settings */
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+
+  @page :first {
+    margin-top: 0.75in;
+  }
+
+  /* Page break handling */
+  .page-break-before {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .page-break-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Prevent orphans and widows */
+  p,
+  li,
+  .form-line {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Keep headings with their content */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Keep tables together when possible */
+  table,
+  .MuiTable-root {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Form sections should stay together */
+  .form-section,
+  .MuiCard-root,
+  .MuiPaper-root {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ccc;
+  }
+
+  /* Typography adjustments for print */
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+    color: black !important;
+  }
+
+  h1 {
+    font-size: 18pt;
+  }
+
+  h2 {
+    font-size: 16pt;
+  }
+
+  h3 {
+    font-size: 14pt;
+  }
+
+  h4,
+  h5,
+  h6 {
+    font-size: 12pt;
+  }
+
+  /* Links should show URL in print */
+  a[href^="http"]:after {
+    content: " (" attr(href) ")";
+    font-size: 10pt;
+    color: #666;
+  }
+
+  /* Internal links don't need URL */
+  a[href^="#"]:after,
+  a[href^="/"]:after {
+    content: "";
+  }
+
+  /* Form fields styling for print */
+  input,
+  select,
+  textarea,
+  .MuiInputBase-root {
+    border: 1px solid #000 !important;
+    background: white !important;
+  }
+
+  /* Currency values */
+  .currency-value {
+    font-family: "Courier New", monospace;
+  }
+
+  /* Summary section */
+  .tax-summary {
+    border: 2px solid #000;
+    padding: 0.25in;
+    margin-bottom: 0.25in;
+  }
+
+  /* Print-specific header */
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 0.5in;
+    border-bottom: 2px solid #000;
+    padding-bottom: 0.25in;
+  }
+
+  /* Print-specific footer */
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10pt;
+    color: #666;
+    border-top: 1px solid #ccc;
+    padding-top: 0.1in;
+  }
+
+  /* Page numbers - requires browser support */
+  .page-number:after {
+    content: counter(page);
+  }
+
+  /* Ensure images print correctly */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Accordion content should be visible */
+  .MuiAccordionDetails-root {
+    display: block !important;
+  }
+
+  .MuiCollapse-root {
+    height: auto !important;
+    visibility: visible !important;
+  }
+
+  /* Alert boxes */
+  .MuiAlert-root {
+    border: 1px solid currentColor;
+    background: white !important;
+  }
+
+  /* Grid adjustments */
+  .MuiGrid-container {
+    display: block !important;
+  }
+
+  .MuiGrid-item {
+    max-width: 100% !important;
+    flex-basis: 100% !important;
+  }
+
+  /* Remove shadows and transitions */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transition: none !important;
+  }
+
+  /* Checkboxes and radio buttons */
+  .MuiCheckbox-root,
+  .MuiRadio-root {
+    color: black !important;
+  }
+
+  .MuiCheckbox-root.Mui-checked:before,
+  .MuiRadio-root.Mui-checked:before {
+    content: "[X]";
+  }
+}
+
+/* Print preview specific styles */
+.print-preview-container {
+  background-color: #f5f5f5;
+  padding: 20px;
+}
+
+.print-preview-page {
+  width: 8.5in;
+  min-height: 11in;
+  margin: 0 auto 20px;
+  padding: 0.5in;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.print-preview-page-break {
+  border-top: 2px dashed #999;
+  margin: 10px 0;
+  position: relative;
+  text-align: center;
+}
+
+.print-preview-page-break::after {
+  content: "Page Break";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f5f5f5;
+  padding: 0 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+/* Screen-only elements (hidden in print) */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

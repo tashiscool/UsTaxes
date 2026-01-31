@@ -1,0 +1,440 @@
+/* Mobile-first responsive styles for UsTaxes */
+
+/* Base mobile styles */
+:root {
+  --touch-target-min: 44px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --border-radius: 8px;
+}
+
+/* Mobile viewport meta handled in HTML */
+
+/* Touch-friendly sizing for all interactive elements */
+@media (max-width: 600px) {
+  /* Ensure minimum touch targets */
+  button,
+  .MuiButton-root,
+  .MuiIconButton-root,
+  .MuiListItem-button,
+  input[type="checkbox"],
+  input[type="radio"],
+  select,
+  a {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+
+  /* Form inputs sizing */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="date"],
+  textarea,
+  select,
+  .MuiInputBase-root,
+  .MuiOutlinedInput-root,
+  .MuiFilledInput-root {
+    font-size: var(--font-size-md) !important;
+    min-height: 48px;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  /* Prevent iOS zoom on focus */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Container padding */
+  .MuiContainer-root,
+  main,
+  .main-content {
+    padding-left: var(--spacing-md) !important;
+    padding-right: var(--spacing-md) !important;
+  }
+
+  /* Stack form fields vertically */
+  .MuiGrid-container {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .MuiGrid-item {
+    padding-left: var(--spacing-xs) !important;
+    padding-right: var(--spacing-xs) !important;
+  }
+
+  /* Full-width form fields on mobile */
+  .MuiFormControl-root,
+  .MuiTextField-root {
+    width: 100% !important;
+    margin-bottom: var(--spacing-md) !important;
+  }
+
+  /* Button sizing */
+  .MuiButton-root {
+    padding: var(--spacing-sm) var(--spacing-lg) !important;
+    font-size: var(--font-size-md) !important;
+  }
+
+  .MuiButton-fullWidth {
+    margin-bottom: var(--spacing-md);
+  }
+
+  /* Card and Paper spacing */
+  .MuiCard-root,
+  .MuiPaper-root {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md) !important;
+  }
+
+  /* Typography adjustments */
+  h1,
+  .MuiTypography-h1 {
+    font-size: 1.75rem !important;
+  }
+
+  h2,
+  .MuiTypography-h2 {
+    font-size: 1.5rem !important;
+  }
+
+  h3,
+  .MuiTypography-h3 {
+    font-size: 1.25rem !important;
+  }
+
+  h4,
+  .MuiTypography-h4 {
+    font-size: 1.1rem !important;
+  }
+
+  /* Table responsiveness */
+  .MuiTable-root {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .MuiTableCell-root {
+    padding: var(--spacing-sm) !important;
+    font-size: var(--font-size-sm) !important;
+  }
+
+  /* Dialog/Modal full-screen on mobile */
+  .MuiDialog-paper {
+    margin: 0 !important;
+    max-height: 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+
+  .MuiDialogTitle-root {
+    padding: var(--spacing-md) !important;
+  }
+
+  .MuiDialogContent-root {
+    padding: var(--spacing-md) !important;
+  }
+
+  .MuiDialogActions-root {
+    padding: var(--spacing-md) !important;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .MuiDialogActions-root .MuiButton-root {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  /* Drawer adjustments */
+  .MuiDrawer-paper {
+    width: 100% !important;
+    max-width: 320px;
+  }
+
+  /* List items touch-friendly */
+  .MuiListItem-root {
+    padding-top: var(--spacing-md) !important;
+    padding-bottom: var(--spacing-md) !important;
+  }
+
+  /* Accordion touch-friendly */
+  .MuiAccordionSummary-root {
+    min-height: 56px !important;
+    padding: 0 var(--spacing-md) !important;
+  }
+
+  .MuiAccordionSummary-content {
+    margin: var(--spacing-md) 0 !important;
+  }
+
+  /* Tabs scrollable on mobile */
+  .MuiTabs-root {
+    overflow-x: auto !important;
+  }
+
+  .MuiTab-root {
+    min-height: 48px !important;
+    min-width: auto !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+  }
+
+  /* Snackbar positioning */
+  .MuiSnackbar-root {
+    bottom: 72px !important; /* Above bottom nav */
+    left: var(--spacing-md) !important;
+    right: var(--spacing-md) !important;
+  }
+
+  /* Bottom padding for fixed bottom nav */
+  body {
+    padding-bottom: 72px;
+  }
+
+  main {
+    margin-bottom: 72px;
+  }
+
+  /* Hide desktop-only elements */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Show mobile-only elements */
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* Mobile navigation styles */
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
+
+  /* App bar adjustments */
+  .MuiAppBar-root {
+    position: fixed !important;
+  }
+
+  .MuiToolbar-root {
+    min-height: 56px !important;
+    padding: 0 var(--spacing-sm) !important;
+  }
+
+  /* Currency input width */
+  .currency-input {
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  /* Date picker full width */
+  .MuiPickersBasePicker-pickerView {
+    max-width: 100% !important;
+  }
+
+  /* Chip group wrapping */
+  .MuiChip-root {
+    margin: var(--spacing-xs) !important;
+  }
+
+  /* Alert full width */
+  .MuiAlert-root {
+    width: 100% !important;
+    margin-bottom: var(--spacing-md) !important;
+  }
+
+  /* Tooltip positioning */
+  .MuiTooltip-popper {
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  /* Stepper vertical on mobile */
+  .MuiStepper-horizontal {
+    flex-direction: column !important;
+  }
+
+  .MuiStep-horizontal {
+    padding: var(--spacing-sm) 0 !important;
+  }
+
+  /* Save indicator positioning */
+  .save-indicator {
+    position: fixed;
+    top: 60px;
+    right: var(--spacing-md);
+    z-index: 1000;
+  }
+
+  /* Print preview adjustments */
+  .print-preview-page {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: var(--spacing-md) !important;
+    transform: none !important;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 601px) and (max-width: 960px) {
+  /* Two-column layout for forms */
+  .MuiGrid-container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .MuiGrid-item {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  /* Full width for certain fields */
+  .MuiGrid-item.full-width {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  /* Hide mobile-only elements */
+  .mobile-only {
+    display: none !important;
+  }
+
+  /* Show tablet elements */
+  .tablet-only {
+    display: block !important;
+  }
+
+  .mobile-bottom-nav {
+    display: none !important;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 961px) {
+  /* Hide mobile and tablet only elements */
+  .mobile-only,
+  .tablet-only {
+    display: none !important;
+  }
+
+  /* Show desktop elements */
+  .desktop-only {
+    display: block !important;
+  }
+
+  .mobile-bottom-nav {
+    display: none !important;
+  }
+}
+
+/* Touch-specific styles */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects for touch devices */
+  .MuiButton-root:hover,
+  .MuiListItem-button:hover,
+  .MuiIconButton-root:hover {
+    background-color: transparent;
+  }
+
+  /* Active state for touch */
+  .MuiButton-root:active,
+  .MuiListItem-button:active,
+  .MuiIconButton-root:active {
+    opacity: 0.7;
+  }
+
+  /* Disable text selection on buttons */
+  button,
+  .MuiButton-root {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Larger tap targets */
+  .MuiCheckbox-root,
+  .MuiRadio-root {
+    padding: 12px !important;
+  }
+
+  /* Scroll momentum */
+  .scrollable {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 960px) and (orientation: landscape) {
+  /* Adjust heights for landscape */
+  .MuiDialog-paper {
+    max-height: 90vh !important;
+  }
+
+  /* Two-column form layout in landscape */
+  .MuiGrid-container.form-grid {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .MuiGrid-container.form-grid .MuiGrid-item {
+    flex: 0 0 50%;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .MuiButton-contained {
+    border: 2px solid currentColor !important;
+  }
+
+  .MuiOutlinedInput-root {
+    border-width: 2px !important;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Dark mode support (system preference) */
+@media (prefers-color-scheme: dark) {
+  /* Base dark theme colors */
+  :root {
+    --background-color: #121212;
+    --surface-color: #1e1e1e;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(var(--spacing-md), env(safe-area-inset-left));
+    padding-right: max(var(--spacing-md), env(safe-area-inset-right));
+    padding-bottom: max(72px, env(safe-area-inset-bottom));
+  }
+
+  .mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

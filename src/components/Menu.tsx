@@ -6,14 +6,18 @@ import {
   createStyles,
   makeStyles,
   AppBar,
+  Box,
   IconButton,
   Slide,
   Theme,
   Toolbar,
-  Typography
+  Typography,
+  useMediaQuery,
+  useTheme
 } from '@material-ui/core'
 import CloseIcon from '@material-ui/icons/Close'
 import MenuIcon from '@material-ui/icons/Menu'
+import PrintIcon from '@material-ui/icons/Print'
 import ResponsiveDrawer, {
   item,
   Section,
@@ -36,7 +40,7 @@ import HelpAndFeedback from './HelpAndFeedback'
 import UserSettings from './UserSettings'
 import Urls from 'ustaxes/data/urls'
 
-import { isMobileOnly as isMobile } from 'react-device-detect'
+import { isMobileOnly as isMobileDevice } from 'react-device-detect'
 import HealthSavingsAccounts from './savingsAccounts/healthSavingsAccounts'
 import IRA from './savingsAccounts/IRA'
 import OtherInvestments from './income/OtherInvestments'
@@ -44,12 +48,20 @@ import { StockOptions } from './income/StockOptions'
 import { PartnershipIncome } from './income/PartnershipIncome'
 import OBBBAIncome from './income/OBBBAIncome'
 import BrokerageImport from './import/BrokerageImport'
+import CryptoImport from './import/CryptoImport'
+import PayrollImport from './import/PayrollImport'
 import { InterviewWizard } from './interview'
 import { TaxPlanningCalculator } from './planning'
 import { WhatIfTool } from './scenarios'
 import { TaxYear } from 'ustaxes/core/data'
 import { AdvanceChildTaxCredit } from './Y2021/AdvanceChildTaxCredit'
 import { YearsTaxesState } from 'ustaxes/redux'
+
+// New UX components
+import { MobileNav, MobileBottomNav } from './MobileNav'
+import { PrintPreview } from './PrintPreview'
+import { SaveIndicator, SyncStatusIcon } from './SaveIndicator'
+import { LanguageSelector } from './LanguageSelector'
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -60,8 +72,28 @@ const useStyles = makeStyles((theme: Theme) =>
         display: 'none'
       }
     },
+    desktopAppBar: {
+      display: 'none',
+      [theme.breakpoints.up('sm')]: {
+        display: 'flex',
+        position: 'fixed',
+        top: 0,
+        left: 240, // drawer width
+        right: 0,
+        zIndex: theme.zIndex.drawer - 1,
+        backgroundColor: theme.palette.background.paper,
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        boxShadow: 'none'
+      }
+    },
+    desktopToolbar: {
+      minHeight: 48,
+      justifyContent: 'flex-end',
+      padding: theme.spacing(0, 2)
+    },
     toolbar: {
-      alignItems: 'center'
+      alignItems: 'center',
+      justifyContent: 'space-between'
     },
     title: {
       position: 'absolute',
@@ -69,8 +101,12 @@ const useStyles = makeStyles((theme: Theme) =>
       textAlign: 'center',
       pointerEvents: 'none'
     },
+    mobileTitle: {
+      flex: 1,
+      textAlign: 'center'
+    },
     menuButton: {
-      marginRight: theme.spacing(2),
+      marginRight: theme.spacing(1),
       [theme.breakpoints.up('sm')]: {
         display: 'none'
       }
@@ -78,6 +114,34 @@ const useStyles = makeStyles((theme: Theme) =>
     gutters: {
       margin: '0 12px',
       padding: 0
+    },
+    toolbarActions: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1)
+    },
+    desktopActions: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(2)
+    },
+    saveIndicator: {
+      display: 'none',
+      [theme.breakpoints.up('sm')]: {
+        display: 'flex'
+      }
+    },
+    mobileOnly: {
+      display: 'flex',
+      [theme.breakpoints.up('sm')]: {
+        display: 'none'
+      }
+    },
+    desktopOnly: {
+      display: 'none',
+      [theme.breakpoints.up('sm')]: {
+        display: 'flex'
+      }
     }
   })
 )
@@ -148,6 +212,16 @@ export const drawerSections: Section[] = [
         'Import Brokerage CSV',
         Urls.income.brokerageImport,
         <BrokerageImport />
+      ),
+      item(
+        'Import Crypto',
+        Urls.income.cryptoImport,
+        <CryptoImport />
+      ),
+      item(
+        'Import W-2 (Payroll)',
+        Urls.income.payrollImport,
+        <PayrollImport />
       )
     ]
   },
@@ -239,15 +313,30 @@ export const drawerSectionsForYear = (year: TaxYear): Section[] => [
 
 const Menu = (): ReactElement => {
   const classes = useStyles()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('xs')) || isMobileDevice
   const [isOpen, setOpen] = useState(!isMobile)
+  const [printPreviewOpen, setPrintPreviewOpen] = useState(false)
+  const location = useLocation()
+
   const activeYear: TaxYear = useSelector(
     (state: YearsTaxesState) => state.activeYear
   )
 
   const allSections = drawerSectionsForYear(activeYear)
+  const currentPageTitle = getTitleAndPage(location.pathname, activeYear)
+
+  const handlePrintPreviewOpen = () => {
+    setPrintPreviewOpen(true)
+  }
+
+  const handlePrintPreviewClose = () => {
+    setPrintPreviewOpen(false)
+  }
 
   return (
     <>
+      {/* Mobile App Bar */}
       <AppBar position="fixed" className={classes.root}>
         <Toolbar
           className={classes.toolbar}
@@ -262,20 +351,68 @@ const Menu = (): ReactElement => {
           >
             {isOpen ? <CloseIcon /> : <MenuIcon />}
           </IconButton>
+
           <Slide in={isOpen} direction={'right'}>
             <Typography className={classes.title}>Menu</Typography>
           </Slide>
           <Slide in={!isOpen} direction={'left'}>
             <Typography className={classes.title}>
-              {getTitleAndPage(useLocation().pathname, activeYear)}
+              {currentPageTitle}
             </Typography>
           </Slide>
+
+          {/* Mobile toolbar actions */}
+          <Box className={classes.mobileOnly}>
+            <SyncStatusIcon size="small" />
+          </Box>
         </Toolbar>
       </AppBar>
-      <ResponsiveDrawer
-        sections={allSections}
-        isOpen={isOpen}
-        setOpen={setOpen}
+
+      {/* Desktop secondary toolbar */}
+      <AppBar position="fixed" className={classes.desktopAppBar} color="default">
+        <Toolbar className={classes.desktopToolbar}>
+          <Box className={classes.desktopActions}>
+            <SaveIndicator showTimestamp />
+
+            <IconButton
+              size="small"
+              onClick={handlePrintPreviewOpen}
+              aria-label="Print Preview"
+              title="Print Preview"
+            >
+              <PrintIcon />
+            </IconButton>
+
+            <LanguageSelector compact size="small" />
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      {/* Use MobileNav for mobile devices, ResponsiveDrawer for desktop */}
+      {isMobile ? (
+        <MobileNav
+          sections={allSections}
+          isOpen={isOpen}
+          setOpen={setOpen}
+        />
+      ) : (
+        <ResponsiveDrawer
+          sections={allSections}
+          isOpen={isOpen}
+          setOpen={setOpen}
+        />
+      )}
+
+      {/* Mobile bottom navigation */}
+      {isMobile && (
+        <MobileBottomNav onMenuClick={() => setOpen(true)} />
+      )}
+
+      {/* Print Preview Modal */}
+      <PrintPreview
+        open={printPreviewOpen}
+        onClose={handlePrintPreviewClose}
+        title="Tax Return Preview"
       />
     </>
   )
