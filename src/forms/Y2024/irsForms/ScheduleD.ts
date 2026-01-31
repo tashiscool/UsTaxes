@@ -168,7 +168,8 @@ export default class ScheduleD extends F1040Attachment {
   l10h = (): number =>
     sumFields(this.l10f8949s().map((f) => f.longTermTotalGain()))
 
-  l11 = (): number | undefined => undefined
+  // Line 11 - Undistributed long-term capital gains from Form 2439
+  l11 = (): number | undefined => this.f1040.f2439?.undistributedCapitalGains()
 
   l12 = (): number | undefined => undefined
 

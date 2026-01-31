@@ -11,37 +11,70 @@ UsTaxes is a free, open-source tax filing application that can be used to file t
 
 **Interested in contributing? [Get Started](#user-content-get-started)**
 
-## Supported Income data
+## Supported Tax Years
 
-Most income and deduction information from the following forms are supported for tax years 2023, 2022, 2021 and 2020.
+- **2025** - Comprehensive support (131 forms, see [Form Documentation](docs/FORMS_Y2025.md))
+- **2024** - Full support
+- **2023** - Full support
+- **2022** - Full support
+- **2021** - Full support
+- **2020** - Full support
 
-- W2
-- 1099-INT
-- 1099-DIV
-- 1099-B
-- 1098-E
-- 1099-R: support for normal distributions from IRA and pension accounts.
-- SSA-1099
+## Supported Income Data
 
-So far, this project can attach the following schedules to form 1040:
+### Income Forms
+- W-2 (Wages)
+- All 1099 variants (INT, DIV, B, R, MISC, NEC, G, SSA, K)
+- 1098-E (Student Loan Interest)
+- Schedule K-1 (Partnership/S-Corp income)
 
-- Schedule 1 (as to Schedule E and 1098-E data only)
-- Schedule 2
-- Schedule 3 (as to excess FICA tax only)
-- Schedule 8812
-- Schedule B
-- Schedule D
-- Schedule E
-- F1040-V
-- F8949 (Uncovered Investment Transactions)
-- F8889 (Health Savings Accounts)
-- F8959 (Additional Medicare Tax)
-- F8960 (Net Investment Income Tax)
+### Schedules (2025)
+- Schedule 1 (Additional Income and Adjustments)
+- Schedule 1-A (OBBBA 2025 Additional Deductions)
+- Schedule 2 (Additional Taxes)
+- Schedule 3 (Additional Credits)
+- Schedule A (Itemized Deductions)
+- Schedule B (Interest and Dividends)
+- Schedule C (Self-Employment)
+- Schedule D (Capital Gains)
+- Schedule E (Rental/Royalty/K-1)
+- Schedule F (Farm Income)
+- Schedule H (Household Employment)
+- Schedule J (Farm Income Averaging)
+- Schedule R (Elderly/Disabled Credit)
+- Schedule SE (Self-Employment Tax)
+- Schedule 8812 (Child Tax Credit)
+- Schedule EIC (Earned Income Credit)
+- And 100+ additional forms (see [full list](docs/FORMS_Y2025.md))
 
 ## Supported Credits
 
-- Credit for children and other dependents
-- Earned income credit
+### Refundable Credits
+- Child Tax Credit / Additional Child Tax Credit
+- Earned Income Credit
+- American Opportunity Credit (F8863)
+- Premium Tax Credit / ACA Subsidy (F8962)
+
+### Nonrefundable Credits
+- Child and Dependent Care Credit (F2441)
+- Residential Energy Credits (F5695)
+- Clean Vehicle Credit (F8936)
+- Saver's Credit (F8880)
+- Foreign Tax Credit (F1116)
+- Education Credits (F8863)
+- Adoption Credit (F8839)
+- 18+ Business Credits via F3800
+
+## Business Support
+
+- Schedule C (Self-Employment)
+- Depreciation (F4562 with Section 179)
+- Home Office (F8829)
+- At-Risk Limitations (F6198)
+- Passive Activity Loss (F8582)
+- Installment Sales (F6252)
+- Like-Kind Exchanges (F8824)
+- General Business Credits (F3800 ecosystem)
 
 ## Supported states
 
@@ -75,13 +108,15 @@ The project is available strictly via client side. Data is persisted to the site
 
 ## Contributing
 
-Thank you for taking the time to contribute; let's make tax filing free for everyone! 🎉
+Thank you for taking the time to contribute; let's make tax filing free for everyone!
 
 To ensure the project is fun for every contributor, please review:
 
 - [Code of conduct](docs/CODE_OF_CONDUCT.md)
 - [Contributing guide](docs/CONTRIBUTING.md)
 - [Project Architecture](docs/ARCHITECTURE.md)
+- [Form Implementation Status (Y2025)](docs/FORMS_Y2025.md)
+- [Forms Roadmap](docs/FORMS_ROADMAP.md)
 
 ## Get Started
 

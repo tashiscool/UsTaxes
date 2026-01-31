@@ -161,6 +161,21 @@ export default class F1040 extends F1040Base {
         this.f8995 = new F8995(this)
       }
     }
+
+    // Form 2439 - Undistributed Long-Term Capital Gains
+    if ((this.info.f2439s ?? []).length > 0) {
+      this.f2439 = new F2439(this)
+    }
+
+    // Form 4136 - Credit for Federal Tax Paid on Fuels
+    if ((this.info.fuelTaxCredits ?? []).length > 0) {
+      this.f4136 = new F4136(this)
+    }
+
+    // Form 4972 - Tax on Lump-Sum Distributions
+    if ((this.info.lumpSumDistributions ?? []).length > 0) {
+      this.f4972 = new F4972(this)
+    }
   }
 
   get f8949s(): F8949[] {
@@ -194,6 +209,8 @@ export default class F1040 extends F1040Base {
       this.scheduleR,
       this.scheduleEIC,
       this.schedule8812,
+      this.f2439,
+      this.f4136,
       this.f4797,
       this.f4952,
       this.f4972,

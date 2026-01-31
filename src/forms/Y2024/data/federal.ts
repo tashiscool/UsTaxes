@@ -403,3 +403,38 @@ export const SSBenefits: SocialSecurityBenefitsDef = {
     [FilingStatus.MFJ]: { l8: 32000, l10: 12000 }
   }
 }
+
+// Form 4136 - Credit for Federal Tax Paid on Fuels
+// Rates per gallon for 2024
+// See IRS Form 4136 instructions for current rates
+export const fuelTaxRates: Record<string, number> = {
+  // Line 1 - Nontaxable Use of Gasoline
+  nontaxableUseGasoline: 0.183,
+  // Line 2 - Nontaxable Use of Aviation Gasoline
+  nontaxableUseAviationGasoline: 0.194,
+  // Line 3 - Nontaxable Use of Undyed Diesel Fuel
+  nontaxableUseUndyedDiesel: 0.243,
+  // Line 4 - Nontaxable Use of Undyed Kerosene
+  nontaxableUseUndyedKerosene: 0.243,
+  // Line 5 - Kerosene Used in Aviation
+  nontaxableUseKeroseneAviation: 0.219,
+  // Line 6 - Exported Dyed Fuels
+  exportedDyedFuels: 0.243,
+  exportedDyedDiesel: 0.243,
+  exportedDyedKerosene: 0.243,
+  // Line 7 - Biodiesel, Renewable Diesel, or SAF Mixture Credit
+  biodieselMixture: 1.00,
+  agribiodiesel: 1.00,
+  renewableDiesel: 1.00,
+  // Line 8 - Alternative Fuel Credit
+  alternativeFuel: 0.50,
+  alternativeFuelMixture: 0.50,
+  // Line 9 - CNG and LNG
+  cngLng: 0.50,
+  // Line 10 - Liquefied Gas from Biomass
+  liquefiedGasFromBiomass: 0.50,
+  // Line 11 - Compressed Gas from Biomass
+  compressedGasFromBiomass: 0.50,
+  // Line 12 - Sustainable Aviation Fuel (SAF) Credit
+  sustainableAviationFuel: 1.25
+}

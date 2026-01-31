@@ -173,14 +173,36 @@ export default class F8889 extends F1040Attachment {
     )
   }
 
+  /**
+   * Get the spouse allocation percentage for this person.
+   * Default is 50% split. User can configure via hsaSpouseAllocationPercent (0-100).
+   * If this is the primary taxpayer, use the configured percentage.
+   * If this is the spouse, use the complement (100 - configured percentage).
+   */
+  private getSpouseAllocationFactor = (): number => {
+    // Get configured allocation percent (defaults to 50 if not set)
+    const primaryPercent = this.state.hsaSpouseAllocationPercent ?? 50
+
+    // Validate bounds
+    const validPercent = Math.min(100, Math.max(0, primaryPercent))
+
+    // Return appropriate factor based on who this form is for
+    if (this.person.role === 'PRIMARY') {
+      return validPercent / 100
+    } else {
+      // Spouse gets the complement
+      return (100 - validPercent) / 100
+    }
+  }
+
   splitFamilyContributionLimit = (): number | undefined => {
     /* if you and your spouse each have separate HSAs and had family coverage under an HDHP at any time during 2020*/
-    /* If you are treated as having family coverage for each month, divide the amount on line 5 equally between you 
+    /* If you are treated as having family coverage for each month, divide the amount on line 5 equally between you
        and your spouse, unless you both agree on a different allocation (such as allocating nothing to one spouse).
        Enter your allocable share on line 6.*/
     /* Example. In 2020, you are an eligible individual and have self-only HDHP coverage. In March you marry and as
        of April 1 you have family HDHP coverage. Neither you nor your spouse qualify for the additional contribution
-       amount. Your spouse has a separate HSA and is an eligible individual from April 1 to December 31, 2020. 
+       amount. Your spouse has a separate HSA and is an eligible individual from April 1 to December 31, 2020.
        Because you and your spouse are considered to have family coverage on December 1, your contribution limit is
        $7,100 (the family coverage maximum). You and your spouse can divide this amount in any allocation to which
       you agree (such as allocating nothing to one spouse).*/
@@ -188,22 +210,23 @@ export default class F8889 extends F1040Attachment {
       return this.l5()
     }
 
+    // Get the allocation factor for this person (allows user-configurable split)
+    const allocationFactor = this.getSpouseAllocationFactor()
+
     if (this.lastMonthCoverage() === 'family') {
-      // TODO: This hard codes the allocation at 50% for each spouse but the
-      // rules say any contribution allowcation is allowed
-      return Math.round(this.l5() / 2)
+      // Apply user-configurable allocation (default 50/50 split)
+      return Math.round(this.l5() * allocationFactor)
     } else {
       // get the number of months of family coverage
       const familyMonths: number = this.perMonthContributions.type.filter(
         (t) => t === 'family'
       ).length
 
-      // TODO: This hard codes the allocation at 50% for each spouse but the
-      // rules say any contribution allowcation is allowed
+      // Apply user-configurable allocation to family coverage portion
       const familyContribution: number =
         (familyMonths * healthSavingsAccounts.contributionLimit['family']) /
-        12 /
-        2
+        12 *
+        allocationFactor
 
       // Add this to the contributions of the self-only portion of the year
       const selfMonths: number = 12 - familyMonths
@@ -211,7 +234,7 @@ export default class F8889 extends F1040Attachment {
       const selfContribution: number =
         (selfMonths * healthSavingsAccounts.contributionLimit['self-only']) / 12
 
-      return familyContribution + selfContribution
+      return Math.round(familyContribution + selfContribution)
     }
   }
 
