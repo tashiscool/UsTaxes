@@ -27,7 +27,12 @@ import {
   OvertimeIncome,
   TipIncome,
   AutoLoanInterest,
-  TrumpSavingsAccountDateString
+  TrumpSavingsAccountDateString,
+  LocalTaxInfo,
+  StockTransactionDateString,
+  CostBasisPortfolioDateString,
+  TaxLotSelection,
+  CostBasisMethod
 } from 'ustaxes/core/data'
 
 import {
@@ -106,7 +111,20 @@ export enum ActionName {
   SET_AUTO_LOAN_INTEREST = 'OBBBA/SET_AUTO_LOAN_INTEREST',
   ADD_TRUMP_ACCOUNT = 'OBBBA/ADD_TRUMP_ACCOUNT',
   EDIT_TRUMP_ACCOUNT = 'OBBBA/EDIT_TRUMP_ACCOUNT',
-  REMOVE_TRUMP_ACCOUNT = 'OBBBA/REMOVE_TRUMP_ACCOUNT'
+  REMOVE_TRUMP_ACCOUNT = 'OBBBA/REMOVE_TRUMP_ACCOUNT',
+  // Prior Year Import
+  IMPORT_PRIOR_YEAR_DATA = 'IMPORT_PRIOR_YEAR_DATA',
+  // Local Tax actions
+  SET_LOCAL_TAX_INFO = 'LOCAL_TAX/SET_INFO',
+  // Brokerage Import
+  IMPORT_BROKERAGE_TRANSACTIONS = 'BROKERAGE/IMPORT_TRANSACTIONS',
+  // Cost Basis Tracking
+  ADD_INVESTMENT_TRANSACTION = 'INVESTMENTS/ADD_TRANSACTION',
+  EDIT_INVESTMENT_TRANSACTION = 'INVESTMENTS/EDIT_TRANSACTION',
+  REMOVE_INVESTMENT_TRANSACTION = 'INVESTMENTS/REMOVE_TRANSACTION',
+  UPDATE_PORTFOLIO = 'INVESTMENTS/UPDATE_PORTFOLIO',
+  RECORD_SALE = 'INVESTMENTS/RECORD_SALE',
+  APPLY_STOCK_SPLIT = 'INVESTMENTS/APPLY_STOCK_SPLIT'
 }
 
 interface Save<T, R> {
@@ -199,6 +217,30 @@ type AddTrumpAccount = Save<typeof ActionName.ADD_TRUMP_ACCOUNT, TrumpSavingsAcc
 type EditTrumpAccount = Save<typeof ActionName.EDIT_TRUMP_ACCOUNT, EditTrumpAccountAction>
 type RemoveTrumpAccount = Save<typeof ActionName.REMOVE_TRUMP_ACCOUNT, number>
 
+// Prior Year Import action type
+export interface PriorYearImportData {
+  sourceYear: TaxYear
+  data: Partial<InformationDateString>
+}
+type ImportPriorYearData = Save<typeof ActionName.IMPORT_PRIOR_YEAR_DATA, PriorYearImportData>
+
+// Brokerage Import action type
+export interface BrokerageImportData {
+  brokerageType: string
+  transactions: Asset<Date>[]
+}
+type ImportBrokerageTransactions = Save<typeof ActionName.IMPORT_BROKERAGE_TRANSACTIONS, BrokerageImportData>
+// Local Tax action type
+type SetLocalTaxInfo = Save<typeof ActionName.SET_LOCAL_TAX_INFO, LocalTaxInfo | undefined>
+
+// Cost Basis Tracking action types
+type AddInvestmentTransaction = Save<typeof ActionName.ADD_INVESTMENT_TRANSACTION, StockTransactionDateString>
+type EditInvestmentTransaction = Save<typeof ActionName.EDIT_INVESTMENT_TRANSACTION, { index: number; value: StockTransactionDateString }>
+type RemoveInvestmentTransaction = Save<typeof ActionName.REMOVE_INVESTMENT_TRANSACTION, number>
+type UpdatePortfolio = Save<typeof ActionName.UPDATE_PORTFOLIO, CostBasisPortfolioDateString>
+type RecordSale = Save<typeof ActionName.RECORD_SALE, { transaction: StockTransactionDateString; lotSelections: TaxLotSelection[]; method: CostBasisMethod }>
+type ApplyStockSplit = Save<typeof ActionName.APPLY_STOCK_SPLIT, { symbol: string; splitRatio: number; date: string }>
+
 export type Actions =
   | SaveRefundInfo
   | SavePrimaryPersonInfo
@@ -255,6 +297,15 @@ export type Actions =
   | AddTrumpAccount
   | EditTrumpAccount
   | RemoveTrumpAccount
+  | ImportPriorYearData
+  | ImportBrokerageTransactions
+  | SetLocalTaxInfo
+  | AddInvestmentTransaction
+  | EditInvestmentTransaction
+  | RemoveInvestmentTransaction
+  | UpdatePortfolio
+  | RecordSale
+  | ApplyStockSplit
 
 export type SignalAction = (year: TaxYear) => Actions
 export type ActionCreator<A> = (formData: A) => SignalAction
@@ -572,3 +623,54 @@ export const removeTrumpAccount: ActionCreator<number> = makeActionCreator(
   ActionName.REMOVE_TRUMP_ACCOUNT,
   indexValidator
 )
+
+// =============================================================================
+// Prior Year Import Action Creator
+// =============================================================================
+
+export const importPriorYearData: ActionCreator<PriorYearImportData> =
+  makeActionCreator(ActionName.IMPORT_PRIOR_YEAR_DATA)
+
+// =============================================================================
+// Brokerage Import Action Creator
+// =============================================================================
+
+export const importBrokerageTransactions: ActionCreator<BrokerageImportData> =
+  makeActionCreator(ActionName.IMPORT_BROKERAGE_TRANSACTIONS)
+
+// =============================================================================
+// Local Tax Action Creators
+// =============================================================================
+
+export const setLocalTaxInfo: ActionCreator<LocalTaxInfo | undefined> =
+  makeActionCreator(ActionName.SET_LOCAL_TAX_INFO)
+
+// =============================================================================
+// Cost Basis Tracking Action Creators
+// =============================================================================
+
+export const addInvestmentTransaction: ActionCreator<StockTransactionDateString> =
+  makeActionCreator(ActionName.ADD_INVESTMENT_TRANSACTION)
+
+export const editInvestmentTransaction: ActionCreator<{
+  index: number
+  value: StockTransactionDateString
+}> = makeActionCreator(ActionName.EDIT_INVESTMENT_TRANSACTION)
+
+export const removeInvestmentTransaction: ActionCreator<number> =
+  makeActionCreator(ActionName.REMOVE_INVESTMENT_TRANSACTION, indexValidator)
+
+export const updatePortfolio: ActionCreator<CostBasisPortfolioDateString> =
+  makeActionCreator(ActionName.UPDATE_PORTFOLIO)
+
+export const recordSale: ActionCreator<{
+  transaction: StockTransactionDateString
+  lotSelections: TaxLotSelection[]
+  method: CostBasisMethod
+}> = makeActionCreator(ActionName.RECORD_SALE)
+
+export const applyStockSplitAction: ActionCreator<{
+  symbol: string
+  splitRatio: number
+  date: string
+}> = makeActionCreator(ActionName.APPLY_STOCK_SPLIT)

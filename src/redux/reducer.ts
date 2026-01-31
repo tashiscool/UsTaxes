@@ -26,7 +26,9 @@ export const blankState: Information = {
   overtimeIncome: undefined,
   tipIncome: undefined,
   autoLoanInterest: undefined,
-  trumpSavingsAccounts: undefined
+  trumpSavingsAccounts: undefined,
+  // Local Tax info
+  localTaxInfo: undefined
 }
 
 const formReducer = (
@@ -477,6 +479,67 @@ const formReducer = (
       }
     }
 
+    // =============================================================================
+    // Local Tax Actions
+    // =============================================================================
+    case ActionName.SET_LOCAL_TAX_INFO: {
+      return {
+        ...newState,
+        localTaxInfo: action.formData
+      }
+    }
+
+    // =============================================================================
+    // Prior Year Import
+    // =============================================================================
+    case ActionName.IMPORT_PRIOR_YEAR_DATA: {
+      const importedData = action.formData.data
+
+      // Merge imported data with current state
+      // Only import structural data (names, addresses, employers, bank info)
+      // Do not import income amounts
+      return {
+        ...newState,
+        taxPayer: {
+          ...newState.taxPayer,
+          // Import primary person if present in imported data
+          primaryPerson: importedData.taxPayer?.primaryPerson
+            ? {
+                ...importedData.taxPayer.primaryPerson,
+                dateOfBirth: new Date(importedData.taxPayer.primaryPerson.dateOfBirth)
+              }
+            : newState.taxPayer.primaryPerson,
+          // Import spouse if present in imported data
+          spouse: importedData.taxPayer?.spouse
+            ? {
+                ...importedData.taxPayer.spouse,
+                dateOfBirth: new Date(importedData.taxPayer.spouse.dateOfBirth)
+              }
+            : newState.taxPayer.spouse,
+          // Import dependents if present
+          dependents: importedData.taxPayer?.dependents
+            ? importedData.taxPayer.dependents.map((d) => ({
+                ...d,
+                dateOfBirth: new Date(d.dateOfBirth)
+              }))
+            : newState.taxPayer.dependents,
+          // Import contact info
+          contactPhoneNumber:
+            importedData.taxPayer?.contactPhoneNumber ??
+            newState.taxPayer.contactPhoneNumber,
+          contactEmail:
+            importedData.taxPayer?.contactEmail ?? newState.taxPayer.contactEmail
+        },
+        // Import refund/bank info
+        refund: importedData.refund ?? newState.refund,
+        // Import state residencies
+        stateResidencies:
+          importedData.stateResidencies && importedData.stateResidencies.length > 0
+            ? importedData.stateResidencies
+            : newState.stateResidencies
+      }
+    }
+
     default: {
       return newState
     }
@@ -533,6 +596,10 @@ const assetReducer = (
     }
     case ActionName.REMOVE_ASSETS: {
       return newState.filter((_, i) => !action.formData.includes(i))
+    }
+    case ActionName.IMPORT_BROKERAGE_TRANSACTIONS: {
+      // Import transactions from brokerage CSV
+      return [...newState, ...action.formData.transactions]
     }
     default: {
       return newState

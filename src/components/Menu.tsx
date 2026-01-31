@@ -43,6 +43,10 @@ import OtherInvestments from './income/OtherInvestments'
 import { StockOptions } from './income/StockOptions'
 import { PartnershipIncome } from './income/PartnershipIncome'
 import OBBBAIncome from './income/OBBBAIncome'
+import BrokerageImport from './import/BrokerageImport'
+import { InterviewWizard } from './interview'
+import { TaxPlanningCalculator } from './planning'
+import { WhatIfTool } from './scenarios'
 import { TaxYear } from 'ustaxes/core/data'
 import { AdvanceChildTaxCredit } from './Y2021/AdvanceChildTaxCredit'
 import { YearsTaxesState } from 'ustaxes/redux'
@@ -107,7 +111,10 @@ export const backPages: SectionItem[] = [
 export const drawerSections: Section[] = [
   {
     title: 'UsTaxes.org',
-    items: [item('Getting Started', Urls.usTaxes.start, <GettingStarted />)]
+    items: [
+      item('Getting Started', Urls.usTaxes.start, <GettingStarted />),
+      item('Interview Mode', Urls.usTaxes.interview, <InterviewWizard />)
+    ]
   },
   {
     title: 'Personal',
@@ -136,6 +143,11 @@ export const drawerSections: Section[] = [
         'Partnership Income',
         Urls.income.partnershipIncome,
         <PartnershipIncome />
+      ),
+      item(
+        'Import Brokerage CSV',
+        Urls.income.brokerageImport,
+        <BrokerageImport />
       )
     ]
   },
@@ -168,6 +180,21 @@ export const drawerSections: Section[] = [
         'Individual Retirement Arrangements (IRA)',
         Urls.savingsAccounts.ira,
         <IRA />
+      )
+    ]
+  },
+  {
+    title: 'Planning',
+    items: [
+      item(
+        'Tax Planning Calculator',
+        Urls.planning.calculator,
+        <TaxPlanningCalculator />
+      ),
+      item(
+        'What-If Scenarios',
+        Urls.tools.whatIf,
+        <WhatIfTool />
       )
     ]
   },

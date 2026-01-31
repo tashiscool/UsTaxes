@@ -1,6 +1,7 @@
 const Urls = {
   usTaxes: {
-    start: '/start'
+    start: '/start',
+    interview: '/interview'
   },
   taxPayer: {
     root: '/taxpayer',
@@ -16,7 +17,8 @@ const Urls = {
     otherInvestments: '/income/otherinvestments',
     stockOptions: '/income/stockoptions',
     partnershipIncome: '/income/partnershipincome',
-    obbba: '/income/obbba'
+    obbba: '/income/obbba',
+    brokerageImport: '/income/brokerage-import'
   },
   payments: {
     estimatedTaxes: '/payments/estimatedtaxes'
@@ -32,6 +34,12 @@ const Urls = {
   credits: {
     main: '/credits',
     eic: '/credits/eic'
+  },
+  planning: {
+    calculator: '/planning/calculator'
+  },
+  tools: {
+    whatIf: '/tools/whatif'
   },
   createPdf: '/createpdf',
   settings: '/settings',

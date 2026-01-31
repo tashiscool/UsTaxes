@@ -628,6 +628,63 @@ export interface Credit {
 }
 
 // =============================================================================
+// Local Tax Data Types (City/Municipal Taxes)
+// =============================================================================
+
+/**
+ * Local Tax Jurisdiction - Represents a city/municipality that levies income tax
+ */
+export interface LocalTaxJurisdiction {
+  name: string
+  state: State
+  taxRate: number
+  creditRate?: number  // Percentage of credit allowed for taxes paid to other jurisdictions
+  collectionAgency?: 'RITA' | 'CCA' | 'Direct'  // For Ohio cities
+  hasResidentTax: boolean
+  hasNonResidentTax: boolean
+  hasSelfEmploymentTax: boolean
+}
+
+/**
+ * Local Tax Information - User-entered data about local tax situation
+ */
+export interface LocalTaxInfo {
+  // Residence information
+  residenceCity?: string
+  residenceState?: State
+  isResident: boolean
+
+  // Work location information
+  workCity?: string
+  workState?: State
+  worksInDifferentCity: boolean
+
+  // Withholding and payments
+  localWithholding: number  // Total local tax withheld (residence city)
+  workCityWithholding?: number  // Tax withheld for work city (if different)
+  estimatedPayments?: number  // Estimated local tax payments made
+  otherMunicipalTaxPaid?: number  // Taxes paid to other municipalities (for credit)
+
+  // Ohio-specific fields
+  ohioSchoolDistrict?: string
+  ohioSchoolDistrictNumber?: string
+
+  // NYC-specific fields
+  nycBorough?: 'Manhattan' | 'Brooklyn' | 'Queens' | 'Bronx' | 'Staten Island'
+
+  // Philadelphia-specific fields
+  philadelphiaWageTaxAccountNumber?: string
+}
+
+/**
+ * Edit action type for LocalTaxInfo
+ */
+export type EditLocalTaxInfoAction = {
+  index: number
+  value: LocalTaxInfo
+}
+
+// =============================================================================
 // OBBBA 2025 New Data Types
 // =============================================================================
 
@@ -2506,6 +2563,8 @@ export interface Information<D = Date> {
   stateResidencies: StateResidency[]
   healthSavingsAccounts: HealthSavingsAccount<D>[]
   individualRetirementArrangements: Ira[]
+  // Local Tax Information (city/municipal taxes)
+  localTaxInfo?: LocalTaxInfo
   // OBBBA 2025 new fields
   overtimeIncome?: OvertimeIncome
   tipIncome?: TipIncome
@@ -2770,3 +2829,147 @@ export type EditScheduleK1Form1065Action =
 export type EditCreditAction = ArrayItemEditAction<Credit>
 export type EditTrumpAccountAction =
   ArrayItemEditAction<TrumpSavingsAccountDateString>
+
+// =============================================================================
+// Cost Basis Tracking Types
+// =============================================================================
+
+/**
+ * Method for selecting tax lots when selling securities
+ */
+export enum CostBasisMethod {
+  FIFO = 'FIFO',           // First In, First Out
+  LIFO = 'LIFO',           // Last In, First Out
+  SpecificID = 'SpecificID', // Specific Identification
+  AverageCost = 'AverageCost' // Average Cost (mutual funds only)
+}
+
+/**
+ * Transaction type for investment tracking
+ */
+export enum StockTransactionType {
+  Buy = 'Buy',
+  Sell = 'Sell',
+  DividendReinvestment = 'DividendReinvestment',
+  StockSplit = 'StockSplit',
+  Merger = 'Merger',
+  SpinOff = 'SpinOff',
+  TransferIn = 'TransferIn',
+  TransferOut = 'TransferOut'
+}
+
+/**
+ * A single tax lot representing a purchase of securities
+ */
+export interface TaxLot<D = Date> {
+  id: string                    // Unique identifier for the lot
+  symbol: string                // Ticker symbol
+  purchaseDate: D               // Date of purchase
+  shares: number                // Number of shares in this lot
+  costPerShare: number          // Cost per share at purchase
+  fees: number                  // Transaction fees
+  totalCost: number             // Total cost basis (shares * costPerShare + fees)
+  remainingShares: number       // Shares remaining after sales
+  adjustedCostBasis: number     // Cost basis after wash sale adjustments
+  washSaleAdjustment: number    // Amount added due to wash sales
+  washSaleDisallowedLoss: number // Disallowed loss from wash sales
+  sourceTransactionId?: string  // Reference to source transaction
+  isMutualFund: boolean         // Whether this is a mutual fund (for average cost)
+}
+
+export type TaxLotDateString = TaxLot<string>
+
+/**
+ * A stock transaction (buy, sell, dividend, etc.)
+ */
+export interface StockTransaction<D = Date> {
+  id: string                    // Unique identifier
+  symbol: string                // Ticker symbol
+  transactionType: StockTransactionType
+  date: D                       // Transaction date
+  shares: number                // Number of shares
+  pricePerShare: number         // Price per share
+  fees: number                  // Transaction fees
+  proceeds?: number             // For sales: total proceeds
+  costBasis?: number            // For sales: cost basis of sold shares
+  lotSelections?: TaxLotSelection[] // For sales: which lots were sold
+  gainLoss?: number             // For sales: realized gain/loss
+  isShortTerm?: boolean         // For sales: short or long term
+  isWashSale?: boolean          // Whether this sale triggered wash sale
+  washSaleDisallowedLoss?: number // Disallowed loss amount
+  relatedLotId?: string         // For dividend reinvestment, splits, etc.
+  splitRatio?: number           // For stock splits (e.g., 2 for 2:1 split)
+  mergerRatio?: number          // For mergers
+  notes?: string                // Optional notes
+}
+
+export type StockTransactionDateString = StockTransaction<string>
+
+/**
+ * Selection of a specific lot for a sale
+ */
+export interface TaxLotSelection {
+  lotId: string                 // ID of the tax lot
+  sharesFromLot: number         // Number of shares sold from this lot
+}
+
+/**
+ * An investment position (aggregated view of all lots for a symbol)
+ */
+export interface Investment<D = Date> {
+  symbol: string                // Ticker symbol
+  name?: string                 // Company/fund name
+  isMutualFund: boolean         // Whether this is a mutual fund
+  lots: TaxLot<D>[]             // All tax lots for this position
+  transactions: StockTransaction<D>[] // All transactions for this position
+  totalShares: number           // Total shares held
+  totalCostBasis: number        // Total cost basis of current holdings
+  averageCostPerShare: number   // Average cost per share
+  currentPrice?: number         // Current market price (for unrealized gains)
+  unrealizedGainLoss?: number   // Unrealized gain/loss
+  defaultCostBasisMethod: CostBasisMethod // Default method for this investment
+}
+
+export type InvestmentDateString = Investment<string>
+
+/**
+ * Wash sale detection result
+ */
+export interface WashSaleInfo {
+  isWashSale: boolean
+  matchingLotId?: string        // The lot that triggered the wash sale
+  disallowedLoss: number        // Amount of loss disallowed
+  adjustmentToNewLot: number    // Amount to add to new lot's cost basis
+  washSaleDate: Date            // Date of the wash sale
+  replacementDate: Date         // Date of the replacement purchase
+}
+
+/**
+ * Summary of gains/losses for tax reporting (Form 8949/Schedule D)
+ */
+export interface GainLossSummary {
+  shortTermProceeds: number
+  shortTermCostBasis: number
+  shortTermGainLoss: number
+  shortTermWashSaleAdjustment: number
+  longTermProceeds: number
+  longTermCostBasis: number
+  longTermGainLoss: number
+  longTermWashSaleAdjustment: number
+}
+
+/**
+ * Cost basis portfolio - all investments for a taxpayer
+ */
+export interface CostBasisPortfolio<D = Date> {
+  investments: Investment<D>[]
+  defaultMethod: CostBasisMethod
+  lastUpdated: D
+}
+
+export type CostBasisPortfolioDateString = CostBasisPortfolio<string>
+
+// Edit action types for cost basis tracking
+export type EditTaxLotAction = ArrayItemEditAction<TaxLotDateString>
+export type EditStockTransactionAction = ArrayItemEditAction<StockTransactionDateString>
+export type EditInvestmentAction = ArrayItemEditAction<InvestmentDateString>
