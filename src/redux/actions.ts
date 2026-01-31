@@ -23,7 +23,11 @@ import {
   HealthSavingsAccountDateString,
   InformationDateString,
   Credit,
-  EditCreditAction
+  EditCreditAction,
+  OvertimeIncome,
+  TipIncome,
+  AutoLoanInterest,
+  TrumpSavingsAccountDateString
 } from 'ustaxes/core/data'
 
 import {
@@ -37,7 +41,8 @@ import {
   EditIraAction,
   EditAssetAction,
   EditF3921Action,
-  EditScheduleK1Form1065Action
+  EditScheduleK1Form1065Action,
+  EditTrumpAccountAction
 } from 'ustaxes/core/data'
 import * as validators from 'ustaxes/core/data/validate'
 import { index as indexValidator } from 'ustaxes/core/data/validate'
@@ -94,7 +99,14 @@ export enum ActionName {
   REMOVE_SCHEDULE_K1_F1065 = 'SCHEDULE_K1_F1065/REMOVE',
   ADD_CREDIT = 'CREDIT/ADD',
   EDIT_CREDIT = 'CREDIT/EDIT',
-  REMOVE_CREDIT = 'CREDIT/REMOVE'
+  REMOVE_CREDIT = 'CREDIT/REMOVE',
+  // OBBBA 2025 actions
+  SET_OVERTIME_INCOME = 'OBBBA/SET_OVERTIME_INCOME',
+  SET_TIP_INCOME = 'OBBBA/SET_TIP_INCOME',
+  SET_AUTO_LOAN_INTEREST = 'OBBBA/SET_AUTO_LOAN_INTEREST',
+  ADD_TRUMP_ACCOUNT = 'OBBBA/ADD_TRUMP_ACCOUNT',
+  EDIT_TRUMP_ACCOUNT = 'OBBBA/EDIT_TRUMP_ACCOUNT',
+  REMOVE_TRUMP_ACCOUNT = 'OBBBA/REMOVE_TRUMP_ACCOUNT'
 }
 
 interface Save<T, R> {
@@ -179,6 +191,13 @@ type RemoveScheduleK1Form1065 = Save<
 type AddCredit = Save<typeof ActionName.ADD_CREDIT, Credit>
 type EditCredit = Save<typeof ActionName.EDIT_CREDIT, EditCreditAction>
 type RemoveCredit = Save<typeof ActionName.REMOVE_CREDIT, number>
+// OBBBA 2025 action types
+type SetOvertimeIncome = Save<typeof ActionName.SET_OVERTIME_INCOME, OvertimeIncome | undefined>
+type SetTipIncome = Save<typeof ActionName.SET_TIP_INCOME, TipIncome | undefined>
+type SetAutoLoanInterest = Save<typeof ActionName.SET_AUTO_LOAN_INTEREST, AutoLoanInterest | undefined>
+type AddTrumpAccount = Save<typeof ActionName.ADD_TRUMP_ACCOUNT, TrumpSavingsAccountDateString>
+type EditTrumpAccount = Save<typeof ActionName.EDIT_TRUMP_ACCOUNT, EditTrumpAccountAction>
+type RemoveTrumpAccount = Save<typeof ActionName.REMOVE_TRUMP_ACCOUNT, number>
 
 export type Actions =
   | SaveRefundInfo
@@ -230,6 +249,12 @@ export type Actions =
   | AddCredit
   | EditCredit
   | RemoveCredit
+  | SetOvertimeIncome
+  | SetTipIncome
+  | SetAutoLoanInterest
+  | AddTrumpAccount
+  | EditTrumpAccount
+  | RemoveTrumpAccount
 
 export type SignalAction = (year: TaxYear) => Actions
 export type ActionCreator<A> = (formData: A) => SignalAction
@@ -521,5 +546,29 @@ export const editCredit: ActionCreator<EditCreditAction> = makeActionCreator(
 
 export const removeCredit: ActionCreator<number> = makeActionCreator(
   ActionName.REMOVE_CREDIT,
+  indexValidator
+)
+
+// =============================================================================
+// OBBBA 2025 Action Creators
+// =============================================================================
+
+export const setOvertimeIncome: ActionCreator<OvertimeIncome | undefined> =
+  makeActionCreator(ActionName.SET_OVERTIME_INCOME)
+
+export const setTipIncome: ActionCreator<TipIncome | undefined> =
+  makeActionCreator(ActionName.SET_TIP_INCOME)
+
+export const setAutoLoanInterest: ActionCreator<AutoLoanInterest | undefined> =
+  makeActionCreator(ActionName.SET_AUTO_LOAN_INTEREST)
+
+export const addTrumpAccount: ActionCreator<TrumpSavingsAccountDateString> =
+  makeActionCreator(ActionName.ADD_TRUMP_ACCOUNT)
+
+export const editTrumpAccount: ActionCreator<EditTrumpAccountAction> =
+  makeActionCreator(ActionName.EDIT_TRUMP_ACCOUNT)
+
+export const removeTrumpAccount: ActionCreator<number> = makeActionCreator(
+  ActionName.REMOVE_TRUMP_ACCOUNT,
   indexValidator
 )

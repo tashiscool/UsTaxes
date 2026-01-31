@@ -209,10 +209,79 @@ export const f1099Div: Arbitrary<types.Income1099Div> = fc
     personRole: types.PersonRole.PRIMARY
   }))
 
+// 1099-NEC: Non-employee compensation (freelance, gig economy)
+export const f1099NECData: Arbitrary<types.F1099NECData> = fc
+  .tuple(wages, fc.nat({ max: 10000 }), state, fc.nat({ max: 5000 }))
+  .map(([nonemployeeCompensation, federalIncomeTaxWithheld, state, stateTaxWithheld]) => ({
+    nonemployeeCompensation,
+    federalIncomeTaxWithheld: federalIncomeTaxWithheld > 0 ? federalIncomeTaxWithheld : undefined,
+    state,
+    stateTaxWithheld: stateTaxWithheld > 0 ? stateTaxWithheld : undefined
+  }))
+
+export const f1099NEC: Arbitrary<types.Income1099NEC> = fc
+  .tuple(payerName, f1099NECData)
+  .map(([payer, form]) => ({
+    type: types.Income1099Type.NEC,
+    form,
+    payer,
+    personRole: types.PersonRole.PRIMARY
+  }))
+
+// 1099-MISC: Miscellaneous income (rents, royalties, etc.)
+export const f1099MISCData: Arbitrary<types.F1099MISCData> = fc
+  .tuple(
+    posCurrency(50000),  // rents
+    posCurrency(10000),  // royalties
+    posCurrency(5000),   // otherIncome
+    fc.nat({ max: 5000 }) // federalIncomeTaxWithheld
+  )
+  .map(([rents, royalties, otherIncome, federalIncomeTaxWithheld]) => ({
+    rents: rents > 0 ? rents : undefined,
+    royalties: royalties > 0 ? royalties : undefined,
+    otherIncome: otherIncome > 0 ? otherIncome : undefined,
+    federalIncomeTaxWithheld: federalIncomeTaxWithheld > 0 ? federalIncomeTaxWithheld : undefined
+  }))
+
+export const f1099MISC: Arbitrary<types.Income1099MISC> = fc
+  .tuple(payerName, f1099MISCData)
+  .map(([payer, form]) => ({
+    type: types.Income1099Type.MISC,
+    form,
+    payer,
+    personRole: types.PersonRole.PRIMARY
+  }))
+
+// 1099-G: Government payments (unemployment, state tax refunds)
+export const f1099GData: Arbitrary<types.F1099GData> = fc
+  .tuple(
+    posCurrency(30000),  // unemploymentCompensation
+    posCurrency(5000),   // stateLocalTaxRefund
+    fc.nat({ max: 2000 }) // federalIncomeTaxWithheld
+  )
+  .map(([unemploymentCompensation, stateLocalTaxRefund, federalIncomeTaxWithheld]) => ({
+    unemploymentCompensation: unemploymentCompensation > 0 ? unemploymentCompensation : undefined,
+    stateLocalTaxRefund: stateLocalTaxRefund > 0 ? stateLocalTaxRefund : undefined,
+    taxYear: stateLocalTaxRefund > 0 ? 2024 : undefined,
+    federalIncomeTaxWithheld: federalIncomeTaxWithheld > 0 ? federalIncomeTaxWithheld : undefined
+  }))
+
+export const f1099G: Arbitrary<types.Income1099G> = fc
+  .tuple(payerName, f1099GData)
+  .map(([payer, form]) => ({
+    type: types.Income1099Type.G,
+    form,
+    payer,
+    personRole: types.PersonRole.PRIMARY
+  }))
+
 export const f1099: Arbitrary<types.Supported1099> = fc.oneof(
   f1099B,
   f1099Div,
-  f1099Int
+  f1099Int,
+  f1099NEC,
+  f1099MISC,
+  f1099G
 )
 
 const propExpenseTypeName: Arbitrary<types.PropertyExpenseTypeName> =

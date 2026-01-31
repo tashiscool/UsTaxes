@@ -42,6 +42,7 @@ import IRA from './savingsAccounts/IRA'
 import OtherInvestments from './income/OtherInvestments'
 import { StockOptions } from './income/StockOptions'
 import { PartnershipIncome } from './income/PartnershipIncome'
+import OBBBAIncome from './income/OBBBAIncome'
 import { TaxYear } from 'ustaxes/core/data'
 import { AdvanceChildTaxCredit } from './Y2021/AdvanceChildTaxCredit'
 import { YearsTaxesState } from 'ustaxes/redux'
@@ -190,6 +191,14 @@ const yearSpecificPages: Partial<{ [k in TaxYear]: Section[] }> = {
           Urls.Y2021.credits,
           <AdvanceChildTaxCredit />
         )
+      ]
+    }
+  ],
+  Y2025: [
+    {
+      title: 'OBBBA 2025 Provisions',
+      items: [
+        item('OBBBA Deductions', Urls.income.obbba, <OBBBAIncome />)
       ]
     }
   ]

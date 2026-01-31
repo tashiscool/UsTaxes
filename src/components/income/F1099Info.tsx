@@ -13,7 +13,8 @@ import {
   Supported1099,
   Income1099Type,
   PlanType1099,
-  PlanType1099Texts
+  PlanType1099Texts,
+  State
 } from 'ustaxes/core/data'
 import {
   Currency,
@@ -73,6 +74,61 @@ const showIncome = (a: Supported1099): ReactElement => {
         </span>
       )
     }
+    case Income1099Type.NEC: {
+      return (
+        <span>
+          Nonemployee Compensation:{' '}
+          <Currency value={a.form.nonemployeeCompensation} />
+          {a.form.federalIncomeTaxWithheld && (
+            <>
+              <br />
+              Federal Withholding:{' '}
+              <Currency value={a.form.federalIncomeTaxWithheld} />
+            </>
+          )}
+        </span>
+      )
+    }
+    case Income1099Type.MISC: {
+      const total =
+        (a.form.rents ?? 0) +
+        (a.form.royalties ?? 0) +
+        (a.form.otherIncome ?? 0)
+      return (
+        <span>
+          Total Misc Income: <Currency value={total} />
+          {a.form.rents && (
+            <>
+              <br />
+              Rents: <Currency value={a.form.rents} />
+            </>
+          )}
+          {a.form.royalties && (
+            <>
+              <br />
+              Royalties: <Currency value={a.form.royalties} />
+            </>
+          )}
+        </span>
+      )
+    }
+    case Income1099Type.G: {
+      return (
+        <span>
+          {a.form.unemploymentCompensation && (
+            <>
+              Unemployment: <Currency value={a.form.unemploymentCompensation} />
+              <br />
+            </>
+          )}
+          {a.form.stateLocalTaxRefund && (
+            <>
+              State Tax Refund: <Currency value={a.form.stateLocalTaxRefund} />
+            </>
+          )}
+        </span>
+      )
+    }
   }
 }
 
@@ -100,6 +156,21 @@ interface F1099UserInput {
   // benefitsPaid: string | number
   // benefitsRepaid: string | number
   netBenefits: string | number
+  // NEC fields
+  nonemployeeCompensation: string | number
+  necFederalWithholding: string | number
+  necState?: State
+  necStateWithholding: string | number
+  // MISC fields
+  rents: string | number
+  royalties: string | number
+  otherIncome: string | number
+  miscFederalWithholding: string | number
+  // G fields
+  unemploymentCompensation: string | number
+  stateLocalTaxRefund: string | number
+  refundTaxYear: string | number
+  gFederalWithholding: string | number
 }
 
 const blankUserInput: F1099UserInput = {
@@ -123,7 +194,22 @@ const blankUserInput: F1099UserInput = {
   // SSA fields
   // benefitsPaid: '',
   // benefitsRepaid: '',
-  netBenefits: ''
+  netBenefits: '',
+  // NEC fields
+  nonemployeeCompensation: '',
+  necFederalWithholding: '',
+  necState: undefined,
+  necStateWithholding: '',
+  // MISC fields
+  rents: '',
+  royalties: '',
+  otherIncome: '',
+  miscFederalWithholding: '',
+  // G fields
+  unemploymentCompensation: '',
+  stateLocalTaxRefund: '',
+  refundTaxYear: '',
+  gFederalWithholding: ''
 }
 
 const toUserInput = (f: Supported1099): F1099UserInput => ({
@@ -150,6 +236,30 @@ const toUserInput = (f: Supported1099): F1099UserInput => ({
       }
       case Income1099Type.SSA: {
         return f.form
+      }
+      case Income1099Type.NEC: {
+        return {
+          nonemployeeCompensation: f.form.nonemployeeCompensation,
+          necFederalWithholding: f.form.federalIncomeTaxWithheld ?? '',
+          necState: f.form.state,
+          necStateWithholding: f.form.stateTaxWithheld ?? ''
+        }
+      }
+      case Income1099Type.MISC: {
+        return {
+          rents: f.form.rents ?? '',
+          royalties: f.form.royalties ?? '',
+          otherIncome: f.form.otherIncome ?? '',
+          miscFederalWithholding: f.form.federalIncomeTaxWithheld ?? ''
+        }
+      }
+      case Income1099Type.G: {
+        return {
+          unemploymentCompensation: f.form.unemploymentCompensation ?? '',
+          stateLocalTaxRefund: f.form.stateLocalTaxRefund ?? '',
+          refundTaxYear: f.form.taxYear ?? '',
+          gFederalWithholding: f.form.federalIncomeTaxWithheld ?? ''
+        }
       }
     }
   })()
@@ -217,6 +327,45 @@ const toF1099 = (input: F1099UserInput): Supported1099 | undefined => {
           // benefitsRepaid: Number(input.benefitsRepaid),
           netBenefits: Number(input.netBenefits),
           federalIncomeTaxWithheld: Number(input.federalIncomeTaxWithheld)
+        }
+      }
+    }
+    case Income1099Type.NEC: {
+      return {
+        payer: input.payer,
+        personRole: input.personRole ?? PersonRole.PRIMARY,
+        type: input.formType,
+        form: {
+          nonemployeeCompensation: Number(input.nonemployeeCompensation),
+          federalIncomeTaxWithheld: Number(input.necFederalWithholding) || undefined,
+          state: input.necState,
+          stateTaxWithheld: Number(input.necStateWithholding) || undefined
+        }
+      }
+    }
+    case Income1099Type.MISC: {
+      return {
+        payer: input.payer,
+        personRole: input.personRole ?? PersonRole.PRIMARY,
+        type: input.formType,
+        form: {
+          rents: Number(input.rents) || undefined,
+          royalties: Number(input.royalties) || undefined,
+          otherIncome: Number(input.otherIncome) || undefined,
+          federalIncomeTaxWithheld: Number(input.miscFederalWithholding) || undefined
+        }
+      }
+    }
+    case Income1099Type.G: {
+      return {
+        payer: input.payer,
+        personRole: input.personRole ?? PersonRole.PRIMARY,
+        type: input.formType,
+        form: {
+          unemploymentCompensation: Number(input.unemploymentCompensation) || undefined,
+          stateLocalTaxRefund: Number(input.stateLocalTaxRefund) || undefined,
+          taxYear: Number(input.refundTaxYear) || undefined,
+          federalIncomeTaxWithheld: Number(input.gFederalWithholding) || undefined
         }
       }
     }
@@ -394,20 +543,109 @@ export default function F1099Info(): ReactElement {
     </Grid>
   )
 
-  const specificFields = {
+  const necFields = (
+    <Grid container spacing={2}>
+      <Alert severity="info">
+        Form 1099-NEC reports nonemployee compensation (freelance, gig economy,
+        independent contractor income). This income is subject to self-employment
+        tax and should be reported on Schedule C.
+      </Alert>
+      <LabeledInput
+        label={boxLabel('1', 'Nonemployee Compensation')}
+        patternConfig={Patterns.currency}
+        name="nonemployeeCompensation"
+      />
+      <LabeledInput
+        label={boxLabel('4', 'Federal Income Tax Withheld')}
+        patternConfig={Patterns.currency}
+        name="necFederalWithholding"
+      />
+      <LabeledInput
+        label={boxLabel('5', 'State Tax Withheld')}
+        patternConfig={Patterns.currency}
+        name="necStateWithholding"
+      />
+    </Grid>
+  )
+
+  const miscFields = (
+    <Grid container spacing={2}>
+      <Alert severity="info">
+        Form 1099-MISC reports miscellaneous income including rents, royalties,
+        prizes, awards, and other income not reported elsewhere.
+      </Alert>
+      <LabeledInput
+        label={boxLabel('1', 'Rents')}
+        patternConfig={Patterns.currency}
+        name="rents"
+      />
+      <LabeledInput
+        label={boxLabel('2', 'Royalties')}
+        patternConfig={Patterns.currency}
+        name="royalties"
+      />
+      <LabeledInput
+        label={boxLabel('3', 'Other Income')}
+        patternConfig={Patterns.currency}
+        name="otherIncome"
+      />
+      <LabeledInput
+        label={boxLabel('4', 'Federal Income Tax Withheld')}
+        patternConfig={Patterns.currency}
+        name="miscFederalWithholding"
+      />
+    </Grid>
+  )
+
+  const gFields = (
+    <Grid container spacing={2}>
+      <Alert severity="info">
+        Form 1099-G reports government payments including unemployment
+        compensation and state/local income tax refunds.
+      </Alert>
+      <LabeledInput
+        label={boxLabel('1', 'Unemployment Compensation')}
+        patternConfig={Patterns.currency}
+        name="unemploymentCompensation"
+      />
+      <LabeledInput
+        label={boxLabel('2', 'State or Local Income Tax Refunds')}
+        patternConfig={Patterns.currency}
+        name="stateLocalTaxRefund"
+      />
+      <LabeledInput
+        label={boxLabel('3', 'Tax Year of Refund')}
+        patternConfig={Patterns.year}
+        name="refundTaxYear"
+      />
+      <LabeledInput
+        label={boxLabel('4', 'Federal Income Tax Withheld')}
+        patternConfig={Patterns.currency}
+        name="gFederalWithholding"
+      />
+    </Grid>
+  )
+
+  const specificFields: { [key in Income1099Type]: ReactElement } = {
     [Income1099Type.INT]: intFields,
     [Income1099Type.B]: bFields,
     [Income1099Type.DIV]: divFields,
     [Income1099Type.R]: rFields,
-    [Income1099Type.SSA]: ssaFields
+    [Income1099Type.SSA]: ssaFields,
+    [Income1099Type.NEC]: necFields,
+    [Income1099Type.MISC]: miscFields,
+    [Income1099Type.G]: gFields
   }
 
-  const titles = {
+  const titles: { [key in Income1099Type]: string } = {
     [Income1099Type.INT]: '1099-INT',
     [Income1099Type.B]: '1099-B',
     [Income1099Type.DIV]: '1099-DIV',
     [Income1099Type.R]: '1099-R',
-    [Income1099Type.SSA]: 'SSA-1099'
+    [Income1099Type.SSA]: 'SSA-1099',
+    [Income1099Type.NEC]: '1099-NEC',
+    [Income1099Type.MISC]: '1099-MISC',
+    [Income1099Type.G]: '1099-G'
   }
 
   const form: ReactElement | undefined = (

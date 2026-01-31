@@ -5,7 +5,7 @@ import { YearsTaxesState } from '.'
 import { ActionName, Actions } from './actions'
 import { stringToDateInfo } from './data'
 
-const DEFAULT_TAX_YEAR: TaxYear = 'Y2024'
+const DEFAULT_TAX_YEAR: TaxYear = 'Y2025'
 
 export const blankState: Information = {
   f1099s: [],
@@ -21,7 +21,12 @@ export const blankState: Information = {
   stateResidencies: [],
   healthSavingsAccounts: [],
   credits: [],
-  individualRetirementArrangements: []
+  individualRetirementArrangements: [],
+  // OBBBA 2025 new fields
+  overtimeIncome: undefined,
+  tipIncome: undefined,
+  autoLoanInterest: undefined,
+  trumpSavingsAccounts: undefined
 }
 
 const formReducer = (
@@ -413,6 +418,65 @@ const formReducer = (
       }
     }
 
+    // =============================================================================
+    // OBBBA 2025 Actions
+    // =============================================================================
+    case ActionName.SET_OVERTIME_INCOME: {
+      return {
+        ...newState,
+        overtimeIncome: action.formData
+      }
+    }
+    case ActionName.SET_TIP_INCOME: {
+      return {
+        ...newState,
+        tipIncome: action.formData
+      }
+    }
+    case ActionName.SET_AUTO_LOAN_INTEREST: {
+      return {
+        ...newState,
+        autoLoanInterest: action.formData
+      }
+    }
+    case ActionName.ADD_TRUMP_ACCOUNT: {
+      return {
+        ...newState,
+        trumpSavingsAccounts: [
+          ...(newState.trumpSavingsAccounts ?? []),
+          {
+            ...action.formData,
+            beneficiaryDateOfBirth: new Date(action.formData.beneficiaryDateOfBirth),
+            accountOpenDate: action.formData.accountOpenDate
+              ? new Date(action.formData.accountOpenDate)
+              : undefined
+          }
+        ]
+      }
+    }
+    case ActionName.EDIT_TRUMP_ACCOUNT: {
+      const newAccounts = [...(newState.trumpSavingsAccounts ?? [])]
+      newAccounts.splice(action.formData.index, 1, {
+        ...action.formData.value,
+        beneficiaryDateOfBirth: new Date(action.formData.value.beneficiaryDateOfBirth),
+        accountOpenDate: action.formData.value.accountOpenDate
+          ? new Date(action.formData.value.accountOpenDate)
+          : undefined
+      })
+      return {
+        ...newState,
+        trumpSavingsAccounts: newAccounts
+      }
+    }
+    case ActionName.REMOVE_TRUMP_ACCOUNT: {
+      const newAccounts = [...(newState.trumpSavingsAccounts ?? [])]
+      newAccounts.splice(action.formData, 1)
+      return {
+        ...newState,
+        trumpSavingsAccounts: newAccounts.length > 0 ? newAccounts : undefined
+      }
+    }
+
     default: {
       return newState
     }
@@ -487,6 +551,7 @@ const rootReducer: Reducer<
   Y2022: guardByYear('Y2022'),
   Y2023: guardByYear('Y2023'),
   Y2024: guardByYear('Y2024'),
+  Y2025: guardByYear('Y2025'),
   activeYear
 }) as Reducer<CombinedState<YearsTaxesState>, Actions>
 
