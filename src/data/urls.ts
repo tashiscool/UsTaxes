@@ -3,6 +3,10 @@ const Urls = {
     start: '/start',
     interview: '/interview'
   },
+  efile: {
+    wizard: '/efile',
+    status: '/efile/status'
+  },
   taxPayer: {
     root: '/taxpayer',
     info: '/info',

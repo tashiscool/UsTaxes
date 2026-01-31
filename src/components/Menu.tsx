@@ -56,6 +56,7 @@ import { WhatIfTool } from './scenarios'
 import { TaxYear } from 'ustaxes/core/data'
 import { AdvanceChildTaxCredit } from './Y2021/AdvanceChildTaxCredit'
 import { YearsTaxesState } from 'ustaxes/redux'
+import { EFileWizard } from './efile'
 
 // New UX components
 import { MobileNav, MobileBottomNav } from './MobileNav'
@@ -278,6 +279,12 @@ export const drawerSections: Section[] = [
       item('Refund Information', Urls.refund, <RefundBankAccount />),
       item('Informational Questions', Urls.questions, <Questions />),
       item('Review and Print', Urls.createPdf, <CreatePDF />)
+    ]
+  },
+  {
+    title: 'File',
+    items: [
+      item('E-File Your Return', Urls.efile.wizard, <EFileWizard />)
     ]
   }
 ]
