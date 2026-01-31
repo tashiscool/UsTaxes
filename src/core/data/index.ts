@@ -1391,6 +1391,80 @@ export interface Form1120Data<D = Date> {
 export type Form1120DataDateString = Form1120Data<string>
 
 /**
+ * Estimated Tax Payment for Corporations (Form 1120-W)
+ */
+export interface CorporateEstimatedPayment {
+  quarter: 1 | 2 | 3 | 4
+  dueDate: Date
+  requiredAmount: number
+  amountPaid?: number
+  datePaid?: Date
+  confirmationNumber?: string
+}
+
+/**
+ * Prior Year Tax Information for Safe Harbor (Form 1120-W)
+ */
+export interface PriorYearCorporateTax {
+  taxableIncome: number
+  totalTax: number
+  wasLargeCorporation: boolean
+  priorYear1TaxableIncome?: number
+  priorYear2TaxableIncome?: number
+  priorYear3TaxableIncome?: number
+}
+
+/**
+ * Annualized Income Installment Method Data (Form 1120-W)
+ */
+export interface AnnualizedIncomeMethod {
+  period1Income: number  // Jan 1 - Mar 31
+  period2Income: number  // Jan 1 - May 31
+  period3Income: number  // Jan 1 - Aug 31
+  period4Income: number  // Jan 1 - Nov 30
+  period1Factor?: number  // Default: 4
+  period2Factor?: number  // Default: 2.4
+  period3Factor?: number  // Default: 1.5
+  period4Factor?: number  // Default: 1.09091
+}
+
+/**
+ * Adjusted Seasonal Installment Method Data (Form 1120-W)
+ */
+export interface SeasonalInstallmentMethod {
+  q1Percentage: number
+  q2Percentage: number
+  q3Percentage: number
+  q4Percentage: number
+  incomeThroughQ1: number
+  incomeThroughQ2: number
+  incomeThroughQ3: number
+  incomeThroughQ4: number
+}
+
+/**
+ * Form 1120-W - Estimated Tax for Corporations
+ *
+ * Used by C-Corporations to calculate and pay quarterly estimated taxes.
+ * Large corporations ($1M+ taxable income in prior 3 years) have special rules.
+ */
+export interface Form1120WData {
+  taxYear: number
+  estimatedTaxableIncome: number
+  estimatedTax: number
+  estimatedCredits: number
+  estimatedOtherTaxes: number
+  priorYearInfo?: PriorYearCorporateTax
+  payments: CorporateEstimatedPayment[]
+  useAnnualizedIncomeMethod: boolean
+  annualizedIncomeData?: AnnualizedIncomeMethod
+  useSeasonalInstallmentMethod: boolean
+  seasonalInstallmentData?: SeasonalInstallmentMethod
+  recaptureTaxes: number
+  refundableCredits: number
+}
+
+/**
  * Partnership Partner Information
  */
 export interface PartnerInfo {
