@@ -73,7 +73,7 @@ void i18n
 
 // Helper function to get current language
 export const getCurrentLanguage = (): LanguageCode => {
-  return (i18n.language?.split('-')[0] as LanguageCode) || 'en'
+  return (i18n.language.split('-')[0] as LanguageCode) || 'en'
 }
 
 // Helper function to change language
@@ -89,10 +89,7 @@ export const getStoredLanguage = (): LanguageCode | null => {
 }
 
 // Format currency based on locale
-export const formatCurrency = (
-  amount: number,
-  lng?: LanguageCode
-): string => {
+export const formatCurrency = (amount: number, lng?: LanguageCode): string => {
   const language = lng || getCurrentLanguage()
   const locale = language === 'es' ? 'es-US' : 'en-US'
 
@@ -105,10 +102,7 @@ export const formatCurrency = (
 }
 
 // Format date based on locale
-export const formatDate = (
-  date: Date,
-  lng?: LanguageCode
-): string => {
+export const formatDate = (date: Date, lng?: LanguageCode): string => {
   const language = lng || getCurrentLanguage()
   const locale = language === 'es' ? 'es-US' : 'en-US'
 
@@ -120,10 +114,7 @@ export const formatDate = (
 }
 
 // Format number based on locale
-export const formatNumber = (
-  num: number,
-  lng?: LanguageCode
-): string => {
+export const formatNumber = (num: number, lng?: LanguageCode): string => {
   const language = lng || getCurrentLanguage()
   const locale = language === 'es' ? 'es-US' : 'en-US'
 

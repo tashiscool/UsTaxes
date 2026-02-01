@@ -57,7 +57,9 @@ export default class F8824 extends F1040Attachment {
   }
 
   exchange = (): LikeKindExchange | undefined => {
-    const exchanges = this.f1040.info.likeKindExchanges as LikeKindExchange[] | undefined
+    const exchanges = this.f1040.info.likeKindExchanges as
+      | LikeKindExchange[]
+      | undefined
     return exchanges?.[0]
   }
 

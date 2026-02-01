@@ -3,8 +3,14 @@
  * Exports all interview-related components and utilities
  */
 
-export { default as InterviewWizard, InterviewWizardEntry } from './InterviewWizard'
-export { default as InterviewQuestion, CompactQuestion } from './InterviewQuestion'
+export {
+  default as InterviewWizard,
+  InterviewWizardEntry
+} from './InterviewWizard'
+export {
+  default as InterviewQuestion,
+  CompactQuestion
+} from './InterviewQuestion'
 export {
   InterviewProvider,
   useInterview,

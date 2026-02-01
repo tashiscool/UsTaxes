@@ -54,11 +54,7 @@ export class BaltimoreCityTax extends Form {
    */
   isBaltimoreResident = (): boolean => {
     const city = this.localTaxInfo?.residenceCity?.toLowerCase()
-    return (
-      city === 'baltimore' ||
-      city === 'baltimore city' ||
-      city === 'balt'
-    )
+    return city === 'baltimore' || city === 'baltimore city' || city === 'balt'
   }
 
   /**
@@ -66,11 +62,7 @@ export class BaltimoreCityTax extends Form {
    */
   worksInBaltimore = (): boolean => {
     const city = this.localTaxInfo?.workCity?.toLowerCase()
-    return (
-      city === 'baltimore' ||
-      city === 'baltimore city' ||
-      city === 'balt'
-    )
+    return city === 'baltimore' || city === 'baltimore city' || city === 'balt'
   }
 
   /**
@@ -178,11 +170,9 @@ export class BaltimoreCityTax extends Form {
 
     const baltimoreWages = this.info.w2s
       .filter((w2) => {
-        const city = w2.employer?.address?.city?.toLowerCase()
+        const city = w2.employer?.address?.city.toLowerCase()
         return (
-          city === 'baltimore' ||
-          city === 'baltimore city' ||
-          city === 'balt'
+          city === 'baltimore' || city === 'baltimore city' || city === 'balt'
         )
       })
       .reduce((sum, w2) => sum + w2.income, 0)

@@ -74,7 +74,7 @@ export default class Schedule990F extends F1040Attachment {
   }
 
   schedule990FData = (): Schedule990FData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Foreign activities
@@ -92,8 +92,10 @@ export default class Schedule990F extends F1040Attachment {
   }
 
   totalGrantsToOrganizations = (): number => {
-    return this.grantsToOrganizations().reduce((sum, g) =>
-      sum + g.amountOfCashGrant + g.amountOfNoncashAssistance, 0)
+    return this.grantsToOrganizations().reduce(
+      (sum, g) => sum + g.amountOfCashGrant + g.amountOfNoncashAssistance,
+      0
+    )
   }
 
   // Part II: Grants to individuals
@@ -102,8 +104,10 @@ export default class Schedule990F extends F1040Attachment {
   }
 
   totalGrantsToIndividuals = (): number => {
-    return this.grantsToIndividuals().reduce((sum, g) =>
-      sum + g.amountOfCashGrant + g.amountOfNoncashAssistance, 0)
+    return this.grantsToIndividuals().reduce(
+      (sum, g) => sum + g.amountOfCashGrant + g.amountOfNoncashAssistance,
+      0
+    )
   }
 
   // Part III: Foreign offices
@@ -112,11 +116,17 @@ export default class Schedule990F extends F1040Attachment {
   }
 
   totalForeignEmployees = (): number => {
-    return this.foreignOffices().reduce((sum, o) => sum + o.numberOfEmployees, 0)
+    return this.foreignOffices().reduce(
+      (sum, o) => sum + o.numberOfEmployees,
+      0
+    )
   }
 
   totalForeignExpenditures = (): number => {
-    return this.foreignOffices().reduce((sum, o) => sum + o.totalExpenditures, 0)
+    return this.foreignOffices().reduce(
+      (sum, o) => sum + o.totalExpenditures,
+      0
+    )
   }
 
   // Part IV: Foreign investments

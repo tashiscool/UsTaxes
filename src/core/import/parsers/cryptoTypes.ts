@@ -11,26 +11,26 @@
  * Types of cryptocurrency transactions
  */
 export type CryptoTransactionType =
-  | 'buy'           // Purchase with fiat
-  | 'sell'          // Sale for fiat
-  | 'convert'       // Swap one crypto for another
-  | 'send'          // Transfer out to another wallet
-  | 'receive'       // Transfer in from another wallet
-  | 'income'        // Staking rewards, interest, etc.
-  | 'airdrop'       // Free tokens received
-  | 'mining'        // Mining rewards
-  | 'gift_sent'     // Gift to another person
+  | 'buy' // Purchase with fiat
+  | 'sell' // Sale for fiat
+  | 'convert' // Swap one crypto for another
+  | 'send' // Transfer out to another wallet
+  | 'receive' // Transfer in from another wallet
+  | 'income' // Staking rewards, interest, etc.
+  | 'airdrop' // Free tokens received
+  | 'mining' // Mining rewards
+  | 'gift_sent' // Gift to another person
   | 'gift_received' // Gift received
-  | 'fork'          // Tokens from blockchain fork
-  | 'other'         // Unknown or other type
+  | 'fork' // Tokens from blockchain fork
+  | 'other' // Unknown or other type
 
 /**
  * Cost basis calculation methods
  */
 export type CostBasisMethod =
-  | 'fifo'    // First In, First Out
-  | 'lifo'    // Last In, First Out
-  | 'hifo'    // Highest In, First Out (minimizes gains)
+  | 'fifo' // First In, First Out
+  | 'lifo' // Last In, First Out
+  | 'hifo' // Highest In, First Out (minimizes gains)
   | 'spec_id' // Specific Identification
 
 /**
@@ -40,14 +40,14 @@ export interface CryptoTransaction {
   id: string
   timestamp: Date
   type: CryptoTransactionType
-  asset: string                    // e.g., BTC, ETH
+  asset: string // e.g., BTC, ETH
   quantity: number
-  pricePerUnit: number            // USD price per unit at transaction time
-  totalValue: number              // Total USD value
-  fees: number                    // Transaction fees in USD
+  pricePerUnit: number // USD price per unit at transaction time
+  totalValue: number // Total USD value
+  fees: number // Transaction fees in USD
   notes?: string
-  exchange?: string               // Exchange name
-  txHash?: string                 // Blockchain transaction hash
+  exchange?: string // Exchange name
+  txHash?: string // Blockchain transaction hash
 
   // For convert transactions
   convertFromAsset?: string
@@ -68,8 +68,8 @@ export interface CryptoHolding {
   costBasisPerUnit: number
   totalCostBasis: number
   acquiredDate: Date
-  source: string                  // Where it was acquired
-  txId?: string                   // Original transaction ID
+  source: string // Where it was acquired
+  txId?: string // Original transaction ID
 }
 
 /**
@@ -91,12 +91,12 @@ export interface CostBasisResult {
  * Form 8949 transaction category
  */
 export type Form8949Category =
-  | 'A'   // Short-term, basis reported to IRS
-  | 'B'   // Short-term, basis NOT reported to IRS
-  | 'C'   // Short-term, Form 1099-B not received
-  | 'D'   // Long-term, basis reported to IRS
-  | 'E'   // Long-term, basis NOT reported to IRS
-  | 'F'   // Long-term, Form 1099-B not received
+  | 'A' // Short-term, basis reported to IRS
+  | 'B' // Short-term, basis NOT reported to IRS
+  | 'C' // Short-term, Form 1099-B not received
+  | 'D' // Long-term, basis reported to IRS
+  | 'E' // Long-term, basis NOT reported to IRS
+  | 'F' // Long-term, Form 1099-B not received
 
 /**
  * Determines Form 8949 category based on holding period and reporting
@@ -107,7 +107,7 @@ export function getForm8949Category(
   basisReportedToIRS: boolean
 ): Form8949Category {
   const oneYearMs = 365 * 24 * 60 * 60 * 1000
-  const isLongTerm = (soldDate.getTime() - acquiredDate.getTime()) > oneYearMs
+  const isLongTerm = soldDate.getTime() - acquiredDate.getTime() > oneYearMs
 
   if (isLongTerm) {
     return basisReportedToIRS ? 'D' : 'E'
@@ -136,16 +136,20 @@ export function calculateCostBasis(
   }
 
   // Clone and sort holdings based on method
-  let sortedHoldings = holdings.map(h => ({ ...h }))
+  const sortedHoldings = holdings.map((h) => ({ ...h }))
 
   switch (method) {
     case 'fifo':
       // First acquired first
-      sortedHoldings.sort((a, b) => a.acquiredDate.getTime() - b.acquiredDate.getTime())
+      sortedHoldings.sort(
+        (a, b) => a.acquiredDate.getTime() - b.acquiredDate.getTime()
+      )
       break
     case 'lifo':
       // Last acquired first
-      sortedHoldings.sort((a, b) => b.acquiredDate.getTime() - a.acquiredDate.getTime())
+      sortedHoldings.sort(
+        (a, b) => b.acquiredDate.getTime() - a.acquiredDate.getTime()
+      )
       break
     case 'hifo':
       // Highest cost basis first (minimizes gains)
@@ -154,7 +158,9 @@ export function calculateCostBasis(
     case 'spec_id':
       // For specific ID, caller should pre-select lots
       // Default to FIFO if not specified
-      sortedHoldings.sort((a, b) => a.acquiredDate.getTime() - b.acquiredDate.getTime())
+      sortedHoldings.sort(
+        (a, b) => a.acquiredDate.getTime() - b.acquiredDate.getTime()
+      )
       break
   }
 
@@ -199,7 +205,8 @@ export function calculateCostBasis(
       result.remainingHoldings.push({
         ...holding,
         quantity: holding.quantity - remainingToSell,
-        totalCostBasis: holding.costBasisPerUnit * (holding.quantity - remainingToSell)
+        totalCostBasis:
+          holding.costBasisPerUnit * (holding.quantity - remainingToSell)
       })
 
       remainingToSell = 0
@@ -241,19 +248,25 @@ export function calculateUnrealizedGains(
   }
 
   for (const [asset, assetHoldings] of byAsset) {
-    const totalQuantity = assetHoldings.reduce((sum, h) => sum + h.quantity, 0)
-    const totalCostBasis = assetHoldings.reduce((sum, h) => sum + h.totalCostBasis, 0)
-    const currentPrice = currentPrices.get(asset) || 0
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/restrict-plus-operands
+    const totalQuantity: number = assetHoldings.reduce((sum: number, h: CryptoHolding) => sum + h.quantity, 0)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/restrict-plus-operands
+    const totalCostBasis: number = assetHoldings.reduce(
+      (sum: number, h: CryptoHolding) => sum + h.totalCostBasis,
+      0
+    )
+    const currentPrice = currentPrices.get(String(asset)) ?? 0
     const currentValue = totalQuantity * currentPrice
     const unrealizedGain = currentValue - totalCostBasis
 
     results.push({
-      asset,
+      asset: String(asset),
       quantity: totalQuantity,
       costBasis: totalCostBasis,
       currentValue,
       unrealizedGain,
-      unrealizedGainPercent: totalCostBasis > 0 ? (unrealizedGain / totalCostBasis) * 100 : 0
+      unrealizedGainPercent:
+        totalCostBasis > 0 ? (unrealizedGain / totalCostBasis) * 100 : 0
     })
   }
 
@@ -268,18 +281,18 @@ export function normalizeAssetSymbol(symbol: string): string {
 
   // Common aliases
   const aliases: Record<string, string> = {
-    'BITCOIN': 'BTC',
-    'ETHEREUM': 'ETH',
-    'LITECOIN': 'LTC',
-    'RIPPLE': 'XRP',
-    'CARDANO': 'ADA',
-    'POLKADOT': 'DOT',
-    'DOGECOIN': 'DOGE',
-    'SOLANA': 'SOL',
-    'POLYGON': 'MATIC',
-    'AVALANCHE': 'AVAX',
-    'CHAINLINK': 'LINK',
-    'UNISWAP': 'UNI'
+    BITCOIN: 'BTC',
+    ETHEREUM: 'ETH',
+    LITECOIN: 'LTC',
+    RIPPLE: 'XRP',
+    CARDANO: 'ADA',
+    POLKADOT: 'DOT',
+    DOGECOIN: 'DOGE',
+    SOLANA: 'SOL',
+    POLYGON: 'MATIC',
+    AVALANCHE: 'AVAX',
+    CHAINLINK: 'LINK',
+    UNISWAP: 'UNI'
   }
 
   return aliases[normalized] || normalized
@@ -291,11 +304,11 @@ export function normalizeAssetSymbol(symbol: string): string {
 export function formatCryptoQuantity(quantity: number, asset: string): string {
   // Common crypto decimal conventions
   const decimals: Record<string, number> = {
-    'BTC': 8,
-    'ETH': 8,
-    'USDT': 2,
-    'USDC': 2,
-    'DAI': 2
+    BTC: 8,
+    ETH: 8,
+    USDT: 2,
+    USDC: 2,
+    DAI: 2
   }
 
   const decimalPlaces = decimals[asset.toUpperCase()] ?? 6
@@ -313,9 +326,7 @@ export function isValidAssetSymbol(symbol: string): boolean {
 /**
  * Calculate total income from staking, rewards, airdrops, etc.
  */
-export function calculateCryptoIncome(
-  transactions: CryptoTransaction[]
-): {
+export function calculateCryptoIncome(transactions: CryptoTransaction[]): {
   stakingRewards: number
   miningIncome: number
   airdropValue: number

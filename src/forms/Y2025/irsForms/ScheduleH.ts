@@ -17,10 +17,10 @@ import { fica } from '../data/federal'
 
 // 2025 thresholds
 const householdTax = {
-  socialSecurityThreshold: 2700,  // Threshold for SS/Medicare taxes
-  futaThreshold: 1000,            // Quarterly threshold for FUTA
-  futaRate: 0.006,                // 0.6% FUTA rate (after state credit)
-  futaWageLimit: 7000,            // FUTA wage base per employee
+  socialSecurityThreshold: 2700, // Threshold for SS/Medicare taxes
+  futaThreshold: 1000, // Quarterly threshold for FUTA
+  futaRate: 0.006, // 0.6% FUTA rate (after state credit)
+  futaWageLimit: 7000, // FUTA wage base per employee
   socialSecurityRate: 0.062,
   medicareRate: 0.0145
 }
@@ -40,7 +40,10 @@ export default class ScheduleH extends F1040Attachment {
   sequenceIndex = 44
 
   isNeeded = (): boolean => {
-    return this.hasHouseholdEmployees() && this.totalWages() >= householdTax.socialSecurityThreshold
+    return (
+      this.hasHouseholdEmployees() &&
+      this.totalWages() >= householdTax.socialSecurityThreshold
+    )
   }
 
   hasHouseholdEmployees = (): boolean => {
@@ -48,7 +51,10 @@ export default class ScheduleH extends F1040Attachment {
   }
 
   employees = (): HouseholdEmployee[] => {
-    return (this.f1040.info.householdEmployees as HouseholdEmployee[] | undefined) ?? []
+    return (
+      (this.f1040.info.householdEmployees as HouseholdEmployee[] | undefined) ??
+      []
+    )
   }
 
   totalWages = (): number => {
@@ -58,11 +64,12 @@ export default class ScheduleH extends F1040Attachment {
   // Part I - Social Security, Medicare, and Federal Income Tax
 
   // Line A: Did you pay cash wages ≥ threshold?
-  lineA = (): boolean => this.totalWages() >= householdTax.socialSecurityThreshold
+  lineA = (): boolean =>
+    this.totalWages() >= householdTax.socialSecurityThreshold
 
   // Line B: Did you withhold federal income tax?
   lineB = (): boolean => {
-    return this.employees().some(emp => emp.federalWithholding > 0)
+    return this.employees().some((emp) => emp.federalWithholding > 0)
   }
 
   // Line 1: Total cash wages subject to social security
@@ -90,7 +97,7 @@ export default class ScheduleH extends F1040Attachment {
   l5 = (): number => {
     const threshold = 200000
     const excess = Math.max(0, this.l3() - threshold)
-    return Math.round(excess * 0.009)  // 0.9% employee portion only
+    return Math.round(excess * 0.009) // 0.9% employee portion only
   }
 
   // Line 6: Total social security, Medicare, and additional Medicare
@@ -98,7 +105,10 @@ export default class ScheduleH extends F1040Attachment {
 
   // Line 7a: Federal income tax withheld
   l7a = (): number => {
-    return this.employees().reduce((sum, emp) => sum + emp.federalWithholding, 0)
+    return this.employees().reduce(
+      (sum, emp) => sum + emp.federalWithholding,
+      0
+    )
   }
 
   // Line 7b: Social security and Medicare withheld from employee
@@ -124,7 +134,7 @@ export default class ScheduleH extends F1040Attachment {
   }
 
   // Line 9: Did any state have unemployment law?
-  l9 = (): boolean => true  // Assume yes for most cases
+  l9 = (): boolean => true // Assume yes for most cases
 
   // Line 10: FUTA wages (max $7,000 per employee)
   l10 = (): number => {
@@ -135,7 +145,7 @@ export default class ScheduleH extends F1040Attachment {
   }
 
   // Line 11: FUTA tax before adjustments
-  l11 = (): number => Math.round(this.l10() * 0.06)  // 6% gross rate
+  l11 = (): number => Math.round(this.l10() * 0.06) // 6% gross rate
 
   // Line 12: State unemployment tax credit
   l12 = (): number => {

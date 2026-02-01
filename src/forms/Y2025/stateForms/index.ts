@@ -53,15 +53,15 @@ import makeWVIT140 from './WV/WVIT140'
  * States with no personal income tax filing requirement
  */
 export const noFilingRequirementStates: State[] = [
-  'AK',  // Alaska - no income tax
-  'FL',  // Florida - no income tax
-  'NV',  // Nevada - no income tax
-  'NH',  // New Hampshire - no income tax on wages
-  'SD',  // South Dakota - no income tax
-  'TN',  // Tennessee - no income tax
-  'TX',  // Texas - no income tax
-  'WA',  // Washington - no income tax
-  'WY'   // Wyoming - no income tax
+  'AK', // Alaska - no income tax
+  'FL', // Florida - no income tax
+  'NV', // Nevada - no income tax
+  'NH', // New Hampshire - no income tax on wages
+  'SD', // South Dakota - no income tax
+  'TN', // Tennessee - no income tax
+  'TX', // Texas - no income tax
+  'WA', // Washington - no income tax
+  'WY' // Wyoming - no income tax
 ]
 
 /**

@@ -57,7 +57,7 @@ const parameters = {
 
   // Virginia Earned Income Credit (20% of federal EIC for 2025)
   // Refundable
-  earnedIncomeCreditFactor: 0.20,
+  earnedIncomeCreditFactor: 0.2,
 
   // Low Income Individuals Credit
   // $300 for single/$600 for MFJ if FAGI <= threshold
@@ -108,7 +108,8 @@ const parameters = {
 
   // Local income tax note
   // Some VA localities (like Fairfax) have additional local income taxes
-  localTaxNote: 'Some VA localities impose additional local income tax - not calculated here'
+  localTaxNote:
+    'Some VA localities impose additional local income tax - not calculated here'
 }
 
 export default parameters

@@ -214,16 +214,8 @@ export const drawerSections: Section[] = [
         Urls.income.brokerageImport,
         <BrokerageImport />
       ),
-      item(
-        'Import Crypto',
-        Urls.income.cryptoImport,
-        <CryptoImport />
-      ),
-      item(
-        'Import W-2 (Payroll)',
-        Urls.income.payrollImport,
-        <PayrollImport />
-      )
+      item('Import Crypto', Urls.income.cryptoImport, <CryptoImport />),
+      item('Import W-2 (Payroll)', Urls.income.payrollImport, <PayrollImport />)
     ]
   },
   {
@@ -266,11 +258,7 @@ export const drawerSections: Section[] = [
         Urls.planning.calculator,
         <TaxPlanningCalculator />
       ),
-      item(
-        'What-If Scenarios',
-        Urls.tools.whatIf,
-        <WhatIfTool />
-      )
+      item('What-If Scenarios', Urls.tools.whatIf, <WhatIfTool />)
     ]
   },
   {
@@ -283,9 +271,7 @@ export const drawerSections: Section[] = [
   },
   {
     title: 'File',
-    items: [
-      item('E-File Your Return', Urls.efile.wizard, <EFileWizard />)
-    ]
+    items: [item('E-File Your Return', Urls.efile.wizard, <EFileWizard />)]
   }
 ]
 
@@ -305,9 +291,7 @@ const yearSpecificPages: Partial<{ [k in TaxYear]: Section[] }> = {
   Y2025: [
     {
       title: 'OBBBA 2025 Provisions',
-      items: [
-        item('OBBBA Deductions', Urls.income.obbba, <OBBBAIncome />)
-      ]
+      items: [item('OBBBA Deductions', Urls.income.obbba, <OBBBAIncome />)]
     }
   ]
 }
@@ -376,7 +360,11 @@ const Menu = (): ReactElement => {
       </AppBar>
 
       {/* Desktop secondary toolbar */}
-      <AppBar position="fixed" className={classes.desktopAppBar} color="default">
+      <AppBar
+        position="fixed"
+        className={classes.desktopAppBar}
+        color="default"
+      >
         <Toolbar className={classes.desktopToolbar}>
           <Box className={classes.desktopActions}>
             <SaveIndicator showTimestamp />
@@ -397,11 +385,7 @@ const Menu = (): ReactElement => {
 
       {/* Use MobileNav for mobile devices, ResponsiveDrawer for desktop */}
       {isMobile ? (
-        <MobileNav
-          sections={allSections}
-          isOpen={isOpen}
-          setOpen={setOpen}
-        />
+        <MobileNav sections={allSections} isOpen={isOpen} setOpen={setOpen} />
       ) : (
         <ResponsiveDrawer
           sections={allSections}
@@ -411,9 +395,7 @@ const Menu = (): ReactElement => {
       )}
 
       {/* Mobile bottom navigation */}
-      {isMobile && (
-        <MobileBottomNav onMenuClick={() => setOpen(true)} />
-      )}
+      {isMobile && <MobileBottomNav onMenuClick={() => setOpen(true)} />}
 
       {/* Print Preview Modal */}
       <PrintPreview

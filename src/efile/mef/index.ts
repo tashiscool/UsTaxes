@@ -49,11 +49,7 @@ export {
   extractCertificateData
 } from './signer'
 
-export type {
-  SignerConfig,
-  SignOptions,
-  VerificationResult
-} from './signer'
+export type { SignerConfig, SignOptions, VerificationResult } from './signer'
 
 // XML Serialization
 export {
@@ -69,6 +65,4 @@ export {
   escapeXml
 } from './serializer'
 
-export type {
-  SerializerConfig
-} from './serializer'
+export type { SerializerConfig } from './serializer'

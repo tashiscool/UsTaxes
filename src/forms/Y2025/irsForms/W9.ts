@@ -25,8 +25,15 @@ export interface W9Data {
   // Line 2: Business name (if different)
   businessName?: string
   // Line 3: Federal tax classification
-  taxClassification: 'individual' | 'ccorp' | 'scorp' | 'partnership' | 'trust' | 'llc' | 'other'
-  llcClassification?: 'C' | 'S' | 'P'  // If LLC: C-corp, S-corp, or Partnership
+  taxClassification:
+    | 'individual'
+    | 'ccorp'
+    | 'scorp'
+    | 'partnership'
+    | 'trust'
+    | 'llc'
+    | 'other'
+  llcClassification?: 'C' | 'S' | 'P' // If LLC: C-corp, S-corp, or Partnership
   otherClassification?: string
   // Line 4: Exemptions
   exemptPayeeCode?: string
@@ -77,7 +84,7 @@ export default class W9 extends F1040Attachment {
   }
 
   hasW9Data = (): boolean => {
-    return false  // Used for information, not tax filing
+    return false // Used for information, not tax filing
   }
 
   w9Data = (): W9Data | undefined => {
@@ -89,7 +96,8 @@ export default class W9 extends F1040Attachment {
   businessName = (): string => this.w9Data()?.businessName ?? ''
 
   // Tax classification
-  taxClassification = (): string => this.w9Data()?.taxClassification ?? 'individual'
+  taxClassification = (): string =>
+    this.w9Data()?.taxClassification ?? 'individual'
 
   isIndividual = (): boolean => this.taxClassification() === 'individual'
   isCCorp = (): boolean => this.taxClassification() === 'ccorp'
@@ -119,9 +127,11 @@ export default class W9 extends F1040Attachment {
   allCertificationsComplete = (): boolean => {
     const data = this.w9Data()
     if (!data) return false
-    return data.certifyTINCorrect &&
-           data.certifyNotSubjectToBackupWithholding &&
-           data.certifyUSPerson
+    return (
+      data.certifyTINCorrect &&
+      data.certifyNotSubjectToBackupWithholding &&
+      data.certifyUSPerson
+    )
   }
 
   fields = (): Field[] => {
@@ -162,7 +172,7 @@ export default class W9 extends F1040Attachment {
       data?.certifyUSPerson ?? false,
       data?.certifyFATCAExempt ?? false,
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? '',
+      data?.signatureDate.toLocaleDateString() ?? '',
       // Summary
       this.tin(),
       this.isExemptPayee(),

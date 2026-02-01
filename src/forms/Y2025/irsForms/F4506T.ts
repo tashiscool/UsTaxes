@@ -40,7 +40,12 @@ export interface F4506TData {
   thirdPartyState?: string
   thirdPartyZip?: string
   // Line 6: Transcript type requested
-  transcriptType: 'return' | 'account' | 'record_of_account' | 'verification_nonfiling' | 'wage_income'
+  transcriptType:
+    | 'return'
+    | 'account'
+    | 'record_of_account'
+    | 'verification_nonfiling'
+    | 'wage_income'
   // Line 7: Tax form requested
   taxFormNumber: string
   // Line 8: Tax year(s) or period(s)
@@ -52,11 +57,11 @@ export interface F4506TData {
 
 // Transcript type descriptions
 const TRANSCRIPT_TYPES: Record<string, string> = {
-  'return': 'Tax Return Transcript - Shows most line items from return',
-  'account': 'Tax Account Transcript - Shows payments, penalties, adjustments',
-  'record_of_account': 'Record of Account - Combination of return and account',
-  'verification_nonfiling': 'Verification of Non-filing Letter',
-  'wage_income': 'Wage and Income Transcript - W-2 and 1099 information'
+  return: 'Tax Return Transcript - Shows most line items from return',
+  account: 'Tax Account Transcript - Shows payments, penalties, adjustments',
+  record_of_account: 'Record of Account - Combination of return and account',
+  verification_nonfiling: 'Verification of Non-filing Letter',
+  wage_income: 'Wage and Income Transcript - W-2 and 1099 information'
 }
 
 export default class F4506T extends F1040Attachment {
@@ -168,7 +173,7 @@ export default class F4506T extends F1040Attachment {
       (data?.taxYears ?? []).join(', '),
       this.yearsRequestedCount(),
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? '',
+      data?.signatureDate.toLocaleDateString() ?? '',
       data?.phone ?? ''
     ]
   }

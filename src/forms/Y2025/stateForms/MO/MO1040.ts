@@ -31,8 +31,7 @@ export class MO1040 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Calculate tax using progressive brackets
   private calculateTax(taxableIncome: number): number {
@@ -42,7 +41,8 @@ export class MO1040 extends Form {
 
     for (const bracket of brackets) {
       if (taxableIncome > bracket.min) {
-        const taxableInBracket = Math.min(taxableIncome, bracket.max) - bracket.min
+        const taxableInBracket =
+          Math.min(taxableIncome, bracket.max) - bracket.min
         tax += taxableInBracket * bracket.rate
       }
     }
@@ -73,7 +73,10 @@ export class MO1040 extends Form {
   // Line 7: Public pension exemption
   l7 = (): number | undefined => {
     const pensionIncome = this.f1040.l5b() ?? 0
-    return Math.min(parameters.publicPensionExemption.maxExemption, pensionIncome) || undefined
+    return (
+      Math.min(parameters.publicPensionExemption.maxExemption, pensionIncome) ||
+      undefined
+    )
   }
 
   // Line 8: Other subtractions
@@ -150,15 +153,32 @@ export class MO1040 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l1(), this.l2(), this.l3(), this.l4(),
-    this.l5(), this.l6(), this.l7(), this.l8(), this.l9(),
-    this.l10(), this.l11(), this.l12(), this.l13(), this.l14(),
-    this.l15(), this.l16(), this.l17(), this.l18(),
-    this.l19(), this.l20(), this.l21(),
-    this.l22(), this.l23()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l1(),
+    this.l2(),
+    this.l3(),
+    this.l4(),
+    this.l5(),
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23()
   ]
 }
 

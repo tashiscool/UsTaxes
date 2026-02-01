@@ -4,7 +4,12 @@
  * Defines known field positions and labels for extracting data from 1099-DIV forms.
  */
 
-import { FieldDefinition, ExtractedField, extractAllFields, extractByBoxNumber } from '../fieldExtractor'
+import {
+  FieldDefinition,
+  ExtractedField,
+  extractAllFields,
+  extractByBoxNumber
+} from '../fieldExtractor'
 import { OCRResult } from '../ocrEngine'
 import { Income1099Div, Income1099Type, PersonRole } from 'ustaxes/core/data'
 
@@ -52,11 +57,7 @@ export const F1099_DIV_FIELDS: FieldDefinition[] = [
   {
     id: 'recipientName',
     name: "Recipient's Name",
-    labels: [
-      "RECIPIENT'S name",
-      "Recipient's name",
-      'Recipient name'
-    ],
+    labels: ["RECIPIENT'S name", "Recipient's name", 'Recipient name'],
     type: 'text'
   },
 
@@ -116,12 +117,7 @@ export const F1099_DIV_FIELDS: FieldDefinition[] = [
   {
     id: 'section1202Gain',
     name: 'Section 1202 gain',
-    labels: [
-      'Section 1202 gain',
-      'Sec. 1202 gain',
-      'Box 2c',
-      '2c Section'
-    ],
+    labels: ['Section 1202 gain', 'Sec. 1202 gain', 'Box 2c', '2c Section'],
     type: 'currency',
     boxNumber: '2c'
   },
@@ -201,22 +197,14 @@ export const F1099_DIV_FIELDS: FieldDefinition[] = [
   {
     id: 'investmentExpenses',
     name: 'Investment expenses',
-    labels: [
-      'Investment expenses',
-      'Box 6',
-      '6 Investment'
-    ],
+    labels: ['Investment expenses', 'Box 6', '6 Investment'],
     type: 'currency',
     boxNumber: '6'
   },
   {
     id: 'foreignTaxPaid',
     name: 'Foreign tax paid',
-    labels: [
-      'Foreign tax paid',
-      'Box 7',
-      '7 Foreign tax'
-    ],
+    labels: ['Foreign tax paid', 'Box 7', '7 Foreign tax'],
     type: 'currency',
     boxNumber: '7'
   },
@@ -285,11 +273,7 @@ export const F1099_DIV_FIELDS: FieldDefinition[] = [
   {
     id: 'state',
     name: 'State',
-    labels: [
-      'State',
-      '15 State',
-      'Box 15'
-    ],
+    labels: ['State', '15 State', 'Box 15'],
     type: 'text',
     boxNumber: '15'
   },
@@ -308,12 +292,7 @@ export const F1099_DIV_FIELDS: FieldDefinition[] = [
   {
     id: 'stateWithholding',
     name: 'State tax withheld',
-    labels: [
-      'State tax withheld',
-      'State income tax',
-      'Box 16',
-      '16 State'
-    ],
+    labels: ['State tax withheld', 'State income tax', 'Box 16', '16 State'],
     type: 'currency',
     boxNumber: '16'
   }
@@ -332,7 +311,9 @@ export interface F1099DivExtractionResult {
 /**
  * Extract 1099-DIV data from OCR result
  */
-export const extract1099DivData = (ocrResult: OCRResult): F1099DivExtractionResult => {
+export const extract1099DivData = (
+  ocrResult: OCRResult
+): F1099DivExtractionResult => {
   const fields = extractAllFields(ocrResult, F1099_DIV_FIELDS)
 
   // Also try extracting by box numbers directly

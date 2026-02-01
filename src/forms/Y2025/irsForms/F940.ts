@@ -26,10 +26,10 @@ import { Form940Data, BusinessEntity, State } from 'ustaxes/core/data'
  */
 
 // 2025 FUTA rates and limits
-const FUTA_WAGE_LIMIT = 7000  // Per employee per year
-const FUTA_RATE = 0.06  // 6.0%
-const FUTA_CREDIT = 0.054  // 5.4% credit for state unemployment
-const NET_FUTA_RATE = FUTA_RATE - FUTA_CREDIT  // 0.6% net rate
+const FUTA_WAGE_LIMIT = 7000 // Per employee per year
+const FUTA_RATE = 0.06 // 6.0%
+const FUTA_CREDIT = 0.054 // 5.4% credit for state unemployment
+const NET_FUTA_RATE = FUTA_RATE - FUTA_CREDIT // 0.6% net rate
 
 export default class F940 extends BusinessForm {
   tag: FormTag = 'f940'
@@ -66,7 +66,7 @@ export default class F940 extends BusinessForm {
   // Line 2: Paid wages only in credit reduction state(s)
   isPaidOnlyInCreditReductionStates = (): boolean => {
     const creditReductionStates = this.getCreditReductionStates()
-    return this.formData.statesWhereWagesPaid.every(s =>
+    return this.formData.statesWhereWagesPaid.every((s) =>
       creditReductionStates.includes(s)
     )
   }
@@ -125,7 +125,7 @@ export default class F940 extends BusinessForm {
   }
 
   // Line 11: If credit reduction applies (Schedule A)
-  l11 = (): number => 0  // From Schedule A
+  l11 = (): number => 0 // From Schedule A
 
   // =========================================================================
   // Part 4 - Determine your FUTA tax and balance due or overpayment
@@ -152,15 +152,19 @@ export default class F940 extends BusinessForm {
   needsQuarterlyBreakdown = (): boolean => this.l12() > 500
 
   // Quarterly liabilities
-  q1Liability = (): number => 0  // Would need quarterly breakdown
+  q1Liability = (): number => 0 // Would need quarterly breakdown
   q2Liability = (): number => 0
   q3Liability = (): number => 0
   q4Liability = (): number => 0
 
   // Line 17: Total tax liability for year (should equal line 12)
   l17 = (): number => {
-    return this.q1Liability() + this.q2Liability() +
-           this.q3Liability() + this.q4Liability()
+    return (
+      this.q1Liability() +
+      this.q2Liability() +
+      this.q3Liability() +
+      this.q4Liability()
+    )
   }
 
   // =========================================================================
@@ -209,7 +213,7 @@ export default class F940 extends BusinessForm {
   isSuccessor = (): boolean => this.formData.isSuccessor
 
   // Maximum FUTA tax per employee
-  maxFutaPerEmployee = (): number => FUTA_WAGE_LIMIT * NET_FUTA_RATE  // $42
+  maxFutaPerEmployee = (): number => FUTA_WAGE_LIMIT * NET_FUTA_RATE // $42
 
   // Count of employees subject to FUTA
   employeeCount = (): number => this.formData.employees?.length ?? 0

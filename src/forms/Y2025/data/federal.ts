@@ -45,15 +45,15 @@ const federalBrackets: FederalBrackets = {
         deductions: [
           {
             name: 'Standard Deduction (Single)',
-            amount: 15750  // OBBBA Senate 2025: $15,750
+            amount: 15750 // OBBBA Senate 2025: $15,750
           },
           {
             name: 'Standard Deduction (Single) with 1 age or blindness allowance',
-            amount: 17750  // $15,750 + $2,000
+            amount: 17750 // $15,750 + $2,000
           },
           {
             name: 'Standard Deduction (Single) with 2 age or blindness allowances',
-            amount: 19750  // $15,750 + $4,000
+            amount: 19750 // $15,750 + $4,000
           }
         ],
         exemptions: [
@@ -69,23 +69,23 @@ const federalBrackets: FederalBrackets = {
         deductions: [
           {
             name: 'Standard Deduction (Married)',
-            amount: 31500  // OBBBA Senate 2025: $31,500
+            amount: 31500 // OBBBA Senate 2025: $31,500
           },
           {
             name: 'Standard Deduction (Married) with 1 age or blindness allowance',
-            amount: 33100  // $31,500 + $1,600
+            amount: 33100 // $31,500 + $1,600
           },
           {
             name: 'Standard Deduction (Married) with 2 age or blindness allowances',
-            amount: 34700  // $31,500 + $3,200
+            amount: 34700 // $31,500 + $3,200
           },
           {
             name: 'Standard Deduction (Married) with 3 age or blindness allowances',
-            amount: 36300  // $31,500 + $4,800
+            amount: 36300 // $31,500 + $4,800
           },
           {
             name: 'Standard Deduction (Married) with 4 age or blindness allowances',
-            amount: 37900  // $31,500 + $6,400
+            amount: 37900 // $31,500 + $6,400
           }
         ],
         exemptions: [
@@ -100,7 +100,7 @@ const federalBrackets: FederalBrackets = {
         deductions: [
           {
             name: 'Standard Deduction (Widowed)',
-            amount: 31500  // Same as MFJ
+            amount: 31500 // Same as MFJ
           },
           {
             name: 'Standard Deduction (Widowed) with 1 age or blindness allowance',
@@ -123,23 +123,23 @@ const federalBrackets: FederalBrackets = {
         deductions: [
           {
             name: 'Standard Deduction (Married Filing Separately)',
-            amount: 15750  // Same as Single
+            amount: 15750 // Same as Single
           },
           {
             name: 'Standard Deduction (Married Filing Separately) with 1 age or blindness allowance',
-            amount: 17350  // $15,750 + $1,600
+            amount: 17350 // $15,750 + $1,600
           },
           {
             name: 'Standard Deduction (Married Filing Separately) with 2 age or blindness allowances',
-            amount: 18950  // $15,750 + $3,200
+            amount: 18950 // $15,750 + $3,200
           },
           {
             name: 'Standard Deduction (Married Filing Separately) with 3 age or blindness allowances',
-            amount: 20550  // $15,750 + $4,800
+            amount: 20550 // $15,750 + $4,800
           },
           {
             name: 'Standard Deduction (Married Filing Separately) with 4 age or blindness allowances',
-            amount: 22150  // $15,750 + $6,400
+            amount: 22150 // $15,750 + $6,400
           }
         ],
         exemptions: [
@@ -155,15 +155,15 @@ const federalBrackets: FederalBrackets = {
         deductions: [
           {
             name: 'Standard Deduction (Head of Household)',
-            amount: 23625  // OBBBA Senate 2025: $23,625
+            amount: 23625 // OBBBA Senate 2025: $23,625
           },
           {
             name: 'Standard Deduction (Head of Household) with 1 age or blindness allowance',
-            amount: 25625  // $23,625 + $2,000
+            amount: 25625 // $23,625 + $2,000
           },
           {
             name: 'Standard Deduction (Head of Household) with 2 age or blindness allowances',
-            amount: 27625  // $23,625 + $4,000
+            amount: 27625 // $23,625 + $4,000
           }
         ],
         exemptions: [
@@ -198,8 +198,8 @@ const federalBrackets: FederalBrackets = {
 }
 
 export const fica = {
-  maxSSTax: 10710.6,  // Updated for 2025
-  maxIncomeSSTaxApplies: 172800,  // Updated for 2025
+  maxSSTax: 10710.6, // Updated for 2025
+  maxIncomeSSTaxApplies: 172800, // Updated for 2025
 
   regularMedicareTaxRate: 1.45 / 100,
   additionalMedicareTaxRate: 0.9 / 100,
@@ -241,8 +241,8 @@ export const netInvestmentIncomeTax = {
 
 export const healthSavingsAccounts = {
   contributionLimit: {
-    'self-only': 4300,  // Updated for 2025
-    family: 8550        // Updated for 2025
+    'self-only': 4300, // Updated for 2025
+    family: 8550 // Updated for 2025
   }
 }
 
@@ -257,12 +257,12 @@ export const amt = {
     switch (filingStatus) {
       case FilingStatus.S:
       case FilingStatus.HOH:
-        return 70300  // OBBBA: $70,300 (reduced from TCJA $89,400)
+        return 70300 // OBBBA: $70,300 (reduced from TCJA $89,400)
       case FilingStatus.MFJ:
       case FilingStatus.W:
-        return 109400  // OBBBA: $109,400 (reduced from TCJA $139,100)
+        return 109400 // OBBBA: $109,400 (reduced from TCJA $139,100)
       case FilingStatus.MFS:
-        return 54700  // OBBBA: $54,700 (reduced from TCJA $69,500)
+        return 54700 // OBBBA: $54,700 (reduced from TCJA $69,500)
     }
   },
   // Phase-out thresholds (House version)
@@ -271,31 +271,28 @@ export const amt = {
       case FilingStatus.S:
       case FilingStatus.HOH:
       case FilingStatus.MFS:
-        return 500000  // Phase-out begins at $500,000
+        return 500000 // Phase-out begins at $500,000
       case FilingStatus.MFJ:
       case FilingStatus.W:
-        return 1000000  // Phase-out begins at $1,000,000
+        return 1000000 // Phase-out begins at $1,000,000
     }
   },
   // Phase-out rate: 25 cents per dollar above threshold
   phaseOutRate: 0.25,
   // Calculate exemption after phase-out
-  exemption: (
-    filingStatus: FilingStatus,
-    income: number
-  ): number => {
+  exemption: (filingStatus: FilingStatus, income: number): number => {
     const baseExemption = amt.exemptionAmount(filingStatus)
     const phaseOutStart = amt.phaseOutStart(filingStatus)
-    
+
     if (income <= phaseOutStart) {
       return baseExemption
     }
-    
+
     // Phase-out: 25 cents per dollar above threshold
     const excess = income - phaseOutStart
     const phaseOutAmount = excess * amt.phaseOutRate
     const exemption = Math.max(0, baseExemption - phaseOutAmount)
-    
+
     return exemption
   },
 
@@ -401,7 +398,7 @@ export const autoLoanInterestDeduction = {
 // Source: docs/obbba/form-1040/STANDARD_DEDUCTION.md
 export const seniorAdditionalDeduction = {
   enabled: true,
-  amount: 6000,  // OBBBA: $6,000 per qualifying person 65+
+  amount: 6000, // OBBBA: $6,000 per qualifying person 65+
   minAge: 65,
   // Effective 2025-2028 (sunsets)
   effectiveYears: [2025, 2026, 2027, 2028]
@@ -414,31 +411,31 @@ export const seniorAdditionalDeduction = {
 export const saltCap = {
   // OBBBA 2025: SALT cap increased to $40,400 (from $10,000)
   // Source: docs/obbba/schedule-a-itemized/SALT_DEDUCTION.md
-  baseAmount: 40400,  // Base cap amount
-  floorAmount: 10000,  // Floor (returns to TCJA cap)
+  baseAmount: 40400, // Base cap amount
+  floorAmount: 10000, // Floor (returns to TCJA cap)
   // Phase-out for high earners: 30% rate, starts at $505,000 AGI
   phaseOutStart: (filingStatus: FilingStatus): number => {
     if (filingStatus === FilingStatus.MFS) {
-      return 252500  // MFS: $252,500
+      return 252500 // MFS: $252,500
     }
-    return 505000  // All others: $505,000
+    return 505000 // All others: $505,000
   },
-  phaseOutRate: 0.30,  // 30% reduction per dollar above threshold
+  phaseOutRate: 0.3, // 30% reduction per dollar above threshold
   // Calculate effective SALT cap with phase-out
   effectiveCap: (filingStatus: FilingStatus, agi: number): number => {
     const base = saltCap.baseAmount
     const floor = saltCap.floorAmount
     const threshold = saltCap.phaseOutStart(filingStatus)
-    
+
     if (agi <= threshold) {
-      return base  // Full cap applies
+      return base // Full cap applies
     }
-    
+
     // Phase-out: reduce by 30% of excess over threshold
     const excess = agi - threshold
     const reduction = excess * saltCap.phaseOutRate
     const effective = Math.max(floor, base - reduction)
-    
+
     return effective
   }
 }
@@ -542,7 +539,7 @@ export const EIC: EICDef = {
     [FilingStatus.MFS]: undefined,
     [FilingStatus.MFJ]: line11MfjCaps
   },
-  maxInvestmentIncome: 11950,  // Updated for 2025 (IRS Rev Proc 2024-40)
+  maxInvestmentIncome: 11950, // Updated for 2025 (IRS Rev Proc 2024-40)
   formulas: {
     [FilingStatus.S]: unmarriedFormulas,
     [FilingStatus.W]: unmarriedFormulas,
@@ -582,11 +579,11 @@ export const childTaxCredit = {
   // Baby Bonus: Additional $1,000 for children born in tax year
   babyBonus: 1000,
   // Refundable portion (ACTC) - max per child
-  refundableAmount: 1700,  // 2025-2026: $1,700 (increases in later years)
+  refundableAmount: 1700, // 2025-2026: $1,700 (increases in later years)
   // Phase-in threshold for refundable portion
   phaseInThreshold: 2500,
   // Phase-in rate
-  phaseInRate: 0.15,  // 15% of earned income above threshold
+  phaseInRate: 0.15, // 15% of earned income above threshold
   // Phase-out thresholds
   phaseOutStart: (filingStatus: FilingStatus): number => {
     return filingStatus === FilingStatus.MFJ ? 400000 : 200000
@@ -605,7 +602,7 @@ export const qbid = {
   // OBBBA House version: 23% rate (up from 20% TCJA)
   maxRate: 0.23,
   // W-2 wage limitation
-  w2WageLimitRate: 0.50,
+  w2WageLimitRate: 0.5,
   w2WageAltRate: 0.25,
   qualifiedPropertyRate: 0.025,
   // Phase-out thresholds (House version)

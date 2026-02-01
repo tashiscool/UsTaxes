@@ -67,10 +67,10 @@ const parameters = {
 
   // Child Care Credit (percentage of federal credit, varies by income)
   childCareCreditPercentages: [
-    { agiLimit: 25000, rate: 0.50 },
-    { agiLimit: 35000, rate: 0.40 },
-    { agiLimit: 60000, rate: 0.30 },
-    { agiLimit: Infinity, rate: 0.10 }
+    { agiLimit: 25000, rate: 0.5 },
+    { agiLimit: 35000, rate: 0.4 },
+    { agiLimit: 60000, rate: 0.3 },
+    { agiLimit: Infinity, rate: 0.1 }
   ],
 
   // School readiness credit (for child care at quality-rated facilities)

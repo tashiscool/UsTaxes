@@ -127,7 +127,15 @@ export default class F990EZ extends F1040Attachment {
 
   // Line 9: Total revenue
   l9 = (): number => {
-    return sumFields([this.l1(), this.l2(), this.l3(), this.l4(), this.l5a(), this.l6c(), this.l8()])
+    return sumFields([
+      this.l1(),
+      this.l2(),
+      this.l3(),
+      this.l4(),
+      this.l5a(),
+      this.l6c(),
+      this.l8()
+    ])
   }
 
   // Part I: Expenses
@@ -155,7 +163,15 @@ export default class F990EZ extends F1040Attachment {
 
   // Line 17: Total expenses
   l17 = (): number => {
-    return sumFields([this.l10(), this.l11(), this.l12(), this.l13(), this.l14(), this.l15(), this.l16()])
+    return sumFields([
+      this.l10(),
+      this.l11(),
+      this.l12(),
+      this.l13(),
+      this.l14(),
+      this.l15(),
+      this.l16()
+    ])
   }
 
   // Line 18: Excess or deficit
@@ -165,14 +181,24 @@ export default class F990EZ extends F1040Attachment {
   l19 = (): number => {
     const info = this.f990EZInfo()
     if (!info) return 0
-    return (info.beginningCash + info.beginningLandBuildings + info.beginningOtherAssets) - info.beginningLiabilities
+    return (
+      info.beginningCash +
+      info.beginningLandBuildings +
+      info.beginningOtherAssets -
+      info.beginningLiabilities
+    )
   }
 
   // Line 21: Net assets end of year
   l21 = (): number => {
     const info = this.f990EZInfo()
     if (!info) return 0
-    return (info.endingCash + info.endingLandBuildings + info.endingOtherAssets) - info.endingLiabilities
+    return (
+      info.endingCash +
+      info.endingLandBuildings +
+      info.endingOtherAssets -
+      info.endingLiabilities
+    )
   }
 
   // Part II: Balance Sheets
@@ -181,7 +207,11 @@ export default class F990EZ extends F1040Attachment {
   totalAssetsBOY = (): number => {
     const info = this.f990EZInfo()
     if (!info) return 0
-    return info.beginningCash + info.beginningLandBuildings + info.beginningOtherAssets
+    return (
+      info.beginningCash +
+      info.beginningLandBuildings +
+      info.beginningOtherAssets
+    )
   }
 
   // Total assets end
@@ -209,8 +239,8 @@ export default class F990EZ extends F1040Attachment {
       `${info?.city ?? ''}, ${info?.state ?? ''} ${info?.zip ?? ''}`,
       info?.website ?? '',
       info?.exemptionType ?? '',
-      info?.fiscalYearStart?.toLocaleDateString() ?? '',
-      info?.fiscalYearEnd?.toLocaleDateString() ?? '',
+      info?.fiscalYearStart.toLocaleDateString() ?? '',
+      info?.fiscalYearEnd.toLocaleDateString() ?? '',
       info?.isFinalReturn ?? false,
       info?.isAmendedReturn ?? false,
       // Part I: Revenue

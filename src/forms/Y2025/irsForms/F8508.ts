@@ -17,7 +17,7 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 export interface F8508Data {
   // Filer Information
   filerName: string
-  filerTIN: string                         // SSN or EIN
+  filerTIN: string // SSN or EIN
   filerAddress: string
   filerCity: string
   filerState: string
@@ -26,7 +26,7 @@ export interface F8508Data {
   filerEmail?: string
   contactName: string
   // Information Return Types
-  returnTypes: string[]                    // e.g., ['1099-MISC', '1099-NEC', 'W-2']
+  returnTypes: string[] // e.g., ['1099-MISC', '1099-NEC', 'W-2']
   // Calendar Year
   calendarYear: number
   // Number of Returns
@@ -50,11 +50,11 @@ export interface F8508Data {
 
 // Waiver reason descriptions
 const WAIVER_REASONS: Record<string, string> = {
-  'hardship': 'Undue hardship - lack of technology or resources',
-  'technology': 'Technology limitations prevent electronic filing',
-  'cost': 'Cost of e-filing software/services is prohibitive',
-  'religious': 'Religious beliefs prohibit use of technology',
-  'other': 'Other reason (explanation required)'
+  hardship: 'Undue hardship - lack of technology or resources',
+  technology: 'Technology limitations prevent electronic filing',
+  cost: 'Cost of e-filing software/services is prohibitive',
+  religious: 'Religious beliefs prohibit use of technology',
+  other: 'Other reason (explanation required)'
 }
 
 export default class F8508 extends F1040Attachment {
@@ -113,8 +113,10 @@ export default class F8508 extends F1040Attachment {
 
   // Is cost prohibitive?
   isCostProhibitive = (): boolean => {
-    return this.waiverReason() === 'cost' ||
-           (this.f8508Data()?.costProhibitive ?? false)
+    return (
+      this.waiverReason() === 'cost' ||
+      (this.f8508Data()?.costProhibitive ?? false)
+    )
   }
 
   // Had prior waiver?
@@ -166,7 +168,7 @@ export default class F8508 extends F1040Attachment {
       // Analysis
       this.isSmallFiler(),
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? '',
+      data?.signatureDate.toLocaleDateString() ?? '',
       data?.signerTitle ?? ''
     ]
   }

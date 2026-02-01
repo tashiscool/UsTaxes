@@ -25,7 +25,11 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
  */
 
 export type AccountHolderType = 'individual' | 'entity' | 'passiveNFFE'
-export type FilerCategory = 'participatingFFI' | 'registeredDeemedCompliant' | 'sponsoredFFI' | 'directReportingNFFE'
+export type FilerCategory =
+  | 'participatingFFI'
+  | 'registeredDeemedCompliant'
+  | 'sponsoredFFI'
+  | 'directReportingNFFE'
 
 export interface AccountHolderInfo {
   type: AccountHolderType
@@ -33,8 +37,8 @@ export interface AccountHolderInfo {
   tin?: string
   address: string
   countryOfResidence: string
-  dateOfBirth?: Date  // For individuals
-  entityType?: string  // For entities
+  dateOfBirth?: Date // For individuals
+  entityType?: string // For entities
   // Substantial U.S. owners (for passive NFFEs)
   substantialUSOwners?: {
     name: string
@@ -45,7 +49,13 @@ export interface AccountHolderInfo {
 
 export interface FinancialAccountInfo {
   accountNumber: string
-  accountType: 'depository' | 'custodial' | 'debtInterest' | 'equityInterest' | 'cashValueInsurance' | 'annuity'
+  accountType:
+    | 'depository'
+    | 'custodial'
+    | 'debtInterest'
+    | 'equityInterest'
+    | 'cashValueInsurance'
+    | 'annuity'
   currency: string
   accountBalance: number
   // Income types
@@ -61,7 +71,7 @@ export interface Form8966Info {
   // Part I: Filer Information
   filerCategory: FilerCategory
   filerName: string
-  filerGIIN: string  // Global Intermediary Identification Number
+  filerGIIN: string // Global Intermediary Identification Number
   filerAddress: string
   filerCountry: string
   sponsorName?: string
@@ -94,7 +104,8 @@ export default class F8966 extends F1040Attachment {
   }
 
   // Part I: Filer Information
-  filerCategory = (): FilerCategory => this.f8966Info()?.filerCategory ?? 'participatingFFI'
+  filerCategory = (): FilerCategory =>
+    this.f8966Info()?.filerCategory ?? 'participatingFFI'
   filerName = (): string => this.f8966Info()?.filerName ?? ''
   filerGIIN = (): string => this.f8966Info()?.filerGIIN ?? ''
   filerAddress = (): string => this.f8966Info()?.filerAddress ?? ''
@@ -103,13 +114,16 @@ export default class F8966 extends F1040Attachment {
   sponsorGIIN = (): string => this.f8966Info()?.sponsorGIIN ?? ''
 
   // Part II: Account Holder Information
-  accountHolder = (): AccountHolderInfo | undefined => this.f8966Info()?.accountHolder
+  accountHolder = (): AccountHolderInfo | undefined =>
+    this.f8966Info()?.accountHolder
 
-  accountHolderType = (): AccountHolderType => this.accountHolder()?.type ?? 'individual'
+  accountHolderType = (): AccountHolderType =>
+    this.accountHolder()?.type ?? 'individual'
   accountHolderName = (): string => this.accountHolder()?.name ?? ''
   accountHolderTin = (): string => this.accountHolder()?.tin ?? ''
   accountHolderAddress = (): string => this.accountHolder()?.address ?? ''
-  accountHolderCountry = (): string => this.accountHolder()?.countryOfResidence ?? ''
+  accountHolderCountry = (): string =>
+    this.accountHolder()?.countryOfResidence ?? ''
 
   isIndividual = (): boolean => this.accountHolderType() === 'individual'
   isEntity = (): boolean => this.accountHolderType() === 'entity'
@@ -120,7 +134,8 @@ export default class F8966 extends F1040Attachment {
   hasSubstantialUSOwners = (): boolean => this.substantialUSOwners().length > 0
 
   // Part III: Financial Account Information
-  financialAccount = (): FinancialAccountInfo | undefined => this.f8966Info()?.financialAccount
+  financialAccount = (): FinancialAccountInfo | undefined =>
+    this.f8966Info()?.financialAccount
 
   accountNumber = (): string => this.financialAccount()?.accountNumber ?? ''
   accountType = (): string => this.financialAccount()?.accountType ?? ''
@@ -134,16 +149,23 @@ export default class F8966 extends F1040Attachment {
   otherIncome = (): number => this.financialAccount()?.otherIncome ?? 0
 
   totalAccountIncome = (): number => {
-    return this.dividendsIncome() + this.interestIncome() +
-           this.grossProceeds() + this.otherIncome()
+    return (
+      this.dividendsIncome() +
+      this.interestIncome() +
+      this.grossProceeds() +
+      this.otherIncome()
+    )
   }
 
-  wasAccountClosed = (): boolean => this.financialAccount()?.wasAccountClosed ?? false
+  wasAccountClosed = (): boolean =>
+    this.financialAccount()?.wasAccountClosed ?? false
 
   // Part IV: Pooled Reporting
   isPooledReport = (): boolean => this.f8966Info()?.isPooledReport ?? false
-  numberOfAccountsInPool = (): number => this.f8966Info()?.numberOfAccountsInPool ?? 0
-  aggregateBalanceInPool = (): number => this.f8966Info()?.aggregateBalanceInPool ?? 0
+  numberOfAccountsInPool = (): number =>
+    this.f8966Info()?.numberOfAccountsInPool ?? 0
+  aggregateBalanceInPool = (): number =>
+    this.f8966Info()?.aggregateBalanceInPool ?? 0
 
   // Reporting year
   reportingYear = (): number => this.f8966Info()?.reportingYear ?? 2025

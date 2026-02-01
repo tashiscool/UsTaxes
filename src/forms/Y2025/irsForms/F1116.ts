@@ -81,7 +81,8 @@ export default class F1116 extends F1040Attachment {
     let from1099Div = 0
     for (const f of this.f1040.f1099Divs()) {
       const form = f.form as DivForm
-      from1099Div += form.foreignSourceIncome ?? form.totalOrdinaryDividends ?? 0
+      from1099Div +=
+        form.foreignSourceIncome ?? form.totalOrdinaryDividends ?? 0
     }
 
     let from1099Int = 0
@@ -102,12 +103,12 @@ export default class F1116 extends F1040Attachment {
   l2 = (): number => 0
 
   // Line 3a-3f: Pro rata share of deductions
-  l3a = (): number => 0  // Certain itemized deductions
-  l3b = (): number => 0  // Other deductions
-  l3c = (): number => 0  // State and local taxes
-  l3d = (): number => 0  // Gross income from all sources
-  l3e = (): number => 0  // Gross foreign source income
-  l3f = (): number => 0  // Multiply line 3c by result of 3e/3d
+  l3a = (): number => 0 // Certain itemized deductions
+  l3b = (): number => 0 // Other deductions
+  l3c = (): number => 0 // State and local taxes
+  l3d = (): number => 0 // Gross income from all sources
+  l3e = (): number => 0 // Gross foreign source income
+  l3f = (): number => 0 // Multiply line 3c by result of 3e/3d
 
   // Line 4: Pro rata share of interest expense
   l4 = (): number => 0
@@ -137,10 +138,18 @@ export default class F1116 extends F1040Attachment {
   l16 = (): number => 0
 
   // Line 17: Add lines 8 through 16
-  l17 = (): number => sumFields([
-    this.l8(), this.l9(), this.l10(), this.l11(),
-    this.l12(), this.l13(), this.l14(), this.l15(), this.l16()
-  ])
+  l17 = (): number =>
+    sumFields([
+      this.l8(),
+      this.l9(),
+      this.l10(),
+      this.l11(),
+      this.l12(),
+      this.l13(),
+      this.l14(),
+      this.l15(),
+      this.l16()
+    ])
 
   // Line 18: Reduction in foreign taxes (simplified)
   l18 = (): number => 0

@@ -30,13 +30,13 @@ import { Form8881Data } from 'ustaxes/core/data'
 
 // 2025 parameters
 const pensionStartupParams = {
-  maxStartupCostCredit: 5000,    // Per year
-  startupCreditRate: 0.50,       // 50% (100% for very small employers)
-  smallEmployerRate: 1.00,       // 100% for ≤50 employees
-  maxAutoEnrollmentCredit: 500,  // Per year
-  maxEmployees: 100,             // Maximum for eligibility
-  verySmallThreshold: 50,        // Threshold for higher rate
-  yearsAvailable: 3              // Credit available for 3 years
+  maxStartupCostCredit: 5000, // Per year
+  startupCreditRate: 0.5, // 50% (100% for very small employers)
+  smallEmployerRate: 1.0, // 100% for ≤50 employees
+  maxAutoEnrollmentCredit: 500, // Per year
+  maxEmployees: 100, // Maximum for eligibility
+  verySmallThreshold: 50, // Threshold for higher rate
+  yearsAvailable: 3 // Credit available for 3 years
 }
 
 export default class F8881 extends F1040Attachment {
@@ -49,10 +49,11 @@ export default class F8881 extends F1040Attachment {
 
   hasPensionStartupCredit = (): boolean => {
     const data = this.creditData()
-    return data !== undefined && (
-      data.qualifiedStartupCosts > 0 ||
-      data.autoEnrollmentCredit > 0 ||
-      (data.passthrough8881Credit ?? 0) > 0
+    return (
+      data !== undefined &&
+      (data.qualifiedStartupCosts > 0 ||
+        data.autoEnrollmentCredit > 0 ||
+        (data.passthrough8881Credit ?? 0) > 0)
     )
   }
 
@@ -70,7 +71,8 @@ export default class F8881 extends F1040Attachment {
   l2 = (): number => {
     const data = this.creditData()
     if (!data) return pensionStartupParams.startupCreditRate
-    return data.numberOfNonHighlyCompensatedEmployees <= pensionStartupParams.verySmallThreshold
+    return data.numberOfNonHighlyCompensatedEmployees <=
+      pensionStartupParams.verySmallThreshold
       ? pensionStartupParams.smallEmployerRate
       : pensionStartupParams.startupCreditRate
   }
@@ -87,10 +89,11 @@ export default class F8881 extends F1040Attachment {
   // Part II - Auto-Enrollment Credit
 
   // Line 6: Auto-enrollment credit (if applicable)
-  l6 = (): number => Math.min(
-    this.creditData()?.autoEnrollmentCredit ?? 0,
-    pensionStartupParams.maxAutoEnrollmentCredit
-  )
+  l6 = (): number =>
+    Math.min(
+      this.creditData()?.autoEnrollmentCredit ?? 0,
+      pensionStartupParams.maxAutoEnrollmentCredit
+    )
 
   // Part III - Total Credit
 
@@ -107,14 +110,15 @@ export default class F8881 extends F1040Attachment {
   credit = (): number => this.creditData()?.totalCredit ?? this.l9()
 
   // Number of non-highly compensated employees
-  numberOfEmployees = (): number => this.creditData()?.numberOfNonHighlyCompensatedEmployees ?? 0
+  numberOfEmployees = (): number =>
+    this.creditData()?.numberOfNonHighlyCompensatedEmployees ?? 0
 
   // Year of credit (1, 2, or 3)
   yearOfCredit = (): number => this.creditData()?.yearsOfCredit ?? 1
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Part I
     this.l1(),
     this.l2(),

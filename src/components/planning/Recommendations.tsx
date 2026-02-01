@@ -173,7 +173,9 @@ export default function Recommendations({
         maxAmount: ctcMax,
         reason:
           ctcActual < ctcMax
-            ? `Phase-out begins at $${inputs.filingStatus === FilingStatus.MFJ ? '400,000' : '200,000'} AGI`
+            ? `Phase-out begins at $${
+                inputs.filingStatus === FilingStatus.MFJ ? '400,000' : '200,000'
+              } AGI`
             : undefined
       })
     }
@@ -255,7 +257,11 @@ export default function Recommendations({
       const currentBracket = bracketBreakdown[bracketBreakdown.length - 1]
       if (currentBracket.rate >= 22 && breakdown.adjustedGrossIncome > 50000) {
         suggestions.push(
-          `You're in the ${currentBracket.rate}% tax bracket. Each additional dollar of pre-tax contributions saves you $${(currentBracket.rate / 100).toFixed(2)} in taxes.`
+          `You're in the ${
+            currentBracket.rate
+          }% tax bracket. Each additional dollar of pre-tax contributions saves you $${(
+            currentBracket.rate / 100
+          ).toFixed(2)} in taxes.`
         )
       }
     }
@@ -270,7 +276,9 @@ export default function Recommendations({
     // Amount owed warning
     if (breakdown.refundOrOwed < -1000) {
       suggestions.push(
-        `You'll owe $${Math.abs(breakdown.refundOrOwed).toLocaleString()} at tax time. Make sure to set aside funds or increase withholding to avoid surprises.`
+        `You'll owe $${Math.abs(
+          breakdown.refundOrOwed
+        ).toLocaleString()} at tax time. Make sure to set aside funds or increase withholding to avoid surprises.`
       )
     }
 
@@ -293,7 +301,11 @@ export default function Recommendations({
 
     if (totalRetirementSpace > 5000 && breakdown.marginalTaxRate >= 22) {
       suggestions.push(
-        `You have $${totalRetirementSpace.toLocaleString()} in unused tax-advantaged contribution space (IRA + HSA). At your ${breakdown.marginalTaxRate}% marginal rate, maxing out could save over $${Math.round(totalRetirementSpace * breakdown.marginalTaxRate / 100).toLocaleString()} in taxes.`
+        `You have $${totalRetirementSpace.toLocaleString()} in unused tax-advantaged contribution space (IRA + HSA). At your ${
+          breakdown.marginalTaxRate
+        }% marginal rate, maxing out could save over $${Math.round(
+          (totalRetirementSpace * breakdown.marginalTaxRate) / 100
+        ).toLocaleString()} in taxes.`
       )
     }
 
@@ -352,10 +364,7 @@ export default function Recommendations({
                   >
                     <Box display="flex" alignItems="center">
                       {getStrategyIcon(opportunity.strategy)}
-                      <Typography
-                        variant="subtitle1"
-                        style={{ marginLeft: 8 }}
-                      >
+                      <Typography variant="subtitle1" style={{ marginLeft: 8 }}>
                         {opportunity.strategy}
                       </Typography>
                     </Box>
@@ -439,8 +448,7 @@ export default function Recommendations({
                         <Chip
                           label={
                             <>
-                              Up to{' '}
-                              <Currency value={credit.maxAmount} plain />
+                              Up to <Currency value={credit.maxAmount} plain />
                             </>
                           }
                           size="small"
@@ -496,7 +504,10 @@ export default function Recommendations({
                   Traditional/Roth IRA
                 </Typography>
                 <Typography variant="h5">
-                  <Currency value={getIRAContributionLimit(inputs.year, 49)} plain />
+                  <Currency
+                    value={getIRAContributionLimit(inputs.year, 49)}
+                    plain
+                  />
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
                   +$1,000 catch-up if 50+
@@ -527,7 +538,11 @@ export default function Recommendations({
                 </Typography>
                 <Typography variant="h5">
                   <Currency
-                    value={getHSAContributionLimit(inputs.year, 'self-only', 54)}
+                    value={getHSAContributionLimit(
+                      inputs.year,
+                      'self-only',
+                      54
+                    )}
                     plain
                   />
                 </Typography>

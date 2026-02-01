@@ -165,7 +165,10 @@ export const canonicalize = (xml: string): string => {
   // This is a simplified approach - full C14N has more complex rules
 
   // Step 5: Expand empty elements: <element/> -> <element></element>
-  result = result.replace(/<([a-zA-Z][a-zA-Z0-9_:-]*)([^>]*?)\/>/g, '<$1$2></$1>')
+  result = result.replace(
+    /<([a-zA-Z][a-zA-Z0-9_:-]*)([^>]*?)\/>/g,
+    '<$1$2></$1>'
+  )
 
   // Step 6: Sort attributes and normalize namespace declarations
   result = normalizeAttributes(result)
@@ -185,50 +188,54 @@ const normalizeAttributes = (xml: string): string => {
   // Match elements with attributes
   const elementRegex = /<([a-zA-Z][a-zA-Z0-9_:-]*)(\s+[^>]*)?>/g
 
-  return xml.replace(elementRegex, (match, tagName: string, attrStr: string) => {
-    if (!attrStr || attrStr.trim() === '') {
-      return `<${tagName}>`
-    }
-
-    // Parse attributes
-    const attrRegex = /([a-zA-Z][a-zA-Z0-9_:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
-    const attrs: Array<{ name: string; value: string }> = []
-    let attrMatch: RegExpExecArray | null
-
-    while ((attrMatch = attrRegex.exec(attrStr)) !== null) {
-      // attrMatch[2] is double-quoted value, attrMatch[3] is single-quoted value
-      // One of these will be undefined depending on which quote style was used
-      const doubleQuoted = attrMatch[2] as string | undefined
-      const singleQuoted = attrMatch[3] as string | undefined
-      attrs.push({
-        name: attrMatch[1],
-        value: doubleQuoted ?? singleQuoted ?? ''
-      })
-    }
-
-    // Sort attributes: xmlns declarations first, then by namespace URI, then by local name
-    attrs.sort((a, b) => {
-      const aIsXmlns = a.name.startsWith('xmlns')
-      const bIsXmlns = b.name.startsWith('xmlns')
-
-      // xmlns declarations come first
-      if (aIsXmlns && !bIsXmlns) return -1
-      if (!aIsXmlns && bIsXmlns) return 1
-
-      // Sort xmlns:prefix before xmlns
-      if (aIsXmlns && bIsXmlns) {
-        if (a.name === 'xmlns' && b.name !== 'xmlns') return -1
-        if (a.name !== 'xmlns' && b.name === 'xmlns') return 1
+  return xml.replace(
+    elementRegex,
+    (match, tagName: string, attrStr: string) => {
+      if (!attrStr || attrStr.trim() === '') {
+        return `<${tagName}>`
       }
 
-      // Alphabetical sort for remaining attributes
-      return a.name.localeCompare(b.name)
-    })
+      // Parse attributes
+      const attrRegex =
+        /([a-zA-Z][a-zA-Z0-9_:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
+      const attrs: Array<{ name: string; value: string }> = []
+      let attrMatch: RegExpExecArray | null
 
-    // Rebuild attribute string
-    const sortedAttrs = attrs.map((a) => `${a.name}="${a.value}"`).join(' ')
-    return `<${tagName} ${sortedAttrs}>`
-  })
+      while ((attrMatch = attrRegex.exec(attrStr)) !== null) {
+        // attrMatch[2] is double-quoted value, attrMatch[3] is single-quoted value
+        // One of these will be undefined depending on which quote style was used
+        const doubleQuoted = attrMatch[2] as string | undefined
+        const singleQuoted = attrMatch[3] as string | undefined
+        attrs.push({
+          name: attrMatch[1],
+          value: doubleQuoted ?? singleQuoted ?? ''
+        })
+      }
+
+      // Sort attributes: xmlns declarations first, then by namespace URI, then by local name
+      attrs.sort((a, b) => {
+        const aIsXmlns = a.name.startsWith('xmlns')
+        const bIsXmlns = b.name.startsWith('xmlns')
+
+        // xmlns declarations come first
+        if (aIsXmlns && !bIsXmlns) return -1
+        if (!aIsXmlns && bIsXmlns) return 1
+
+        // Sort xmlns:prefix before xmlns
+        if (aIsXmlns && bIsXmlns) {
+          if (a.name === 'xmlns' && b.name !== 'xmlns') return -1
+          if (a.name !== 'xmlns' && b.name === 'xmlns') return 1
+        }
+
+        // Alphabetical sort for remaining attributes
+        return a.name.localeCompare(b.name)
+      })
+
+      // Rebuild attribute string
+      const sortedAttrs = attrs.map((a) => `${a.name}="${a.value}"`).join(' ')
+      return `<${tagName} ${sortedAttrs}>`
+    }
+  )
 }
 
 /**
@@ -247,10 +254,7 @@ const normalizeAttributeValues = (xml: string): string => {
 
   // This is handled during attribute parsing/rebuilding
   // For now, ensure consistent quote style (double quotes)
-  return xml.replace(
-    /([a-zA-Z][a-zA-Z0-9_:-]*)\s*=\s*'([^']*)'/g,
-    '$1="$2"'
-  )
+  return xml.replace(/([a-zA-Z][a-zA-Z0-9_:-]*)\s*=\s*'([^']*)'/g, '$1="$2"')
 }
 
 /**
@@ -324,7 +328,10 @@ export class XmlSigner {
     ) {
       throw new Error('Certificate must be in PEM format')
     }
-    if (!config.privateKey.includes('BEGIN') || !config.privateKey.includes('KEY')) {
+    if (
+      !config.privateKey.includes('BEGIN') ||
+      !config.privateKey.includes('KEY')
+    ) {
       throw new Error('Private key must be in PEM format')
     }
   }

@@ -219,11 +219,12 @@ describe('ATS Scenario Schema Validation', () => {
       const result = create1040(info, [])
 
       await run(result).fold(
-        async (errors) => {
+        (errors) => {
           throw new Error(`Form creation failed: ${errors.join(', ')}`)
         },
         async ([f1040]) => {
           const serializer = new Form1040Serializer(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             f1040 as any,
             defaultSerializerConfig
           )
@@ -240,16 +241,17 @@ describe('ATS Scenario Schema Validation', () => {
       )
     })
 
-    it('should have valid SSN format in XML', async () => {
+    it('should have valid SSN format in XML', () => {
       const info = atsScenarioToInformation(scenario)
       const result = create1040(info, [])
 
-      await run(result).fold(
-        async (errors) => {
+      run(result).fold(
+        (errors) => {
           throw new Error(`Form creation failed: ${errors.join(', ')}`)
         },
-        async ([f1040]) => {
+        ([f1040]) => {
           const serializer = new Form1040Serializer(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             f1040 as any,
             defaultSerializerConfig
           )
@@ -323,11 +325,12 @@ describe('ATS Scenario Schema Validation', () => {
       const result = create1040(info, [])
 
       await run(result).fold(
-        async (errors) => {
+        (errors) => {
           throw new Error(`Form creation failed: ${errors.join(', ')}`)
         },
         async ([f1040]) => {
           const serializer = new Form1040Serializer(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             f1040 as any,
             { ...defaultSerializerConfig, spousePIN: '54321' }
           )
@@ -344,16 +347,17 @@ describe('ATS Scenario Schema Validation', () => {
       )
     })
 
-    it('should have valid spouse SSN format', async () => {
+    it('should have valid spouse SSN format', () => {
       const info = atsScenarioToInformation(scenario)
       const result = create1040(info, [])
 
-      await run(result).fold(
-        async (errors) => {
+      run(result).fold(
+        (errors) => {
           throw new Error(`Form creation failed: ${errors.join(', ')}`)
         },
-        async ([f1040]) => {
+        ([f1040]) => {
           const serializer = new Form1040Serializer(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             f1040 as any,
             { ...defaultSerializerConfig, spousePIN: '54321' }
           )
@@ -416,11 +420,12 @@ describe('ATS Scenario Schema Validation', () => {
       const result = create1040(info, [])
 
       await run(result).fold(
-        async (errors) => {
+        (errors) => {
           throw new Error(`Form creation failed: ${errors.join(', ')}`)
         },
         async ([f1040]) => {
           const serializer = new Form1040Serializer(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             f1040 as any,
             defaultSerializerConfig
           )
@@ -498,11 +503,12 @@ describe('Multiple Form Validation', () => {
     const result = create1040(info, [])
 
     await run(result).fold(
-      async (errors) => {
+      (errors) => {
         throw new Error(`Form creation failed: ${errors.join(', ')}`)
       },
       async ([f1040]) => {
         const serializer = new Form1040Serializer(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           f1040 as any,
           defaultSerializerConfig
         )

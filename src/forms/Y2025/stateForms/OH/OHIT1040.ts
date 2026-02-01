@@ -32,11 +32,10 @@ export class OHIT1040 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -83,9 +82,15 @@ export class OHIT1040 extends Form {
   l9 = (): number | undefined => undefined
 
   // Line 10: Total deductions
-  l10 = (): number => sumFields([
-    this.l4(), this.l5(), this.l6(), this.l7(), this.l8(), this.l9()
-  ])
+  l10 = (): number =>
+    sumFields([
+      this.l4(),
+      this.l5(),
+      this.l6(),
+      this.l7(),
+      this.l8(),
+      this.l9()
+    ])
 
   // Line 11: Ohio adjusted gross income
   l11 = (): number => Math.max(0, this.l1() + this.l3() - this.l10())
@@ -109,7 +114,8 @@ export class OHIT1040 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -142,7 +148,10 @@ export class OHIT1040 extends Form {
     const retirementIncome = this.f1040.l5b() ?? 0
     const agi = this.l11()
 
-    if (retirementIncome > 0 && agi <= parameters.retirementIncomeCredit.incomeLimit) {
+    if (
+      retirementIncome > 0 &&
+      agi <= parameters.retirementIncomeCredit.incomeLimit
+    ) {
       return Math.min(
         parameters.retirementIncomeCredit.maxCredit,
         Math.round(retirementIncome * 0.05)
@@ -179,10 +188,19 @@ export class OHIT1040 extends Form {
   l20 = (): number | undefined => undefined
 
   // Line 21: Total nonrefundable credits (limited to tax)
-  l21 = (): number => Math.min(
-    sumFields([this.l14(), this.l15(), this.l16(), this.l17(), this.l18(), this.l19(), this.l20()]),
-    this.l13()
-  )
+  l21 = (): number =>
+    Math.min(
+      sumFields([
+        this.l14(),
+        this.l15(),
+        this.l16(),
+        this.l17(),
+        this.l18(),
+        this.l19(),
+        this.l20()
+      ]),
+      this.l13()
+    )
 
   // Line 22: Tax after nonrefundable credits
   l22 = (): number => Math.max(0, this.l13() - this.l21())
@@ -222,15 +240,39 @@ export class OHIT1040 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l1(), this.l2a(), this.l2b(), this.l2c(), this.l3(),
-    this.l4(), this.l5(), this.l6(), this.l7(), this.l8(), this.l9(), this.l10(),
-    this.l11(), this.l12(), this.l13(),
-    this.l14(), this.l15(), this.l16(), this.l17(), this.l18(), this.l19(), this.l20(), this.l21(),
-    this.l22(), this.l23(), this.l24(), this.l25(), this.l26(),
-    this.l27(), this.l28()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l1(),
+    this.l2a(),
+    this.l2b(),
+    this.l2c(),
+    this.l3(),
+    this.l4(),
+    this.l5(),
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23(),
+    this.l24(),
+    this.l25(),
+    this.l26(),
+    this.l27(),
+    this.l28()
   ]
 }
 

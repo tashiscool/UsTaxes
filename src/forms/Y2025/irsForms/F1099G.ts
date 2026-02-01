@@ -30,19 +30,19 @@ export interface F1099GData {
   // Account number
   accountNumber?: string
   // Payments
-  unemploymentCompensation: number        // Box 1
-  stateLocalTaxRefund: number             // Box 2
-  taxYearOfRefund: number                 // Box 3
-  federalTaxWithheld: number              // Box 4
-  rtaaPayments: number                    // Box 5
-  taxableGrants: number                   // Box 6
-  agriculturePayments: number             // Box 7
-  tradeOrBusinessIncome: boolean          // Box 8 checkbox
-  marketGain: number                      // Box 9
+  unemploymentCompensation: number // Box 1
+  stateLocalTaxRefund: number // Box 2
+  taxYearOfRefund: number // Box 3
+  federalTaxWithheld: number // Box 4
+  rtaaPayments: number // Box 5
+  taxableGrants: number // Box 6
+  agriculturePayments: number // Box 7
+  tradeOrBusinessIncome: boolean // Box 8 checkbox
+  marketGain: number // Box 9
   // State
-  stateTaxWithheld: number                // Box 10a
-  stateId: string                         // Box 10b
-  stateIncome: number                     // Box 11
+  stateTaxWithheld: number // Box 10a
+  stateId: string // Box 10b
+  stateIncome: number // Box 11
 }
 
 export default class F1099G extends F1040Attachment {
@@ -121,15 +121,15 @@ export default class F1099G extends F1040Attachment {
       data?.recipientTIN ?? '',
       data?.accountNumber ?? '',
       // Payments
-      data?.unemploymentCompensation ?? 0,        // Box 1
-      data?.stateLocalTaxRefund ?? 0,             // Box 2
-      data?.taxYearOfRefund ?? 0,                 // Box 3
-      data?.federalTaxWithheld ?? 0,              // Box 4
-      data?.rtaaPayments ?? 0,                    // Box 5
-      data?.taxableGrants ?? 0,                   // Box 6
-      data?.agriculturePayments ?? 0,             // Box 7
-      data?.tradeOrBusinessIncome ?? false,       // Box 8
-      data?.marketGain ?? 0,                      // Box 9
+      data?.unemploymentCompensation ?? 0, // Box 1
+      data?.stateLocalTaxRefund ?? 0, // Box 2
+      data?.taxYearOfRefund ?? 0, // Box 3
+      data?.federalTaxWithheld ?? 0, // Box 4
+      data?.rtaaPayments ?? 0, // Box 5
+      data?.taxableGrants ?? 0, // Box 6
+      data?.agriculturePayments ?? 0, // Box 7
+      data?.tradeOrBusinessIncome ?? false, // Box 8
+      data?.marketGain ?? 0, // Box 9
       // State
       data?.stateTaxWithheld ?? 0,
       data?.stateId ?? '',

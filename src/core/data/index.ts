@@ -66,8 +66,8 @@ export interface Address {
 export interface PrimaryPerson<D = Date> extends Person<D> {
   address: Address
   isTaxpayerDependent: boolean
-  isStudent?: boolean  // For F8615 Kiddie Tax
-  ein?: string  // Employer ID for Schedule H household employment
+  isStudent?: boolean // For F8615 Kiddie Tax
+  ein?: string // Employer ID for Schedule H household employment
 }
 export type PrimaryPersonDateString = PrimaryPerson<string>
 
@@ -121,9 +121,9 @@ export enum Income1099Type {
   DIV = 'DIV',
   R = 'R',
   SSA = 'SSA',
-  NEC = 'NEC',    // Non-employee compensation (gig economy, freelance)
-  MISC = 'MISC',  // Miscellaneous income (rents, royalties, prizes)
-  G = 'G'         // Government payments (unemployment, state tax refunds)
+  NEC = 'NEC', // Non-employee compensation (gig economy, freelance)
+  MISC = 'MISC', // Miscellaneous income (rents, royalties, prizes)
+  G = 'G' // Government payments (unemployment, state tax refunds)
 }
 
 export interface F1099BData {
@@ -188,12 +188,12 @@ export interface F1099SSAData {
  * Replaced Box 7 of 1099-MISC starting in 2020
  */
 export interface F1099NECData {
-  nonemployeeCompensation: number  // Box 1
-  federalIncomeTaxWithheld?: number  // Box 4
-  stateTaxWithheld?: number  // Box 5
-  state?: State  // Box 6
-  statePayerNumber?: string  // Box 7
-  stateIncome?: number  // Box 7
+  nonemployeeCompensation: number // Box 1
+  federalIncomeTaxWithheld?: number // Box 4
+  stateTaxWithheld?: number // Box 5
+  state?: State // Box 6
+  statePayerNumber?: string // Box 7
+  stateIncome?: number // Box 7
 }
 
 /**
@@ -201,22 +201,22 @@ export interface F1099NECData {
  * Rents, royalties, prizes, awards, other income
  */
 export interface F1099MISCData {
-  rents?: number  // Box 1 - Rents
-  royalties?: number  // Box 2 - Royalties
-  otherIncome?: number  // Box 3 - Other income
-  federalIncomeTaxWithheld?: number  // Box 4
-  fishingBoatProceeds?: number  // Box 5
-  medicalPayments?: number  // Box 6
-  substitutePayments?: number  // Box 8 - Substitute payments in lieu of dividends
-  cropInsuranceProceeds?: number  // Box 9
-  grossProceedsAttorney?: number  // Box 10
-  fishPurchasedForResale?: number  // Box 11
-  section409ADeferrals?: number  // Box 12
-  excessGoldenParachute?: number  // Box 13
-  nonqualifiedDeferredComp?: number  // Box 14
-  stateTaxWithheld?: number  // Box 15
-  state?: State  // Box 16
-  stateIncome?: number  // Box 17
+  rents?: number // Box 1 - Rents
+  royalties?: number // Box 2 - Royalties
+  otherIncome?: number // Box 3 - Other income
+  federalIncomeTaxWithheld?: number // Box 4
+  fishingBoatProceeds?: number // Box 5
+  medicalPayments?: number // Box 6
+  substitutePayments?: number // Box 8 - Substitute payments in lieu of dividends
+  cropInsuranceProceeds?: number // Box 9
+  grossProceedsAttorney?: number // Box 10
+  fishPurchasedForResale?: number // Box 11
+  section409ADeferrals?: number // Box 12
+  excessGoldenParachute?: number // Box 13
+  nonqualifiedDeferredComp?: number // Box 14
+  stateTaxWithheld?: number // Box 15
+  state?: State // Box 16
+  stateIncome?: number // Box 17
 }
 
 /**
@@ -224,18 +224,18 @@ export interface F1099MISCData {
  * Unemployment compensation, state/local tax refunds, RTAA payments
  */
 export interface F1099GData {
-  unemploymentCompensation?: number  // Box 1 - Unemployment compensation
-  stateLocalTaxRefund?: number  // Box 2 - State or local income tax refunds
-  taxYear?: number  // Box 3 - Tax year of refund (if Box 2)
-  federalIncomeTaxWithheld?: number  // Box 4
-  rtaaPayments?: number  // Box 5 - RTAA payments (Reemployment Trade Adjustment)
-  taxableGrants?: number  // Box 6 - Taxable grants
-  agriculturePayments?: number  // Box 7 - Agriculture payments
-  tradeOrBusinessIncome?: boolean  // Box 8 - Check if trade/business income
-  marketGain?: number  // Box 9 - Market gain
-  state?: State  // Box 10a
-  stateIdNumber?: string  // Box 10b
-  stateTaxWithheld?: number  // Box 11
+  unemploymentCompensation?: number // Box 1 - Unemployment compensation
+  stateLocalTaxRefund?: number // Box 2 - State or local income tax refunds
+  taxYear?: number // Box 3 - Tax year of refund (if Box 2)
+  federalIncomeTaxWithheld?: number // Box 4
+  rtaaPayments?: number // Box 5 - RTAA payments (Reemployment Trade Adjustment)
+  taxableGrants?: number // Box 6 - Taxable grants
+  agriculturePayments?: number // Box 7 - Agriculture payments
+  tradeOrBusinessIncome?: boolean // Box 8 - Check if trade/business income
+  marketGain?: number // Box 9 - Market gain
+  state?: State // Box 10a
+  stateIdNumber?: string // Box 10b
+  stateTaxWithheld?: number // Box 11
 }
 
 export interface Income1099<T, D> {
@@ -638,8 +638,8 @@ export interface LocalTaxJurisdiction {
   name: string
   state: State
   taxRate: number
-  creditRate?: number  // Percentage of credit allowed for taxes paid to other jurisdictions
-  collectionAgency?: 'RITA' | 'CCA' | 'Direct'  // For Ohio cities
+  creditRate?: number // Percentage of credit allowed for taxes paid to other jurisdictions
+  collectionAgency?: 'RITA' | 'CCA' | 'Direct' // For Ohio cities
   hasResidentTax: boolean
   hasNonResidentTax: boolean
   hasSelfEmploymentTax: boolean
@@ -660,10 +660,10 @@ export interface LocalTaxInfo {
   worksInDifferentCity: boolean
 
   // Withholding and payments
-  localWithholding: number  // Total local tax withheld (residence city)
-  workCityWithholding?: number  // Tax withheld for work city (if different)
-  estimatedPayments?: number  // Estimated local tax payments made
-  otherMunicipalTaxPaid?: number  // Taxes paid to other municipalities (for credit)
+  localWithholding: number // Total local tax withheld (residence city)
+  workCityWithholding?: number // Tax withheld for work city (if different)
+  estimatedPayments?: number // Estimated local tax payments made
+  otherMunicipalTaxPaid?: number // Taxes paid to other municipalities (for credit)
 
   // Ohio-specific fields
   ohioSchoolDistrict?: string
@@ -690,20 +690,20 @@ export type EditLocalTaxInfoAction = {
 
 // Overtime Income Exemption (new for 2025)
 export interface OvertimeIncome {
-  amount: number  // Total qualified overtime wages
+  amount: number // Total qualified overtime wages
   employerName?: string
 }
 
 // Tip Income Exemption (new for 2025)
 export interface TipIncome {
-  amount: number  // Total qualified tip income
+  amount: number // Total qualified tip income
   employerName?: string
 }
 
 // Auto Loan Interest Deduction (new for 2025)
 export interface AutoLoanInterest {
-  amount: number  // Total auto loan interest paid
-  domesticManufacture: boolean  // Vehicle manufactured in USA
+  amount: number // Total auto loan interest paid
+  domesticManufacture: boolean // Vehicle manufactured in USA
   lenderName?: string
   vehicleMake?: string
   vehicleModel?: string
@@ -716,11 +716,11 @@ export interface TrumpSavingsAccount<D = Date> {
   beneficiaryName: string
   beneficiarySSN: string
   beneficiaryDateOfBirth: D
-  beneficiaryIsCitizen: boolean  // Required for eligibility
-  accountOpenDate?: D  // Date account was opened
-  contributionAmount: number  // Taxpayer contribution this year (max $5,000)
-  governmentContribution?: number  // Initial $1,000 for children born 2025+
-  fairMarketValue?: number  // Year-end FMV
+  beneficiaryIsCitizen: boolean // Required for eligibility
+  accountOpenDate?: D // Date account was opened
+  contributionAmount: number // Taxpayer contribution this year (max $5,000)
+  governmentContribution?: number // Initial $1,000 for children born 2025+
+  fairMarketValue?: number // Year-end FMV
   accountNumber?: string
   custodianName?: string
   custodianEIN?: string
@@ -757,9 +757,15 @@ export interface MovingExpenses<D = Date> {
 
 // Depreciable Assets (Form 4562)
 export type DepreciableAssetClass =
-  | '3-year' | '5-year' | '7-year' | '10-year'
-  | '15-year' | '20-year' | '25-year'
-  | '27.5-year' | '39-year'
+  | '3-year'
+  | '5-year'
+  | '7-year'
+  | '10-year'
+  | '15-year'
+  | '20-year'
+  | '25-year'
+  | '27.5-year'
+  | '39-year'
 
 export interface DepreciableAsset<D = Date> {
   description: string
@@ -794,7 +800,7 @@ export interface ExtensionInfo {
 
 // Early Distribution Exceptions (Form 5329)
 export interface EarlyDistributionException {
-  code: string  // IRS exception codes 01-12
+  code: string // IRS exception codes 01-12
   amount: number
   description: string
 }
@@ -883,9 +889,9 @@ export interface PriorYearAmtInfo {
   regularTaxLiability: number
   netAmtAdjustments: number
   amtCreditCarryforward: number
-  line6: number  // Form 6251 line 6 (AMT after exemption)
-  exclusionItems: number  // Exclusion items from prior year
-  foreignTaxCredit: number  // Prior year minimum tax foreign tax credit
+  line6: number // Form 6251 line 6 (AMT after exemption)
+  exclusionItems: number // Exclusion items from prior year
+  foreignTaxCredit: number // Prior year minimum tax foreign tax credit
 }
 
 // Like-Kind Exchange (Form 8824)
@@ -940,7 +946,12 @@ export interface AdoptedChild {
 }
 
 // Foreign Financial Assets (Form 8938 - FATCA)
-export type ForeignAssetType = 'depositAccount' | 'custodialAccount' | 'equity' | 'debt' | 'other'
+export type ForeignAssetType =
+  | 'depositAccount'
+  | 'custodialAccount'
+  | 'equity'
+  | 'debt'
+  | 'other'
 
 export interface ForeignFinancialAsset<D = Date> {
   type: ForeignAssetType
@@ -1023,7 +1034,7 @@ export interface HouseholdEmployee {
 export interface DependentCareProvider {
   name: string
   address: string
-  tin: string  // SSN or EIN
+  tin: string // SSN or EIN
   amountPaid: number
 }
 
@@ -1034,19 +1045,26 @@ export interface EducationExpense {
   institutionName: string
   institutionEin?: string
   institutionAddress?: string
-  qualifiedExpenses: number  // Tuition and fees
+  qualifiedExpenses: number // Tuition and fees
   scholarshipsReceived: number
   isHalfTimeStudent: boolean
-  isFirstFourYears: boolean  // First 4 years of postsecondary education
-  hasConviction: boolean  // Drug felony conviction
-  creditType: 'AOTC' | 'LLC'  // American Opportunity or Lifetime Learning
+  isFirstFourYears: boolean // First 4 years of postsecondary education
+  hasConviction: boolean // Drug felony conviction
+  creditType: 'AOTC' | 'LLC' // American Opportunity or Lifetime Learning
   personRole: PersonRole
 }
 
 // Energy Improvement (Form 5695)
 export type EnergyImprovementType =
-  | 'insulation' | 'exteriorDoors' | 'windows' | 'centralAirConditioner'
-  | 'waterHeater' | 'furnace' | 'heatPump' | 'biomassStove' | 'homeEnergyAudit'
+  | 'insulation'
+  | 'exteriorDoors'
+  | 'windows'
+  | 'centralAirConditioner'
+  | 'waterHeater'
+  | 'furnace'
+  | 'heatPump'
+  | 'biomassStove'
+  | 'homeEnergyAudit'
 
 export interface EnergyImprovement<D = Date> {
   type: EnergyImprovementType
@@ -1061,11 +1079,11 @@ export interface HealthInsuranceMarketplaceInfo<D = Date> {
   policyNumber: string
   coverageStartDate: D
   coverageEndDate: D
-  enrollmentPremiums: number[]  // Monthly premiums (12 entries)
-  slcsp: number[]  // Second lowest cost silver plan (12 entries)
-  advancePayments: number[]  // Advance premium tax credit (12 entries)
-  coverageFamily: number  // Number of people covered
-  sharedPolicyAllocation?: number  // Percentage if shared policy
+  enrollmentPremiums: number[] // Monthly premiums (12 entries)
+  slcsp: number[] // Second lowest cost silver plan (12 entries)
+  advancePayments: number[] // Advance premium tax credit (12 entries)
+  coverageFamily: number // Number of people covered
+  sharedPolicyAllocation?: number // Percentage if shared policy
 }
 
 // Foreign Earned Income (Form 2555)
@@ -1084,7 +1102,7 @@ export interface ForeignEarnedIncomeInfo<D = Date> {
   residenceStartDate?: D
   residenceEndDate?: D
   // Physical presence test
-  physicalPresenceDays?: number  // Days in foreign countries
+  physicalPresenceDays?: number // Days in foreign countries
   physicalPresenceStartDate?: D
   physicalPresenceEndDate?: D
 }
@@ -1098,13 +1116,13 @@ export interface ForeignEarnedIncomeInfo<D = Date> {
  * Received from RICs (mutual funds) or REITs
  */
 export interface F2439Data {
-  payer: string  // Name of RIC or REIT
-  payerTin?: string  // Payer's TIN
-  box1a: number  // Total undistributed long-term capital gains
-  box1b?: number  // Unrecaptured section 1250 gain
-  box1c?: number  // Section 1202 gain (excluded from tax)
-  box1d?: number  // Collectibles (28%) gain
-  box2: number  // Tax paid by the RIC or REIT
+  payer: string // Name of RIC or REIT
+  payerTin?: string // Payer's TIN
+  box1a: number // Total undistributed long-term capital gains
+  box1b?: number // Unrecaptured section 1250 gain
+  box1c?: number // Section 1202 gain (excluded from tax)
+  box1d?: number // Collectibles (28%) gain
+  box2: number // Tax paid by the RIC or REIT
 }
 
 // =============================================================================
@@ -1136,9 +1154,9 @@ export type FuelType =
 export interface FuelTaxCreditEntry {
   fuelType: FuelType
   gallons: number
-  rate?: number  // If not provided, use standard rate
-  claimant?: string  // Type of claimant (registered ultimate vendor, etc.)
-  crnCode?: string  // Claimant registration number code
+  rate?: number // If not provided, use standard rate
+  claimant?: string // Type of claimant (registered ultimate vendor, etc.)
+  crnCode?: string // Claimant registration number code
 }
 
 // =============================================================================
@@ -1152,17 +1170,17 @@ export interface FuelTaxCreditEntry {
 export interface LumpSumDistributionData {
   planName: string
   planEin?: string
-  participantBirthYear: number  // Must have been born before 1936 for capital gain treatment
-  totalDistribution: number  // Box 1 of 1099-R
-  capitalGainPortion?: number  // Amount eligible for capital gain treatment
-  ordinaryIncomePortion?: number  // Amount subject to ordinary income tax
-  netUnrealizedAppreciation?: number  // NUA from employer securities
-  employeeContributions?: number  // Your after-tax contributions
-  previouslyTaxedAmount?: number  // Amount previously taxed
-  currentActuarialValue?: number  // Current actuarial value of annuity
-  electCapitalGainTreatment?: boolean  // Elect 20% capital gain rate for pre-1974 participation
-  elect10YearAveraging?: boolean  // Elect 10-year averaging
-  federalEstateTaxAttributable?: number  // Federal estate tax attributable to distribution
+  participantBirthYear: number // Must have been born before 1936 for capital gain treatment
+  totalDistribution: number // Box 1 of 1099-R
+  capitalGainPortion?: number // Amount eligible for capital gain treatment
+  ordinaryIncomePortion?: number // Amount subject to ordinary income tax
+  netUnrealizedAppreciation?: number // NUA from employer securities
+  employeeContributions?: number // Your after-tax contributions
+  previouslyTaxedAmount?: number // Amount previously taxed
+  currentActuarialValue?: number // Current actuarial value of annuity
+  electCapitalGainTreatment?: boolean // Elect 20% capital gain rate for pre-1974 participation
+  elect10YearAveraging?: boolean // Elect 10-year averaging
+  federalEstateTaxAttributable?: number // Federal estate tax attributable to distribution
 }
 
 // =============================================================================
@@ -1176,11 +1194,11 @@ export type BusinessEntityType =
   | 'C-Corporation'
   | 'S-Corporation'
   | 'Partnership'
-  | 'LLC-Partnership'     // LLC taxed as partnership
-  | 'LLC-SCorp'           // LLC elected S-Corp status
-  | 'LLC-CCorp'           // LLC elected C-Corp status
-  | 'LLC-Disregarded'     // Single-member LLC (Schedule C)
-  | 'SoleProprietorship'  // Schedule C
+  | 'LLC-Partnership' // LLC taxed as partnership
+  | 'LLC-SCorp' // LLC elected S-Corp status
+  | 'LLC-CCorp' // LLC elected C-Corp status
+  | 'LLC-Disregarded' // Single-member LLC (Schedule C)
+  | 'SoleProprietorship' // Schedule C
 
 /**
  * Business entity identification and basic info
@@ -1192,12 +1210,12 @@ export interface BusinessEntity<D = Date> {
   dateIncorporated?: D
   stateOfIncorporation?: State
   address: Address
-  principalBusinessActivity: string  // NAICS code
+  principalBusinessActivity: string // NAICS code
   principalProductOrService: string
   accountingMethod: 'cash' | 'accrual' | 'other'
   taxYear: number
   isFiscalYear: boolean
-  fiscalYearEnd?: string  // MM/DD format if fiscal year
+  fiscalYearEnd?: string // MM/DD format if fiscal year
   totalAssets: number
   numberOfEmployees?: number
 }
@@ -1211,7 +1229,7 @@ export interface SCorpIncome {
   grossReceiptsOrSales: number
   returnsAndAllowances: number
   costOfGoodsSold: number
-  netGainFromSaleOfAssets: number  // Form 4797
+  netGainFromSaleOfAssets: number // Form 4797
   otherIncome: number
   interestIncome: number
   dividendIncome: number
@@ -1223,14 +1241,14 @@ export interface SCorpIncome {
  * S-Corporation Deductions (Form 1120-S)
  */
 export interface SCorpDeductions {
-  compensation: number  // Shareholder-employee wages
-  salariesAndWages: number  // Non-shareholder employees
+  compensation: number // Shareholder-employee wages
+  salariesAndWages: number // Non-shareholder employees
   repairsAndMaintenance: number
   badDebts: number
   rents: number
   taxesAndLicenses: number
   interest: number
-  depreciation: number  // From Form 4562
+  depreciation: number // From Form 4562
   depletion: number
   advertising: number
   pensionPlans: number
@@ -1245,11 +1263,11 @@ export interface SCorpShareholder {
   name: string
   ssn: string
   address?: Address
-  ownershipPercentage: number  // 0-100
-  stockOwned: number  // Number of shares
-  dateAcquired?: string  // Date acquired stock
+  ownershipPercentage: number // 0-100
+  stockOwned: number // Number of shares
+  dateAcquired?: string // Date acquired stock
   isOfficer: boolean
-  compensation?: number  // If officer/employee
+  compensation?: number // If officer/employee
 }
 
 /**
@@ -1258,37 +1276,37 @@ export interface SCorpShareholder {
  */
 export interface ScheduleKItems {
   // Income/Loss
-  ordinaryBusinessIncome: number  // Line 1
-  netRentalRealEstateIncome: number  // Line 2
-  otherNetRentalIncome: number  // Line 3c
-  interestIncome: number  // Line 4
-  dividendIncome: number  // Line 5a
-  qualifiedDividends: number  // Line 5b
-  royalties: number  // Line 6
-  netShortTermCapitalGain: number  // Line 7
-  netLongTermCapitalGain: number  // Line 8a
-  collectibles28Gain: number  // Line 8b
-  unrecaptured1250Gain: number  // Line 8c
-  net1231Gain: number  // Line 9
-  otherIncome: number  // Line 10
+  ordinaryBusinessIncome: number // Line 1
+  netRentalRealEstateIncome: number // Line 2
+  otherNetRentalIncome: number // Line 3c
+  interestIncome: number // Line 4
+  dividendIncome: number // Line 5a
+  qualifiedDividends: number // Line 5b
+  royalties: number // Line 6
+  netShortTermCapitalGain: number // Line 7
+  netLongTermCapitalGain: number // Line 8a
+  collectibles28Gain: number // Line 8b
+  unrecaptured1250Gain: number // Line 8c
+  net1231Gain: number // Line 9
+  otherIncome: number // Line 10
   // Deductions
-  section179Deduction: number  // Line 11
-  otherDeductions: number  // Line 12
+  section179Deduction: number // Line 11
+  otherDeductions: number // Line 12
   charitableContributions: number
   // Credits
-  lowIncomeHousingCredit: number  // Line 13a
-  otherCredits: number  // Line 13b-13g
+  lowIncomeHousingCredit: number // Line 13a
+  otherCredits: number // Line 13b-13g
   // Self-employment
-  netEarningsSE: number  // For partners only
+  netEarningsSE: number // For partners only
   // Tax-exempt income
-  taxExemptInterest: number  // Line 16a
-  otherTaxExemptIncome: number  // Line 16b
-  nondeductibleExpenses: number  // Line 16c
+  taxExemptInterest: number // Line 16a
+  otherTaxExemptIncome: number // Line 16b
+  nondeductibleExpenses: number // Line 16c
   // Distributions
-  cashDistributions: number  // Line 16d
+  cashDistributions: number // Line 16d
   propertyDistributions: number
   // Other
-  section199AQBI: number  // Line 17
+  section199AQBI: number // Line 17
   foreignTransactions?: Record<string, unknown>
   amtItems?: Record<string, unknown>
 }
@@ -1303,10 +1321,10 @@ export interface Form1120SData<D = Date> {
   shareholders: SCorpShareholder[]
   scheduleK: ScheduleKItems
   // Tax computation
-  builtInGainsTax?: number  // If converted from C-Corp
-  excessPassiveIncomeTax?: number  // If excess passive income and E&P
+  builtInGainsTax?: number // If converted from C-Corp
+  excessPassiveIncomeTax?: number // If excess passive income and E&P
   // Prior year items
-  priorYearAccumulatedE_P?: number  // C-Corp E&P if converted
+  priorYearAccumulatedE_P?: number // C-Corp E&P if converted
   // Credits
   generalBusinessCredits?: Record<string, number>
   // Estimated tax payments
@@ -1327,7 +1345,7 @@ export interface CCorpIncome {
   grossRents: number
   grossRoyalties: number
   capitalGainNetIncome: number
-  netGainFromSaleOfAssets: number  // Form 4797
+  netGainFromSaleOfAssets: number // Form 4797
   otherIncome: number
 }
 
@@ -1342,7 +1360,7 @@ export interface CCorpDeductions {
   rents: number
   taxesAndLicenses: number
   interest: number
-  charitableContributions: number  // Limited to 10% taxable income
+  charitableContributions: number // Limited to 10% taxable income
   depreciation: number
   depletion: number
   advertising: number
@@ -1356,12 +1374,12 @@ export interface CCorpDeductions {
  * C-Corporation Special Deductions (Schedule C of 1120)
  */
 export interface CCorpSpecialDeductions {
-  dividendsReceivedDeduction: number  // 50%, 65%, or 100%
+  dividendsReceivedDeduction: number // 50%, 65%, or 100%
   dividendsFromAffiliated: number
   dividendsOnDebtFinancedStock: number
   dividendsOnCertainPreferred: number
   foreignDividends: number
-  nol: number  // Net Operating Loss deduction
+  nol: number // Net Operating Loss deduction
 }
 
 /**
@@ -1374,7 +1392,7 @@ export interface Form1120Data<D = Date> {
   specialDeductions: CCorpSpecialDeductions
   // Tax computation
   taxableIncome: number
-  taxBeforeCredits: number  // 21% flat rate for 2025
+  taxBeforeCredits: number // 21% flat rate for 2025
   // Credits
   foreignTaxCredit?: number
   generalBusinessCredits?: Record<string, number>
@@ -1418,14 +1436,14 @@ export interface PriorYearCorporateTax {
  * Annualized Income Installment Method Data (Form 1120-W)
  */
 export interface AnnualizedIncomeMethod {
-  period1Income: number  // Jan 1 - Mar 31
-  period2Income: number  // Jan 1 - May 31
-  period3Income: number  // Jan 1 - Aug 31
-  period4Income: number  // Jan 1 - Nov 30
-  period1Factor?: number  // Default: 4
-  period2Factor?: number  // Default: 2.4
-  period3Factor?: number  // Default: 1.5
-  period4Factor?: number  // Default: 1.09091
+  period1Income: number // Jan 1 - Mar 31
+  period2Income: number // Jan 1 - May 31
+  period3Income: number // Jan 1 - Aug 31
+  period4Income: number // Jan 1 - Nov 30
+  period1Factor?: number // Default: 4
+  period2Factor?: number // Default: 2.4
+  period3Factor?: number // Default: 1.5
+  period4Factor?: number // Default: 1.09091
 }
 
 /**
@@ -1469,14 +1487,14 @@ export interface Form1120WData {
  */
 export interface PartnerInfo {
   name: string
-  tin: string  // SSN or EIN
+  tin: string // SSN or EIN
   tinType: 'SSN' | 'EIN'
   address?: Address
   isGeneralPartner: boolean
   isLimitedPartner: boolean
   isDomestic: boolean
-  profitSharingPercent: number  // Profit sharing %
-  lossSharingPercent: number    // Loss sharing %
+  profitSharingPercent: number // Profit sharing %
+  lossSharingPercent: number // Loss sharing %
   capitalSharingPercent: number // Capital sharing %
   beginningCapitalAccount: number
   capitalContributed: number
@@ -1494,7 +1512,7 @@ export interface PartnershipIncome {
   grossReceiptsOrSales: number
   returnsAndAllowances: number
   costOfGoodsSold: number
-  ordinaryIncome: number  // From other partnerships, estates, trusts
+  ordinaryIncome: number // From other partnerships, estates, trusts
   netFarmProfit: number
   netGainFromSaleOfAssets: number
   otherIncome: number
@@ -1559,9 +1577,9 @@ export interface PayrollEmployee {
   socialSecurityTax: number
   medicareWages: number
   medicareTax: number
-  additionalMedicareTax?: number  // Over $200K
+  additionalMedicareTax?: number // Over $200K
   tipsReported?: number
-  advancedEIC?: number  // Legacy, no longer applicable
+  advancedEIC?: number // Legacy, no longer applicable
 }
 
 /**
@@ -1576,9 +1594,9 @@ export interface QuarterlyPayrollData<D = Date> {
   totalWages: number
   totalFederalWithholding: number
   totalSocialSecurityWages: number
-  totalSocialSecurityTax: number  // Employee + employer share
+  totalSocialSecurityTax: number // Employee + employer share
   totalMedicareWages: number
-  totalMedicareTax: number  // Employee + employer share
+  totalMedicareTax: number // Employee + employer share
   totalAdditionalMedicareTax: number
   totalTipsReported: number
   // Adjustments
@@ -1605,7 +1623,7 @@ export interface Form941Data<D = Date> {
   entity: BusinessEntity<D>
   quarterData: QuarterlyPayrollData<D>
   // Signatures
-  payerNameControl: string  // First 4 letters of business name
+  payerNameControl: string // First 4 letters of business name
   // Deposit schedule
   depositSchedule: 'monthly' | 'semiweekly'
   totalLiabilityForQuarter: number
@@ -1623,7 +1641,7 @@ export interface FUTAWageData {
   employeeName: string
   employeeSSN: string
   totalWages: number
-  wagesToFUTALimit: number  // Up to $7,000 per employee for 2025
+  wagesToFUTALimit: number // Up to $7,000 per employee for 2025
   stateUnemploymentWages: number
   stateUnemploymentContributions: number
 }
@@ -1642,18 +1660,18 @@ export interface Form940Data<D = Date> {
   statesWhereWagesPaid: State[]
   allWagesExemptFromSUTA: boolean
   // Wages
-  totalPayments: number  // Line 3
-  exemptPayments: number  // Line 4 (retirement, group life, dependent care, other)
-  paymentsOverFUTALimit: number  // Line 5
-  totalTaxableWages: number  // Line 7
+  totalPayments: number // Line 3
+  exemptPayments: number // Line 4 (retirement, group life, dependent care, other)
+  paymentsOverFUTALimit: number // Line 5
+  totalTaxableWages: number // Line 7
   // FUTA tax calculation
-  futaTaxBeforeAdjustments: number  // Line 8 (0.6% of line 7)
+  futaTaxBeforeAdjustments: number // Line 8 (0.6% of line 7)
   // Multi-state adjustments
-  stateUnemploymentTaxCredit: number  // Line 9
-  creditReductionAmount: number  // Line 10 (for credit reduction states)
-  totalFUTATax: number  // Line 12
+  stateUnemploymentTaxCredit: number // Line 9
+  creditReductionAmount: number // Line 10 (for credit reduction states)
+  totalFUTATax: number // Line 12
   // Payments
-  depositsForYear: number  // Line 13
+  depositsForYear: number // Line 13
   balanceDue: number
   overpayment: number
   // Per-employee data for Schedule A if needed
@@ -1666,25 +1684,25 @@ export type Form940DataDateString = Form940Data<string>
  * General Business Credit Components (Form 3800)
  */
 export interface GeneralBusinessCreditComponents {
-  investmentCredit?: number  // Form 3468
-  workOpportunityCredit?: number  // Form 5884
-  alcoholFuelsCredit?: number  // Form 6478
-  researchCredit?: number  // Form 6765
-  lowIncomeHousingCredit?: number  // Form 8586
-  disabledAccessCredit?: number  // Form 8826
-  renewableElectricityCredit?: number  // Form 8835
-  empowermentZoneCredit?: number  // Form 8844
-  indianEmploymentCredit?: number  // Form 8845
-  orphanDrugCredit?: number  // Form 8820
-  newMarketsCredit?: number  // Form 8874
-  creditForEmployerSSOnTips?: number  // Form 8846
-  biodieselFuelsCredit?: number  // Form 8864
-  smallEmployerPensionStartup?: number  // Form 8881
-  employerProvidedChildcareCredit?: number  // Form 8882
-  differentialWageCredit?: number  // Form 8932
-  carbonOxideSequestration?: number  // Form 8933
-  qualifiedPlugInCredit?: number  // Form 8936
-  smallEmployerHealthInsurance?: number  // Form 8941 Part III
+  investmentCredit?: number // Form 3468
+  workOpportunityCredit?: number // Form 5884
+  alcoholFuelsCredit?: number // Form 6478
+  researchCredit?: number // Form 6765
+  lowIncomeHousingCredit?: number // Form 8586
+  disabledAccessCredit?: number // Form 8826
+  renewableElectricityCredit?: number // Form 8835
+  empowermentZoneCredit?: number // Form 8844
+  indianEmploymentCredit?: number // Form 8845
+  orphanDrugCredit?: number // Form 8820
+  newMarketsCredit?: number // Form 8874
+  creditForEmployerSSOnTips?: number // Form 8846
+  biodieselFuelsCredit?: number // Form 8864
+  smallEmployerPensionStartup?: number // Form 8881
+  employerProvidedChildcareCredit?: number // Form 8882
+  differentialWageCredit?: number // Form 8932
+  carbonOxideSequestration?: number // Form 8933
+  qualifiedPlugInCredit?: number // Form 8936
+  smallEmployerHealthInsurance?: number // Form 8941 Part III
   otherCredits?: number
 }
 
@@ -1700,7 +1718,7 @@ export interface Form3800Data {
   tentativeMinimumTax: number
   netIncomeTax: number
   netRegularTaxLiability: number
-  allowedCredit: number  // Lesser of available credit or limitation
+  allowedCredit: number // Lesser of available credit or limitation
   carryforwardToNextYear: number
 }
 
@@ -1945,8 +1963,8 @@ export interface Form1099BGenerated extends Form1099Base {
   box2ShortTermGainLoss?: number
   box3LongTermGainLoss?: number
   box4FederalWithholding?: number
-  box5Checkbox?: boolean  // Noncovered security
-  box6ReportedToIRS?: 'A' | 'B' | 'D' | 'X'  // Basis reporting
+  box5Checkbox?: boolean // Noncovered security
+  box6ReportedToIRS?: 'A' | 'B' | 'D' | 'X' // Basis reporting
   box7LossNotAllowed?: boolean
   box8Type?: 'ordinary' | 'QOF' | 'collectibles'
   box9QOFDeferredGain?: number
@@ -1968,7 +1986,7 @@ export interface Form1099RGenerated extends Form1099Base {
   box4FederalWithholding?: number
   box5EmployeeContributions?: number
   box6NetUnrealizedAppreciation?: number
-  box7DistributionCode: string  // e.g., '1', '7', 'G'
+  box7DistributionCode: string // e.g., '1', '7', 'G'
   box7IRASEPSimple?: boolean
   box8Other?: number
   box8OtherPercent?: number
@@ -2037,7 +2055,7 @@ export interface FormW2Generated {
   box8AllocatedTips?: number
   box10DependentCareBenefits?: number
   box11NonqualifiedPlans?: number
-  box12: W2Box12Info  // Various codes
+  box12: W2Box12Info // Various codes
   box13Statutory?: boolean
   box13RetirementPlan?: boolean
   box13ThirdPartySickPay?: boolean
@@ -2099,7 +2117,15 @@ export interface Form1096Data {
   contactPhone?: string
   contactEmail?: string
   // Type of form being transmitted
-  formType: '1099-NEC' | '1099-MISC' | '1099-INT' | '1099-DIV' | '1099-B' | '1099-R' | '1099-S' | '1099-K'
+  formType:
+    | '1099-NEC'
+    | '1099-MISC'
+    | '1099-INT'
+    | '1099-DIV'
+    | '1099-B'
+    | '1099-R'
+    | '1099-S'
+    | '1099-K'
   numberOfForms: number
   totalAmount: number
   federalWithholding?: number
@@ -2125,7 +2151,7 @@ export type ExciseTaxCategory =
 
 export interface ExciseTaxItem {
   category: ExciseTaxCategory
-  irn: string  // IRS Reference Number
+  irn: string // IRS Reference Number
   description: string
   gallonsOrUnits: number
   rate: number
@@ -2161,11 +2187,11 @@ export type Form720DataDateString = Form720Data<string>
 
 export interface HeavyVehicle {
   vin: string
-  taxableGrossWeight: number  // In pounds (55,000+ taxable)
-  categoryLetter: string  // A through V based on weight
-  firstUseMonth: number  // 1-12
-  loggingUse?: boolean  // Reduced rate for logging
-  suspended?: boolean  // Mileage under 5,000 (7,500 for ag)
+  taxableGrossWeight: number // In pounds (55,000+ taxable)
+  categoryLetter: string // A through V based on weight
+  firstUseMonth: number // 1-12
+  loggingUse?: boolean // Reduced rate for logging
+  suspended?: boolean // Mileage under 5,000 (7,500 for ag)
 }
 
 /**
@@ -2173,7 +2199,7 @@ export interface HeavyVehicle {
  */
 export interface Form2290Data<D = Date> {
   entity: BusinessEntity<D>
-  taxPeriod: string  // July YYYY - June YYYY+1
+  taxPeriod: string // July YYYY - June YYYY+1
   taxYear: number
   // Vehicles
   vehicles: HeavyVehicle[]
@@ -2199,10 +2225,10 @@ export type Form2290DataDateString = Form2290Data<string>
 // =============================================================================
 
 export type EntityClassificationChoice =
-  | 'corporation'           // Taxed as corporation
-  | 'partnership'           // Taxed as partnership (default for multi-member)
-  | 'disregarded'           // Disregarded entity (default for single-member LLC)
-  | 'sCorporation'          // S-Corporation election (requires 2553)
+  | 'corporation' // Taxed as corporation
+  | 'partnership' // Taxed as partnership (default for multi-member)
+  | 'disregarded' // Disregarded entity (default for single-member LLC)
+  | 'sCorporation' // S-Corporation election (requires 2553)
 
 /**
  * Form 8832 - Entity Classification Election
@@ -2239,9 +2265,9 @@ export interface SCorpShareholderConsent {
   name: string
   ssn: string
   address?: Address
-  stockOwned: number  // Number of shares
+  stockOwned: number // Number of shares
   dateAcquired: string
-  taxYearEnd: string  // Fiscal year ending month/day
+  taxYearEnd: string // Fiscal year ending month/day
   signatureDate: string
   consent: boolean
 }
@@ -2257,8 +2283,8 @@ export interface Form2553Data<D = Date> {
   dateIncorporated: D
   stateOfIncorporation: State
   // Election details
-  effectiveDate: D  // First day of tax year election is effective
-  taxYearEnd: 'December' | string  // Calendar year or fiscal
+  effectiveDate: D // First day of tax year election is effective
+  taxYearEnd: 'December' | string // Calendar year or fiscal
   // Principal business
   principalBusinessActivity: string
   principalProduct: string
@@ -2360,7 +2386,7 @@ export interface Form5884Data {
     targetGroup: string
     employeeName: string
     wages: number
-    creditRate: number  // 25% or 40%
+    creditRate: number // 25% or 40%
     credit: number
   }[]
   totalCredit: number
@@ -2377,7 +2403,7 @@ export interface Form6765Data {
   // Alternative simplified credit
   useSimplifiedMethod: boolean
   currentYearQRE?: number
-  priorYearQRE?: number[]  // Prior 3 years
+  priorYearQRE?: number[] // Prior 3 years
   // Credit calculation
   regularCredit: number
   alternativeCredit: number
@@ -2395,8 +2421,8 @@ export interface Form8994Data {
     name: string
     wagesForLeave: number
     normalWages: number
-    leaveWagesPercent: number  // 50-100%
-    creditRate: number  // 12.5-25%
+    leaveWagesPercent: number // 50-100%
+    creditRate: number // 12.5-25%
     credit: number
   }[]
   totalCredit: number
@@ -2412,10 +2438,10 @@ export interface Form8586Data {
     dateAcquired: string
     dateOfAllocation: string
     qualifiedBasisAmount: number
-    creditPercentage: number  // 4% or ~9%
+    creditPercentage: number // 4% or ~9%
     creditAmount: number
   }[]
-  passthrough8586Credit?: number  // From partnerships/S-corps
+  passthrough8586Credit?: number // From partnerships/S-corps
   totalCredit: number
 }
 
@@ -2423,11 +2449,11 @@ export interface Form8586Data {
  * Form 8826 - Disabled Access Credit
  */
 export interface Form8826Data {
-  eligibleAccessExpenditures: number  // Total eligible expenses (max $10,250)
-  minimumExpenditure: number  // $250 (not eligible)
-  maximumExpenditure: number  // $10,250 (cap)
+  eligibleAccessExpenditures: number // Total eligible expenses (max $10,250)
+  minimumExpenditure: number // $250 (not eligible)
+  maximumExpenditure: number // $10,250 (cap)
   taxYear: number
-  totalCredit: number  // 50% of expenses between $250 and $10,250 (max $5,000)
+  totalCredit: number // 50% of expenses between $250 and $10,250 (max $5,000)
 }
 
 /**
@@ -2435,10 +2461,20 @@ export interface Form8826Data {
  */
 export interface Form8835Data {
   facilities: {
-    facilityType: 'wind' | 'closedLoopBiomass' | 'openLoopBiomass' | 'geothermal' | 'solar' | 'smallIrrigation' | 'landfillGas' | 'trash' | 'hydropower' | 'marineHydrokinetic'
+    facilityType:
+      | 'wind'
+      | 'closedLoopBiomass'
+      | 'openLoopBiomass'
+      | 'geothermal'
+      | 'solar'
+      | 'smallIrrigation'
+      | 'landfillGas'
+      | 'trash'
+      | 'hydropower'
+      | 'marineHydrokinetic'
     dateInService: string
     kilowattHoursProduced: number
-    creditRate: number  // Per kWh rate
+    creditRate: number // Per kWh rate
     creditAmount: number
   }[]
   passthrough8835Credit?: number
@@ -2452,9 +2488,9 @@ export interface Form8844Data {
   qualifiedEmployees: {
     name: string
     ssn: string
-    zoneName: string  // Name of empowerment zone
-    qualifiedWages: number  // Up to $15,000 per employee
-    creditAmount: number  // 20% of qualified wages
+    zoneName: string // Name of empowerment zone
+    qualifiedWages: number // Up to $15,000 per employee
+    creditAmount: number // 20% of qualified wages
   }[]
   passthrough8844Credit?: number
   totalCredit: number
@@ -2470,10 +2506,10 @@ export interface Form8845Data {
     reservationName: string
     qualifiedWages: number
     qualifiedHealthInsuranceCosts: number
-    totalQualifiedAmount: number  // Up to $20,000 per employee
+    totalQualifiedAmount: number // Up to $20,000 per employee
     priorYearAmount: number
     incrementalAmount: number
-    creditAmount: number  // 20% of incremental amount
+    creditAmount: number // 20% of incremental amount
   }[]
   passthrough8845Credit?: number
   totalCredit: number
@@ -2485,7 +2521,7 @@ export interface Form8845Data {
 export interface Form8820Data {
   qualifiedClinicalTestingExpenses: number
   passthrough8820Credit?: number
-  totalCredit: number  // 25% of qualified clinical testing expenses
+  totalCredit: number // 25% of qualified clinical testing expenses
 }
 
 /**
@@ -2493,12 +2529,12 @@ export interface Form8820Data {
  */
 export interface Form8874Data {
   qualifiedEquityInvestments: {
-    cdfiName: string  // Community Development Financial Institution
+    cdfiName: string // Community Development Financial Institution
     cdfiEIN: string
     dateOfInvestment: string
     originalInvestmentAmount: number
     creditAllocationYear: number
-    creditPercentage: number  // 5% for years 1-3, 6% for years 4-7
+    creditPercentage: number // 5% for years 1-3, 6% for years 4-7
     creditAmount: number
   }[]
   passthrough8874Credit?: number
@@ -2513,9 +2549,9 @@ export interface Form8846Data {
     name: string
     ssn: string
     totalTips: number
-    tipsAboveMinWage: number  // Tips above minimum wage already
-    creditableTips: number  // Tips below cash wage limit
-    ssAndMedicareTax: number  // 7.65% employer portion
+    tipsAboveMinWage: number // Tips above minimum wage already
+    creditableTips: number // Tips below cash wage limit
+    ssAndMedicareTax: number // 7.65% employer portion
   }[]
   passthrough8846Credit?: number
   totalCredit: number
@@ -2526,13 +2562,13 @@ export interface Form8846Data {
  */
 export interface Form8864Data {
   biodieselGallons: number
-  biodieselCreditRate: number  // $1.00 per gallon
+  biodieselCreditRate: number // $1.00 per gallon
   biodieselCredit: number
   agribiodieselGallons: number
-  agribiodieselCreditRate: number  // $1.00 per gallon
+  agribiodieselCreditRate: number // $1.00 per gallon
   agribiodieselCredit: number
   renewableDieselGallons: number
-  renewableDieselCreditRate: number  // $1.00 per gallon
+  renewableDieselCreditRate: number // $1.00 per gallon
   renewableDieselCredit: number
   passthrough8864Credit?: number
   totalCredit: number
@@ -2542,12 +2578,12 @@ export interface Form8864Data {
  * Form 8881 - Credit for Small Employer Pension Plan Startup Costs
  */
 export interface Form8881Data {
-  qualifiedStartupCosts: number  // Up to $5,000 per year
-  autoEnrollmentCredit: number  // Up to $500 for auto-enrollment feature
-  numberOfNonHighlyCompensatedEmployees: number  // Max 100
-  yearsOfCredit: number  // Up to 3 years
+  qualifiedStartupCosts: number // Up to $5,000 per year
+  autoEnrollmentCredit: number // Up to $500 for auto-enrollment feature
+  numberOfNonHighlyCompensatedEmployees: number // Max 100
+  yearsOfCredit: number // Up to 3 years
   passthrough8881Credit?: number
-  totalCredit: number  // 50% of startup costs (max $250-$5,000 depending on employees)
+  totalCredit: number // 50% of startup costs (max $250-$5,000 depending on employees)
 }
 
 /**
@@ -2558,7 +2594,7 @@ export interface Form8882Data {
   qualifiedChildcareResourceCosts: number
   totalQualifiedCosts: number
   passthrough8882Credit?: number
-  totalCredit: number  // 25% of facility costs + 10% of resource costs (max $150,000)
+  totalCredit: number // 25% of facility costs + 10% of resource costs (max $150,000)
 }
 
 /**
@@ -2569,8 +2605,8 @@ export interface Form8932Data {
     name: string
     ssn: string
     militaryDutyDays: number
-    differentialWagesPaid: number  // Wages paid while on active duty
-    creditAmount: number  // 20% of wages (max $20,000 per employee)
+    differentialWagesPaid: number // Wages paid while on active duty
+    creditAmount: number // 20% of wages (max $20,000 per employee)
   }[]
   passthrough8932Credit?: number
   totalCredit: number
@@ -2585,7 +2621,7 @@ export interface Form8933Data {
     location: string
     metricTonsCaptured: number
     disposalMethod: 'geologicStorage' | 'enhancedOilRecovery' | 'utilization'
-    creditRate: number  // Varies by disposal method and capture year
+    creditRate: number // Varies by disposal method and capture year
     creditAmount: number
   }[]
   passthrough8933Credit?: number
@@ -2601,15 +2637,24 @@ export interface Form3468Data {
     buildingAddress: string
     preCertified: boolean
     qualifiedRehabilitationExpenditures: number
-    creditPercentage: number  // 20% for certified historic structures
+    creditPercentage: number // 20% for certified historic structures
     creditAmount: number
   }[]
   // Energy credit
   energyProperty: {
     propertyDescription: string
-    propertyType: 'solar' | 'geothermal' | 'fuelCell' | 'microturbine' | 'chp' | 'smallWind' | 'offshoreWind' | 'geothermalHeatPump' | 'wasteEnergyRecovery'
+    propertyType:
+      | 'solar'
+      | 'geothermal'
+      | 'fuelCell'
+      | 'microturbine'
+      | 'chp'
+      | 'smallWind'
+      | 'offshoreWind'
+      | 'geothermalHeatPump'
+      | 'wasteEnergyRecovery'
     basisForCredit: number
-    creditPercentage: number  // 6% base, up to 30% with prevailing wage/apprenticeship
+    creditPercentage: number // 6% base, up to 30% with prevailing wage/apprenticeship
     creditAmount: number
   }[]
   // Qualifying advanced coal/gasification projects
@@ -2645,46 +2690,46 @@ export interface Information<D = Date> {
   autoLoanInterest?: AutoLoanInterest
   trumpSavingsAccounts?: TrumpSavingsAccount<D>[]
   // Phase 1-3 Form Data (using generic Record types to avoid conflicts with form-specific interfaces)
-  priorYearTax?: number  // Prior year tax liability (F2210)
-  priorYearTaxInfo?: PriorYearTaxInfo[]  // Prior year tax info for income averaging (ScheduleJ)
-  movingExpenses?: Record<string, unknown>  // Form 3903 (cast in form)
-  depreciableAssets?: Record<string, unknown>[]  // Form 4562 (cast in form)
-  section179Carryover?: number  // Form 4562
-  amortizationCostsCurrentYear?: number  // Form 4562
-  amortizationCostsPriorYears?: number  // Form 4562
-  casualtyEvents?: Record<string, unknown>[]  // Form 4684 (cast in form)
-  requestExtension?: boolean  // Form 4868
-  extensionPayment?: number  // Form 4868
-  outOfCountryOnDueDate?: boolean  // Form 4868
-  earlyDistributionExceptions?: EarlyDistributionException[]  // Form 5329
-  excessIraContributions?: number  // Form 5329
-  excessRothContributions?: number  // Form 5329
-  excessEsaContributions?: number  // Form 5329
-  excessHsaContributions?: number  // Form 5329
-  rmdShortfall?: RmdShortfall  // Form 5329
-  atRiskActivities?: AtRiskActivity[]  // Form 6198
-  installmentSales?: Record<string, unknown>[]  // Form 6252 (cast in form)
-  iraContributions?: IraContribution[]  // Form 8606, F8880
-  rothConversions?: RothConversion[]  // Form 8606
-  traditionalIraBasis?: number  // Form 8606
-  iraEndOfYearValue?: number  // Form 8606
-  rothDistributions?: RothDistribution[]  // Form 8606
-  rothIraBasis?: number  // Form 8606
-  parentInfo?: ParentTaxInfo  // Form 8615 (Kiddie Tax)
-  priorYearAmtCredit?: number  // Form 8801
-  priorYearAmt?: PriorYearAmtInfo  // Form 8801
-  priorYearAmtCreditCarryforward?: number  // Form 8801
-  likeKindExchanges?: Record<string, unknown>[]  // Form 8824 (cast in form)
-  homeOffice?: Record<string, unknown>  // Form 8829 (cast in form)
-  adoptedChildren?: AdoptedChild[]  // Form 8839
-  adoptionCreditCarryforward?: number  // Form 8839
-  foreignFinancialAssets?: Record<string, unknown>[]  // Form 8938 (cast in form)
-  farmBusiness?: Record<string, unknown>  // Schedule F (cast in form)
-  electFarmIncomeAveraging?: boolean  // Schedule J
-  householdEmployees?: Record<string, unknown>[]  // Schedule H (cast in form)
-  householdTaxDeposits?: number  // Schedule H
+  priorYearTax?: number // Prior year tax liability (F2210)
+  priorYearTaxInfo?: PriorYearTaxInfo[] // Prior year tax info for income averaging (ScheduleJ)
+  movingExpenses?: Record<string, unknown> // Form 3903 (cast in form)
+  depreciableAssets?: Record<string, unknown>[] // Form 4562 (cast in form)
+  section179Carryover?: number // Form 4562
+  amortizationCostsCurrentYear?: number // Form 4562
+  amortizationCostsPriorYears?: number // Form 4562
+  casualtyEvents?: Record<string, unknown>[] // Form 4684 (cast in form)
+  requestExtension?: boolean // Form 4868
+  extensionPayment?: number // Form 4868
+  outOfCountryOnDueDate?: boolean // Form 4868
+  earlyDistributionExceptions?: EarlyDistributionException[] // Form 5329
+  excessIraContributions?: number // Form 5329
+  excessRothContributions?: number // Form 5329
+  excessEsaContributions?: number // Form 5329
+  excessHsaContributions?: number // Form 5329
+  rmdShortfall?: RmdShortfall // Form 5329
+  atRiskActivities?: AtRiskActivity[] // Form 6198
+  installmentSales?: Record<string, unknown>[] // Form 6252 (cast in form)
+  iraContributions?: IraContribution[] // Form 8606, F8880
+  rothConversions?: RothConversion[] // Form 8606
+  traditionalIraBasis?: number // Form 8606
+  iraEndOfYearValue?: number // Form 8606
+  rothDistributions?: RothDistribution[] // Form 8606
+  rothIraBasis?: number // Form 8606
+  parentInfo?: ParentTaxInfo // Form 8615 (Kiddie Tax)
+  priorYearAmtCredit?: number // Form 8801
+  priorYearAmt?: PriorYearAmtInfo // Form 8801
+  priorYearAmtCreditCarryforward?: number // Form 8801
+  likeKindExchanges?: Record<string, unknown>[] // Form 8824 (cast in form)
+  homeOffice?: Record<string, unknown> // Form 8829 (cast in form)
+  adoptedChildren?: AdoptedChild[] // Form 8839
+  adoptionCreditCarryforward?: number // Form 8839
+  foreignFinancialAssets?: Record<string, unknown>[] // Form 8938 (cast in form)
+  farmBusiness?: Record<string, unknown> // Schedule F (cast in form)
+  electFarmIncomeAveraging?: boolean // Schedule J
+  householdEmployees?: Record<string, unknown>[] // Schedule H (cast in form)
+  householdTaxDeposits?: number // Schedule H
   // Schedule C - Business Income
-  businesses?: Record<string, unknown>[]  // Schedule C (cast in form)
+  businesses?: Record<string, unknown>[] // Schedule C (cast in form)
   // Form 2441 - Child Care
   dependentCareProviders?: DependentCareProvider[]
   dependentCareExpenses?: number
@@ -2698,9 +2743,9 @@ export interface Information<D = Date> {
   geothermalCost?: number
   fuelCellCost?: number
   batteryStorageCost?: number
-  cleanEnergyProperties?: Record<string, unknown>[]  // Part I: Solar, wind, geothermal, fuel cells, battery
-  homeImprovements?: Record<string, unknown>[]  // Part II: Insulation, doors, windows, HVAC
-  cleanEnergyCarryforward?: number  // Carryforward from prior year
+  cleanEnergyProperties?: Record<string, unknown>[] // Part I: Solar, wind, geothermal, fuel cells, battery
+  homeImprovements?: Record<string, unknown>[] // Part II: Insulation, doors, windows, HVAC
+  cleanEnergyCarryforward?: number // Carryforward from prior year
   // Form 8962 - Premium Tax Credit
   healthInsuranceMarketplace?: HealthInsuranceMarketplaceInfo<D>[]
   // Form 2555 - Foreign Earned Income
@@ -2712,7 +2757,7 @@ export interface Information<D = Date> {
   militaryRetirement?: number
   // Form 4797 - Sale of Business Property
   businessPropertySales?: Record<string, unknown>[]
-  priorSection1231Losses?: number  // Total unrecaptured Section 1231 losses from prior 5 years
+  priorSection1231Losses?: number // Total unrecaptured Section 1231 losses from prior 5 years
   section179Recapture?: number
   // Form 2439 - Undistributed Long-Term Capital Gains
   f2439s?: F2439Data[]
@@ -2769,12 +2814,12 @@ export interface Information<D = Date> {
   longTermContracts?: Record<string, unknown>[]
   // Business Entity Data (for business owners filing individual returns)
   // These are used when an individual owns a pass-through entity
-  sCorpOwnership?: Form1120SData<D>[]  // S-Corps owned (generates K-1)
-  partnershipOwnership?: Form1065Data<D>[]  // Partnerships owned (generates K-1)
-  cCorpOwnership?: Form1120Data<D>[]  // C-Corps owned (for dividend reporting)
+  sCorpOwnership?: Form1120SData<D>[] // S-Corps owned (generates K-1)
+  partnershipOwnership?: Form1065Data<D>[] // Partnerships owned (generates K-1)
+  cCorpOwnership?: Form1120Data<D>[] // C-Corps owned (for dividend reporting)
   // Payroll for household/business employees (individual employers)
-  payrollData?: Form941Data<D>[]  // Quarterly payroll for Schedule H integration
-  futaData?: Form940Data<D>  // Annual FUTA for Schedule H
+  payrollData?: Form941Data<D>[] // Quarterly payroll for Schedule H integration
+  futaData?: Form940Data<D> // Annual FUTA for Schedule H
   // General business credits for pass-through entities
   generalBusinessCredits?: Form3800Data
   // Phase 6-8: Advanced Forms Data
@@ -2912,8 +2957,8 @@ export type EditTrumpAccountAction =
  * Method for selecting tax lots when selling securities
  */
 export enum CostBasisMethod {
-  FIFO = 'FIFO',           // First In, First Out
-  LIFO = 'LIFO',           // Last In, First Out
+  FIFO = 'FIFO', // First In, First Out
+  LIFO = 'LIFO', // Last In, First Out
   SpecificID = 'SpecificID', // Specific Identification
   AverageCost = 'AverageCost' // Average Cost (mutual funds only)
 }
@@ -2936,19 +2981,19 @@ export enum StockTransactionType {
  * A single tax lot representing a purchase of securities
  */
 export interface TaxLot<D = Date> {
-  id: string                    // Unique identifier for the lot
-  symbol: string                // Ticker symbol
-  purchaseDate: D               // Date of purchase
-  shares: number                // Number of shares in this lot
-  costPerShare: number          // Cost per share at purchase
-  fees: number                  // Transaction fees
-  totalCost: number             // Total cost basis (shares * costPerShare + fees)
-  remainingShares: number       // Shares remaining after sales
-  adjustedCostBasis: number     // Cost basis after wash sale adjustments
-  washSaleAdjustment: number    // Amount added due to wash sales
+  id: string // Unique identifier for the lot
+  symbol: string // Ticker symbol
+  purchaseDate: D // Date of purchase
+  shares: number // Number of shares in this lot
+  costPerShare: number // Cost per share at purchase
+  fees: number // Transaction fees
+  totalCost: number // Total cost basis (shares * costPerShare + fees)
+  remainingShares: number // Shares remaining after sales
+  adjustedCostBasis: number // Cost basis after wash sale adjustments
+  washSaleAdjustment: number // Amount added due to wash sales
   washSaleDisallowedLoss: number // Disallowed loss from wash sales
-  sourceTransactionId?: string  // Reference to source transaction
-  isMutualFund: boolean         // Whether this is a mutual fund (for average cost)
+  sourceTransactionId?: string // Reference to source transaction
+  isMutualFund: boolean // Whether this is a mutual fund (for average cost)
 }
 
 export type TaxLotDateString = TaxLot<string>
@@ -2957,24 +3002,24 @@ export type TaxLotDateString = TaxLot<string>
  * A stock transaction (buy, sell, dividend, etc.)
  */
 export interface StockTransaction<D = Date> {
-  id: string                    // Unique identifier
-  symbol: string                // Ticker symbol
+  id: string // Unique identifier
+  symbol: string // Ticker symbol
   transactionType: StockTransactionType
-  date: D                       // Transaction date
-  shares: number                // Number of shares
-  pricePerShare: number         // Price per share
-  fees: number                  // Transaction fees
-  proceeds?: number             // For sales: total proceeds
-  costBasis?: number            // For sales: cost basis of sold shares
+  date: D // Transaction date
+  shares: number // Number of shares
+  pricePerShare: number // Price per share
+  fees: number // Transaction fees
+  proceeds?: number // For sales: total proceeds
+  costBasis?: number // For sales: cost basis of sold shares
   lotSelections?: TaxLotSelection[] // For sales: which lots were sold
-  gainLoss?: number             // For sales: realized gain/loss
-  isShortTerm?: boolean         // For sales: short or long term
-  isWashSale?: boolean          // Whether this sale triggered wash sale
+  gainLoss?: number // For sales: realized gain/loss
+  isShortTerm?: boolean // For sales: short or long term
+  isWashSale?: boolean // Whether this sale triggered wash sale
   washSaleDisallowedLoss?: number // Disallowed loss amount
-  relatedLotId?: string         // For dividend reinvestment, splits, etc.
-  splitRatio?: number           // For stock splits (e.g., 2 for 2:1 split)
-  mergerRatio?: number          // For mergers
-  notes?: string                // Optional notes
+  relatedLotId?: string // For dividend reinvestment, splits, etc.
+  splitRatio?: number // For stock splits (e.g., 2 for 2:1 split)
+  mergerRatio?: number // For mergers
+  notes?: string // Optional notes
 }
 
 export type StockTransactionDateString = StockTransaction<string>
@@ -2983,24 +3028,24 @@ export type StockTransactionDateString = StockTransaction<string>
  * Selection of a specific lot for a sale
  */
 export interface TaxLotSelection {
-  lotId: string                 // ID of the tax lot
-  sharesFromLot: number         // Number of shares sold from this lot
+  lotId: string // ID of the tax lot
+  sharesFromLot: number // Number of shares sold from this lot
 }
 
 /**
  * An investment position (aggregated view of all lots for a symbol)
  */
 export interface Investment<D = Date> {
-  symbol: string                // Ticker symbol
-  name?: string                 // Company/fund name
-  isMutualFund: boolean         // Whether this is a mutual fund
-  lots: TaxLot<D>[]             // All tax lots for this position
+  symbol: string // Ticker symbol
+  name?: string // Company/fund name
+  isMutualFund: boolean // Whether this is a mutual fund
+  lots: TaxLot<D>[] // All tax lots for this position
   transactions: StockTransaction<D>[] // All transactions for this position
-  totalShares: number           // Total shares held
-  totalCostBasis: number        // Total cost basis of current holdings
-  averageCostPerShare: number   // Average cost per share
-  currentPrice?: number         // Current market price (for unrealized gains)
-  unrealizedGainLoss?: number   // Unrealized gain/loss
+  totalShares: number // Total shares held
+  totalCostBasis: number // Total cost basis of current holdings
+  averageCostPerShare: number // Average cost per share
+  currentPrice?: number // Current market price (for unrealized gains)
+  unrealizedGainLoss?: number // Unrealized gain/loss
   defaultCostBasisMethod: CostBasisMethod // Default method for this investment
 }
 
@@ -3011,11 +3056,11 @@ export type InvestmentDateString = Investment<string>
  */
 export interface WashSaleInfo {
   isWashSale: boolean
-  matchingLotId?: string        // The lot that triggered the wash sale
-  disallowedLoss: number        // Amount of loss disallowed
-  adjustmentToNewLot: number    // Amount to add to new lot's cost basis
-  washSaleDate: Date            // Date of the wash sale
-  replacementDate: Date         // Date of the replacement purchase
+  matchingLotId?: string // The lot that triggered the wash sale
+  disallowedLoss: number // Amount of loss disallowed
+  adjustmentToNewLot: number // Amount to add to new lot's cost basis
+  washSaleDate: Date // Date of the wash sale
+  replacementDate: Date // Date of the replacement purchase
 }
 
 /**
@@ -3045,7 +3090,8 @@ export type CostBasisPortfolioDateString = CostBasisPortfolio<string>
 
 // Edit action types for cost basis tracking
 export type EditTaxLotAction = ArrayItemEditAction<TaxLotDateString>
-export type EditStockTransactionAction = ArrayItemEditAction<StockTransactionDateString>
+export type EditStockTransactionAction =
+  ArrayItemEditAction<StockTransactionDateString>
 export type EditInvestmentAction = ArrayItemEditAction<InvestmentDateString>
 
 // Gift tax exports

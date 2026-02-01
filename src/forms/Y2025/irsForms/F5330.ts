@@ -28,7 +28,7 @@ export interface ExcessContribution401k {
   taxYear: number
   excessAmount: number
   correctedByDeadline: boolean
-  taxRate: number  // 10%
+  taxRate: number // 10%
   exciseTax: number
 }
 
@@ -39,8 +39,8 @@ export interface ProhibitedTransaction {
   disqualifiedPerson: string
   wasTransactionCorrected: boolean
   correctionDate?: Date
-  initialTaxRate: number  // 15%
-  additionalTaxRate: number  // 100% if not corrected
+  initialTaxRate: number // 15%
+  additionalTaxRate: number // 100% if not corrected
   exciseTax: number
 }
 
@@ -51,8 +51,8 @@ export interface MinimumFundingDeficiency {
   deficiencyAmount: number
   wasCorrected: boolean
   correctionDate?: Date
-  initialTaxRate: number  // 5%
-  additionalTaxRate: number  // 100% if not corrected
+  initialTaxRate: number // 5%
+  additionalTaxRate: number // 100% if not corrected
   exciseTax: number
 }
 
@@ -62,7 +62,7 @@ export interface PlanAssetReversion {
   reversionAmount: number
   transferredToReplacement: boolean
   usedForHealthBenefits: boolean
-  taxRate: number  // 20% or 50%
+  taxRate: number // 20% or 50%
   exciseTax: number
 }
 
@@ -71,7 +71,7 @@ export interface NondeductibleContribution {
   totalContributions: number
   deductibleLimit: number
   excessAmount: number
-  taxRate: number  // 10%
+  taxRate: number // 10%
   exciseTax: number
 }
 
@@ -122,10 +122,14 @@ export default class F5330 extends F1040Attachment {
   }
 
   totalExcess401kTax = (): number => {
-    return this.excessContributions401k().reduce((sum, e) => sum + e.exciseTax, 0)
+    return this.excessContributions401k().reduce(
+      (sum, e) => sum + e.exciseTax,
+      0
+    )
   }
 
-  hasExcessContributions401k = (): boolean => this.excessContributions401k().length > 0
+  hasExcessContributions401k = (): boolean =>
+    this.excessContributions401k().length > 0
 
   // Part IV: Prohibited Transactions
   prohibitedTransactions = (): ProhibitedTransaction[] => {
@@ -133,10 +137,14 @@ export default class F5330 extends F1040Attachment {
   }
 
   totalProhibitedTransactionTax = (): number => {
-    return this.prohibitedTransactions().reduce((sum, t) => sum + t.exciseTax, 0)
+    return this.prohibitedTransactions().reduce(
+      (sum, t) => sum + t.exciseTax,
+      0
+    )
   }
 
-  hasProhibitedTransactions = (): boolean => this.prohibitedTransactions().length > 0
+  hasProhibitedTransactions = (): boolean =>
+    this.prohibitedTransactions().length > 0
 
   // Part V: Minimum Funding Deficiency
   minimumFundingDeficiencies = (): MinimumFundingDeficiency[] => {
@@ -144,10 +152,14 @@ export default class F5330 extends F1040Attachment {
   }
 
   totalMinimumFundingTax = (): number => {
-    return this.minimumFundingDeficiencies().reduce((sum, d) => sum + d.exciseTax, 0)
+    return this.minimumFundingDeficiencies().reduce(
+      (sum, d) => sum + d.exciseTax,
+      0
+    )
   }
 
-  hasMinimumFundingDeficiency = (): boolean => this.minimumFundingDeficiencies().length > 0
+  hasMinimumFundingDeficiency = (): boolean =>
+    this.minimumFundingDeficiencies().length > 0
 
   // Part VI: Plan Asset Reversions
   planAssetReversions = (): PlanAssetReversion[] => {
@@ -166,20 +178,27 @@ export default class F5330 extends F1040Attachment {
   }
 
   totalNondeductibleContributionTax = (): number => {
-    return this.nondeductibleContributions().reduce((sum, c) => sum + c.exciseTax, 0)
+    return this.nondeductibleContributions().reduce(
+      (sum, c) => sum + c.exciseTax,
+      0
+    )
   }
 
-  hasNondeductibleContributions = (): boolean => this.nondeductibleContributions().length > 0
+  hasNondeductibleContributions = (): boolean =>
+    this.nondeductibleContributions().length > 0
 
   // Total Tax Calculation
   totalExciseTax = (): number => {
-    return this.f5330Info()?.totalTaxDue ?? sumFields([
-      this.totalExcess401kTax(),
-      this.totalProhibitedTransactionTax(),
-      this.totalMinimumFundingTax(),
-      this.totalReversionTax(),
-      this.totalNondeductibleContributionTax()
-    ])
+    return (
+      this.f5330Info()?.totalTaxDue ??
+      sumFields([
+        this.totalExcess401kTax(),
+        this.totalProhibitedTransactionTax(),
+        this.totalMinimumFundingTax(),
+        this.totalReversionTax(),
+        this.totalNondeductibleContributionTax()
+      ])
+    )
   }
 
   // Return Status

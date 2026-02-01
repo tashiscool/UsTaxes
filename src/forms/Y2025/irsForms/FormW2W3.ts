@@ -35,7 +35,9 @@ export class FormW2 extends Form {
   employerName = (): string => this.data.employerName
   employerAddress = (): string => {
     const addr = this.data.employerAddress
-    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${addr.zip ?? ''}`
+    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${
+      addr.zip ?? ''
+    }`
   }
 
   // Employee information
@@ -44,7 +46,9 @@ export class FormW2 extends Form {
   employeeAddress = (): string => {
     const addr = this.data.employeeAddress
     if (!addr) return ''
-    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${addr.zip ?? ''}`
+    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${
+      addr.zip ?? ''
+    }`
   }
 
   // Control number (optional)
@@ -158,7 +162,9 @@ export class FormW3 extends Form {
   employerName = (): string => this.data.employerName
   employerAddress = (): string => {
     const addr = this.data.employerAddress
-    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${addr.zip ?? ''}`
+    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${
+      addr.zip ?? ''
+    }`
   }
   contactName = (): string => this.data.employerContactName ?? ''
   contactPhone = (): string => this.data.employerContactPhone ?? ''
@@ -224,10 +230,22 @@ export class FormW3 extends Form {
   } => {
     return {
       wages: this.w2Forms.reduce((sum, w2) => sum + w2.box1Wages, 0),
-      federalWithholding: this.w2Forms.reduce((sum, w2) => sum + w2.box2FederalWithholding, 0),
-      ssWages: this.w2Forms.reduce((sum, w2) => sum + w2.box3SocialSecurityWages, 0),
-      ssTax: this.w2Forms.reduce((sum, w2) => sum + w2.box4SocialSecurityTax, 0),
-      medicareWages: this.w2Forms.reduce((sum, w2) => sum + w2.box5MedicareWages, 0),
+      federalWithholding: this.w2Forms.reduce(
+        (sum, w2) => sum + w2.box2FederalWithholding,
+        0
+      ),
+      ssWages: this.w2Forms.reduce(
+        (sum, w2) => sum + w2.box3SocialSecurityWages,
+        0
+      ),
+      ssTax: this.w2Forms.reduce(
+        (sum, w2) => sum + w2.box4SocialSecurityTax,
+        0
+      ),
+      medicareWages: this.w2Forms.reduce(
+        (sum, w2) => sum + w2.box5MedicareWages,
+        0
+      ),
       medicareTax: this.w2Forms.reduce((sum, w2) => sum + w2.box6MedicareTax, 0)
     }
   }

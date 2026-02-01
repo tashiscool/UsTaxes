@@ -77,7 +77,8 @@ export default class F8822 extends F1040Attachment {
   hasSpouse = (): boolean => (this.f8822Data()?.spouseName ?? '').length > 0
 
   // Both spouses same new address?
-  bothSpousesSameAddress = (): boolean => this.f8822Data()?.bothSpousesSameAddress ?? false
+  bothSpousesSameAddress = (): boolean =>
+    this.f8822Data()?.bothSpousesSameAddress ?? false
 
   // Is foreign address (old)?
   hasOldForeignAddress = (): boolean => {
@@ -99,7 +100,7 @@ export default class F8822 extends F1040Attachment {
       data.oldCity,
       data.oldState,
       data.oldZip
-    ].filter(p => p && p.length > 0)
+    ].filter((p) => p && p.length > 0)
     return parts.join(', ')
   }
 
@@ -113,7 +114,7 @@ export default class F8822 extends F1040Attachment {
       data.newCity,
       data.newState,
       data.newZip
-    ].filter(p => p && p.length > 0)
+    ].filter((p) => p && p.length > 0)
     return parts.join(', ')
   }
 
@@ -152,7 +153,7 @@ export default class F8822 extends F1040Attachment {
       this.isJointReturn(),
       this.bothSpousesSameAddress(),
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? '',
+      data?.signatureDate.toLocaleDateString() ?? '',
       data?.spouseSignatureDate?.toLocaleDateString() ?? '',
       // Calculated
       this.fullOldAddress(),

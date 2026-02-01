@@ -95,10 +95,12 @@ export default class F8332 extends F1040Attachment {
   }
 
   // Custodial parent
-  custodialParentName = (): string => this.f8332Data()?.custodialParentName ?? ''
+  custodialParentName = (): string =>
+    this.f8332Data()?.custodialParentName ?? ''
 
   // Noncustodial parent
-  noncustodialParentName = (): string => this.f8332Data()?.noncustodialParentName ?? ''
+  noncustodialParentName = (): string =>
+    this.f8332Data()?.noncustodialParentName ?? ''
 
   // Is this a revocation?
   isRevocation = (): boolean => this.f8332Data()?.isRevocation ?? false
@@ -138,7 +140,7 @@ export default class F8332 extends F1040Attachment {
       data?.custodialParentName ?? '',
       data?.custodialParentSSN ?? '',
       data?.custodialParentAddress ?? '',
-      data?.custodialParentSignatureDate?.toLocaleDateString() ?? '',
+      data?.custodialParentSignatureDate.toLocaleDateString() ?? '',
       // Noncustodial parent
       data?.noncustodialParentName ?? '',
       data?.noncustodialParentSSN ?? '',

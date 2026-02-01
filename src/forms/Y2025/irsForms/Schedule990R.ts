@@ -65,7 +65,14 @@ export interface RelatedCorporationOrTrust {
 
 export interface TransactionWithRelatedOrg {
   relatedOrgName: string
-  transactionType: 'receipt' | 'gift' | 'rent' | 'loan' | 'services' | 'asset' | 'other'
+  transactionType:
+    | 'receipt'
+    | 'gift'
+    | 'rent'
+    | 'loan'
+    | 'services'
+    | 'asset'
+    | 'other'
   amountInvolved: number
   methodOfDeterminingAmount: string
 }
@@ -104,7 +111,7 @@ export default class Schedule990R extends F1040Attachment {
   }
 
   schedule990RData = (): Schedule990RData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Part I: Disregarded entities
@@ -117,7 +124,10 @@ export default class Schedule990R extends F1040Attachment {
   }
 
   totalDisregardedEntityAssets = (): number => {
-    return this.disregardedEntities().reduce((sum, e) => sum + e.endOfYearAssets, 0)
+    return this.disregardedEntities().reduce(
+      (sum, e) => sum + e.endOfYearAssets,
+      0
+    )
   }
 
   // Part II: Related exempt organizations
@@ -133,7 +143,10 @@ export default class Schedule990R extends F1040Attachment {
   }
 
   totalPartnershipIncome = (): number => {
-    return this.relatedPartnerships().reduce((sum, p) => sum + p.shareOfTotalIncome, 0)
+    return this.relatedPartnerships().reduce(
+      (sum, p) => sum + p.shareOfTotalIncome,
+      0
+    )
   }
 
   // Part IV: Related corporations and trusts
@@ -142,7 +155,10 @@ export default class Schedule990R extends F1040Attachment {
   }
 
   totalCorpAndTrustIncome = (): number => {
-    return this.relatedCorpsAndTrusts().reduce((sum, c) => sum + c.shareOfTotalIncome, 0)
+    return this.relatedCorpsAndTrusts().reduce(
+      (sum, c) => sum + c.shareOfTotalIncome,
+      0
+    )
   }
 
   // Part V: Transactions
@@ -160,7 +176,10 @@ export default class Schedule990R extends F1040Attachment {
   }
 
   totalUnrelatedPartnershipIncome = (): number => {
-    return this.unrelatedPartnerships().reduce((sum, p) => sum + p.incomeFromPartnership, 0)
+    return this.unrelatedPartnerships().reduce(
+      (sum, p) => sum + p.incomeFromPartnership,
+      0
+    )
   }
 
   fields = (): Field[] => {

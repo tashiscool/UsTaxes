@@ -108,7 +108,8 @@ export default class ScheduleK1_1041 extends F1040Attachment {
     const fiduciary = this.f1040.info.fiduciaryReturn
     if (!fiduciary) return undefined
 
-    const beneficiaryList = (fiduciary as { beneficiaries?: unknown[] }).beneficiaries ?? []
+    const beneficiaryList =
+      (fiduciary as { beneficiaries?: unknown[] }).beneficiaries ?? []
     const beneficiaries = beneficiaryList as Array<Record<string, unknown>>
     if (this.beneficiaryIndex >= beneficiaries.length) return undefined
 
@@ -120,7 +121,8 @@ export default class ScheduleK1_1041 extends F1040Attachment {
         address: (ben.address as string) ?? '',
         isForeignBeneficiary: false,
         percentageShare: (ben.percentageShare as number) ?? 0,
-        isFinalK1: ((fiduciary as { isFinalReturn?: boolean }).isFinalReturn) ?? false
+        isFinalK1:
+          (fiduciary as { isFinalReturn?: boolean }).isFinalReturn ?? false
       },
       interestIncome: (ben.interestIncome as number) ?? 0,
       ordinaryDividends: (ben.ordinaryDividends as number) ?? 0,
@@ -153,7 +155,8 @@ export default class ScheduleK1_1041 extends F1040Attachment {
 
   beneficiaryName = (): string => this.k1Data()?.beneficiary.name ?? ''
   beneficiaryTin = (): string => this.k1Data()?.beneficiary.tin ?? ''
-  percentageShare = (): number => this.k1Data()?.beneficiary.percentageShare ?? 0
+  percentageShare = (): number =>
+    this.k1Data()?.beneficiary.percentageShare ?? 0
 
   // Line 1: Interest income
   l1 = (): number => this.k1Data()?.interestIncome ?? 0
@@ -290,13 +293,14 @@ export default class ScheduleK1_1041 extends F1040Attachment {
     const fiduciary = this.f1040.info.fiduciaryReturn
     if (!fiduciary) return []
 
-    const beneficiaryList = (fiduciary as { beneficiaries?: unknown[] }).beneficiaries ?? []
+    const beneficiaryList =
+      (fiduciary as { beneficiaries?: unknown[] }).beneficiaries ?? []
     const beneficiaries = beneficiaryList as Array<Record<string, unknown>>
     if (beneficiaries.length <= 1) return []
 
     // Create copies for additional beneficiaries (first one is this instance)
-    return beneficiaries.slice(1).map((_, index) =>
-      new ScheduleK1_1041(this.f1040, index + 1)
-    )
+    return beneficiaries
+      .slice(1)
+      .map((_, index) => new ScheduleK1_1041(this.f1040, index + 1))
   }
 }

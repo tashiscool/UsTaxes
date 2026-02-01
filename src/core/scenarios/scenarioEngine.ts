@@ -6,7 +6,15 @@
  * what-if scenario analysis.
  */
 
-import { Information, TaxYear, Asset, FilingStatus, IncomeW2, PersonRole, IraPlanType } from 'ustaxes/core/data'
+import {
+  Information,
+  TaxYear,
+  Asset,
+  FilingStatus,
+  IncomeW2,
+  PersonRole,
+  IraPlanType
+} from 'ustaxes/core/data'
 import { YearCreateForm, yearFormBuilder } from 'ustaxes/forms/YearForms'
 import { isRight } from 'ustaxes/core/util'
 import _ from 'lodash'
@@ -428,22 +436,22 @@ export const calculateTaxes = (
     standardDeduction?: () => number | undefined
   }
 
-  const wagesIncome = f.l1z?.() ?? 0
-  const totalIncome = f.l9?.() ?? 0
-  const agi = f.l11?.() ?? 0
-  const deductionUsed = f.l12?.() ?? 0
-  const taxableIncome = f.l15?.() ?? 0
-  const taxBeforeCredits = f.l16?.() ?? 0
-  const totalCredits = f.l21?.() ?? 0
-  const totalTax = f.l24?.() ?? 0
-  const withholdings = f.l25d?.() ?? 0
-  const estimatedPayments = f.l26?.() ?? 0
-  const totalPayments = f.l33?.() ?? 0
-  const refundAmount = f.l35a?.() ?? 0
-  const amountOwed = f.l37?.() ?? 0
+  const wagesIncome = f.l1z() ?? 0
+  const totalIncome = f.l9() ?? 0
+  const agi = f.l11() ?? 0
+  const deductionUsed = f.l12() ?? 0
+  const taxableIncome = f.l15() ?? 0
+  const taxBeforeCredits = f.l16() ?? 0
+  const totalCredits = f.l21() ?? 0
+  const totalTax = f.l24() ?? 0
+  const withholdings = f.l25d() ?? 0
+  const estimatedPayments = f.l26() ?? 0
+  const totalPayments = f.l33() ?? 0
+  const refundAmount = f.l35a() ?? 0
+  const amountOwed = f.l37() ?? 0
 
   const standardDeduction = f.standardDeduction?.() ?? 0
-  const itemizedDeduction = f.scheduleA?.deductions?.() ?? 0
+  const itemizedDeduction = f.scheduleA?.deductions() ?? 0
 
   const effectiveTaxRate =
     agi > 0 ? Math.round((totalTax / agi) * 10000) / 100 : 0
@@ -499,24 +507,24 @@ const estimateMarginalRate = (
           { limit: Infinity, rate: 37 }
         ]
       : filingStatus === FilingStatus.HOH
-        ? [
-            { limit: 16550, rate: 10 },
-            { limit: 63100, rate: 12 },
-            { limit: 100500, rate: 22 },
-            { limit: 191950, rate: 24 },
-            { limit: 243700, rate: 32 },
-            { limit: 609350, rate: 35 },
-            { limit: Infinity, rate: 37 }
-          ]
-        : [
-            { limit: 11600, rate: 10 },
-            { limit: 47150, rate: 12 },
-            { limit: 100525, rate: 22 },
-            { limit: 191950, rate: 24 },
-            { limit: 243725, rate: 32 },
-            { limit: 609350, rate: 35 },
-            { limit: Infinity, rate: 37 }
-          ]
+      ? [
+          { limit: 16550, rate: 10 },
+          { limit: 63100, rate: 12 },
+          { limit: 100500, rate: 22 },
+          { limit: 191950, rate: 24 },
+          { limit: 243700, rate: 32 },
+          { limit: 609350, rate: 35 },
+          { limit: Infinity, rate: 37 }
+        ]
+      : [
+          { limit: 11600, rate: 10 },
+          { limit: 47150, rate: 12 },
+          { limit: 100525, rate: 22 },
+          { limit: 191950, rate: 24 },
+          { limit: 243725, rate: 32 },
+          { limit: 609350, rate: 35 },
+          { limit: Infinity, rate: 37 }
+        ]
 
   for (const bracket of brackets) {
     if (taxableIncome <= bracket.limit) {

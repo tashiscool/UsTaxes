@@ -145,14 +145,11 @@ export default function TaxPlanningCalculator(): ReactElement {
     (state: YearsTaxesState) => state.activeYear
   )
 
-  const information = useSelector(
-    (state: YearsTaxesState) => state[activeYear]
-  )
+  const information = useSelector((state: YearsTaxesState) => state[activeYear])
 
   // Convert redux state to TaxInputs
   const currentInputs = useMemo((): TaxInputs => {
-    const filingStatus =
-      information.taxPayer.filingStatus ?? FilingStatus.S
+    const filingStatus = information.taxPayer.filingStatus ?? FilingStatus.S
 
     // Calculate total wages from W2s
     const wages = information.w2s.reduce((sum, w2) => sum + w2.income, 0)
@@ -312,9 +309,7 @@ export default function TaxPlanningCalculator(): ReactElement {
       {/* Current Year Summary */}
       <Paper className={classes.paper}>
         <Typography variant="h6" gutterBottom>
-          <Assessment
-            style={{ verticalAlign: 'middle', marginRight: 8 }}
-          />
+          <Assessment style={{ verticalAlign: 'middle', marginRight: 8 }} />
           {activeYear.replace('Y', '')} Tax Summary
         </Typography>
 
@@ -362,7 +357,9 @@ export default function TaxPlanningCalculator(): ReactElement {
             <Card className={classes.summaryCard}>
               <CardContent>
                 <Typography variant="subtitle2" color="textSecondary">
-                  {currentBreakdown.refundOrOwed >= 0 ? 'Refund' : 'Amount Owed'}
+                  {currentBreakdown.refundOrOwed >= 0
+                    ? 'Refund'
+                    : 'Amount Owed'}
                 </Typography>
                 <Typography
                   variant="h5"
@@ -421,7 +418,9 @@ export default function TaxPlanningCalculator(): ReactElement {
                     width: `${bracket.percentage}%`,
                     backgroundColor: bracket.color
                   }}
-                  title={`${bracket.rate}%: $${bracket.taxInBracket.toLocaleString()}`}
+                  title={`${
+                    bracket.rate
+                  }%: $${bracket.taxInBracket.toLocaleString()}`}
                 />
               ))}
             </Box>
@@ -433,7 +432,8 @@ export default function TaxPlanningCalculator(): ReactElement {
                     style={{ backgroundColor: bracket.color }}
                   />
                   <Typography variant="caption">
-                    {bracket.rate}%: <Currency value={bracket.taxInBracket} plain />
+                    {bracket.rate}%:{' '}
+                    <Currency value={bracket.taxInBracket} plain />
                   </Typography>
                 </Box>
               ))}
@@ -493,7 +493,9 @@ export default function TaxPlanningCalculator(): ReactElement {
                       value={
                         currentInputs.deductions.useItemized
                           ? currentInputs.deductions.itemizedAmount
-                          : taxData.standardDeduction[currentInputs.filingStatus]
+                          : taxData.standardDeduction[
+                              currentInputs.filingStatus
+                            ]
                       }
                       plain
                     />
@@ -512,7 +514,10 @@ export default function TaxPlanningCalculator(): ReactElement {
                 <TableRow>
                   <TableCell>Ordinary Income Tax</TableCell>
                   <TableCell align="right">
-                    <Currency value={currentBreakdown.ordinaryIncomeTax} plain />
+                    <Currency
+                      value={currentBreakdown.ordinaryIncomeTax}
+                      plain
+                    />
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -547,7 +552,9 @@ export default function TaxPlanningCalculator(): ReactElement {
                   </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell>Total Payments (Withholding + Estimated)</TableCell>
+                  <TableCell>
+                    Total Payments (Withholding + Estimated)
+                  </TableCell>
                   <TableCell align="right">
                     <Currency value={currentBreakdown.totalPayments} plain />
                   </TableCell>
@@ -628,7 +635,10 @@ export default function TaxPlanningCalculator(): ReactElement {
         </TabPanel>
 
         <TabPanel value={activeTab} index={2}>
-          <Recommendations inputs={currentInputs} breakdown={currentBreakdown} />
+          <Recommendations
+            inputs={currentInputs}
+            breakdown={currentBreakdown}
+          />
         </TabPanel>
       </Paper>
     </Box>

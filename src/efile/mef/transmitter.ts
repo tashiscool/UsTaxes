@@ -290,7 +290,11 @@ export class EFileTransmitter {
   /**
    * Update status via callback if set
    */
-  private updateStatus(step: EFileStep, message: string, progress?: number): void {
+  private updateStatus(
+    step: EFileStep,
+    message: string,
+    progress?: number
+  ): void {
     if (this.statusCallback) {
       this.statusCallback(step, message, progress)
     }
@@ -362,13 +366,14 @@ export class EFileTransmitter {
 
     // Build XML structure
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    xml += '<Return xmlns="http://www.irs.gov/efile" returnVersion="2024v1.0">\n'
+    xml +=
+      '<Return xmlns="http://www.irs.gov/efile" returnVersion="2024v1.0">\n'
 
     // Return header
     xml += this.buildReturnHeaderXml(info)
 
     // Return data
-    xml += '  <ReturnData documentCnt="' + schedules.length + '">\n'
+    xml += `  <ReturnData documentCnt="${String(schedules.length)}">\n`
 
     for (const schedule of schedules) {
       xml += this.serializeScheduleToXml(schedule)
@@ -421,7 +426,10 @@ export class EFileTransmitter {
   /**
    * Serialize a schedule/form to XML
    */
-  private serializeScheduleToXml(schedule: { tag: string; fields: () => unknown[] }): string {
+  private serializeScheduleToXml(schedule: {
+    tag: string
+    fields: () => unknown[]
+  }): string {
     const tag = schedule.tag
     const fields = schedule.fields()
 
@@ -430,7 +438,9 @@ export class EFileTransmitter {
     // Convert fields to XML elements
     fields.forEach((value, index) => {
       if (value !== null && value !== undefined && value !== '') {
-        xml += `      <Line${index + 1}>${this.escapeXml(String(value))}</Line${index + 1}>\n`
+        xml += `      <Line${index + 1}>${this.escapeXml(String(value))}</Line${
+          index + 1
+        }>\n`
       }
     })
 
@@ -464,7 +474,9 @@ export class EFileTransmitter {
 
     if (info.taxPayer.spouse) {
       filerGrp.spouseSSN = info.taxPayer.spouse.ssid
-      filerGrp.spouseNameControlTxt = info.taxPayer.spouse.lastName.substring(0, 4).toUpperCase()
+      filerGrp.spouseNameControlTxt = info.taxPayer.spouse.lastName
+        .substring(0, 4)
+        .toUpperCase()
     }
 
     const originatorGrp: OriginatorGrp = {
@@ -500,16 +512,24 @@ export class EFileTransmitter {
 
     // Schema validation
     const schemaErrors = this.validateSchema(prepared.xml)
-    errors.push(...schemaErrors.filter(e => e.type === 'schema'))
+    errors.push(...schemaErrors.filter((e) => e.type === 'schema'))
 
     // Business rules validation
     const ruleErrors = this.validateBusinessRules(prepared)
-    errors.push(...ruleErrors.filter(e =>
-      e.type === 'businessRule' && (e as { severityCd: string }).severityCd === 'Reject'
-    ))
-    warnings.push(...ruleErrors.filter(e =>
-      e.type === 'businessRule' && (e as { severityCd: string }).severityCd !== 'Reject'
-    ))
+    errors.push(
+      ...ruleErrors.filter(
+        (e) =>
+          e.type === 'businessRule' &&
+          (e as { severityCd: string }).severityCd === 'Reject'
+      )
+    )
+    warnings.push(
+      ...ruleErrors.filter(
+        (e) =>
+          e.type === 'businessRule' &&
+          (e as { severityCd: string }).severityCd !== 'Reject'
+      )
+    )
 
     // Math validation
     const mathErrors = this.validateMath(prepared)
@@ -519,7 +539,9 @@ export class EFileTransmitter {
 
     this.updateStatus(
       'validating',
-      isValid ? 'Validation passed' : `Validation found ${errors.length} error(s)`,
+      isValid
+        ? 'Validation passed'
+        : `Validation found ${errors.length} error(s)`,
       40
     )
 
@@ -698,11 +720,15 @@ export class EFileTransmitter {
     const signedHeader: ReturnHeader = {
       ...prepared.header,
       selfSelectPINGrp,
-      ipAddress: signature.ipAddress ? {
-        ipAddressTxt: signature.ipAddress,
-        ipAddressTypeCd: signature.ipAddress.includes(':') ? 'IPv6' : 'IPv4',
-        ipTs: new Date().toISOString()
-      } : undefined
+      ipAddress: signature.ipAddress
+        ? {
+            ipAddressTxt: signature.ipAddress,
+            ipAddressTypeCd: signature.ipAddress.includes(':')
+              ? 'IPv6'
+              : 'IPv4',
+            ipTs: new Date().toISOString()
+          }
+        : undefined
     }
 
     // Generate submission ID
@@ -770,7 +796,7 @@ export class EFileTransmitter {
     let hash = 0
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
+      hash = (hash << 5) - hash + char
       hash = hash & hash
     }
     return Math.abs(hash).toString(36).toUpperCase()
@@ -803,7 +829,8 @@ export class EFileTransmitter {
 
       return result
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error'
       return {
         success: false,
         errorMessage,
@@ -829,7 +856,9 @@ export class EFileTransmitter {
   /**
    * Send submission to MeF
    */
-  private async sendSubmission(submission: Submission): Promise<SubmissionResult> {
+  private async sendSubmission(
+    submission: Submission
+  ): Promise<SubmissionResult> {
     const { mefConfig } = this.config
 
     // In production, this would:
@@ -858,8 +887,8 @@ export class EFileTransmitter {
    */
   async pollForAcknowledgment(
     submissionId: SubmissionId,
-    maxAttempts: number = 10,
-    intervalMs: number = 30000
+    maxAttempts = 10,
+    intervalMs = 30000
   ): Promise<AcknowledgmentResult> {
     this.updateStatus('polling', 'Waiting for IRS acknowledgment...', 85)
 
@@ -927,7 +956,9 @@ export class EFileTransmitter {
   /**
    * Get acknowledgment for a submission
    */
-  private async getAcknowledgment(submissionId: SubmissionId): Promise<Acknowledgment | null> {
+  private async getAcknowledgment(
+    submissionId: SubmissionId
+  ): Promise<Acknowledgment | null> {
     // In production, this would make a SOAP request to the MeF getAck endpoint
 
     // Simulate network delay
@@ -959,7 +990,8 @@ export class EFileTransmitter {
           {
             errorId: 'R0000-507-01',
             errorCategoryCd: 'BUSINESS-RULE-ERROR',
-            errorMessageTxt: 'SSN in the return was used as a dependent on another return',
+            errorMessageTxt:
+              'SSN in the return was used as a dependent on another return',
             ruleNum: 'R0000-507-01',
             severityCd: 'Reject'
           }
@@ -1035,7 +1067,9 @@ export class EFileTransmitter {
       }
 
       // Step 5: Poll for acknowledgment
-      acknowledgment = await this.pollForAcknowledgment(submission.submissionId!)
+      acknowledgment = await this.pollForAcknowledgment(
+        submission.submissionId!
+      )
       timestamps.acknowledged = new Date()
 
       // Determine final status
@@ -1098,7 +1132,7 @@ export class EFileTransmitter {
    * Delay execution
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   /**

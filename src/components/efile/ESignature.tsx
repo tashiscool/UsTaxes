@@ -38,9 +38,10 @@ const useStyles = makeStyles((theme: Theme) =>
       marginBottom: theme.spacing(2)
     },
     consentBox: {
-      backgroundColor: theme.palette.type === 'dark'
-        ? 'rgba(255, 255, 255, 0.05)'
-        : 'rgba(0, 0, 0, 0.02)',
+      backgroundColor:
+        theme.palette.type === 'dark'
+          ? 'rgba(255, 255, 255, 0.05)'
+          : 'rgba(0, 0, 0, 0.02)',
       padding: theme.spacing(2),
       borderRadius: theme.shape.borderRadius,
       marginBottom: theme.spacing(2),
@@ -190,9 +191,9 @@ export function ESignature({
   const classes = useStyles()
 
   const [isSigned, setIsSigned] = useState(!!initialValues?.signatureTimestamp)
-  const [signatureTimestamp, setSignatureTimestamp] = useState<string | undefined>(
-    initialValues?.signatureTimestamp
-  )
+  const [signatureTimestamp, setSignatureTimestamp] = useState<
+    string | undefined
+  >(initialValues?.signatureTimestamp)
 
   const defaultValues: ESignatureData = {
     primaryPIN: '',
@@ -203,7 +204,11 @@ export function ESignature({
   }
 
   const methods = useForm<ESignatureData>({ defaultValues })
-  const { handleSubmit, watch, formState: { errors } } = methods
+  const {
+    handleSubmit,
+    watch,
+    formState: { errors }
+  } = methods
 
   const form8879Consent = watch('form8879Consent')
   const efileConsent = watch('efileConsent')
@@ -211,7 +216,8 @@ export function ESignature({
   const spousePIN = watch('spousePIN')
 
   // Check if form is complete
-  const isComplete = form8879Consent &&
+  const isComplete =
+    form8879Consent &&
     efileConsent &&
     /^\d{5}$/.test(primaryPIN) &&
     (!isJoint || /^\d{5}$/.test(spousePIN || ''))
@@ -241,7 +247,7 @@ export function ESignature({
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(handleSign)}>
+      <form onSubmit={(e) => void handleSubmit(handleSign)(e)}>
         {/* Return Summary */}
         <Paper className={classes.paper} elevation={2}>
           <Typography variant="h6" className={classes.sectionTitle}>
@@ -253,24 +259,24 @@ export function ESignature({
               <Typography variant="body2" color="textSecondary">
                 Taxpayer
               </Typography>
-              <Typography variant="body1">
-                {primaryName}
-              </Typography>
+              <Typography variant="body1">{primaryName}</Typography>
               {isJoint && spouseName && (
-                <Typography variant="body1">
-                  {spouseName}
-                </Typography>
+                <Typography variant="body1">{spouseName}</Typography>
               )}
             </Grid>
             <Grid item xs={6}>
               <Typography variant="body2" color="textSecondary">
-                {refundAmount && refundAmount > 0 ? 'Refund Amount' : 'Amount Owed'}
+                {refundAmount && refundAmount > 0
+                  ? 'Refund Amount'
+                  : 'Amount Owed'}
               </Typography>
-              <Typography variant="h5" color={refundAmount && refundAmount > 0 ? 'primary' : 'error'}>
+              <Typography
+                variant="h5"
+                color={refundAmount && refundAmount > 0 ? 'primary' : 'error'}
+              >
                 {refundAmount && refundAmount > 0
                   ? formatCurrency(refundAmount)
-                  : formatCurrency(amountOwed || 0)
-                }
+                  : formatCurrency(amountOwed || 0)}
               </Typography>
             </Grid>
           </Grid>
@@ -283,7 +289,11 @@ export function ESignature({
           </Typography>
 
           <Box className={classes.consentBox}>
-            <Typography className={classes.consentText} component="pre" style={{ whiteSpace: 'pre-wrap' }}>
+            <Typography
+              className={classes.consentText}
+              component="pre"
+              style={{ whiteSpace: 'pre-wrap' }}
+            >
               {FORM_8879_CONSENT}
             </Typography>
           </Box>
@@ -294,15 +304,18 @@ export function ESignature({
               <Checkbox
                 name="form8879Consent"
                 checked={form8879Consent}
-                onChange={(e) => methods.setValue('form8879Consent', e.target.checked)}
+                onChange={(e) =>
+                  methods.setValue('form8879Consent', e.target.checked)
+                }
                 color="primary"
                 disabled={readOnly || isSigned}
               />
             }
             label={
               <Typography variant="body2">
-                I have read and agree to the IRS e-file Signature Authorization (Form 8879).
-                I understand that by entering my PIN below, I am signing my return electronically.
+                I have read and agree to the IRS e-file Signature Authorization
+                (Form 8879). I understand that by entering my PIN below, I am
+                signing my return electronically.
               </Typography>
             }
           />
@@ -313,15 +326,17 @@ export function ESignature({
               <Checkbox
                 name="efileConsent"
                 checked={efileConsent}
-                onChange={(e) => methods.setValue('efileConsent', e.target.checked)}
+                onChange={(e) =>
+                  methods.setValue('efileConsent', e.target.checked)
+                }
                 color="primary"
                 disabled={readOnly || isSigned}
               />
             }
             label={
               <Typography variant="body2">
-                I consent to electronically file my {taxYear} federal income tax return
-                with the Internal Revenue Service.
+                I consent to electronically file my {taxYear} federal income tax
+                return with the Internal Revenue Service.
               </Typography>
             }
           />
@@ -335,7 +350,8 @@ export function ESignature({
 
           <Alert severity="info" style={{ marginBottom: 16 }}>
             Choose any 5-digit PIN (except all zeros). This PIN serves as your
-            electronic signature. Remember this PIN if you need to file an amended return.
+            electronic signature. Remember this PIN if you need to file an
+            amended return.
           </Alert>
 
           <Grid container spacing={3} className={classes.pinGrid}>
@@ -366,7 +382,11 @@ export function ESignature({
                   }
                 }}
               />
-              <Typography variant="caption" color="textSecondary" className={classes.pinHelp}>
+              <Typography
+                variant="caption"
+                color="textSecondary"
+                className={classes.pinHelp}
+              >
                 Example: 12345 (do not use all zeros)
               </Typography>
             </Grid>
@@ -399,7 +419,11 @@ export function ESignature({
                     }
                   }}
                 />
-                <Typography variant="caption" color="textSecondary" className={classes.pinHelp}>
+                <Typography
+                  variant="caption"
+                  color="textSecondary"
+                  className={classes.pinHelp}
+                >
                   Spouse must create their own PIN
                 </Typography>
               </Grid>
@@ -451,9 +475,10 @@ export function ESignature({
         {/* Legal Notice */}
         <Alert severity="warning">
           <Typography variant="body2">
-            <strong>Important:</strong> By signing electronically, you certify that all
-            information on your tax return is true, correct, and complete to the best
-            of your knowledge. Submitting a false return is a federal crime.
+            <strong>Important:</strong> By signing electronically, you certify
+            that all information on your tax return is true, correct, and
+            complete to the best of your knowledge. Submitting a false return is
+            a federal crime.
           </Typography>
         </Alert>
       </form>

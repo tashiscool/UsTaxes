@@ -24,8 +24,16 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * Due Date: 15th day of 5th month after fiscal year end
  */
 
-export type FoundationType = 'nonOperating' | 'operating' | 'passThrough' | 'privateOperating'
-export type FoundationStatus = 'section4940a1' | 'section4940a3' | 'section4940e' | 'other'
+export type FoundationType =
+  | 'nonOperating'
+  | 'operating'
+  | 'passThrough'
+  | 'privateOperating'
+export type FoundationStatus =
+  | 'section4940a1'
+  | 'section4940a3'
+  | 'section4940e'
+  | 'other'
 
 export interface FoundationInfo {
   name: string
@@ -127,8 +135,8 @@ export interface Form990PFInfo {
 }
 
 // 2025 Excise Tax Rates
-const STANDARD_EXCISE_RATE = 0.0139  // 1.39%
-const REDUCED_EXCISE_RATE = 0.01     // 1.0% for qualifying foundations
+const STANDARD_EXCISE_RATE = 0.0139 // 1.39%
+const REDUCED_EXCISE_RATE = 0.01 // 1.0% for qualifying foundations
 
 export default class F990PF extends F1040Attachment {
   tag: FormTag = 'f990pf'
@@ -150,8 +158,11 @@ export default class F990PF extends F1040Attachment {
   foundation = (): FoundationInfo | undefined => this.f990PFInfo()?.foundation
   foundationName = (): string => this.foundation()?.name ?? ''
   ein = (): string => this.foundation()?.ein ?? ''
-  foundationType = (): FoundationType => this.foundation()?.foundationType ?? 'nonOperating'
-  isOperating = (): boolean => this.foundationType() === 'operating' || this.foundationType() === 'privateOperating'
+  foundationType = (): FoundationType =>
+    this.foundation()?.foundationType ?? 'nonOperating'
+  isOperating = (): boolean =>
+    this.foundationType() === 'operating' ||
+    this.foundationType() === 'privateOperating'
 
   // Part I: Revenue
   revenue = (): FoundationRevenue | undefined => this.f990PFInfo()?.revenue
@@ -190,7 +201,8 @@ export default class F990PF extends F1040Attachment {
     ])
   }
 
-  excessRevenueOverExpenses = (): number => this.totalRevenue() - this.totalExpenses()
+  excessRevenueOverExpenses = (): number =>
+    this.totalRevenue() - this.totalExpenses()
 
   // Part II: Balance Sheet
   totalAssets = (): number => this.f990PFInfo()?.assetsEnding ?? 0
@@ -198,7 +210,8 @@ export default class F990PF extends F1040Attachment {
   netAssets = (): number => this.totalAssets() - this.totalLiabilities()
 
   // Part IX: Charitable Distributions
-  distributions = (): CharitableDistributions | undefined => this.f990PFInfo()?.distributions
+  distributions = (): CharitableDistributions | undefined =>
+    this.f990PFInfo()?.distributions
 
   totalCharitableDistributions = (): number => {
     const dist = this.distributions()
@@ -235,9 +248,11 @@ export default class F990PF extends F1040Attachment {
   }
 
   // Excise Tax on Investment Income
-  netInvestmentIncome = (): number => this.f990PFInfo()?.netInvestmentIncome ?? 0
+  netInvestmentIncome = (): number =>
+    this.f990PFInfo()?.netInvestmentIncome ?? 0
 
-  exciseTaxRate = (): number => this.f990PFInfo()?.exciseTaxRate ?? STANDARD_EXCISE_RATE
+  exciseTaxRate = (): number =>
+    this.f990PFInfo()?.exciseTaxRate ?? STANDARD_EXCISE_RATE
 
   exciseTax = (): number => {
     return Math.round(this.netInvestmentIncome() * this.exciseTaxRate())
@@ -261,8 +276,8 @@ export default class F990PF extends F1040Attachment {
       this.isOperating(),
       found?.yearOfFormation ?? 0,
       // Dates
-      info?.fiscalYearStart?.toLocaleDateString() ?? '',
-      info?.fiscalYearEnd?.toLocaleDateString() ?? '',
+      info?.fiscalYearStart.toLocaleDateString() ?? '',
+      info?.fiscalYearEnd.toLocaleDateString() ?? '',
       info?.isFinalReturn ?? false,
       info?.isAmendedReturn ?? false,
       // Part I: Revenue

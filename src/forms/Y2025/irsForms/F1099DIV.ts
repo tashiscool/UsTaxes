@@ -33,28 +33,28 @@ export interface F1099DIVData {
   // FATCA filing requirement
   fatcaFilingRequired: boolean
   // Dividend amounts
-  totalOrdinaryDividends: number       // Box 1a
-  qualifiedDividends: number           // Box 1b
+  totalOrdinaryDividends: number // Box 1a
+  qualifiedDividends: number // Box 1b
   totalCapitalGainDistributions: number // Box 2a
-  unrecapturedSection1250Gain: number  // Box 2b
-  section1202Gain: number              // Box 2c
-  collectiblesGain: number             // Box 2d
-  section897OrdinaryDividends: number  // Box 2e
-  section897CapitalGain: number        // Box 2f
-  nondividendDistributions: number     // Box 3
-  federalTaxWithheld: number           // Box 4
-  section199ADividends: number         // Box 5
-  investmentExpenses: number           // Box 6
-  foreignTaxPaid: number               // Box 7
-  foreignCountry: string               // Box 8
+  unrecapturedSection1250Gain: number // Box 2b
+  section1202Gain: number // Box 2c
+  collectiblesGain: number // Box 2d
+  section897OrdinaryDividends: number // Box 2e
+  section897CapitalGain: number // Box 2f
+  nondividendDistributions: number // Box 3
+  federalTaxWithheld: number // Box 4
+  section199ADividends: number // Box 5
+  investmentExpenses: number // Box 6
+  foreignTaxPaid: number // Box 7
+  foreignCountry: string // Box 8
   cashLiquidationDistributions: number // Box 9
   noncashLiquidationDistributions: number // Box 10
-  exemptInterestDividends: number      // Box 12
+  exemptInterestDividends: number // Box 12
   privateActivityBondDividends: number // Box 13
   // State tax
-  stateTaxWithheld: number             // Box 14
-  stateId: string                      // Box 15
-  stateDistribution: number            // Box 16
+  stateTaxWithheld: number // Box 14
+  stateId: string // Box 15
+  stateDistribution: number // Box 16
 }
 
 export default class F1099DIV extends F1040Attachment {
@@ -137,23 +137,23 @@ export default class F1099DIV extends F1040Attachment {
       data?.accountNumber ?? '',
       data?.fatcaFilingRequired ?? false,
       // Dividend amounts
-      data?.totalOrdinaryDividends ?? 0,       // Box 1a
-      data?.qualifiedDividends ?? 0,           // Box 1b
+      data?.totalOrdinaryDividends ?? 0, // Box 1a
+      data?.qualifiedDividends ?? 0, // Box 1b
       data?.totalCapitalGainDistributions ?? 0, // Box 2a
-      data?.unrecapturedSection1250Gain ?? 0,  // Box 2b
-      data?.section1202Gain ?? 0,              // Box 2c
-      data?.collectiblesGain ?? 0,             // Box 2d
-      data?.section897OrdinaryDividends ?? 0,  // Box 2e
-      data?.section897CapitalGain ?? 0,        // Box 2f
-      data?.nondividendDistributions ?? 0,     // Box 3
-      data?.federalTaxWithheld ?? 0,           // Box 4
-      data?.section199ADividends ?? 0,         // Box 5
-      data?.investmentExpenses ?? 0,           // Box 6
-      data?.foreignTaxPaid ?? 0,               // Box 7
-      data?.foreignCountry ?? '',              // Box 8
+      data?.unrecapturedSection1250Gain ?? 0, // Box 2b
+      data?.section1202Gain ?? 0, // Box 2c
+      data?.collectiblesGain ?? 0, // Box 2d
+      data?.section897OrdinaryDividends ?? 0, // Box 2e
+      data?.section897CapitalGain ?? 0, // Box 2f
+      data?.nondividendDistributions ?? 0, // Box 3
+      data?.federalTaxWithheld ?? 0, // Box 4
+      data?.section199ADividends ?? 0, // Box 5
+      data?.investmentExpenses ?? 0, // Box 6
+      data?.foreignTaxPaid ?? 0, // Box 7
+      data?.foreignCountry ?? '', // Box 8
       data?.cashLiquidationDistributions ?? 0, // Box 9
       data?.noncashLiquidationDistributions ?? 0, // Box 10
-      data?.exemptInterestDividends ?? 0,      // Box 12
+      data?.exemptInterestDividends ?? 0, // Box 12
       data?.privateActivityBondDividends ?? 0, // Box 13
       // State
       data?.stateTaxWithheld ?? 0,

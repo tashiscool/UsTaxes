@@ -50,7 +50,7 @@ export default class Schedule990O extends F1040Attachment {
   }
 
   schedule990OData = (): Schedule990OData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Get explanations
@@ -87,7 +87,7 @@ export default class Schedule990O extends F1040Attachment {
   // Get explanation by form part and line
   getExplanation = (formPart: string, lineNumber: string): string => {
     const explanation = this.explanations().find(
-      e => e.formPart === formPart && e.lineNumber === lineNumber
+      (e) => e.formPart === formPart && e.lineNumber === lineNumber
     )
     return explanation?.explanation ?? ''
   }

@@ -44,7 +44,10 @@ export default class F5329 extends F1040Attachment {
     const f1099rs = this.f1040.f1099rs()
     for (const f of f1099rs) {
       const form = f.form as F1099RForm
-      if (form.personRole === this.personRole && form.distributionCode === '1') {
+      if (
+        form.personRole === this.personRole &&
+        form.distributionCode === '1'
+      ) {
         return true
       }
     }
@@ -70,7 +73,10 @@ export default class F5329 extends F1040Attachment {
     let total = 0
     for (const f of this.f1040.f1099rs()) {
       const form = f.form as F1099RForm
-      if (form.personRole === this.personRole && form.distributionCode === '1') {
+      if (
+        form.personRole === this.personRole &&
+        form.distributionCode === '1'
+      ) {
         total += form.taxableAmount ?? 0
       }
     }
@@ -82,14 +88,17 @@ export default class F5329 extends F1040Attachment {
     // Exceptions: death, disability, medical expenses, etc.
     // Sum all exception amounts
     const exceptions = this.f1040.info.earlyDistributionExceptions ?? []
-    return exceptions.reduce((sum: number, e: { amount: number }) => sum + e.amount, 0)
+    return exceptions.reduce(
+      (sum: number, e: { amount: number }) => sum + e.amount,
+      0
+    )
   }
 
   // Line 3: Amount subject to additional tax (line 1 - line 2)
   l3 = (): number => Math.max(0, this.l1() - this.l2())
 
   // Line 4: Additional tax (line 3 × 10%)
-  l4 = (): number => Math.round(this.l3() * 0.10)
+  l4 = (): number => Math.round(this.l3() * 0.1)
 
   // Part II - Additional Tax on Certain Distributions from Education Accounts
 
@@ -97,7 +106,7 @@ export default class F5329 extends F1040Attachment {
   l5 = (): number => 0
 
   // Line 6: Additional tax (line 5 × 10%)
-  l6 = (): number => Math.round(this.l5() * 0.10)
+  l6 = (): number => Math.round(this.l5() * 0.1)
 
   // Part III - Additional Tax on Excess Contributions to Traditional IRAs
 
@@ -118,7 +127,8 @@ export default class F5329 extends F1040Attachment {
   l20 = (): number => 0
 
   // Line 21: Total excess contributions subject to tax
-  l21 = (): number => Math.max(0, this.l17() + this.l18() - this.l19() - this.l20())
+  l21 = (): number =>
+    Math.max(0, this.l17() + this.l18() - this.l19() - this.l20())
 
   // Line 22: Additional tax on excess contributions (line 21 × 6%)
   l22 = (): number => Math.round(this.l21() * 0.06)
@@ -130,7 +140,8 @@ export default class F5329 extends F1040Attachment {
   l24 = (): number => 0
   l25 = (): number => 0
   l26 = (): number => 0
-  l27 = (): number => Math.max(0, this.l23() + this.l24() - this.l25() - this.l26())
+  l27 = (): number =>
+    Math.max(0, this.l23() + this.l24() - this.l25() - this.l26())
   l28 = (): number => Math.round(this.l27() * 0.06)
 
   // Part V - Additional Tax on Excess Contributions to Coverdell ESAs
@@ -143,7 +154,8 @@ export default class F5329 extends F1040Attachment {
   l30 = (): number => 0
   l31 = (): number => 0
   l32 = (): number => 0
-  l33 = (): number => Math.max(0, this.l29() + this.l30() - this.l31() - this.l32())
+  l33 = (): number =>
+    Math.max(0, this.l29() + this.l30() - this.l31() - this.l32())
   l34 = (): number => Math.round(this.l33() * 0.06)
 
   // Part VI - Additional Tax on Excess Contributions to HSAs
@@ -156,7 +168,8 @@ export default class F5329 extends F1040Attachment {
   l42 = (): number => 0
   l43 = (): number => 0
   l44 = (): number => 0
-  l45 = (): number => Math.max(0, this.l41() + this.l42() - this.l43() - this.l44())
+  l45 = (): number =>
+    Math.max(0, this.l41() + this.l42() - this.l43() - this.l44())
   l46 = (): number => Math.round(this.l45() * 0.06)
 
   // Part IX - Additional Tax on Excess Accumulation in Qualified Retirement Plans (RMD)
@@ -175,13 +188,13 @@ export default class F5329 extends F1040Attachment {
   // Total additional tax (goes to Schedule 2)
   totalAdditionalTax = (): number => {
     return sumFields([
-      this.l4(),   // Early distribution penalty
-      this.l6(),   // ESA/QTP penalty
-      this.l22(),  // Excess traditional IRA
-      this.l28(),  // Excess Roth IRA
-      this.l34(),  // Excess ESA
-      this.l46(),  // Excess HSA
-      this.l55()   // RMD penalty
+      this.l4(), // Early distribution penalty
+      this.l6(), // ESA/QTP penalty
+      this.l22(), // Excess traditional IRA
+      this.l28(), // Excess Roth IRA
+      this.l34(), // Excess ESA
+      this.l46(), // Excess HSA
+      this.l55() // RMD penalty
     ])
   }
 

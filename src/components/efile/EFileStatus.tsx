@@ -92,9 +92,10 @@ const useStyles = makeStyles((theme: Theme) =>
       backgroundColor: theme.palette.error.light + '20'
     },
     errorDetails: {
-      backgroundColor: theme.palette.type === 'dark'
-        ? 'rgba(255, 255, 255, 0.02)'
-        : 'rgba(0, 0, 0, 0.01)'
+      backgroundColor:
+        theme.palette.type === 'dark'
+          ? 'rgba(255, 255, 255, 0.02)'
+          : 'rgba(0, 0, 0, 0.01)'
     },
     resolutionBox: {
       backgroundColor: theme.palette.info.light + '20',
@@ -183,39 +184,46 @@ interface ErrorResolution {
 const ERROR_RESOLUTIONS: ErrorResolution[] = [
   {
     pattern: /SSN.*dependent.*another return/i,
-    resolution: 'Someone else claimed your dependent. You may need to file by mail with documentation proving the dependent is yours.',
+    resolution:
+      'Someone else claimed your dependent. You may need to file by mail with documentation proving the dependent is yours.',
     action: 'Print and mail your return'
   },
   {
     pattern: /SSN.*already.*filed/i,
-    resolution: 'A return has already been filed with this SSN. This could indicate identity theft. File Form 14039 (Identity Theft Affidavit).',
+    resolution:
+      'A return has already been filed with this SSN. This could indicate identity theft. File Form 14039 (Identity Theft Affidavit).',
     action: 'File Form 14039',
     link: 'https://www.irs.gov/individuals/how-irs-id-theft-victim-assistance-works'
   },
   {
     pattern: /AGI.*does not match/i,
-    resolution: 'The prior year AGI you entered does not match IRS records. Try entering $0 if you filed late last year, or check your prior year return.',
+    resolution:
+      'The prior year AGI you entered does not match IRS records. Try entering $0 if you filed late last year, or check your prior year return.',
     action: 'Update prior year AGI'
   },
   {
     pattern: /IP PIN.*invalid/i,
-    resolution: 'The Identity Protection PIN is incorrect. You can retrieve your IP PIN from your IRS online account.',
+    resolution:
+      'The Identity Protection PIN is incorrect. You can retrieve your IP PIN from your IRS online account.',
     action: 'Get IP PIN',
     link: 'https://www.irs.gov/identity-theft-fraud-scams/get-an-identity-protection-pin'
   },
   {
     pattern: /EIN.*not valid/i,
-    resolution: 'An Employer Identification Number (EIN) on your return is not valid. Please verify the EIN from your W-2 or other tax documents.',
+    resolution:
+      'An Employer Identification Number (EIN) on your return is not valid. Please verify the EIN from your W-2 or other tax documents.',
     action: 'Verify employer information'
   },
   {
     pattern: /date of birth/i,
-    resolution: 'A date of birth on your return does not match IRS records. Verify all dates of birth are correct.',
+    resolution:
+      'A date of birth on your return does not match IRS records. Verify all dates of birth are correct.',
     action: 'Verify dates of birth'
   },
   {
     pattern: /schema|xml|format/i,
-    resolution: 'There was a technical error with your return format. Please try submitting again.',
+    resolution:
+      'There was a technical error with your return format. Please try submitting again.',
     action: 'Resubmit return'
   }
 ]
@@ -224,7 +232,7 @@ const ERROR_RESOLUTIONS: ErrorResolution[] = [
  * Find resolution for an error message
  */
 function findResolution(errorMessage: string): ErrorResolution | undefined {
-  return ERROR_RESOLUTIONS.find(r => r.pattern.test(errorMessage))
+  return ERROR_RESOLUTIONS.find((r) => r.pattern.test(errorMessage))
 }
 
 // =============================================================================
@@ -273,15 +281,31 @@ export function EFileStatus({
   const renderStatusIcon = () => {
     switch (status) {
       case 'Accepted':
-        return <CheckCircleIcon className={`${classes.statusIcon} ${classes.acceptedIcon}`} />
+        return (
+          <CheckCircleIcon
+            className={`${classes.statusIcon} ${classes.acceptedIcon}`}
+          />
+        )
       case 'Rejected':
-        return <ErrorIcon className={`${classes.statusIcon} ${classes.rejectedIcon}`} />
+        return (
+          <ErrorIcon
+            className={`${classes.statusIcon} ${classes.rejectedIcon}`}
+          />
+        )
       case 'pending':
       case 'Pending':
       case 'submitting':
-        return <HourglassEmptyIcon className={`${classes.statusIcon} ${classes.pendingIcon}`} />
+        return (
+          <HourglassEmptyIcon
+            className={`${classes.statusIcon} ${classes.pendingIcon}`}
+          />
+        )
       default:
-        return <HourglassEmptyIcon className={`${classes.statusIcon} ${classes.pendingIcon}`} />
+        return (
+          <HourglassEmptyIcon
+            className={`${classes.statusIcon} ${classes.pendingIcon}`}
+          />
+        )
     }
   }
 
@@ -289,9 +313,21 @@ export function EFileStatus({
   const renderStatusChip = () => {
     switch (status) {
       case 'Accepted':
-        return <Chip label="Accepted" color="primary" className={classes.statusChip} />
+        return (
+          <Chip
+            label="Accepted"
+            color="primary"
+            className={classes.statusChip}
+          />
+        )
       case 'Rejected':
-        return <Chip label="Rejected" color="secondary" className={classes.statusChip} />
+        return (
+          <Chip
+            label="Rejected"
+            color="secondary"
+            className={classes.statusChip}
+          />
+        )
       case 'pending':
       case 'Pending':
         return <Chip label="Pending" className={classes.statusChip} />
@@ -312,7 +348,8 @@ export function EFileStatus({
             <Typography variant="h5">
               {status === 'Accepted' && 'Your Return Has Been Accepted!'}
               {status === 'Rejected' && 'Your Return Has Been Rejected'}
-              {(status === 'pending' || status === 'Pending') && 'Waiting for IRS Response'}
+              {(status === 'pending' || status === 'Pending') &&
+                'Waiting for IRS Response'}
               {status === 'submitting' && 'Submitting Your Return...'}
               {renderStatusChip()}
             </Typography>
@@ -329,7 +366,9 @@ export function EFileStatus({
               Checking for IRS acknowledgment...
             </Typography>
             <LinearProgress
-              variant={pollingProgress !== undefined ? 'determinate' : 'indeterminate'}
+              variant={
+                pollingProgress !== undefined ? 'determinate' : 'indeterminate'
+              }
               value={pollingProgress}
             />
           </Box>
@@ -472,8 +511,8 @@ export function EFileStatus({
                       rel="noopener noreferrer"
                     >
                       Where&apos;s My Refund?
-                    </Link>
-                    {' '}after 24 hours
+                    </Link>{' '}
+                    after 24 hours
                   </>
                 }
               />
@@ -498,7 +537,8 @@ export function EFileStatus({
             Rejection Errors
           </Typography>
           <Typography variant="body2" color="textSecondary" paragraph>
-            Your return was rejected due to the following issues. Please review and correct them.
+            Your return was rejected due to the following issues. Please review
+            and correct them.
           </Typography>
 
           {acknowledgment.errors.map((error, index) => {
@@ -592,8 +632,8 @@ export function EFileStatus({
             Still Waiting?
           </Typography>
           <Typography variant="body2" color="textSecondary" paragraph>
-            The IRS typically responds within a few minutes to 48 hours.
-            If you&apos;ve been waiting more than 48 hours, there may be an issue.
+            The IRS typically responds within a few minutes to 48 hours. If
+            you&apos;ve been waiting more than 48 hours, there may be an issue.
           </Typography>
 
           <Box className={classes.actionButtons}>

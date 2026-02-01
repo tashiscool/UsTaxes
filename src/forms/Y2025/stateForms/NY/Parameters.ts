@@ -13,7 +13,9 @@ const parameters = {
       rates: [0.04, 0.045, 0.0525, 0.055, 0.06, 0.0685, 0.0965, 0.103, 0.109]
     },
     [FilingStatus.MFJ]: {
-      brackets: [17150, 23600, 27900, 161550, 323200, 2155350, 5000000, 25000000],
+      brackets: [
+        17150, 23600, 27900, 161550, 323200, 2155350, 5000000, 25000000
+      ],
       rates: [0.04, 0.045, 0.0525, 0.055, 0.06, 0.0685, 0.0965, 0.103, 0.109]
     },
     [FilingStatus.MFS]: {
@@ -21,11 +23,15 @@ const parameters = {
       rates: [0.04, 0.045, 0.0525, 0.055, 0.06, 0.0685, 0.0965, 0.103, 0.109]
     },
     [FilingStatus.HOH]: {
-      brackets: [12800, 17650, 20900, 107650, 269300, 1616450, 5000000, 25000000],
+      brackets: [
+        12800, 17650, 20900, 107650, 269300, 1616450, 5000000, 25000000
+      ],
       rates: [0.04, 0.045, 0.0525, 0.055, 0.06, 0.0685, 0.0965, 0.103, 0.109]
     },
     [FilingStatus.W]: {
-      brackets: [17150, 23600, 27900, 161550, 323200, 2155350, 5000000, 25000000],
+      brackets: [
+        17150, 23600, 27900, 161550, 323200, 2155350, 5000000, 25000000
+      ],
       rates: [0.04, 0.045, 0.0525, 0.055, 0.06, 0.0685, 0.0965, 0.103, 0.109]
     }
   },
@@ -43,10 +49,10 @@ const parameters = {
   dependentExemption: 1000,
 
   // NY Earned Income Credit (percentage of federal EIC)
-  eicPercentage: 0.30,
+  eicPercentage: 0.3,
 
   // NY Child and Dependent Care Credit rate
-  childCareRate: 0.20,
+  childCareRate: 0.2,
 
   // College tuition credit max
   collegeTuitionCreditMax: 400,

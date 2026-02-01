@@ -87,7 +87,9 @@ export default class F944X extends F1040Attachment {
 
   medicareWagesDifference = (): number => {
     const data = this.f944XData()
-    return (data?.correctedMedicareWages ?? 0) - (data?.originalMedicareWages ?? 0)
+    return (
+      (data?.correctedMedicareWages ?? 0) - (data?.originalMedicareWages ?? 0)
+    )
   }
 
   medicareTaxDifference = (): number => {
@@ -96,7 +98,9 @@ export default class F944X extends F1040Attachment {
 
   addlMedicareDifference = (): number => {
     const data = this.f944XData()
-    return (data?.correctedAddlMedicare ?? 0) - (data?.originalAddlMedicare ?? 0)
+    return (
+      (data?.correctedAddlMedicare ?? 0) - (data?.originalAddlMedicare ?? 0)
+    )
   }
 
   totalTaxDifference = (): number => {
@@ -116,7 +120,7 @@ export default class F944X extends F1040Attachment {
 
     return [
       data?.yearBeingCorrected ?? 0,
-      data?.dateOriginalReturnFiled?.toLocaleDateString() ?? '',
+      data?.dateOriginalReturnFiled.toLocaleDateString() ?? '',
       data?.isAdjustedReturn ?? true,
       data?.isClaimForRefund ?? false,
       data?.originalWages ?? 0,

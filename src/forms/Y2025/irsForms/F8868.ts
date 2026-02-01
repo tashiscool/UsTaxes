@@ -21,16 +21,16 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
  */
 
 export type ExemptReturnType =
-  | '990'      // Return of Organization Exempt From Income Tax
-  | '990-BL'   // Information and Initial Excise Tax Return for Black Lung Benefit Trusts
-  | '990-EZ'   // Short Form Return of Organization Exempt From Income Tax
-  | '990-PF'   // Return of Private Foundation
-  | '990-T'    // Exempt Organization Business Income Tax Return
-  | '1041-A'   // US Information Return - Trust Accumulation of Charitable Amounts
-  | '4720'     // Return of Certain Excise Taxes Under Chapters 41 and 42
-  | '5227'     // Split-Interest Trust Information Return
-  | '6069'     // Return of Excise Tax on Excess Contributions
-  | '8870'     // Information Return for Transfers to Certain Foreign Trusts
+  | '990' // Return of Organization Exempt From Income Tax
+  | '990-BL' // Information and Initial Excise Tax Return for Black Lung Benefit Trusts
+  | '990-EZ' // Short Form Return of Organization Exempt From Income Tax
+  | '990-PF' // Return of Private Foundation
+  | '990-T' // Exempt Organization Business Income Tax Return
+  | '1041-A' // US Information Return - Trust Accumulation of Charitable Amounts
+  | '4720' // Return of Certain Excise Taxes Under Chapters 41 and 42
+  | '5227' // Split-Interest Trust Information Return
+  | '6069' // Return of Excise Tax on Excess Contributions
+  | '8870' // Information Return for Transfers to Certain Foreign Trusts
 
 export interface ExemptOrgExtensionInfo {
   returnType: ExemptReturnType
@@ -42,7 +42,7 @@ export interface ExemptOrgExtensionInfo {
   zip: string
   taxYearBegin: Date
   taxYearEnd: Date
-  tentativeTax: number  // For returns with tax (990-T, 4720)
+  tentativeTax: number // For returns with tax (990-T, 4720)
   paymentWithExtension: number
   isGroupReturn: boolean
   groupExemptionNumber?: string
@@ -61,7 +61,9 @@ export default class F8868 extends F1040Attachment {
   }
 
   extensionInfo = (): ExemptOrgExtensionInfo | undefined => {
-    return this.f1040.info.exemptOrgExtension as ExemptOrgExtensionInfo | undefined
+    return this.f1040.info.exemptOrgExtension as
+      | ExemptOrgExtensionInfo
+      | undefined
   }
 
   // Part I - Automatic 6-Month Extension
@@ -87,19 +89,19 @@ export default class F8868 extends F1040Attachment {
 
   // Line 5a: Tax year beginning
   l5a = (): string => {
-    return this.extensionInfo()?.taxYearBegin?.toLocaleDateString() ?? ''
+    return this.extensionInfo()?.taxYearBegin.toLocaleDateString() ?? ''
   }
 
   // Line 5b: Tax year ending
   l5b = (): string => {
-    return this.extensionInfo()?.taxYearEnd?.toLocaleDateString() ?? ''
+    return this.extensionInfo()?.taxYearEnd.toLocaleDateString() ?? ''
   }
 
   // Line 6: Tentative tax (for 990-T, 4720, etc.)
   l6 = (): number => this.extensionInfo()?.tentativeTax ?? 0
 
   // Line 7: Total payments and credits
-  l7 = (): number => 0  // Prior estimated payments
+  l7 = (): number => 0 // Prior estimated payments
 
   // Line 8: Balance due (line 6 - line 7)
   l8 = (): number => Math.max(0, this.l6() - this.l7())
@@ -109,7 +111,8 @@ export default class F8868 extends F1040Attachment {
 
   // Group return information
   isGroupReturn = (): boolean => this.extensionInfo()?.isGroupReturn ?? false
-  groupExemptNumber = (): string => this.extensionInfo()?.groupExemptionNumber ?? ''
+  groupExemptNumber = (): string =>
+    this.extensionInfo()?.groupExemptionNumber ?? ''
 
   // Due date calculations
   originalDueDate = (): Date | undefined => {

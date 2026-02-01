@@ -423,18 +423,18 @@ export const fuelTaxRates: Record<string, number> = {
   exportedDyedDiesel: 0.243,
   exportedDyedKerosene: 0.243,
   // Line 7 - Biodiesel, Renewable Diesel, or SAF Mixture Credit
-  biodieselMixture: 1.00,
-  agribiodiesel: 1.00,
-  renewableDiesel: 1.00,
+  biodieselMixture: 1.0,
+  agribiodiesel: 1.0,
+  renewableDiesel: 1.0,
   // Line 8 - Alternative Fuel Credit
-  alternativeFuel: 0.50,
-  alternativeFuelMixture: 0.50,
+  alternativeFuel: 0.5,
+  alternativeFuelMixture: 0.5,
   // Line 9 - CNG and LNG
-  cngLng: 0.50,
+  cngLng: 0.5,
   // Line 10 - Liquefied Gas from Biomass
-  liquefiedGasFromBiomass: 0.50,
+  liquefiedGasFromBiomass: 0.5,
   // Line 11 - Compressed Gas from Biomass
-  compressedGasFromBiomass: 0.50,
+  compressedGasFromBiomass: 0.5,
   // Line 12 - Sustainable Aviation Fuel (SAF) Credit
   sustainableAviationFuel: 1.25
 }

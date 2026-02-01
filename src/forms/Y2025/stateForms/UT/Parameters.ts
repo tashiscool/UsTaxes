@@ -45,7 +45,7 @@ const parameters = {
   retirementCreditMax: 450,
 
   // UT Earned Income Credit (percentage of federal EIC)
-  eicPercentage: 0.20
+  eicPercentage: 0.2
 }
 
 export default parameters

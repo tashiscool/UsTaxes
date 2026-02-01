@@ -56,7 +56,7 @@ export default class Schedule1041A extends F1040Attachment {
   }
 
   schedule1041AData = (): Schedule1041AData | undefined => {
-    return undefined  // Would be populated from estate/trust data
+    return undefined // Would be populated from estate/trust data
   }
 
   // Charitable contributions
@@ -70,7 +70,7 @@ export default class Schedule1041A extends F1040Attachment {
   }
 
   // Line 2: Tax-exempt income allocable to charitable contributions
-  l2 = (): number => 0  // Would be calculated from exempt income
+  l2 = (): number => 0 // Would be calculated from exempt income
 
   // Line 3: Subtract line 2 from line 1
   l3 = (): number => Math.max(0, this.l1() - this.l2())
@@ -94,14 +94,14 @@ export default class Schedule1041A extends F1040Attachment {
   // Total contributions from principal
   totalFromPrincipal = (): number => {
     return this.contributions()
-      .filter(c => c.paidFromPrincipal)
+      .filter((c) => c.paidFromPrincipal)
       .reduce((sum, c) => sum + c.amount, 0)
   }
 
   // Total contributions from income
   totalFromIncome = (): number => {
     return this.contributions()
-      .filter(c => c.paidFromIncome)
+      .filter((c) => c.paidFromIncome)
       .reduce((sum, c) => sum + c.amount, 0)
   }
 

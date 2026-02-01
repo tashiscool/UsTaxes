@@ -26,7 +26,15 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * Due Date: April 15 for calendar year (15th of 4th month for fiscal year)
  */
 
-export type EntityType = 'decedentEstate' | 'simpleTrust' | 'complexTrust' | 'grantorTrust' | 'bankruptcyEstate' | 'pooledIncomeFund' | 'qsst' | 'esbt'
+export type EntityType =
+  | 'decedentEstate'
+  | 'simpleTrust'
+  | 'complexTrust'
+  | 'grantorTrust'
+  | 'bankruptcyEstate'
+  | 'pooledIncomeFund'
+  | 'qsst'
+  | 'esbt'
 
 export interface FiduciaryInfo {
   name: string
@@ -93,8 +101,8 @@ export interface Form1041Info {
   requiredDistributions: number
   otherDistributions: number
   // Tax elections
-  section645Election: boolean  // Treat revocable trust as part of estate
-  section663bElection: boolean  // 65-day rule for distributions
+  section645Election: boolean // Treat revocable trust as part of estate
+  section663bElection: boolean // 65-day rule for distributions
   // Tax payments
   estimatedTaxPayments: number
   withholding: number
@@ -102,7 +110,7 @@ export interface Form1041Info {
 
 // 2025 Trust Tax Brackets (compressed vs individual)
 const TRUST_BRACKETS_2025 = [
-  { limit: 3150, rate: 0.10 },
+  { limit: 3150, rate: 0.1 },
   { limit: 11450, rate: 0.24 },
   { limit: 15650, rate: 0.35 },
   { limit: Infinity, rate: 0.37 }
@@ -170,7 +178,9 @@ export default class F1041 extends F1040Attachment {
   // Line 4: Capital gains
   l4 = (): number => {
     const income = this.f1041Info()?.income
-    return (income?.capitalGainShortTerm ?? 0) + (income?.capitalGainLongTerm ?? 0)
+    return (
+      (income?.capitalGainShortTerm ?? 0) + (income?.capitalGainLongTerm ?? 0)
+    )
   }
 
   // Line 5: Rents, royalties, partnerships, etc.
@@ -183,7 +193,7 @@ export default class F1041 extends F1040Attachment {
   l6 = (): number => this.f1041Info()?.income.farmIncome ?? 0
 
   // Line 7: Ordinary gain or loss
-  l7 = (): number => 0  // From Form 4797
+  l7 = (): number => 0 // From Form 4797
 
   // Line 8: Other income
   l8 = (): number => this.f1041Info()?.income.otherIncome ?? 0
@@ -191,8 +201,14 @@ export default class F1041 extends F1040Attachment {
   // Line 9: Total income
   l9 = (): number => {
     return sumFields([
-      this.l1(), this.l2a(), this.l3(), this.l4(),
-      this.l5(), this.l6(), this.l7(), this.l8()
+      this.l1(),
+      this.l2a(),
+      this.l3(),
+      this.l4(),
+      this.l5(),
+      this.l6(),
+      this.l7(),
+      this.l8()
     ])
   }
 
@@ -222,7 +238,12 @@ export default class F1041 extends F1040Attachment {
   // Line 16: Total deductions
   l16 = (): number => {
     return sumFields([
-      this.l10(), this.l11(), this.l12(), this.l13(), this.l14(), this.l15()
+      this.l10(),
+      this.l11(),
+      this.l12(),
+      this.l13(),
+      this.l14(),
+      this.l15()
     ])
   }
 
@@ -242,7 +263,7 @@ export default class F1041 extends F1040Attachment {
   }
 
   // Line 19: Estate tax deduction
-  l19 = (): number => 0  // IRD items
+  l19 = (): number => 0 // IRD items
 
   // Line 20: Exemption
   l20 = (): number => {
@@ -264,7 +285,8 @@ export default class F1041 extends F1040Attachment {
     let previousLimit = 0
 
     for (const bracket of TRUST_BRACKETS_2025) {
-      const taxableInBracket = Math.min(taxableIncome, bracket.limit) - previousLimit
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket.limit) - previousLimit
       if (taxableInBracket > 0) {
         tax += taxableInBracket * bracket.rate
       }
@@ -318,9 +340,9 @@ export default class F1041 extends F1040Attachment {
   // K-1 Generation
   generateK1s = (): BeneficiaryInfo[] => {
     const totalDistribution = this.l18()
-    return this.beneficiaries().map(b => ({
+    return this.beneficiaries().map((b) => ({
       ...b,
-      ordinaryIncome: Math.round(totalDistribution * b.percentageShare / 100)
+      ordinaryIncome: Math.round((totalDistribution * b.percentageShare) / 100)
     }))
   }
 
@@ -332,7 +354,7 @@ export default class F1041 extends F1040Attachment {
       // Entity Information
       this.entityName(),
       this.ein(),
-      this.f1041Info()?.dateCreated?.toLocaleDateString() ?? '',
+      this.f1041Info()?.dateCreated.toLocaleDateString() ?? '',
       this.isDecedentEstate(),
       this.isSimpleTrust(),
       this.isComplexTrust(),

@@ -29,15 +29,15 @@ export interface F1099QData {
   // Account number
   accountNumber?: string
   // Distribution details
-  grossDistribution: number                 // Box 1
-  earnings: number                          // Box 2
-  basis: number                             // Box 3
-  trusteeToTrusteeTransfer: boolean         // Box 4 checkbox
+  grossDistribution: number // Box 1
+  earnings: number // Box 2
+  basis: number // Box 3
+  trusteeToTrusteeTransfer: boolean // Box 4 checkbox
   // Account type
-  is529Plan: boolean                        // Box 5 checkbox for 529
-  isCoverdellESA: boolean                   // Box 5 checkbox for Coverdell
+  is529Plan: boolean // Box 5 checkbox for 529
+  isCoverdellESA: boolean // Box 5 checkbox for Coverdell
   // Designated beneficiary is not the recipient
-  beneficiaryNotRecipient: boolean          // Box 6 checkbox
+  beneficiaryNotRecipient: boolean // Box 6 checkbox
 }
 
 export default class F1099Q extends F1040Attachment {
@@ -100,7 +100,7 @@ export default class F1099Q extends F1040Attachment {
 
   // The earnings portion may be subject to 10% penalty if not for qualified expenses
   potentialPenalty = (): number => {
-    return Math.round(this.potentiallyTaxableEarnings() * 0.10)
+    return Math.round(this.potentiallyTaxableEarnings() * 0.1)
   }
 
   fields = (): Field[] => {
@@ -119,12 +119,12 @@ export default class F1099Q extends F1040Attachment {
       // Beneficiary
       data?.beneficiaryName ?? '',
       data?.beneficiarySSN ?? '',
-      data?.beneficiaryNotRecipient ?? false,    // Box 6
+      data?.beneficiaryNotRecipient ?? false, // Box 6
       // Distribution details
-      data?.grossDistribution ?? 0,               // Box 1
-      data?.earnings ?? 0,                        // Box 2
-      data?.basis ?? 0,                           // Box 3
-      data?.trusteeToTrusteeTransfer ?? false,   // Box 4
+      data?.grossDistribution ?? 0, // Box 1
+      data?.earnings ?? 0, // Box 2
+      data?.basis ?? 0, // Box 3
+      data?.trusteeToTrusteeTransfer ?? false, // Box 4
       // Account type
       this.is529Plan(),
       this.isCoverdellESA(),

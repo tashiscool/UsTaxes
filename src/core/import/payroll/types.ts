@@ -22,21 +22,21 @@ export interface W2ImportData {
   employerAddress?: string
 
   // Box 1-11 (Income and Tax)
-  wages: number                          // Box 1: Wages, tips, other compensation
-  federalWithholding: number             // Box 2: Federal income tax withheld
-  ssWages?: number                       // Box 3: Social security wages
-  ssTax?: number                         // Box 4: Social security tax withheld
-  medicareWages?: number                 // Box 5: Medicare wages and tips
-  medicareTax?: number                   // Box 6: Medicare tax withheld
-  ssTips?: number                        // Box 7: Social security tips
-  allocatedTips?: number                 // Box 8: Allocated tips
+  wages: number // Box 1: Wages, tips, other compensation
+  federalWithholding: number // Box 2: Federal income tax withheld
+  ssWages?: number // Box 3: Social security wages
+  ssTax?: number // Box 4: Social security tax withheld
+  medicareWages?: number // Box 5: Medicare wages and tips
+  medicareTax?: number // Box 6: Medicare tax withheld
+  ssTips?: number // Box 7: Social security tips
+  allocatedTips?: number // Box 8: Allocated tips
   // Box 9 is blank
-  dependentCareBenefits?: number         // Box 10: Dependent care benefits
-  nonQualifiedPlans?: number             // Box 11: Nonqualified plans
+  dependentCareBenefits?: number // Box 10: Dependent care benefits
+  nonQualifiedPlans?: number // Box 11: Nonqualified plans
 
   // Box 12 (Various codes and amounts)
   box12?: Array<{
-    code: string    // A through HH
+    code: string // A through HH
     amount: number
   }>
 
@@ -62,7 +62,7 @@ export interface W2ImportData {
 
   // Additional metadata
   taxYear?: number
-  source?: string   // Which payroll provider
+  source?: string // Which payroll provider
 }
 
 /**
@@ -204,11 +204,57 @@ export function maskSSN(ssn: string): string {
  */
 export function isValidState(code: string): code is State {
   const validStates: State[] = [
-    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL',
-    'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME',
-    'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH',
-    'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI',
-    'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+    'AL',
+    'AK',
+    'AZ',
+    'AR',
+    'CA',
+    'CO',
+    'CT',
+    'DE',
+    'DC',
+    'FL',
+    'GA',
+    'HI',
+    'ID',
+    'IL',
+    'IN',
+    'IA',
+    'KS',
+    'KY',
+    'LA',
+    'ME',
+    'MD',
+    'MA',
+    'MI',
+    'MN',
+    'MS',
+    'MO',
+    'MT',
+    'NE',
+    'NV',
+    'NH',
+    'NJ',
+    'NM',
+    'NY',
+    'NC',
+    'ND',
+    'OH',
+    'OK',
+    'OR',
+    'PA',
+    'RI',
+    'SC',
+    'SD',
+    'TN',
+    'TX',
+    'UT',
+    'VT',
+    'VA',
+    'WA',
+    'WV',
+    'WI',
+    'WY'
   ]
   return validStates.includes(code.toUpperCase() as State)
 }
@@ -217,35 +263,35 @@ export function isValidState(code: string): code is State {
  * Box 12 code descriptions
  */
 export const BOX_12_CODES: Record<string, string> = {
-  'A': 'Uncollected social security or RRTA tax on tips',
-  'B': 'Uncollected Medicare tax on tips',
-  'C': 'Taxable cost of group-term life insurance over $50,000',
-  'D': 'Elective deferrals to 401(k)',
-  'E': 'Elective deferrals to 403(b)',
-  'F': 'Elective deferrals to 408(k)(6) SEP',
-  'G': 'Elective deferrals to 457(b)',
-  'H': 'Elective deferrals to 501(c)(18)(D)',
-  'J': 'Nontaxable sick pay',
-  'K': '20% excise tax on excess golden parachute',
-  'L': 'Substantiated employee business expense reimbursements',
-  'M': 'Uncollected social security or RRTA tax on group-term life insurance',
-  'N': 'Uncollected Medicare tax on group-term life insurance',
-  'P': 'Excludable moving expense reimbursements',
-  'Q': 'Nontaxable combat pay',
-  'R': 'Employer contributions to Archer MSA',
-  'S': 'Employee salary reduction contributions to SIMPLE',
-  'T': 'Adoption benefits',
-  'V': 'Income from exercise of nonstatutory stock options',
-  'W': 'Employer contributions to HSA',
-  'Y': 'Deferrals under 409A nonqualified deferred compensation',
-  'Z': 'Income under 409A nonqualified deferred compensation',
-  'AA': 'Designated Roth contributions to 401(k)',
-  'BB': 'Designated Roth contributions to 403(b)',
-  'DD': 'Cost of employer-sponsored health coverage',
-  'EE': 'Designated Roth contributions to 457(b)',
-  'FF': 'Permitted benefits under qualified small employer HRA',
-  'GG': 'Income from qualified equity grants under 83(i)',
-  'HH': 'Aggregate deferrals under 83(i)'
+  A: 'Uncollected social security or RRTA tax on tips',
+  B: 'Uncollected Medicare tax on tips',
+  C: 'Taxable cost of group-term life insurance over $50,000',
+  D: 'Elective deferrals to 401(k)',
+  E: 'Elective deferrals to 403(b)',
+  F: 'Elective deferrals to 408(k)(6) SEP',
+  G: 'Elective deferrals to 457(b)',
+  H: 'Elective deferrals to 501(c)(18)(D)',
+  J: 'Nontaxable sick pay',
+  K: '20% excise tax on excess golden parachute',
+  L: 'Substantiated employee business expense reimbursements',
+  M: 'Uncollected social security or RRTA tax on group-term life insurance',
+  N: 'Uncollected Medicare tax on group-term life insurance',
+  P: 'Excludable moving expense reimbursements',
+  Q: 'Nontaxable combat pay',
+  R: 'Employer contributions to Archer MSA',
+  S: 'Employee salary reduction contributions to SIMPLE',
+  T: 'Adoption benefits',
+  V: 'Income from exercise of nonstatutory stock options',
+  W: 'Employer contributions to HSA',
+  Y: 'Deferrals under 409A nonqualified deferred compensation',
+  Z: 'Income under 409A nonqualified deferred compensation',
+  AA: 'Designated Roth contributions to 401(k)',
+  BB: 'Designated Roth contributions to 403(b)',
+  DD: 'Cost of employer-sponsored health coverage',
+  EE: 'Designated Roth contributions to 457(b)',
+  FF: 'Permitted benefits under qualified small employer HRA',
+  GG: 'Income from qualified equity grants under 83(i)',
+  HH: 'Aggregate deferrals under 83(i)'
 }
 
 /**
@@ -273,7 +319,8 @@ export function combineW2s(w2s: W2ImportData[]): W2ImportData[] {
   const result: W2ImportData[] = []
 
   for (const [, employerW2s] of byEmployer.entries()) {
-    const w2List: W2ImportData[] = employerW2s
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const w2List: W2ImportData[] = employerW2s as W2ImportData[]
     if (w2List.length === 1) {
       result.push(w2List[0])
     } else {

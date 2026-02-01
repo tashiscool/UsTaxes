@@ -652,9 +652,8 @@ export const selectCalculationResult = (
 ): TaxCalculationResult | undefined =>
   state.scenarios.calculationCache[scenarioId]
 
-export const selectIsLoading = (state: {
-  scenarios: ScenarioState
-}): boolean => state.scenarios.isLoading
+export const selectIsLoading = (state: { scenarios: ScenarioState }): boolean =>
+  state.scenarios.isLoading
 
 export const selectError = (state: {
   scenarios: ScenarioState

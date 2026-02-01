@@ -70,18 +70,23 @@ export default class Schedule990C extends F1040Attachment {
   }
 
   schedule990CData = (): Schedule990CData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Part I-A
   is501c3 = (): boolean => this.schedule990CData()?.is501c3 ?? false
-  directPoliticalExpenses = (): number => this.schedule990CData()?.directPoliticalCampaignExpenses ?? 0
+  directPoliticalExpenses = (): number =>
+    this.schedule990CData()?.directPoliticalCampaignExpenses ?? 0
 
   // Part I-B: 501(h) election calculations
-  made501hElection = (): boolean => this.schedule990CData()?.made501hElection ?? false
-  totalLobbyingExpenses = (): number => this.schedule990CData()?.totalLobbyingExpenses ?? 0
-  lobbyingNontaxable = (): number => this.schedule990CData()?.lobbyingNontaxable ?? 0
-  grassrootsNontaxable = (): number => this.schedule990CData()?.grassrootsNontaxable ?? 0
+  made501hElection = (): boolean =>
+    this.schedule990CData()?.made501hElection ?? false
+  totalLobbyingExpenses = (): number =>
+    this.schedule990CData()?.totalLobbyingExpenses ?? 0
+  lobbyingNontaxable = (): number =>
+    this.schedule990CData()?.lobbyingNontaxable ?? 0
+  grassrootsNontaxable = (): number =>
+    this.schedule990CData()?.grassrootsNontaxable ?? 0
 
   // Excess lobbying (taxable)
   excessLobbyingExpenses = (): number => {
@@ -91,17 +96,25 @@ export default class Schedule990C extends F1040Attachment {
   }
 
   // Part II-A
-  directLobbyingExpenses = (): number => this.schedule990CData()?.directLobbyingExpenses ?? 0
-  grassrootsLobbyingExpenses = (): number => this.schedule990CData()?.grassrootsLobbyingExpenses ?? 0
-  duesUsedForLobbying = (): number => this.schedule990CData()?.duesUsedForLobbying ?? 0
+  directLobbyingExpenses = (): number =>
+    this.schedule990CData()?.directLobbyingExpenses ?? 0
+  grassrootsLobbyingExpenses = (): number =>
+    this.schedule990CData()?.grassrootsLobbyingExpenses ?? 0
+  duesUsedForLobbying = (): number =>
+    this.schedule990CData()?.duesUsedForLobbying ?? 0
 
   // Total lobbying
   totalLobbyingAndPolitical = (): number => {
-    return this.directLobbyingExpenses() + this.grassrootsLobbyingExpenses() + this.directPoliticalExpenses()
+    return (
+      this.directLobbyingExpenses() +
+      this.grassrootsLobbyingExpenses() +
+      this.directPoliticalExpenses()
+    )
   }
 
   // Part III: Section 527
-  has527Relationship = (): boolean => this.schedule990CData()?.has527Relationship ?? false
+  has527Relationship = (): boolean =>
+    this.schedule990CData()?.has527Relationship ?? false
 
   fields = (): Field[] => {
     const data = this.schedule990CData()

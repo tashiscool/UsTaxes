@@ -78,11 +78,11 @@ export interface Form8283Info {
 
 // Deduction limits as percentage of AGI
 const DEDUCTION_LIMITS = {
-  publiclyTradedSecurities: 0.30,  // 30% of AGI
-  longTermCapitalGainProperty: 0.30,  // 30% of AGI
-  ordinaryIncomeProperty: 0.50,  // 50% of AGI
-  conservationEasement: 0.50,  // 50% of AGI (special rules for farmers)
-  privateFoundation: 0.30  // 30% of AGI
+  publiclyTradedSecurities: 0.3, // 30% of AGI
+  longTermCapitalGainProperty: 0.3, // 30% of AGI
+  ordinaryIncomeProperty: 0.5, // 50% of AGI
+  conservationEasement: 0.5, // 50% of AGI (special rules for farmers)
+  privateFoundation: 0.3 // 30% of AGI
 }
 
 export default class F8283 extends F1040Attachment {
@@ -102,32 +102,48 @@ export default class F8283 extends F1040Attachment {
   }
 
   // Section A donations (under $5,000)
-  sectionADonations = (): DonatedProperty[] => this.f8283Info()?.sectionADonations ?? []
+  sectionADonations = (): DonatedProperty[] =>
+    this.f8283Info()?.sectionADonations ?? []
 
   // Section B donations (over $5,000)
-  sectionBDonations = (): DonatedProperty[] => this.f8283Info()?.sectionBDonations ?? []
+  sectionBDonations = (): DonatedProperty[] =>
+    this.f8283Info()?.sectionBDonations ?? []
 
   // Vehicle donations
-  vehicleDonations = (): VehicleDonation[] => this.f8283Info()?.vehicleDonations ?? []
+  vehicleDonations = (): VehicleDonation[] =>
+    this.f8283Info()?.vehicleDonations ?? []
 
   // Total Section A value
   totalSectionAValue = (): number => {
-    return this.sectionADonations().reduce((sum, d) => sum + d.fairMarketValue, 0)
+    return this.sectionADonations().reduce(
+      (sum, d) => sum + d.fairMarketValue,
+      0
+    )
   }
 
   // Total Section B value
   totalSectionBValue = (): number => {
-    return this.sectionBDonations().reduce((sum, d) => sum + d.fairMarketValue, 0)
+    return this.sectionBDonations().reduce(
+      (sum, d) => sum + d.fairMarketValue,
+      0
+    )
   }
 
   // Total vehicle donation value
   totalVehicleValue = (): number => {
-    return this.vehicleDonations().reduce((sum, v) => sum + v.deductionClaimed, 0)
+    return this.vehicleDonations().reduce(
+      (sum, v) => sum + v.deductionClaimed,
+      0
+    )
   }
 
   // Total noncash value
   totalNoncashValue = (): number => {
-    return this.totalSectionAValue() + this.totalSectionBValue() + this.totalVehicleValue()
+    return (
+      this.totalSectionAValue() +
+      this.totalSectionBValue() +
+      this.totalVehicleValue()
+    )
   }
 
   // Check if Section B is needed
@@ -138,8 +154,8 @@ export default class F8283 extends F1040Attachment {
   // Get donations by property type
   donationsByType = (type: PropertyType): DonatedProperty[] => {
     return [
-      ...this.sectionADonations().filter(d => d.propertyType === type),
-      ...this.sectionBDonations().filter(d => d.propertyType === type)
+      ...this.sectionADonations().filter((d) => d.propertyType === type),
+      ...this.sectionBDonations().filter((d) => d.propertyType === type)
     ]
   }
 
@@ -166,7 +182,7 @@ export default class F8283 extends F1040Attachment {
   // If donations exceed AGI limits, excess can be carried forward 5 years
   calculateCarryover = (): number => {
     const agi = this.f1040.l11()
-    const limit = agi * 0.30  // Simplified - actual calculation more complex
+    const limit = agi * 0.3 // Simplified - actual calculation more complex
     const excess = Math.max(0, this.totalNoncashValue() - limit)
     return excess
   }

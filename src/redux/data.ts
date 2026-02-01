@@ -56,7 +56,9 @@ const stringToDateBusinessEntity = (
   e: BusinessEntity<string>
 ): BusinessEntity<Date> => ({
   ...e,
-  dateIncorporated: e.dateIncorporated ? new Date(e.dateIncorporated) : undefined
+  dateIncorporated: e.dateIncorporated
+    ? new Date(e.dateIncorporated)
+    : undefined
 })
 
 const dateToStringBusinessEntity = (
@@ -94,60 +96,44 @@ const dateToStringForm1120S = (
   entity: dateToStringBusinessEntity(f.entity)
 })
 
-const stringToDateForm1120 = (
-  f: Form1120Data<string>
-): Form1120Data<Date> => ({
+const stringToDateForm1120 = (f: Form1120Data<string>): Form1120Data<Date> => ({
   ...f,
   entity: stringToDateBusinessEntity(f.entity)
 })
 
-const dateToStringForm1120 = (
-  f: Form1120Data<Date>
-): Form1120Data<string> => ({
+const dateToStringForm1120 = (f: Form1120Data<Date>): Form1120Data<string> => ({
   ...f,
   entity: dateToStringBusinessEntity(f.entity)
 })
 
-const stringToDateForm1065 = (
-  f: Form1065Data<string>
-): Form1065Data<Date> => ({
+const stringToDateForm1065 = (f: Form1065Data<string>): Form1065Data<Date> => ({
   ...f,
   entity: stringToDateBusinessEntity(f.entity)
 })
 
-const dateToStringForm1065 = (
-  f: Form1065Data<Date>
-): Form1065Data<string> => ({
+const dateToStringForm1065 = (f: Form1065Data<Date>): Form1065Data<string> => ({
   ...f,
   entity: dateToStringBusinessEntity(f.entity)
 })
 
-const stringToDateForm941 = (
-  f: Form941Data<string>
-): Form941Data<Date> => ({
+const stringToDateForm941 = (f: Form941Data<string>): Form941Data<Date> => ({
   ...f,
   entity: stringToDateBusinessEntity(f.entity),
   quarterData: stringToDateQuarterlyPayroll(f.quarterData)
 })
 
-const dateToStringForm941 = (
-  f: Form941Data<Date>
-): Form941Data<string> => ({
+const dateToStringForm941 = (f: Form941Data<Date>): Form941Data<string> => ({
   ...f,
   entity: dateToStringBusinessEntity(f.entity),
   quarterData: dateToStringQuarterlyPayroll(f.quarterData)
 })
 
-const stringToDateForm940 = (
-  f: Form940Data<string>
-): Form940Data<Date> => ({
+const stringToDateForm940 = (f: Form940Data<string>): Form940Data<Date> => ({
   ...f,
   entity: stringToDateBusinessEntity(f.entity)
 })
 
-const dateToStringForm940 = (
-  f: Form940Data<Date>
-): Form940Data<string> => ({
+const dateToStringForm940 = (f: Form940Data<Date>): Form940Data<string> => ({
   ...f,
   entity: dateToStringBusinessEntity(f.entity)
 })
@@ -176,17 +162,25 @@ export const stringToDateInfo = <I extends Information<string>>(
       ? stringToDatePerson(info.taxPayer.spouse)
       : undefined
   },
-  foreignEarnedIncome: info.foreignEarnedIncome ? {
-    ...info.foreignEarnedIncome,
-    residenceStartDate: info.foreignEarnedIncome.residenceStartDate
-      ? new Date(info.foreignEarnedIncome.residenceStartDate) : undefined,
-    residenceEndDate: info.foreignEarnedIncome.residenceEndDate
-      ? new Date(info.foreignEarnedIncome.residenceEndDate) : undefined,
-    physicalPresenceStartDate: info.foreignEarnedIncome.physicalPresenceStartDate
-      ? new Date(info.foreignEarnedIncome.physicalPresenceStartDate) : undefined,
-    physicalPresenceEndDate: info.foreignEarnedIncome.physicalPresenceEndDate
-      ? new Date(info.foreignEarnedIncome.physicalPresenceEndDate) : undefined
-  } : undefined,
+  foreignEarnedIncome: info.foreignEarnedIncome
+    ? {
+        ...info.foreignEarnedIncome,
+        residenceStartDate: info.foreignEarnedIncome.residenceStartDate
+          ? new Date(info.foreignEarnedIncome.residenceStartDate)
+          : undefined,
+        residenceEndDate: info.foreignEarnedIncome.residenceEndDate
+          ? new Date(info.foreignEarnedIncome.residenceEndDate)
+          : undefined,
+        physicalPresenceStartDate: info.foreignEarnedIncome
+          .physicalPresenceStartDate
+          ? new Date(info.foreignEarnedIncome.physicalPresenceStartDate)
+          : undefined,
+        physicalPresenceEndDate: info.foreignEarnedIncome
+          .physicalPresenceEndDate
+          ? new Date(info.foreignEarnedIncome.physicalPresenceEndDate)
+          : undefined
+      }
+    : undefined,
   healthInsuranceMarketplace: info.healthInsuranceMarketplace?.map((h) => ({
     ...h,
     coverageStartDate: new Date(h.coverageStartDate),
@@ -228,13 +222,19 @@ export const infoToStringInfo = <I extends Information<Date>>(
       ? dateToStringPerson(info.taxPayer.spouse)
       : undefined
   },
-  foreignEarnedIncome: info.foreignEarnedIncome ? {
-    ...info.foreignEarnedIncome,
-    residenceStartDate: info.foreignEarnedIncome.residenceStartDate?.toISOString(),
-    residenceEndDate: info.foreignEarnedIncome.residenceEndDate?.toISOString(),
-    physicalPresenceStartDate: info.foreignEarnedIncome.physicalPresenceStartDate?.toISOString(),
-    physicalPresenceEndDate: info.foreignEarnedIncome.physicalPresenceEndDate?.toISOString()
-  } : undefined,
+  foreignEarnedIncome: info.foreignEarnedIncome
+    ? {
+        ...info.foreignEarnedIncome,
+        residenceStartDate:
+          info.foreignEarnedIncome.residenceStartDate?.toISOString(),
+        residenceEndDate:
+          info.foreignEarnedIncome.residenceEndDate?.toISOString(),
+        physicalPresenceStartDate:
+          info.foreignEarnedIncome.physicalPresenceStartDate?.toISOString(),
+        physicalPresenceEndDate:
+          info.foreignEarnedIncome.physicalPresenceEndDate?.toISOString()
+      }
+    : undefined,
   healthInsuranceMarketplace: info.healthInsuranceMarketplace?.map((h) => ({
     ...h,
     coverageStartDate: h.coverageStartDate.toISOString(),

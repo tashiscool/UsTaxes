@@ -44,8 +44,10 @@ export class NYCResidentTax extends Form {
    * Check if NYC resident tax applies
    */
   isNeeded = (): boolean => {
-    return this.localTaxInfo?.residenceCity === 'NYC' ||
-           this.localTaxInfo?.residenceCity === 'New York City'
+    return (
+      this.localTaxInfo?.residenceCity === 'NYC' ||
+      this.localTaxInfo?.residenceCity === 'New York City'
+    )
   }
 
   // Taxpayer information
@@ -128,7 +130,7 @@ export class NYCResidentTax extends Form {
       creditInfo.maxDependents
     )
 
-    return creditInfo.baseCredit + (numDependents * creditInfo.perDependentCredit)
+    return creditInfo.baseCredit + numDependents * creditInfo.perDependentCredit
   }
 
   /**

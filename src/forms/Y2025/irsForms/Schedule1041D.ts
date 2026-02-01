@@ -66,7 +66,7 @@ export default class Schedule1041D extends F1040Attachment {
   }
 
   schedule1041DData = (): Schedule1041DData | undefined => {
-    return undefined  // Would be populated from estate/trust data
+    return undefined // Would be populated from estate/trust data
   }
 
   // Part I: Short-Term Capital Gains and Losses
@@ -78,7 +78,7 @@ export default class Schedule1041D extends F1040Attachment {
   // Line 1: Short-term totals from Form 8949
   l1 = (): number => {
     return this.shortTermTransactions()
-      .filter(t => t.isShortTerm)
+      .filter((t) => t.isShortTerm)
       .reduce((sum, t) => sum + t.gainOrLoss, 0)
   }
 
@@ -109,7 +109,7 @@ export default class Schedule1041D extends F1040Attachment {
   // Line 8: Long-term totals from Form 8949
   l8 = (): number => {
     return this.longTermTransactions()
-      .filter(t => !t.isShortTerm)
+      .filter((t) => !t.isShortTerm)
       .reduce((sum, t) => sum + t.gainOrLoss, 0)
   }
 
@@ -126,10 +126,18 @@ export default class Schedule1041D extends F1040Attachment {
   l12 = (): number => this.schedule1041DData()?.longTermGainFromScheduleK1 ?? 0
 
   // Line 13: Capital gain distributions
-  l13 = (): number => 0  // From 1099-DIV Box 2a
+  l13 = (): number => 0 // From 1099-DIV Box 2a
 
   // Line 14: Net long-term gain or loss
-  l14 = (): number => sumFields([this.l8(), this.l9(), this.l10(), this.l11(), this.l12(), this.l13()])
+  l14 = (): number =>
+    sumFields([
+      this.l8(),
+      this.l9(),
+      this.l10(),
+      this.l11(),
+      this.l12(),
+      this.l13()
+    ])
 
   // Line 15: Long-term capital loss carryover
   l15 = (): number => this.schedule1041DData()?.longTermLossCarryover ?? 0
@@ -149,17 +157,27 @@ export default class Schedule1041D extends F1040Attachment {
   }
 
   // Line 18b: Unrecaptured section 1250 gain
-  l18b = (): number => this.schedule1041DData()?.unrecapturedSection1250Gain ?? 0
+  l18b = (): number =>
+    this.schedule1041DData()?.unrecapturedSection1250Gain ?? 0
 
   // Capital gains allocated to beneficiaries
   capitalGainsToBeneficiaries = (): number => {
-    const allTransactions = [...this.shortTermTransactions(), ...this.longTermTransactions()]
-    return allTransactions.reduce((sum, t) => sum + t.allocatedToBeneficiaries, 0)
+    const allTransactions = [
+      ...this.shortTermTransactions(),
+      ...this.longTermTransactions()
+    ]
+    return allTransactions.reduce(
+      (sum, t) => sum + t.allocatedToBeneficiaries,
+      0
+    )
   }
 
   // Capital gains allocated to corpus
   capitalGainsToCorpus = (): number => {
-    const allTransactions = [...this.shortTermTransactions(), ...this.longTermTransactions()]
+    const allTransactions = [
+      ...this.shortTermTransactions(),
+      ...this.longTermTransactions()
+    ]
     return allTransactions.reduce((sum, t) => sum + t.allocatedToCorpus, 0)
   }
 

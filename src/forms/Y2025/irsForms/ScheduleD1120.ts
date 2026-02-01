@@ -61,7 +61,7 @@ export default class ScheduleD1120 extends F1040Attachment {
   }
 
   scheduleD1120Data = (): ScheduleD1120Data | undefined => {
-    return undefined  // Would be populated from entity data
+    return undefined // Would be populated from entity data
   }
 
   // Part I: Short-Term Capital Gains and Losses
@@ -72,23 +72,29 @@ export default class ScheduleD1120 extends F1040Attachment {
 
   // Line 1: Short-term totals from transactions
   l1 = (): number => {
-    return this.shortTermTransactions().reduce((sum, t) => sum + t.gainOrLoss, 0)
+    return this.shortTermTransactions().reduce(
+      (sum, t) => sum + t.gainOrLoss,
+      0
+    )
   }
 
   // Line 2: Short-term gain from Form 4797
   l2 = (): number => this.scheduleD1120Data()?.shortTermGainFromForm4797 ?? 0
 
   // Line 3: Short-term gain from installment sales
-  l3 = (): number => this.scheduleD1120Data()?.shortTermGainFromInstallmentSales ?? 0
+  l3 = (): number =>
+    this.scheduleD1120Data()?.shortTermGainFromInstallmentSales ?? 0
 
   // Line 4: Short-term gain from like-kind exchanges
-  l4 = (): number => this.scheduleD1120Data()?.shortTermGainFromLikeKindExchanges ?? 0
+  l4 = (): number =>
+    this.scheduleD1120Data()?.shortTermGainFromLikeKindExchanges ?? 0
 
   // Line 5: Net short-term capital gain/loss
   l5 = (): number => sumFields([this.l1(), this.l2(), this.l3(), this.l4()])
 
   // Line 6: Short-term capital loss carryover
-  l6 = (): number => this.scheduleD1120Data()?.shortTermCapitalLossCarryover ?? 0
+  l6 = (): number =>
+    this.scheduleD1120Data()?.shortTermCapitalLossCarryover ?? 0
 
   // Line 7: Net short-term capital gain/loss
   l7 = (): number => this.l5() - this.l6()
@@ -108,16 +114,19 @@ export default class ScheduleD1120 extends F1040Attachment {
   l9 = (): number => this.scheduleD1120Data()?.longTermGainFromForm4797 ?? 0
 
   // Line 10: Long-term gain from installment sales
-  l10 = (): number => this.scheduleD1120Data()?.longTermGainFromInstallmentSales ?? 0
+  l10 = (): number =>
+    this.scheduleD1120Data()?.longTermGainFromInstallmentSales ?? 0
 
   // Line 11: Long-term gain from like-kind exchanges
-  l11 = (): number => this.scheduleD1120Data()?.longTermGainFromLikeKindExchanges ?? 0
+  l11 = (): number =>
+    this.scheduleD1120Data()?.longTermGainFromLikeKindExchanges ?? 0
 
   // Line 12: Net long-term capital gain/loss
   l12 = (): number => sumFields([this.l8(), this.l9(), this.l10(), this.l11()])
 
   // Line 13: Long-term capital loss carryover
-  l13 = (): number => this.scheduleD1120Data()?.longTermCapitalLossCarryover ?? 0
+  l13 = (): number =>
+    this.scheduleD1120Data()?.longTermCapitalLossCarryover ?? 0
 
   // Line 14: Net long-term capital gain/loss
   l14 = (): number => this.l12() - this.l13()

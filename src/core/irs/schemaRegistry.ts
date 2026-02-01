@@ -14,21 +14,21 @@
  * IRS standard data type patterns
  */
 export enum IRSDataType {
-  SSN = 'SSN',                // XXX-XX-XXXX
-  EIN = 'EIN',                // XX-XXXXXXX
-  Phone = 'Phone',            // (XXX) XXX-XXXX
-  Date = 'Date',              // YYYY-MM-DD
-  DateTime = 'DateTime',      // ISO 8601
-  Currency = 'Currency',      // Decimal, no symbols
-  Percentage = 'Percentage',  // Decimal 0.XX or whole XX
-  Year = 'Year',              // YYYY
-  State = 'State',            // 2-letter code
-  Country = 'Country',        // Text or ISO code
-  ZIP = 'ZIP',                // XXXXX or XXXXX-XXXX
-  Boolean = 'Boolean',        // X (checkbox) or Yes/No
-  String = 'String',          // Free text
-  Integer = 'Integer',        // Whole number
-  Enum = 'Enum'               // Enumerated values
+  SSN = 'SSN', // XXX-XX-XXXX
+  EIN = 'EIN', // XX-XXXXXXX
+  Phone = 'Phone', // (XXX) XXX-XXXX
+  Date = 'Date', // YYYY-MM-DD
+  DateTime = 'DateTime', // ISO 8601
+  Currency = 'Currency', // Decimal, no symbols
+  Percentage = 'Percentage', // Decimal 0.XX or whole XX
+  Year = 'Year', // YYYY
+  State = 'State', // 2-letter code
+  Country = 'Country', // Text or ISO code
+  ZIP = 'ZIP', // XXXXX or XXXXX-XXXX
+  Boolean = 'Boolean', // X (checkbox) or Yes/No
+  String = 'String', // Free text
+  Integer = 'Integer', // Whole number
+  Enum = 'Enum' // Enumerated values
 }
 
 /**
@@ -282,7 +282,7 @@ class SchemaRegistry {
     this.forms.set(key, form)
 
     // Register schedules
-    form.schedules.forEach(schedule => {
+    form.schedules.forEach((schedule) => {
       const scheduleKey = `${form.formNumber}_${schedule.id}_${form.taxYear}`
       this.schedules.set(scheduleKey, schedule)
     })
@@ -298,7 +298,11 @@ class SchemaRegistry {
   /**
    * Get a schedule definition
    */
-  getSchedule(formNumber: string, scheduleId: string, taxYear: number): ScheduleDefinition | undefined {
+  getSchedule(
+    formNumber: string,
+    scheduleId: string,
+    taxYear: number
+  ): ScheduleDefinition | undefined {
     return this.schedules.get(`${formNumber}_${scheduleId}_${taxYear}`)
   }
 
@@ -307,7 +311,7 @@ class SchemaRegistry {
    */
   listForms(): { formNumber: string; taxYear: number; name: string }[] {
     const result: { formNumber: string; taxYear: number; name: string }[] = []
-    this.forms.forEach(form => {
+    this.forms.forEach((form) => {
       result.push({
         formNumber: form.formNumber,
         taxYear: form.taxYear,
@@ -320,11 +324,17 @@ class SchemaRegistry {
   /**
    * Get field definition by line number
    */
-  getFieldByLine(formNumber: string, taxYear: number, lineNumber: string): FieldDefinition | undefined {
+  getFieldByLine(
+    formNumber: string,
+    taxYear: number,
+    lineNumber: string
+  ): FieldDefinition | undefined {
     const form = this.getForm(formNumber, taxYear)
     if (!form) return undefined
 
-    const searchSection = (sections: SectionDefinition[]): FieldDefinition | undefined => {
+    const searchSection = (
+      sections: SectionDefinition[]
+    ): FieldDefinition | undefined => {
       for (const section of sections) {
         for (const field of section.fields) {
           if (field.lineNumber === lineNumber) {
@@ -371,11 +381,14 @@ class SchemaRegistry {
   /**
    * Build calculation dependency graph
    */
-  buildDependencyGraph(formNumber: string, taxYear: number): Map<string, string[]> {
+  buildDependencyGraph(
+    formNumber: string,
+    taxYear: number
+  ): Map<string, string[]> {
     const fields = this.getCalculatedFields(formNumber, taxYear)
     const graph = new Map<string, string[]>()
 
-    fields.forEach(field => {
+    fields.forEach((field) => {
       if (field.calculation) {
         graph.set(field.id, field.calculation.dependsOn)
       }
@@ -387,11 +400,17 @@ class SchemaRegistry {
   /**
    * Validate field value against definition
    */
-  validateFieldValue(field: FieldDefinition, value: unknown): { valid: boolean; errors: string[] } {
+  validateFieldValue(
+    field: FieldDefinition,
+    value: unknown
+  ): { valid: boolean; errors: string[] } {
     const errors: string[] = []
 
     // Check required
-    if (field.required && (value === undefined || value === null || value === '')) {
+    if (
+      field.required &&
+      (value === undefined || value === null || value === '')
+    ) {
       errors.push(`${field.label} is required`)
       return { valid: false, errors }
     }
@@ -417,12 +436,17 @@ class SchemaRegistry {
     // Check enum values
     if (field.dataType === IRSDataType.Enum && field.enumValues) {
       if (!field.enumValues.includes(strValue)) {
-        errors.push(`${field.label} must be one of: ${field.enumValues.join(', ')}`)
+        errors.push(
+          `${field.label} must be one of: ${field.enumValues.join(', ')}`
+        )
       }
     }
 
     // Check numeric range
-    if (field.dataType === IRSDataType.Currency || field.dataType === IRSDataType.Integer) {
+    if (
+      field.dataType === IRSDataType.Currency ||
+      field.dataType === IRSDataType.Integer
+    ) {
       const numValue = Number(value)
       if (!isNaN(numValue)) {
         if (field.minValue !== undefined && numValue < field.minValue) {
@@ -619,11 +643,13 @@ const form709Part1Fields: FieldDefinition[] = [
     dataType: IRSDataType.Boolean,
     required: false,
     cardinality: { min: 0, max: 1 },
-    conditions: [{
-      triggerField: 'previouslyFiled709',
-      triggerValue: true,
-      action: 'show'
-    }]
+    conditions: [
+      {
+        triggerField: 'previouslyFiled709',
+        triggerValue: true,
+        action: 'show'
+      }
+    ]
   },
   {
     id: 'giftsBySpouses',
@@ -698,7 +724,8 @@ const form709Part2Fields: FieldDefinition[] = [
     calculation: {
       dependsOn: ['currentPeriodTaxableGifts', 'priorPeriodTaxableGifts'],
       formula: 'Line 1 + Line 2',
-      compute: (v) => v['currentPeriodTaxableGifts'] + v['priorPeriodTaxableGifts']
+      compute: (v) =>
+        v['currentPeriodTaxableGifts'] + v['priorPeriodTaxableGifts']
     }
   },
   {
@@ -778,7 +805,8 @@ const form709Part2Fields: FieldDefinition[] = [
     calculation: {
       dependsOn: ['applicableCreditAmount', 'priorPeriodCreditUsed'],
       formula: 'MAX(0, Line 7 - Line 8)',
-      compute: (v) => Math.max(0, v['applicableCreditAmount'] - v['priorPeriodCreditUsed'])
+      compute: (v) =>
+        Math.max(0, v['applicableCreditAmount'] - v['priorPeriodCreditUsed'])
     }
   },
   {
@@ -802,7 +830,8 @@ const form709Part2Fields: FieldDefinition[] = [
     calculation: {
       dependsOn: ['creditBalance', 'specificExemption'],
       formula: 'MAX(0, Line 9 - Line 10)',
-      compute: (v) => Math.max(0, v['creditBalance'] - (v['specificExemption'] || 0))
+      compute: (v) =>
+        Math.max(0, v['creditBalance'] - (v['specificExemption'] || 0))
     }
   },
   {
@@ -816,7 +845,8 @@ const form709Part2Fields: FieldDefinition[] = [
     calculation: {
       dependsOn: ['taxBalance', 'creditBalanceAfterExemption'],
       formula: 'MIN(Line 6, Line 11)',
-      compute: (v) => Math.min(v['taxBalance'], v['creditBalanceAfterExemption'])
+      compute: (v) =>
+        Math.min(v['taxBalance'], v['creditBalanceAfterExemption'])
     }
   },
   {
@@ -1083,11 +1113,13 @@ export function createForm709Definition(taxYear: number): FormDefinition {
             dataType: IRSDataType.String,
             required: false,
             cardinality: { min: 0, max: 1 },
-            conditions: [{
-              triggerField: 'giftsBySpouses',
-              triggerValue: true,
-              action: 'require'
-            }]
+            conditions: [
+              {
+                triggerField: 'giftsBySpouses',
+                triggerValue: true,
+                action: 'require'
+              }
+            ]
           },
           {
             id: 'consentingSpouseSSN',
@@ -1097,11 +1129,13 @@ export function createForm709Definition(taxYear: number): FormDefinition {
             dataType: IRSDataType.SSN,
             required: false,
             cardinality: { min: 0, max: 1 },
-            conditions: [{
-              triggerField: 'giftsBySpouses',
-              triggerValue: true,
-              action: 'require'
-            }]
+            conditions: [
+              {
+                triggerField: 'giftsBySpouses',
+                triggerValue: true,
+                action: 'require'
+              }
+            ]
           }
         ]
       }
@@ -1118,37 +1152,44 @@ export function createForm709Definition(taxYear: number): FormDefinition {
             id: 'part1',
             title: 'Part 1 - Gifts Subject Only to Gift Tax',
             fields: [],
-            sections: [{
-              id: 'gifts',
-              title: 'Gift Entries',
-              fields: form709ScheduleAGiftFields,
-              repeating: true,
-              maxInstances: 100
-            }]
+            sections: [
+              {
+                id: 'gifts',
+                title: 'Gift Entries',
+                fields: form709ScheduleAGiftFields,
+                repeating: true,
+                maxInstances: 100
+              }
+            ]
           },
           {
             id: 'part2',
-            title: 'Part 2 - Direct Skips (Subject to Both Gift Tax and GST Tax)',
+            title:
+              'Part 2 - Direct Skips (Subject to Both Gift Tax and GST Tax)',
             fields: [],
-            sections: [{
-              id: 'directSkips',
-              title: 'Direct Skip Entries',
-              fields: form709ScheduleAGiftFields,
-              repeating: true,
-              maxInstances: 100
-            }]
+            sections: [
+              {
+                id: 'directSkips',
+                title: 'Direct Skip Entries',
+                fields: form709ScheduleAGiftFields,
+                repeating: true,
+                maxInstances: 100
+              }
+            ]
           },
           {
             id: 'part3',
             title: 'Part 3 - Indirect Skips and Other Transfers in Trust',
             fields: [],
-            sections: [{
-              id: 'indirectSkips',
-              title: 'Indirect Skip Entries',
-              fields: form709ScheduleAGiftFields,
-              repeating: true,
-              maxInstances: 100
-            }]
+            sections: [
+              {
+                id: 'indirectSkips',
+                title: 'Indirect Skip Entries',
+                fields: form709ScheduleAGiftFields,
+                repeating: true,
+                maxInstances: 100
+              }
+            ]
           },
           {
             id: 'part4',
@@ -1192,7 +1233,8 @@ export function createForm709Definition(taxYear: number): FormDefinition {
                 calculation: {
                   dependsOn: ['totalPart1', 'totalPart2', 'totalPart3'],
                   formula: 'Line 1 + Line 2 + Line 3',
-                  compute: (v) => v['totalPart1'] + v['totalPart2'] + v['totalPart3']
+                  compute: (v) =>
+                    v['totalPart1'] + v['totalPart2'] + v['totalPart3']
                 }
               },
               {
@@ -1257,7 +1299,9 @@ export function createForm709Definition(taxYear: number): FormDefinition {
                 calculation: {
                   dependsOn: ['maritalDeduction', 'charitableDeduction'],
                   formula: 'Line 8 + Line 9',
-                  compute: (v) => (v['maritalDeduction'] || 0) + (v['charitableDeduction'] || 0)
+                  compute: (v) =>
+                    (v['maritalDeduction'] || 0) +
+                    (v['charitableDeduction'] || 0)
                 }
               },
               {
@@ -1271,7 +1315,8 @@ export function createForm709Definition(taxYear: number): FormDefinition {
                 calculation: {
                   dependsOn: ['giftsAfterExclusions', 'totalDeductions'],
                   formula: 'Line 7 - Line 10',
-                  compute: (v) => v['giftsAfterExclusions'] - v['totalDeductions']
+                  compute: (v) =>
+                    v['giftsAfterExclusions'] - v['totalDeductions']
                 }
               }
             ]
@@ -1284,64 +1329,68 @@ export function createForm709Definition(taxYear: number): FormDefinition {
         xmlName: 'IRS709ScheduleB',
         attachesTo: '709',
         cardinality: { min: 0, max: 1 },
-        requiredWhen: [{
-          triggerField: 'previouslyFiled709',
-          triggerValue: true,
-          action: 'require'
-        }],
-        sections: [{
-          id: 'priorGifts',
-          title: 'Prior Period Gifts',
-          fields: [
-            {
-              id: 'calendarYear',
-              xmlName: 'CalendarYearOrQuarter',
-              label: 'Calendar Year/Quarter',
-              lineNumber: 'a',
-              dataType: IRSDataType.String,
-              required: true,
-              cardinality: { min: 1, max: 1 }
-            },
-            {
-              id: 'irsOfficeFiled',
-              xmlName: 'IrsOfficeWhereFiledTxt',
-              label: 'IRS Office Where Filed',
-              lineNumber: 'b',
-              dataType: IRSDataType.String,
-              required: true,
-              cardinality: { min: 1, max: 1 }
-            },
-            {
-              id: 'creditUsed',
-              xmlName: 'ApplicableCreditUsedAmt',
-              label: 'Applicable Credit Used',
-              lineNumber: 'c',
-              dataType: IRSDataType.Currency,
-              required: true,
-              cardinality: { min: 1, max: 1 }
-            },
-            {
-              id: 'specificExemption',
-              xmlName: 'SpecificExemptionAmt',
-              label: 'Specific Exemption (pre-1977)',
-              lineNumber: 'd',
-              dataType: IRSDataType.Currency,
-              required: false,
-              cardinality: { min: 0, max: 1 }
-            },
-            {
-              id: 'taxableGiftsAmount',
-              xmlName: 'TaxableGiftsAmt',
-              label: 'Taxable Gifts Amount',
-              lineNumber: 'e',
-              dataType: IRSDataType.Currency,
-              required: true,
-              cardinality: { min: 1, max: 1 }
-            }
-          ],
-          repeating: true,
-          maxInstances: 50
-        }]
+        requiredWhen: [
+          {
+            triggerField: 'previouslyFiled709',
+            triggerValue: true,
+            action: 'require'
+          }
+        ],
+        sections: [
+          {
+            id: 'priorGifts',
+            title: 'Prior Period Gifts',
+            fields: [
+              {
+                id: 'calendarYear',
+                xmlName: 'CalendarYearOrQuarter',
+                label: 'Calendar Year/Quarter',
+                lineNumber: 'a',
+                dataType: IRSDataType.String,
+                required: true,
+                cardinality: { min: 1, max: 1 }
+              },
+              {
+                id: 'irsOfficeFiled',
+                xmlName: 'IrsOfficeWhereFiledTxt',
+                label: 'IRS Office Where Filed',
+                lineNumber: 'b',
+                dataType: IRSDataType.String,
+                required: true,
+                cardinality: { min: 1, max: 1 }
+              },
+              {
+                id: 'creditUsed',
+                xmlName: 'ApplicableCreditUsedAmt',
+                label: 'Applicable Credit Used',
+                lineNumber: 'c',
+                dataType: IRSDataType.Currency,
+                required: true,
+                cardinality: { min: 1, max: 1 }
+              },
+              {
+                id: 'specificExemption',
+                xmlName: 'SpecificExemptionAmt',
+                label: 'Specific Exemption (pre-1977)',
+                lineNumber: 'd',
+                dataType: IRSDataType.Currency,
+                required: false,
+                cardinality: { min: 0, max: 1 }
+              },
+              {
+                id: 'taxableGiftsAmount',
+                xmlName: 'TaxableGiftsAmt',
+                label: 'Taxable Gifts Amount',
+                lineNumber: 'e',
+                dataType: IRSDataType.Currency,
+                required: true,
+                cardinality: { min: 1, max: 1 }
+              }
+            ],
+            repeating: true,
+            maxInstances: 50
+          }
+        ]
       },
       {
         id: 'C',
@@ -1349,72 +1398,83 @@ export function createForm709Definition(taxYear: number): FormDefinition {
         xmlName: 'IRS709ScheduleC',
         attachesTo: '709',
         cardinality: { min: 0, max: 1 },
-        requiredWhen: [{
-          triggerField: 'dsueApplied',
-          triggerValue: true,
-          action: 'require'
-        }],
-        sections: [{
-          id: 'dsue',
-          title: 'DSUE Calculation',
-          fields: [
-            {
-              id: 'basicExclusionAmount',
-              xmlName: 'BasicExclusionAmt',
-              label: 'Basic Exclusion Amount',
-              lineNumber: '1',
-              dataType: IRSDataType.Currency,
-              required: true,
-              cardinality: { min: 1, max: 1 },
-              defaultValue: 13610000 // 2024 amount
-            },
-            {
-              id: 'totalDSUE',
-              xmlName: 'TotalDSUEAmt',
-              label: 'Total DSUE from Parts 1 & 2',
-              lineNumber: '2',
-              dataType: IRSDataType.Currency,
-              required: false,
-              cardinality: { min: 0, max: 1 }
-            },
-            {
-              id: 'restoredExclusionAmount',
-              xmlName: 'RestoredExclusionAmt',
-              label: 'Restored Exclusion Amount',
-              lineNumber: '3',
-              dataType: IRSDataType.Currency,
-              required: false,
-              cardinality: { min: 0, max: 1 }
-            },
-            {
-              id: 'totalExclusion',
-              xmlName: 'TotalExclusionAmt',
-              label: 'Total (Lines 1+2+3)',
-              lineNumber: '4',
-              dataType: IRSDataType.Currency,
-              required: true,
-              cardinality: { min: 1, max: 1 },
-              calculation: {
-                dependsOn: ['basicExclusionAmount', 'totalDSUE', 'restoredExclusionAmount'],
-                formula: 'Line 1 + Line 2 + Line 3',
-                compute: (v) => v['basicExclusionAmount'] + (v['totalDSUE'] || 0) + (v['restoredExclusionAmount'] || 0)
+        requiredWhen: [
+          {
+            triggerField: 'dsueApplied',
+            triggerValue: true,
+            action: 'require'
+          }
+        ],
+        sections: [
+          {
+            id: 'dsue',
+            title: 'DSUE Calculation',
+            fields: [
+              {
+                id: 'basicExclusionAmount',
+                xmlName: 'BasicExclusionAmt',
+                label: 'Basic Exclusion Amount',
+                lineNumber: '1',
+                dataType: IRSDataType.Currency,
+                required: true,
+                cardinality: { min: 1, max: 1 },
+                defaultValue: 13610000 // 2024 amount
+              },
+              {
+                id: 'totalDSUE',
+                xmlName: 'TotalDSUEAmt',
+                label: 'Total DSUE from Parts 1 & 2',
+                lineNumber: '2',
+                dataType: IRSDataType.Currency,
+                required: false,
+                cardinality: { min: 0, max: 1 }
+              },
+              {
+                id: 'restoredExclusionAmount',
+                xmlName: 'RestoredExclusionAmt',
+                label: 'Restored Exclusion Amount',
+                lineNumber: '3',
+                dataType: IRSDataType.Currency,
+                required: false,
+                cardinality: { min: 0, max: 1 }
+              },
+              {
+                id: 'totalExclusion',
+                xmlName: 'TotalExclusionAmt',
+                label: 'Total (Lines 1+2+3)',
+                lineNumber: '4',
+                dataType: IRSDataType.Currency,
+                required: true,
+                cardinality: { min: 1, max: 1 },
+                calculation: {
+                  dependsOn: [
+                    'basicExclusionAmount',
+                    'totalDSUE',
+                    'restoredExclusionAmount'
+                  ],
+                  formula: 'Line 1 + Line 2 + Line 3',
+                  compute: (v) =>
+                    v['basicExclusionAmount'] +
+                    (v['totalDSUE'] || 0) +
+                    (v['restoredExclusionAmount'] || 0)
+                }
+              },
+              {
+                id: 'applicableCreditOnLine4',
+                xmlName: 'ApplicableCreditOnLine4Amt',
+                label: 'Applicable Credit',
+                lineNumber: '5',
+                dataType: IRSDataType.Currency,
+                required: true,
+                cardinality: { min: 1, max: 1 },
+                calculation: {
+                  dependsOn: ['totalExclusion'],
+                  formula: 'Gift tax table lookup on Line 4'
+                }
               }
-            },
-            {
-              id: 'applicableCreditOnLine4',
-              xmlName: 'ApplicableCreditOnLine4Amt',
-              label: 'Applicable Credit',
-              lineNumber: '5',
-              dataType: IRSDataType.Currency,
-              required: true,
-              cardinality: { min: 1, max: 1 },
-              calculation: {
-                dependsOn: ['totalExclusion'],
-                formula: 'Gift tax table lookup on Line 4'
-              }
-            }
-          ]
-        }]
+            ]
+          }
+        ]
       },
       {
         id: 'D',
@@ -1463,7 +1523,8 @@ export function createForm709Definition(taxYear: number): FormDefinition {
                 calculation: {
                   dependsOn: ['maxGSTExemption', 'priorGSTExemptionUsed'],
                   formula: 'Line 1 - Line 2',
-                  compute: (v) => v['maxGSTExemption'] - v['priorGSTExemptionUsed']
+                  compute: (v) =>
+                    v['maxGSTExemption'] - v['priorGSTExemptionUsed']
                 }
               }
             ]

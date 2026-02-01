@@ -31,11 +31,10 @@ export class WVIT140 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -131,7 +130,8 @@ export class WVIT140 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -220,16 +220,16 @@ export class WVIT140 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
     this.info.taxPayer.spouse?.firstName,
     this.info.taxPayer.spouse?.lastName,
     this.info.taxPayer.spouse?.ssid,
-    this.info.taxPayer.primaryPerson?.address.address,
-    this.info.taxPayer.primaryPerson?.address.city,
-    this.info.taxPayer.primaryPerson?.address.state,
-    this.info.taxPayer.primaryPerson?.address.zip,
+    this.info.taxPayer.primaryPerson.address.address,
+    this.info.taxPayer.primaryPerson.address.city,
+    this.info.taxPayer.primaryPerson.address.state,
+    this.info.taxPayer.primaryPerson.address.zip,
     this.filingStatus() === FilingStatus.S,
     this.filingStatus() === FilingStatus.MFJ,
     this.filingStatus() === FilingStatus.MFS,

@@ -24,28 +24,28 @@ import { Form2290Data, BusinessEntity, HeavyVehicle } from 'ustaxes/core/data'
 
 // Tax table for 2025 (annual amounts)
 const TAX_TABLE: Record<string, number> = {
-  'A': 0,      // 55,000 lbs (suspended)
-  'B': 0,      // Logging suspended
-  'C': 100,    // 55,001-56,000 lbs
-  'D': 122,    // 56,001-57,000 lbs
-  'E': 144,    // 57,001-58,000 lbs
-  'F': 166,    // 58,001-59,000 lbs
-  'G': 188,    // 59,001-60,000 lbs
-  'H': 210,    // 60,001-61,000 lbs
-  'I': 232,    // 61,001-62,000 lbs
-  'J': 254,    // 62,001-63,000 lbs
-  'K': 276,    // 63,001-64,000 lbs
-  'L': 298,    // 64,001-65,000 lbs
-  'M': 320,    // 65,001-66,000 lbs
-  'N': 342,    // 66,001-67,000 lbs
-  'O': 364,    // 67,001-68,000 lbs
-  'P': 386,    // 68,001-69,000 lbs
-  'Q': 408,    // 69,001-70,000 lbs
-  'R': 430,    // 70,001-71,000 lbs
-  'S': 452,    // 71,001-72,000 lbs
-  'T': 474,    // 72,001-73,000 lbs
-  'U': 496,    // 73,001-74,000 lbs
-  'V': 550     // 75,001+ lbs
+  A: 0, // 55,000 lbs (suspended)
+  B: 0, // Logging suspended
+  C: 100, // 55,001-56,000 lbs
+  D: 122, // 56,001-57,000 lbs
+  E: 144, // 57,001-58,000 lbs
+  F: 166, // 58,001-59,000 lbs
+  G: 188, // 59,001-60,000 lbs
+  H: 210, // 60,001-61,000 lbs
+  I: 232, // 61,001-62,000 lbs
+  J: 254, // 62,001-63,000 lbs
+  K: 276, // 63,001-64,000 lbs
+  L: 298, // 64,001-65,000 lbs
+  M: 320, // 65,001-66,000 lbs
+  N: 342, // 66,001-67,000 lbs
+  O: 364, // 67,001-68,000 lbs
+  P: 386, // 68,001-69,000 lbs
+  Q: 408, // 69,001-70,000 lbs
+  R: 430, // 70,001-71,000 lbs
+  S: 452, // 71,001-72,000 lbs
+  T: 474, // 72,001-73,000 lbs
+  U: 496, // 73,001-74,000 lbs
+  V: 550 // 75,001+ lbs
 }
 
 export default class F2290 extends BusinessForm {
@@ -71,7 +71,7 @@ export default class F2290 extends BusinessForm {
 
   // Line 1: Taxable vehicles
   taxableVehicles = (): HeavyVehicle[] => {
-    return this.vehicles().filter(v => !v.suspended)
+    return this.vehicles().filter((v) => !v.suspended)
   }
 
   // Line 2: Total number of taxable vehicles
@@ -79,7 +79,7 @@ export default class F2290 extends BusinessForm {
 
   // Suspended vehicles (mileage under limit)
   suspendedVehicles = (): HeavyVehicle[] => {
-    return this.vehicles().filter(v => v.suspended)
+    return this.vehicles().filter((v) => v.suspended)
   }
 
   // Line 3: Total number of suspended vehicles
@@ -93,7 +93,8 @@ export default class F2290 extends BusinessForm {
 
     // Prorate for partial year (first use month)
     const monthsRemaining = 12 - vehicle.firstUseMonth + 1
-    const proratedTax = Math.round((baseTax * monthsRemaining / 12) * 100) / 100
+    const proratedTax =
+      Math.round(((baseTax * monthsRemaining) / 12) * 100) / 100
 
     // Logging vehicles get 75% rate
     if (vehicle.loggingUse) {
@@ -105,11 +106,14 @@ export default class F2290 extends BusinessForm {
 
   // Line 4: Tax from vehicles
   l4 = (): number => {
-    return this.taxableVehicles().reduce((sum, v) => sum + this.calculateVehicleTax(v), 0)
+    return this.taxableVehicles().reduce(
+      (sum, v) => sum + this.calculateVehicleTax(v),
+      0
+    )
   }
 
   // Line 5: Additional tax from increase in taxable gross weight
-  l5 = (): number => 0  // For weight increases during the year
+  l5 = (): number => 0 // For weight increases during the year
 
   // Line 6: Total tax (line 4 + line 5)
   l6 = (): number => this.l4() + this.l5()
@@ -141,7 +145,8 @@ export default class F2290 extends BusinessForm {
   amountDue = (): number => this.formData.amountDue
 
   // Electronic filing required?
-  requiresElectronicFiling = (): boolean => this.formData.electronicFilingRequired
+  requiresElectronicFiling = (): boolean =>
+    this.formData.electronicFilingRequired
 
   // Get weight category letter based on gross weight
   static getWeightCategory(grossWeight: number): string {
@@ -165,7 +170,7 @@ export default class F2290 extends BusinessForm {
     if (grossWeight <= 72000) return 'S'
     if (grossWeight <= 73000) return 'T'
     if (grossWeight <= 74000) return 'U'
-    return 'V'  // 75,001+ lbs
+    return 'V' // 75,001+ lbs
   }
 
   fields = (): Field[] => [

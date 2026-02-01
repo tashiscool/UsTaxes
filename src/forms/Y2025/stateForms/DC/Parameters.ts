@@ -53,7 +53,7 @@ const parameters = {
   dependentExemption: 4400,
 
   // DC Earned Income Tax Credit (40% of federal)
-  eicPercentage: 0.40,
+  eicPercentage: 0.4,
 
   // DC does not tax Social Security benefits
 

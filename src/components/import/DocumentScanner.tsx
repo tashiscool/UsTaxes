@@ -34,7 +34,12 @@ import {
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
 import { useDispatch } from 'ustaxes/redux'
 import { addW2, add1099 } from 'ustaxes/redux/actions'
-import { IncomeW2, PersonRole, Supported1099, Income1099Type } from 'ustaxes/core/data'
+import {
+  IncomeW2,
+  PersonRole,
+  Supported1099,
+  Income1099Type
+} from 'ustaxes/core/data'
 import {
   scanDocument,
   DocumentScanResult,
@@ -151,15 +156,15 @@ const FieldEditor = ({
     field.confidence >= 0.8
       ? classes.confidenceHigh
       : field.confidence >= 0.5
-        ? classes.confidenceMedium
-        : classes.confidenceLow
+      ? classes.confidenceMedium
+      : classes.confidenceLow
 
   const ConfidenceIcon =
     field.confidence >= 0.8
       ? Check
       : field.confidence >= 0.5
-        ? Warning
-        : ErrorIcon
+      ? Warning
+      : ErrorIcon
 
   const handleSave = () => {
     onUpdate(fieldId, value)
@@ -171,7 +176,9 @@ const FieldEditor = ({
       <CardContent>
         <Grid container spacing={1} alignItems="center">
           <Grid item xs={12} sm={4}>
-            <Typography className={classes.fieldLabel}>{field.label}</Typography>
+            <Typography className={classes.fieldLabel}>
+              {field.label}
+            </Typography>
           </Grid>
           <Grid item xs={12} sm={5}>
             {editing ? (
@@ -237,7 +244,9 @@ export default function DocumentScanner(): ReactElement {
   const [scanResult, setScanResult] = useState<DocumentScanResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [editedFields, setEditedFields] = useState<Map<string, string>>(new Map())
+  const [editedFields, setEditedFields] = useState<Map<string, string>>(
+    new Map()
+  )
 
   // Handle file selection
   const handleFileSelect = useCallback((file: File) => {
@@ -337,7 +346,7 @@ export default function DocumentScanner(): ReactElement {
   }
 
   // Draw bounding boxes on detected fields
-  const drawBoundingBoxes = async (result: DocumentScanResult) => {
+  const drawBoundingBoxes = (result: DocumentScanResult) => {
     const canvas = canvasRef.current
     const previewImg = document.querySelector(
       `.${classes.previewImage}`
@@ -409,7 +418,7 @@ export default function DocumentScanner(): ReactElement {
     try {
       switch (type) {
         case 'W-2': {
-          const w2Data = result.w2Data as Partial<IncomeW2>
+          const w2Data = result.w2Data 
 
           // Apply edited fields
           editedFields.forEach((value, fieldId) => {
@@ -554,9 +563,11 @@ export default function DocumentScanner(): ReactElement {
           break
         }
 
-        default:
-          setError(`Import not yet supported for ${type} documents`)
+        default: {
+          const _exhaustiveCheck: never = type
+          setError(`Import not yet supported for ${String(_exhaustiveCheck)} documents`)
           return
+        }
       }
 
       // Reset state after successful import
@@ -622,7 +633,9 @@ export default function DocumentScanner(): ReactElement {
       {/* File upload area */}
       {!selectedFile && (
         <Paper
-          className={`${classes.uploadArea} ${isDragging ? classes.uploadAreaDragging : ''}`}
+          className={`${classes.uploadArea} ${
+            isDragging ? classes.uploadAreaDragging : ''
+          }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -712,7 +725,11 @@ export default function DocumentScanner(): ReactElement {
             >
               {isScanning ? 'Scanning...' : 'Scan Document'}
             </Button>
-            <Button variant="outlined" onClick={handleReset} disabled={isScanning}>
+            <Button
+              variant="outlined"
+              onClick={handleReset}
+              disabled={isScanning}
+            >
               Reset
             </Button>
           </Box>
@@ -726,7 +743,7 @@ export default function DocumentScanner(): ReactElement {
             Extracted Fields
           </Typography>
 
-          {scanResult.extractionResult.result.missingRequired?.length > 0 && (
+          {scanResult.extractionResult.result.missingRequired.length > 0 && (
             <Alert severity="warning" style={{ marginBottom: 16 }}>
               Some required fields could not be detected:{' '}
               {scanResult.extractionResult.result.missingRequired.join(', ')}

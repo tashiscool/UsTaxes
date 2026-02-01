@@ -23,13 +23,16 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
  * - Periodic Payment: First payment with offer, remaining in 6-24 months
  */
 
-export type OfferBasis = 'doubtAsToLiability' | 'doubtAsToCollectibility' | 'effectiveTaxAdministration'
+export type OfferBasis =
+  | 'doubtAsToLiability'
+  | 'doubtAsToCollectibility'
+  | 'effectiveTaxAdministration'
 export type PaymentOption = 'lumpSum' | 'periodicPayment'
 
 export interface TaxPeriodDebt {
   taxType: 'income' | 'employment' | 'excise' | 'other'
   formNumber: string
-  taxPeriod: string  // e.g., "2024", "Q1 2024"
+  taxPeriod: string // e.g., "2024", "Q1 2024"
   amount: number
 }
 
@@ -37,17 +40,17 @@ export interface OfferInCompromiseInfo {
   offerBasis: OfferBasis
   paymentOption: PaymentOption
   offerAmount: number
-  applicationFee: number  // $205 for 2025
-  initialPayment: number  // 20% for lump sum, or first periodic payment
+  applicationFee: number // $205 for 2025
+  initialPayment: number // 20% for lump sum, or first periodic payment
   taxDebts: TaxPeriodDebt[]
   totalDebtOwed: number
   reasonForOffer: string
   // Financial information references
-  hasF433A: boolean  // Individual collection statement
-  hasF433B: boolean  // Business collection statement
+  hasF433A: boolean // Individual collection statement
+  hasF433B: boolean // Business collection statement
   // Payment terms (for periodic payment)
   periodicPaymentAmount?: number
-  paymentMonths?: number  // 6-24 months
+  paymentMonths?: number // 6-24 months
 }
 
 export default class F656 extends F1040Attachment {
@@ -63,20 +66,27 @@ export default class F656 extends F1040Attachment {
   }
 
   offerInfo = (): OfferInCompromiseInfo | undefined => {
-    return this.f1040.info.offerInCompromise as OfferInCompromiseInfo | undefined
+    return this.f1040.info.offerInCompromise as
+      | OfferInCompromiseInfo
+      | undefined
   }
 
   // Section 1: Taxpayer Information (from F1040)
 
   // Section 2: Offer Basis
-  offerBasis = (): OfferBasis => this.offerInfo()?.offerBasis ?? 'doubtAsToCollectibility'
+  offerBasis = (): OfferBasis =>
+    this.offerInfo()?.offerBasis ?? 'doubtAsToCollectibility'
 
-  isDoubtAsToLiability = (): boolean => this.offerBasis() === 'doubtAsToLiability'
-  isDoubtAsToCollectibility = (): boolean => this.offerBasis() === 'doubtAsToCollectibility'
-  isEffectiveTaxAdministration = (): boolean => this.offerBasis() === 'effectiveTaxAdministration'
+  isDoubtAsToLiability = (): boolean =>
+    this.offerBasis() === 'doubtAsToLiability'
+  isDoubtAsToCollectibility = (): boolean =>
+    this.offerBasis() === 'doubtAsToCollectibility'
+  isEffectiveTaxAdministration = (): boolean =>
+    this.offerBasis() === 'effectiveTaxAdministration'
 
   // Section 3: Payment Options
-  paymentOption = (): PaymentOption => this.offerInfo()?.paymentOption ?? 'lumpSum'
+  paymentOption = (): PaymentOption =>
+    this.offerInfo()?.paymentOption ?? 'lumpSum'
 
   isLumpSum = (): boolean => this.paymentOption() === 'lumpSum'
   isPeriodicPayment = (): boolean => this.paymentOption() === 'periodicPayment'
@@ -89,7 +99,7 @@ export default class F656 extends F1040Attachment {
   // For lump sum: 20% of offer amount
   lumpSumInitialPayment = (): number => {
     if (this.isLumpSum()) {
-      return Math.round(this.offerAmount() * 0.20)
+      return Math.round(this.offerAmount() * 0.2)
     }
     return 0
   }
@@ -103,15 +113,18 @@ export default class F656 extends F1040Attachment {
   }
 
   // For periodic payment
-  periodicPaymentAmount = (): number => this.offerInfo()?.periodicPaymentAmount ?? 0
+  periodicPaymentAmount = (): number =>
+    this.offerInfo()?.periodicPaymentAmount ?? 0
   paymentMonths = (): number => this.offerInfo()?.paymentMonths ?? 24
 
   // Section 5: Tax Debt Information
   taxDebts = (): TaxPeriodDebt[] => this.offerInfo()?.taxDebts ?? []
 
   totalDebtOwed = (): number => {
-    return this.offerInfo()?.totalDebtOwed ??
-           this.taxDebts().reduce((sum, d) => sum + d.amount, 0)
+    return (
+      this.offerInfo()?.totalDebtOwed ??
+      this.taxDebts().reduce((sum, d) => sum + d.amount, 0)
+    )
   }
 
   // Offer as percentage of debt
@@ -137,14 +150,16 @@ export default class F656 extends F1040Attachment {
   isLowIncome = (): boolean => {
     // Based on federal poverty guidelines - simplified check
     // Form 656-A would be used to claim low-income certification
-    return false  // Would need income verification
+    return false // Would need income verification
   }
 
   fields = (): Field[] => [
     this.f1040.namesString(),
     this.f1040.info.taxPayer.primaryPerson.ssid,
     this.f1040.info.taxPayer.primaryPerson.address.address ?? '',
-    `${this.f1040.info.taxPayer.primaryPerson.address.city ?? ''}, ${this.f1040.info.taxPayer.primaryPerson.address.state ?? ''} ${this.f1040.info.taxPayer.primaryPerson.address.zip ?? ''}`,
+    `${this.f1040.info.taxPayer.primaryPerson.address.city ?? ''}, ${
+      this.f1040.info.taxPayer.primaryPerson.address.state ?? ''
+    } ${this.f1040.info.taxPayer.primaryPerson.address.zip ?? ''}`,
     // Offer basis checkboxes
     this.isDoubtAsToLiability(),
     this.isDoubtAsToCollectibility(),

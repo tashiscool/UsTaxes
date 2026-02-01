@@ -137,11 +137,32 @@ type CryptoExchange = 'coinbase' | 'kraken' | 'generic'
 /**
  * Cost basis method labels
  */
-const COST_BASIS_METHODS: { value: CostBasisMethod; label: string; description: string }[] = [
-  { value: 'fifo', label: 'FIFO', description: 'First In, First Out - Oldest coins sold first' },
-  { value: 'lifo', label: 'LIFO', description: 'Last In, First Out - Newest coins sold first' },
-  { value: 'hifo', label: 'HIFO', description: 'Highest In, First Out - Highest cost basis sold first (minimizes gains)' },
-  { value: 'spec_id', label: 'Specific ID', description: 'Manually select which lots to sell' }
+const COST_BASIS_METHODS: {
+  value: CostBasisMethod
+  label: string
+  description: string
+}[] = [
+  {
+    value: 'fifo',
+    label: 'FIFO',
+    description: 'First In, First Out - Oldest coins sold first'
+  },
+  {
+    value: 'lifo',
+    label: 'LIFO',
+    description: 'Last In, First Out - Newest coins sold first'
+  },
+  {
+    value: 'hifo',
+    label: 'HIFO',
+    description:
+      'Highest In, First Out - Highest cost basis sold first (minimizes gains)'
+  },
+  {
+    value: 'spec_id',
+    label: 'Specific ID',
+    description: 'Manually select which lots to sell'
+  }
 ]
 
 /**
@@ -174,7 +195,10 @@ const formatQuantity = (quantity: number): string => {
 interface GenericMappingProps {
   headers: string[]
   columnMapping: CryptoColumnMapping
-  onMappingChange: (field: keyof CryptoColumnMapping, columnIndex: number) => void
+  onMappingChange: (
+    field: keyof CryptoColumnMapping,
+    columnIndex: number
+  ) => void
   previewRows: string[][]
 }
 
@@ -198,10 +222,15 @@ const GenericMappingUI = ({
         {CRYPTO_FIELDS.map((field) => (
           <Grid item xs={12} sm={6} md={4} key={field.key}>
             <FormControl fullWidth size="small">
-              <InputLabel>{field.label}{field.required ? ' *' : ''}</InputLabel>
+              <InputLabel>
+                {field.label}
+                {field.required ? ' *' : ''}
+              </InputLabel>
               <Select
                 value={columnMapping[field.key] ?? -1}
-                onChange={(e) => onMappingChange(field.key, e.target.value as number)}
+                onChange={(e) =>
+                  onMappingChange(field.key, e.target.value as number)
+                }
                 className={classes.columnSelect}
               >
                 <MenuItem value={-1}>-- Not mapped --</MenuItem>
@@ -237,7 +266,10 @@ const GenericMappingUI = ({
                 {previewRows.slice(1, 4).map((row, rowIndex) => (
                   <TableRow key={rowIndex}>
                     {row.map((cell, cellIndex) => (
-                      <TableCell key={cellIndex} className={classes.previewCell}>
+                      <TableCell
+                        key={cellIndex}
+                        className={classes.previewCell}
+                      >
                         {cell}
                       </TableCell>
                     ))}
@@ -293,8 +325,14 @@ const TransactionTable = ({
           <TableRow>
             <TableCell padding="checkbox">
               <Checkbox
-                checked={selectedIndices.size === transactions.length && transactions.length > 0}
-                indeterminate={selectedIndices.size > 0 && selectedIndices.size < transactions.length}
+                checked={
+                  selectedIndices.size === transactions.length &&
+                  transactions.length > 0
+                }
+                indeterminate={
+                  selectedIndices.size > 0 &&
+                  selectedIndices.size < transactions.length
+                }
                 onChange={toggleAll}
               />
             </TableCell>
@@ -324,17 +362,26 @@ const TransactionTable = ({
               </TableCell>
               <TableCell>{formatDate(tx.dateAcquired)}</TableCell>
               <TableCell>{formatDate(tx.dateSold)}</TableCell>
-              <TableCell align="right">{formatQuantity(tx.quantity ?? 0)}</TableCell>
+              <TableCell align="right">
+                {formatQuantity(tx.quantity ?? 0)}
+              </TableCell>
               <TableCell align="right">{formatCurrency(tx.proceeds)}</TableCell>
-              <TableCell align="right">{formatCurrency(tx.costBasis)}</TableCell>
-              <TableCell align="right" className={tx.gainLoss >= 0 ? classes.gain : classes.loss}>
+              <TableCell align="right">
+                {formatCurrency(tx.costBasis)}
+              </TableCell>
+              <TableCell
+                align="right"
+                className={tx.gainLoss >= 0 ? classes.gain : classes.loss}
+              >
                 {formatCurrency(tx.gainLoss)}
               </TableCell>
               <TableCell>
                 <Chip
                   size="small"
                   label={tx.isShortTerm ? 'Short' : 'Long'}
-                  className={`${classes.chip} ${tx.isShortTerm ? classes.shortTerm : classes.longTerm}`}
+                  className={`${classes.chip} ${
+                    tx.isShortTerm ? classes.shortTerm : classes.longTerm
+                  }`}
                 />
               </TableCell>
             </TableRow>
@@ -376,16 +423,18 @@ const CryptoTransactionTable = ({
             <TableRow key={index}>
               <TableCell>{formatDate(tx.timestamp)}</TableCell>
               <TableCell>
-                <Chip
-                  size="small"
-                  label={tx.type}
-                  className={classes.chip}
-                />
+                <Chip size="small" label={tx.type} className={classes.chip} />
               </TableCell>
-              <TableCell><strong>{tx.asset}</strong></TableCell>
+              <TableCell>
+                <strong>{tx.asset}</strong>
+              </TableCell>
               <TableCell align="right">{formatQuantity(tx.quantity)}</TableCell>
-              <TableCell align="right">{formatCurrency(tx.pricePerUnit)}</TableCell>
-              <TableCell align="right">{formatCurrency(tx.totalValue)}</TableCell>
+              <TableCell align="right">
+                {formatCurrency(tx.pricePerUnit)}
+              </TableCell>
+              <TableCell align="right">
+                {formatCurrency(tx.totalValue)}
+              </TableCell>
               <TableCell align="right">{formatCurrency(tx.fees)}</TableCell>
             </TableRow>
           ))}
@@ -403,12 +452,19 @@ export const CryptoImport = (): ReactElement => {
   const dispatch = useDispatch()
 
   // State
-  const [selectedExchange, setSelectedExchange] = useState<CryptoExchange | ''>('')
-  const [costBasisMethod, setCostBasisMethod] = useState<CostBasisMethod>('fifo')
+  const [selectedExchange, setSelectedExchange] = useState<CryptoExchange | ''>(
+    ''
+  )
+  const [costBasisMethod, setCostBasisMethod] =
+    useState<CostBasisMethod>('fifo')
   const [csvContent, setCsvContent] = useState<string>('')
   const [parseResult, setParseResult] = useState<ParseResult | null>(null)
-  const [cryptoTransactions, setCryptoTransactions] = useState<CryptoTransaction[]>([])
-  const [selectedTransactions, setSelectedTransactions] = useState<Set<number>>(new Set())
+  const [cryptoTransactions, setCryptoTransactions] = useState<
+    CryptoTransaction[]
+  >([])
+  const [selectedTransactions, setSelectedTransactions] = useState<Set<number>>(
+    new Set()
+  )
   const [skipHeaderRows, setSkipHeaderRows] = useState<number>(1)
   const [exchangeName, setExchangeName] = useState<string>('')
   const [importSuccess, setImportSuccess] = useState<boolean>(false)
@@ -426,7 +482,7 @@ export const CryptoImport = (): ReactElement => {
   const csvData = useMemo(() => {
     if (!csvContent) return { headers: [], rows: [] }
 
-    const lines = csvContent.split('\n').filter(line => line.trim())
+    const lines = csvContent.split('\n').filter((line) => line.trim())
     if (lines.length === 0) return { headers: [], rows: [] }
 
     const parseRow = (line: string): string[] => {
@@ -460,23 +516,25 @@ export const CryptoImport = (): ReactElement => {
       return null
     }
 
-    const selected = parseResult.transactions.filter((_, i) => selectedTransactions.has(i))
+    const selected = parseResult.transactions.filter((_, i) =>
+      selectedTransactions.has(i)
+    )
     const txs = selected.length > 0 ? selected : parseResult.transactions
 
     const shortTermGain = txs
-      .filter(tx => tx.isShortTerm && tx.gainLoss > 0)
+      .filter((tx) => tx.isShortTerm && tx.gainLoss > 0)
       .reduce((sum, tx) => sum + tx.gainLoss, 0)
 
     const shortTermLoss = txs
-      .filter(tx => tx.isShortTerm && tx.gainLoss < 0)
+      .filter((tx) => tx.isShortTerm && tx.gainLoss < 0)
       .reduce((sum, tx) => sum + tx.gainLoss, 0)
 
     const longTermGain = txs
-      .filter(tx => !tx.isShortTerm && tx.gainLoss > 0)
+      .filter((tx) => !tx.isShortTerm && tx.gainLoss > 0)
       .reduce((sum, tx) => sum + tx.gainLoss, 0)
 
     const longTermLoss = txs
-      .filter(tx => !tx.isShortTerm && tx.gainLoss < 0)
+      .filter((tx) => !tx.isShortTerm && tx.gainLoss < 0)
       .reduce((sum, tx) => sum + tx.gainLoss, 0)
 
     // Calculate income from crypto transactions
@@ -502,10 +560,17 @@ export const CryptoImport = (): ReactElement => {
     const lower = content.toLowerCase()
     const firstLine = lower.split('\n')[0] || ''
 
-    if (lower.includes('coinbase') || firstLine.includes('spot price at transaction')) {
+    if (
+      lower.includes('coinbase') ||
+      firstLine.includes('spot price at transaction')
+    ) {
       return 'coinbase'
     }
-    if (lower.includes('kraken') || firstLine.includes('refid') || firstLine.includes('aclass')) {
+    if (
+      lower.includes('kraken') ||
+      firstLine.includes('refid') ||
+      firstLine.includes('aclass')
+    ) {
       return 'kraken'
     }
 
@@ -535,7 +600,11 @@ export const CryptoImport = (): ReactElement => {
   /**
    * Parse content with selected exchange
    */
-  const parseContent = (content: string, exchange: CryptoExchange, method: CostBasisMethod) => {
+  const parseContent = (
+    content: string,
+    exchange: CryptoExchange,
+    method: CostBasisMethod
+  ) => {
     let parser: CoinbaseParser | KrakenParser | GenericCryptoParser
     let cryptoTxs: CryptoTransaction[] = []
 
@@ -594,14 +663,18 @@ export const CryptoImport = (): ReactElement => {
   const handleImport = () => {
     if (!parseResult || !selectedExchange) return
 
-    const toImport = parseResult.transactions.filter((_, i) => selectedTransactions.has(i))
+    const toImport = parseResult.transactions.filter((_, i) =>
+      selectedTransactions.has(i)
+    )
     if (toImport.length === 0) return
 
     const assets = transactionsToAssets(toImport)
-    dispatch(actions.importBrokerageTransactions({
-      brokerageType: `crypto-${selectedExchange}`,
-      transactions: assets
-    }))
+    dispatch(
+      actions.importBrokerageTransactions({
+        brokerageType: `crypto-${selectedExchange}`,
+        transactions: assets
+      })
+    )
 
     setImportSuccess(true)
     setCsvContent('')
@@ -633,14 +706,18 @@ export const CryptoImport = (): ReactElement => {
   /**
    * Handle column mapping change
    */
-  const handleMappingChange = (field: keyof CryptoColumnMapping, columnIndex: number) => {
-    setColumnMapping(prev => ({
+  const handleMappingChange = (
+    field: keyof CryptoColumnMapping,
+    columnIndex: number
+  ) => {
+    setColumnMapping((prev) => ({
       ...prev,
       [field]: columnIndex
     }))
   }
 
-  const isMappingValid = columnMapping.timestamp >= 0 &&
+  const isMappingValid =
+    columnMapping.timestamp >= 0 &&
     columnMapping.transactionType >= 0 &&
     columnMapping.asset >= 0 &&
     columnMapping.quantity >= 0
@@ -651,12 +728,17 @@ export const CryptoImport = (): ReactElement => {
         Import Cryptocurrency Transactions
       </Typography>
       <Typography variant="body2" color="textSecondary" paragraph>
-        Import crypto transactions from exchanges to calculate capital gains/losses for Form 8949.
-        Staking rewards and other income will be flagged for reporting as ordinary income.
+        Import crypto transactions from exchanges to calculate capital
+        gains/losses for Form 8949. Staking rewards and other income will be
+        flagged for reporting as ordinary income.
       </Typography>
 
       {importSuccess && (
-        <Alert severity="success" onClose={() => setImportSuccess(false)} className={classes.section}>
+        <Alert
+          severity="success"
+          onClose={() => setImportSuccess(false)}
+          className={classes.section}
+        >
           Transactions imported successfully! View them in Other Investments.
         </Alert>
       )}
@@ -672,7 +754,9 @@ export const CryptoImport = (): ReactElement => {
               <InputLabel>Exchange</InputLabel>
               <Select
                 value={selectedExchange}
-                onChange={(e) => setSelectedExchange(e.target.value as CryptoExchange)}
+                onChange={(e) =>
+                  setSelectedExchange(e.target.value as CryptoExchange)
+                }
               >
                 <MenuItem value="">-- Select Exchange --</MenuItem>
                 <MenuItem value="coinbase">Coinbase</MenuItem>
@@ -686,9 +770,11 @@ export const CryptoImport = (): ReactElement => {
               <InputLabel>Cost Basis Method</InputLabel>
               <Select
                 value={costBasisMethod}
-                onChange={(e) => handleCostBasisChange(e.target.value as CostBasisMethod)}
+                onChange={(e) =>
+                  handleCostBasisChange(e.target.value as CostBasisMethod)
+                }
               >
-                {COST_BASIS_METHODS.map(method => (
+                {COST_BASIS_METHODS.map((method) => (
                   <MenuItem key={method.value} value={method.value}>
                     {method.label}
                     <Tooltip title={method.description}>
@@ -725,7 +811,9 @@ export const CryptoImport = (): ReactElement => {
                 type="number"
                 label="Skip Header Rows"
                 value={skipHeaderRows}
-                onChange={(e) => setSkipHeaderRows(Math.max(0, parseInt(e.target.value) || 0))}
+                onChange={(e) =>
+                  setSkipHeaderRows(Math.max(0, parseInt(e.target.value) || 0))
+                }
                 InputProps={{ inputProps: { min: 0 } }}
                 helperText="Number of header rows to skip"
               />
@@ -760,23 +848,27 @@ export const CryptoImport = (): ReactElement => {
       )}
 
       {/* Parse button for non-generic */}
-      {selectedExchange && selectedExchange !== 'generic' && csvContent && !parseResult && (
-        <Paper className={`${classes.root} ${classes.section}`}>
-          <Button variant="contained" color="primary" onClick={handleParse}>
-            Parse Transactions
-          </Button>
-        </Paper>
-      )}
+      {selectedExchange &&
+        selectedExchange !== 'generic' &&
+        csvContent &&
+        !parseResult && (
+          <Paper className={`${classes.root} ${classes.section}`}>
+            <Button variant="contained" color="primary" onClick={handleParse}>
+              Parse Transactions
+            </Button>
+          </Paper>
+        )}
 
       {/* Step 3: Results */}
       {parseResult && (
         <Paper className={`${classes.root} ${classes.section}`}>
           <Typography variant="h6" gutterBottom>
-            {selectedExchange === 'generic' ? 'Step 3' : 'Step 2'}: Review Transactions
+            {selectedExchange === 'generic' ? 'Step 3' : 'Step 2'}: Review
+            Transactions
           </Typography>
 
           {/* Tabs for different views */}
-          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+          <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)}>
             <Tab label={`Form 8949 (${parseResult.transactions.length})`} />
             <Tab label={`All Transactions (${cryptoTransactions.length})`} />
           </Tabs>
@@ -787,13 +879,18 @@ export const CryptoImport = (): ReactElement => {
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography color="error">
-                    {parseResult.errors.length} Error{parseResult.errors.length !== 1 ? 's' : ''}
+                    {parseResult.errors.length} Error
+                    {parseResult.errors.length !== 1 ? 's' : ''}
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <Box>
                     {parseResult.errors.map((error, index) => (
-                      <Alert severity="error" key={index} style={{ marginBottom: 8 }}>
+                      <Alert
+                        severity="error"
+                        key={index}
+                        style={{ marginBottom: 8 }}
+                      >
                         Row {error.row}: {error.message}
                       </Alert>
                     ))}
@@ -807,13 +904,18 @@ export const CryptoImport = (): ReactElement => {
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography color="textSecondary">
-                    {parseResult.warnings.length} Warning{parseResult.warnings.length !== 1 ? 's' : ''}
+                    {parseResult.warnings.length} Warning
+                    {parseResult.warnings.length !== 1 ? 's' : ''}
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                   <Box>
                     {parseResult.warnings.map((warning, index) => (
-                      <Alert severity="warning" key={index} style={{ marginBottom: 8 }}>
+                      <Alert
+                        severity="warning"
+                        key={index}
+                        style={{ marginBottom: 8 }}
+                      >
                         {warning}
                       </Alert>
                     ))}
@@ -825,7 +927,11 @@ export const CryptoImport = (): ReactElement => {
             {/* Transaction Tables */}
             {activeTab === 0 && parseResult.transactions.length > 0 && (
               <>
-                <Typography variant="subtitle1" gutterBottom style={{ marginTop: 16 }}>
+                <Typography
+                  variant="subtitle1"
+                  gutterBottom
+                  style={{ marginTop: 16 }}
+                >
                   Form 8949 Transactions (Sells/Dispositions)
                 </Typography>
                 <TransactionTable
@@ -838,7 +944,11 @@ export const CryptoImport = (): ReactElement => {
 
             {activeTab === 1 && cryptoTransactions.length > 0 && (
               <>
-                <Typography variant="subtitle1" gutterBottom style={{ marginTop: 16 }}>
+                <Typography
+                  variant="subtitle1"
+                  gutterBottom
+                  style={{ marginTop: 16 }}
+                >
                   All Crypto Transactions
                 </Typography>
                 <CryptoTransactionTable transactions={cryptoTransactions} />
@@ -847,7 +957,8 @@ export const CryptoImport = (): ReactElement => {
 
             {activeTab === 0 && parseResult.transactions.length === 0 && (
               <Alert severity="info" style={{ marginTop: 16 }}>
-                No taxable sales found. Buys, deposits, and income transactions are tracked for cost basis.
+                No taxable sales found. Buys, deposits, and income transactions
+                are tracked for cost basis.
               </Alert>
             )}
           </div>
@@ -860,25 +971,39 @@ export const CryptoImport = (): ReactElement => {
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Short-Term Capital Gains</Typography>
+                  <Typography variant="subtitle2">
+                    Short-Term Capital Gains
+                  </Typography>
                   <Typography>
-                    Gains: {formatCurrency(summary.shortTermGain)} |
-                    Losses: {formatCurrency(summary.shortTermLoss)}
+                    Gains: {formatCurrency(summary.shortTermGain)} | Losses:{' '}
+                    {formatCurrency(summary.shortTermLoss)}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    Net: <strong className={summary.shortTermNet >= 0 ? classes.gain : classes.loss}>
+                    Net:{' '}
+                    <strong
+                      className={
+                        summary.shortTermNet >= 0 ? classes.gain : classes.loss
+                      }
+                    >
                       {formatCurrency(summary.shortTermNet)}
                     </strong>
                   </Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Long-Term Capital Gains</Typography>
+                  <Typography variant="subtitle2">
+                    Long-Term Capital Gains
+                  </Typography>
                   <Typography>
-                    Gains: {formatCurrency(summary.longTermGain)} |
-                    Losses: {formatCurrency(summary.longTermLoss)}
+                    Gains: {formatCurrency(summary.longTermGain)} | Losses:{' '}
+                    {formatCurrency(summary.longTermLoss)}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    Net: <strong className={summary.longTermNet >= 0 ? classes.gain : classes.loss}>
+                    Net:{' '}
+                    <strong
+                      className={
+                        summary.longTermNet >= 0 ? classes.gain : classes.loss
+                      }
+                    >
                       {formatCurrency(summary.longTermNet)}
                     </strong>
                   </Typography>
@@ -886,15 +1011,21 @@ export const CryptoImport = (): ReactElement => {
                 {summary.income.totalIncome > 0 && (
                   <Grid item xs={12}>
                     <Alert severity="info">
-                      <Typography variant="subtitle2">Crypto Income (Report as Ordinary Income)</Typography>
-                      <Typography variant="body2">
-                        Staking Rewards: {formatCurrency(summary.income.stakingRewards)} |
-                        Mining: {formatCurrency(summary.income.miningIncome)} |
-                        Airdrops: {formatCurrency(summary.income.airdropValue)} |
-                        Other: {formatCurrency(summary.income.otherIncome)}
+                      <Typography variant="subtitle2">
+                        Crypto Income (Report as Ordinary Income)
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Total Income: {formatCurrency(summary.income.totalIncome)}</strong>
+                        Staking Rewards:{' '}
+                        {formatCurrency(summary.income.stakingRewards)} |
+                        Mining: {formatCurrency(summary.income.miningIncome)} |
+                        Airdrops: {formatCurrency(summary.income.airdropValue)}{' '}
+                        | Other: {formatCurrency(summary.income.otherIncome)}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>
+                          Total Income:{' '}
+                          {formatCurrency(summary.income.totalIncome)}
+                        </strong>
                       </Typography>
                     </Alert>
                   </Grid>
@@ -902,7 +1033,11 @@ export const CryptoImport = (): ReactElement => {
                 <Grid item xs={12}>
                   <Typography variant="body1">
                     <strong>Total Net Gain/Loss: </strong>
-                    <span className={summary.totalNet >= 0 ? classes.gain : classes.loss}>
+                    <span
+                      className={
+                        summary.totalNet >= 0 ? classes.gain : classes.loss
+                      }
+                    >
                       {formatCurrency(summary.totalNet)}
                     </span>
                   </Typography>
@@ -919,7 +1054,8 @@ export const CryptoImport = (): ReactElement => {
               onClick={handleImport}
               disabled={selectedTransactions.size === 0}
             >
-              Import {selectedTransactions.size} Transaction{selectedTransactions.size !== 1 ? 's' : ''}
+              Import {selectedTransactions.size} Transaction
+              {selectedTransactions.size !== 1 ? 's' : ''}
             </Button>
             <Button variant="outlined" onClick={handleReset}>
               Reset

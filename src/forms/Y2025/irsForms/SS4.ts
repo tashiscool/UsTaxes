@@ -50,17 +50,36 @@ export interface SS4Data {
   // Line 8b: Number of LLC members
   numberOfLLCMembers?: number
   // Line 9a: Type of entity
-  entityType: 'sole_proprietor' | 'partnership' | 'corporation' | 'personal_service_corp' |
-              'church' | 'nonprofit' | 'other_nonprofit' | 'estate' | 'trust' |
-              'plan_administrator' | 'farmers_coop' | 'remic' | 'state_local_gov' |
-              'federal_gov' | 'indian_tribal' | 'other'
+  entityType:
+    | 'sole_proprietor'
+    | 'partnership'
+    | 'corporation'
+    | 'personal_service_corp'
+    | 'church'
+    | 'nonprofit'
+    | 'other_nonprofit'
+    | 'estate'
+    | 'trust'
+    | 'plan_administrator'
+    | 'farmers_coop'
+    | 'remic'
+    | 'state_local_gov'
+    | 'federal_gov'
+    | 'indian_tribal'
+    | 'other'
   otherEntityType?: string
   // Line 9b: State of incorporation
   stateOfIncorporation?: string
   // Line 10: Reason for applying
-  reasonForApplying: 'started_new_business' | 'hired_employees' | 'banking' |
-                     'changed_org_type' | 'purchased_business' | 'created_trust' |
-                     'created_pension_plan' | 'other'
+  reasonForApplying:
+    | 'started_new_business'
+    | 'hired_employees'
+    | 'banking'
+    | 'changed_org_type'
+    | 'purchased_business'
+    | 'created_trust'
+    | 'created_pension_plan'
+    | 'other'
   otherReason?: string
   // Line 11: Date business started
   dateBusinessStarted: Date
@@ -99,7 +118,7 @@ export default class SS4 extends F1040Attachment {
   }
 
   hasSS4Data = (): boolean => {
-    return false  // Application form, not tax filing
+    return false // Application form, not tax filing
   }
 
   ss4Data = (): SS4Data | undefined => {
@@ -116,7 +135,8 @@ export default class SS4 extends F1040Attachment {
   isSoleProprietor = (): boolean => this.entityType() === 'sole_proprietor'
   isPartnership = (): boolean => this.entityType() === 'partnership'
   isCorporation = (): boolean => this.entityType() === 'corporation'
-  isNonprofit = (): boolean => this.entityType() === 'nonprofit' || this.entityType() === 'other_nonprofit'
+  isNonprofit = (): boolean =>
+    this.entityType() === 'nonprofit' || this.entityType() === 'other_nonprofit'
   isEstate = (): boolean => this.entityType() === 'estate'
   isTrust = (): boolean => this.entityType() === 'trust'
 
@@ -125,13 +145,15 @@ export default class SS4 extends F1040Attachment {
   numberOfLLCMembers = (): number => this.ss4Data()?.numberOfLLCMembers ?? 1
 
   // Responsible party
-  responsiblePartyName = (): string => this.ss4Data()?.responsiblePartyName ?? ''
+  responsiblePartyName = (): string =>
+    this.ss4Data()?.responsiblePartyName ?? ''
 
   // Reason for applying
   reasonForApplying = (): string => this.ss4Data()?.reasonForApplying ?? ''
 
   // Business dates
-  dateBusinessStarted = (): Date | undefined => this.ss4Data()?.dateBusinessStarted
+  dateBusinessStarted = (): Date | undefined =>
+    this.ss4Data()?.dateBusinessStarted
   fiscalYearEndMonth = (): number => this.ss4Data()?.fiscalYearEndMonth ?? 12
 
   // Employees
@@ -180,7 +202,7 @@ export default class SS4 extends F1040Attachment {
       data?.reasonForApplying ?? '',
       data?.otherReason ?? '',
       // Lines 11-12: Dates
-      data?.dateBusinessStarted?.toLocaleDateString() ?? '',
+      data?.dateBusinessStarted.toLocaleDateString() ?? '',
       data?.fiscalYearEndMonth ?? 12,
       // Lines 13-15: Employment
       this.expectedEmployees(),
@@ -196,7 +218,7 @@ export default class SS4 extends F1040Attachment {
       data?.thirdPartyDesignee ?? '',
       data?.thirdPartyPhone ?? '',
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? '',
+      data?.signatureDate.toLocaleDateString() ?? '',
       data?.signerName ?? '',
       data?.signerTitle ?? '',
       data?.signerPhone ?? '',

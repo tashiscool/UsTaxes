@@ -44,7 +44,7 @@ const parameters = {
   // Property Tax Credit (for homeowners/renters)
   propertyTaxCredit: {
     maxCredit: 300,
-    incomeLimit: 109500  // For MFJ
+    incomeLimit: 109500 // For MFJ
   },
 
   // Child Tax Credit (refundable)

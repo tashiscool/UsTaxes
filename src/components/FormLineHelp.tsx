@@ -133,10 +133,10 @@ export function FormLineHelp({
   const { explanation, loading, error, fetchExplanation } =
     useLazyTaxExplanation()
 
-  const handleClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget)
     if (!explanation) {
-      await fetchExplanation(formId, lineNumber, context, 'standard')
+      void fetchExplanation(formId, lineNumber, context, 'standard')
     }
   }
 
@@ -238,7 +238,7 @@ export function FormLineHelp({
                 {/* Excerpt */}
                 {explanation.legalBasis.primaryIrcSection?.excerpt && (
                   <Typography className={classes.excerpt}>
-                    "{explanation.legalBasis.primaryIrcSection.excerpt}"
+                    &quot;{explanation.legalBasis.primaryIrcSection.excerpt}&quot;
                   </Typography>
                 )}
 

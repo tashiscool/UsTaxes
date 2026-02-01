@@ -61,7 +61,7 @@ export default class Schedule990N extends F1040Attachment {
   }
 
   schedule990NData = (): Schedule990NData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Part I: Status
@@ -83,7 +83,10 @@ export default class Schedule990N extends F1040Attachment {
   }
 
   totalAssetsDisposed = (): number => {
-    return this.assetDispositions().reduce((sum, d) => sum + d.fairMarketValue, 0)
+    return this.assetDispositions().reduce(
+      (sum, d) => sum + d.fairMarketValue,
+      0
+    )
   }
 
   dispositionPercent = (): number => {

@@ -136,10 +136,7 @@ const QuickScenarios = ({
 
   // Get current 401k contribution
   const current401k = useMemo(() => {
-    return currentInfo.w2s.reduce(
-      (sum, w2) => sum + (w2.box12?.D ?? 0),
-      0
-    )
+    return currentInfo.w2s.reduce((sum, w2) => sum + (w2.box12?.D ?? 0), 0)
   }, [currentInfo])
 
   // Get current HSA contribution
@@ -204,7 +201,7 @@ const QuickScenarios = ({
         id: 'spouse-works',
         title: 'Spouse Starts Working',
         description:
-          "Model the tax impact if your spouse begins earning income. Enter estimated annual income.",
+          'Model the tax impact if your spouse begins earning income. Enter estimated annual income.',
         icon: <Person className={classes.icon} />,
         requiresInput: true,
         inputLabel: 'Spouse Annual Income',
@@ -229,7 +226,9 @@ const QuickScenarios = ({
         getScenario: (inputValue) => ({
           id: generateScenarioId(),
           name: 'Itemize Deductions',
-          description: `Compare with $${(inputValue ?? 20000).toLocaleString()} in itemized deductions`,
+          description: `Compare with $${(
+            inputValue ?? 20000
+          ).toLocaleString()} in itemized deductions`,
           modifications: [
             {
               id: 'mod_itemize',
@@ -284,7 +283,9 @@ const QuickScenarios = ({
         getScenario: (inputValue) => ({
           id: generateScenarioId(),
           name: 'Traditional IRA Contribution',
-          description: `Contribute $${(inputValue ?? 7000).toLocaleString()} to Traditional IRA`,
+          description: `Contribute $${(
+            inputValue ?? 7000
+          ).toLocaleString()} to Traditional IRA`,
           modifications: [
             {
               id: 'mod_ira',
@@ -311,7 +312,9 @@ const QuickScenarios = ({
         getScenario: (inputValue) => ({
           id: generateScenarioId(),
           name: 'Education Expenses',
-          description: `$${(inputValue ?? 4000).toLocaleString()} in qualified education expenses`,
+          description: `$${(
+            inputValue ?? 4000
+          ).toLocaleString()} in qualified education expenses`,
           modifications: [
             {
               id: 'mod_edu',

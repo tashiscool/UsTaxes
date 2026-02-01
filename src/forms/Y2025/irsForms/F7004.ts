@@ -24,31 +24,31 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
  */
 
 export type BusinessReturnType =
-  | '1065'      // Partnership
-  | '1065-B'    // Electing Large Partnership
-  | '1066'      // Real Estate Mortgage Investment Conduit
-  | '1120'      // Corporation
-  | '1120-C'    // Cooperative Association
-  | '1120-F'    // Foreign Corporation
-  | '1120-FSC'  // Foreign Sales Corporation
-  | '1120-H'    // Homeowners Association
-  | '1120-L'    // Life Insurance Company
-  | '1120-ND'   // Nuclear Decommissioning
-  | '1120-PC'   // Property/Casualty Insurance
-  | '1120-POL'  // Political Organization
+  | '1065' // Partnership
+  | '1065-B' // Electing Large Partnership
+  | '1066' // Real Estate Mortgage Investment Conduit
+  | '1120' // Corporation
+  | '1120-C' // Cooperative Association
+  | '1120-F' // Foreign Corporation
+  | '1120-FSC' // Foreign Sales Corporation
+  | '1120-H' // Homeowners Association
+  | '1120-L' // Life Insurance Company
+  | '1120-ND' // Nuclear Decommissioning
+  | '1120-PC' // Property/Casualty Insurance
+  | '1120-POL' // Political Organization
   | '1120-REIT' // Real Estate Investment Trust
-  | '1120-RIC'  // Regulated Investment Company
-  | '1120-S'    // S Corporation
-  | '1120-SF'   // Settlement Fund
-  | '1041'      // Estate/Trust
-  | '1041-N'    // Electing Alaska Native Settlement Trust
-  | '1041-QFT'  // Qualified Funeral Trust
-  | '990'       // Exempt Organization
-  | '990-BL'    // Black Lung Benefit Trust
-  | '990-PF'    // Private Foundation
-  | '990-T'     // Exempt Organization Business Income
-  | '8804'      // Foreign Partner Withholding
-  | '8831'      // Excise Taxes on Excess Inclusions
+  | '1120-RIC' // Regulated Investment Company
+  | '1120-S' // S Corporation
+  | '1120-SF' // Settlement Fund
+  | '1041' // Estate/Trust
+  | '1041-N' // Electing Alaska Native Settlement Trust
+  | '1041-QFT' // Qualified Funeral Trust
+  | '990' // Exempt Organization
+  | '990-BL' // Black Lung Benefit Trust
+  | '990-PF' // Private Foundation
+  | '990-T' // Exempt Organization Business Income
+  | '8804' // Foreign Partner Withholding
+  | '8831' // Excise Taxes on Excess Inclusions
 
 export interface BusinessExtensionInfo {
   returnType: BusinessReturnType
@@ -60,7 +60,7 @@ export interface BusinessExtensionInfo {
   zip: string
   taxYear: number
   isFiscalYear: boolean
-  fiscalYearEnd?: string  // MM/DD format
+  fiscalYearEnd?: string // MM/DD format
   tentativeTax: number
   paymentWithExtension: number
   balanceDue: number
@@ -79,7 +79,9 @@ export default class F7004 extends F1040Attachment {
   }
 
   extensionInfo = (): BusinessExtensionInfo | undefined => {
-    return this.f1040.info.businessExtension as BusinessExtensionInfo | undefined
+    return this.f1040.info.businessExtension as
+      | BusinessExtensionInfo
+      | undefined
   }
 
   // Extension period by return type
@@ -128,7 +130,7 @@ export default class F7004 extends F1040Attachment {
   l6 = (): number => this.extensionInfo()?.tentativeTax ?? 0
 
   // Line 7: Total payments and credits
-  l7 = (): number => 0  // Prior payments/estimated taxes
+  l7 = (): number => 0 // Prior payments/estimated taxes
 
   // Line 8: Balance due (line 6 - line 7)
   l8 = (): number => Math.max(0, this.l6() - this.l7())
@@ -146,14 +148,14 @@ export default class F7004 extends F1040Attachment {
       switch (info.returnType) {
         case '1065':
         case '1120-S':
-          return 'March 15'  // Partnerships and S Corps
+          return 'March 15' // Partnerships and S Corps
         case '1041':
-          return 'April 15'  // Estates and Trusts
+          return 'April 15' // Estates and Trusts
         case '990':
         case '990-PF':
-          return 'May 15'    // Exempt organizations (15th day of 5th month)
+          return 'May 15' // Exempt organizations (15th day of 5th month)
         default:
-          return 'April 15'  // Most corporations
+          return 'April 15' // Most corporations
       }
     }
 
@@ -171,7 +173,7 @@ export default class F7004 extends F1040Attachment {
         case '1120-S':
           return 'September 15'
         case '1041':
-          return 'September 30'  // 5.5 months
+          return 'September 30' // 5.5 months
         case '990':
         case '990-PF':
           return 'November 15'

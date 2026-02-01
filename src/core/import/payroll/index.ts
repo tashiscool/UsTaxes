@@ -34,7 +34,9 @@ const PARSERS: Record<Exclude<PayrollProvider, 'generic'>, PayrollParser> = {
 /**
  * Get parser for a specific provider
  */
-export function getPayrollParser(provider: PayrollProvider): PayrollParser | null {
+export function getPayrollParser(
+  provider: PayrollProvider
+): PayrollParser | null {
   if (provider === 'generic') return null
   return PARSERS[provider]
 }
@@ -44,7 +46,7 @@ export function getPayrollParser(provider: PayrollProvider): PayrollParser | nul
  */
 export function detectPayrollProvider(content: string): PayrollProvider | null {
   const lines = content.split('\n').slice(0, 10)
-  const headers = lines[0]?.split(',').map(h => h.toLowerCase().trim()) ?? []
+  const headers = lines[0]?.split(',').map((h) => h.toLowerCase().trim()) ?? []
 
   for (const [provider, parser] of Object.entries(PARSERS)) {
     if (parser.canParse(content, headers)) {
@@ -76,7 +78,9 @@ export function autoParsePayroll(content: string): {
     provider: null,
     result: {
       w2s: [],
-      errors: [{ row: 0, message: 'Could not auto-detect payroll provider format' }],
+      errors: [
+        { row: 0, message: 'Could not auto-detect payroll provider format' }
+      ],
       warnings: []
     }
   }
@@ -92,7 +96,9 @@ export function parseWithProvider(
   if (provider === 'generic') {
     return {
       w2s: [],
-      errors: [{ row: 0, message: 'Generic provider requires manual column mapping' }],
+      errors: [
+        { row: 0, message: 'Generic provider requires manual column mapping' }
+      ],
       warnings: []
     }
   }
@@ -140,7 +146,8 @@ export function validateW2Data(w2: W2ImportData): string[] {
   }
 
   // Check for common data issues
-  if (w2.ssWages && w2.ssWages > 160200) { // 2023 SS wage base
+  if (w2.ssWages && w2.ssWages > 160200) {
+    // 2023 SS wage base
     issues.push('Social Security wages exceed the annual wage base')
   }
 

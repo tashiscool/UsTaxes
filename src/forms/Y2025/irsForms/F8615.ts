@@ -47,16 +47,20 @@ export default class F8615 extends F1040Attachment {
 
     // Child must be under 19, or under 24 if full-time student
     const isUnder19 = age < 19
-    const isStudentUnder24 = age < 24 && (this.f1040.info.taxPayer.primaryPerson.isStudent ?? false)
+    const isStudentUnder24 =
+      age < 24 && (this.f1040.info.taxPayer.primaryPerson.isStudent ?? false)
 
     // Child must have unearned income
     const hasUnearnedIncome = this.l1() > 0
 
     // Child must have required support from parent (simplified check)
-    const hasParentSupport = this.f1040.info.taxPayer.primaryPerson.isTaxpayerDependent ||
-                             this.parentInfo() !== undefined
+    const hasParentSupport =
+      this.f1040.info.taxPayer.primaryPerson.isTaxpayerDependent ||
+      this.parentInfo() !== undefined
 
-    return (isUnder19 || isStudentUnder24) && hasUnearnedIncome && hasParentSupport
+    return (
+      (isUnder19 || isStudentUnder24) && hasUnearnedIncome && hasParentSupport
+    )
   }
 
   // Get parent information (for calculating parent's tax rate)

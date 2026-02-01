@@ -12,20 +12,54 @@
  */
 
 import { IncomeW2, State } from 'ustaxes/core/data'
-import { PayrollParseResult, PayrollParser, W2ImportData, parseSSN, parseEIN, parseMoney } from './types'
+import {
+  PayrollParseResult,
+  PayrollParser,
+  W2ImportData,
+  parseSSN,
+  parseEIN,
+  parseMoney
+} from './types'
 
 /**
  * ADP column mappings for CSV export
  */
 const ADP_COLUMN_MAPPINGS = {
   // Employee info
-  employeeSSN: ['employee ssn', 'ssn', 'employee social security', 'social security number', 'emp ssn'],
-  employeeFirstName: ['employee first name', 'first name', 'emp first name', 'first'],
-  employeeLastName: ['employee last name', 'last name', 'emp last name', 'last'],
-  employeeMiddleInitial: ['employee middle initial', 'middle initial', 'mi', 'middle'],
+  employeeSSN: [
+    'employee ssn',
+    'ssn',
+    'employee social security',
+    'social security number',
+    'emp ssn'
+  ],
+  employeeFirstName: [
+    'employee first name',
+    'first name',
+    'emp first name',
+    'first'
+  ],
+  employeeLastName: [
+    'employee last name',
+    'last name',
+    'emp last name',
+    'last'
+  ],
+  employeeMiddleInitial: [
+    'employee middle initial',
+    'middle initial',
+    'mi',
+    'middle'
+  ],
 
   // Employer info
-  employerEIN: ['employer ein', 'ein', 'employer id', 'federal ein', 'employer federal id'],
+  employerEIN: [
+    'employer ein',
+    'ein',
+    'employer id',
+    'federal ein',
+    'employer federal id'
+  ],
   employerName: ['employer name', 'company name', 'employer', 'company'],
   employerAddress: ['employer address', 'employer street', 'company address'],
   employerCity: ['employer city', 'company city'],
@@ -33,10 +67,27 @@ const ADP_COLUMN_MAPPINGS = {
   employerZip: ['employer zip', 'company zip', 'employer postal code'],
 
   // W-2 Box values
-  box1: ['box 1', 'wages tips other comp', 'wages', 'gross wages', 'federal wages'],
-  box2: ['box 2', 'federal income tax withheld', 'federal tax withheld', 'fit withheld', 'federal withholding'],
+  box1: [
+    'box 1',
+    'wages tips other comp',
+    'wages',
+    'gross wages',
+    'federal wages'
+  ],
+  box2: [
+    'box 2',
+    'federal income tax withheld',
+    'federal tax withheld',
+    'fit withheld',
+    'federal withholding'
+  ],
   box3: ['box 3', 'social security wages', 'ss wages', 'fica wages'],
-  box4: ['box 4', 'social security tax withheld', 'ss tax withheld', 'fica tax'],
+  box4: [
+    'box 4',
+    'social security tax withheld',
+    'ss tax withheld',
+    'fica tax'
+  ],
   box5: ['box 5', 'medicare wages and tips', 'medicare wages'],
   box6: ['box 6', 'medicare tax withheld', 'medicare tax'],
   box7: ['box 7', 'social security tips', 'ss tips'],
@@ -49,28 +100,42 @@ const ADP_COLUMN_MAPPINGS = {
   box12d: ['box 12d', '12d code', '12d amount', 'code d'],
   box13Statutory: ['box 13 statutory', 'statutory employee', 'statutory'],
   box13Retirement: ['box 13 retirement', 'retirement plan', 'retirement'],
-  box13ThirdParty: ['box 13 third party', 'third party sick pay', 'third party'],
+  box13ThirdParty: [
+    'box 13 third party',
+    'third party sick pay',
+    'third party'
+  ],
   box14: ['box 14', 'other'],
 
   // State info
   stateCode: ['state', 'state code', 'state abbrev'],
   stateID: ['state id', 'employer state id', 'state employer id'],
   stateWages: ['state wages', 'state taxable wages', 'state income'],
-  stateTax: ['state tax withheld', 'state income tax', 'sit withheld', 'state withholding'],
+  stateTax: [
+    'state tax withheld',
+    'state income tax',
+    'sit withheld',
+    'state withholding'
+  ],
 
   // Local info
   localWages: ['local wages', 'local taxable wages', 'local income'],
   localTax: ['local tax withheld', 'local income tax', 'local withholding'],
-  localityName: ['locality name', 'local name', 'locality', 'local jurisdiction']
+  localityName: [
+    'locality name',
+    'local name',
+    'locality',
+    'local jurisdiction'
+  ]
 }
 
 /**
  * Find column index by checking multiple possible header names
  */
 function findColumn(headers: string[], possibleNames: string[]): number {
-  const lowerHeaders = headers.map(h => h.toLowerCase().trim())
+  const lowerHeaders = headers.map((h) => h.toLowerCase().trim())
   for (const name of possibleNames) {
-    const index = lowerHeaders.findIndex(h => h.includes(name.toLowerCase()))
+    const index = lowerHeaders.findIndex((h) => h.includes(name.toLowerCase()))
     if (index >= 0) return index
   }
   return -1
@@ -79,7 +144,11 @@ function findColumn(headers: string[], possibleNames: string[]): number {
 /**
  * Parse Box 12 code and amount from combined or separate fields
  */
-function parseBox12(row: string[], codeCol: number, amountCol?: number): { code?: string; amount?: number } | undefined {
+function parseBox12(
+  row: string[],
+  codeCol: number,
+  amountCol?: number
+): { code?: string; amount?: number } | undefined {
   if (codeCol < 0 || codeCol >= row.length) return undefined
 
   const value = row[codeCol].trim()
@@ -97,9 +166,10 @@ function parseBox12(row: string[], codeCol: number, amountCol?: number): { code?
   // Check if it's just a code
   if (/^[A-Z]{1,2}$/i.test(value)) {
     const code = value.toUpperCase()
-    const amount = amountCol !== undefined && amountCol >= 0 && amountCol < row.length
-      ? parseMoney(row[amountCol])
-      : undefined
+    const amount =
+      amountCol !== undefined && amountCol >= 0 && amountCol < row.length
+        ? parseMoney(row[amountCol])
+        : undefined
     return { code, amount }
   }
 
@@ -150,10 +220,12 @@ export class ADPParser implements PayrollParser {
     // Find header row (ADP might have intro text)
     let headerRowIndex = 0
     for (let i = 0; i < Math.min(rows.length, 10); i++) {
-      const rowLower = rows[i].map(c => c.toLowerCase())
+      const rowLower = rows[i].map((c) => c.toLowerCase())
       if (
-        rowLower.some(c => c.includes('ssn') || c.includes('social security')) &&
-        rowLower.some(c => c.includes('wages') || c.includes('box'))
+        rowLower.some(
+          (c) => c.includes('ssn') || c.includes('social security')
+        ) &&
+        rowLower.some((c) => c.includes('wages') || c.includes('box'))
       ) {
         headerRowIndex = i
         break
@@ -165,9 +237,18 @@ export class ADPParser implements PayrollParser {
     // Map columns
     const columnMap = {
       employeeSSN: findColumn(headers, ADP_COLUMN_MAPPINGS.employeeSSN),
-      employeeFirstName: findColumn(headers, ADP_COLUMN_MAPPINGS.employeeFirstName),
-      employeeLastName: findColumn(headers, ADP_COLUMN_MAPPINGS.employeeLastName),
-      employeeMiddleInitial: findColumn(headers, ADP_COLUMN_MAPPINGS.employeeMiddleInitial),
+      employeeFirstName: findColumn(
+        headers,
+        ADP_COLUMN_MAPPINGS.employeeFirstName
+      ),
+      employeeLastName: findColumn(
+        headers,
+        ADP_COLUMN_MAPPINGS.employeeLastName
+      ),
+      employeeMiddleInitial: findColumn(
+        headers,
+        ADP_COLUMN_MAPPINGS.employeeMiddleInitial
+      ),
       employerEIN: findColumn(headers, ADP_COLUMN_MAPPINGS.employerEIN),
       employerName: findColumn(headers, ADP_COLUMN_MAPPINGS.employerName),
       employerAddress: findColumn(headers, ADP_COLUMN_MAPPINGS.employerAddress),
@@ -203,7 +284,10 @@ export class ADPParser implements PayrollParser {
 
     // Validate required columns
     if (columnMap.box1 < 0) {
-      errors.push({ row: headerRowIndex, message: 'Could not find Wages (Box 1) column' })
+      errors.push({
+        row: headerRowIndex,
+        message: 'Could not find Wages (Box 1) column'
+      })
     }
     if (columnMap.employerEIN < 0) {
       warnings.push('Employer EIN column not found - will need manual entry')
@@ -213,18 +297,20 @@ export class ADPParser implements PayrollParser {
     for (let i = headerRowIndex + 1; i < rows.length; i++) {
       const row = rows[i]
 
-      if (row.length === 0 || row.every(c => c === '')) continue
+      if (row.length === 0 || row.every((c) => c === '')) continue
 
       try {
         // Parse employee SSN
-        const ssnRaw = columnMap.employeeSSN >= 0 ? row[columnMap.employeeSSN] : ''
+        const ssnRaw =
+          columnMap.employeeSSN >= 0 ? row[columnMap.employeeSSN] : ''
         const ssn = parseSSN(ssnRaw)
         if (!ssn) {
           warnings.push(`Row ${i + 1}: Invalid or missing SSN`)
         }
 
         // Parse employer EIN
-        const einRaw = columnMap.employerEIN >= 0 ? row[columnMap.employerEIN] : ''
+        const einRaw =
+          columnMap.employerEIN >= 0 ? row[columnMap.employerEIN] : ''
         const ein = parseEIN(einRaw)
 
         // Parse wages
@@ -234,10 +320,21 @@ export class ADPParser implements PayrollParser {
         }
 
         // Build employee name
-        const firstName = columnMap.employeeFirstName >= 0 ? row[columnMap.employeeFirstName].trim() : ''
-        const lastName = columnMap.employeeLastName >= 0 ? row[columnMap.employeeLastName].trim() : ''
-        const middleInitial = columnMap.employeeMiddleInitial >= 0 ? row[columnMap.employeeMiddleInitial].trim() : ''
-        const employeeName = [firstName, middleInitial, lastName].filter(Boolean).join(' ')
+        const firstName =
+          columnMap.employeeFirstName >= 0
+            ? row[columnMap.employeeFirstName].trim()
+            : ''
+        const lastName =
+          columnMap.employeeLastName >= 0
+            ? row[columnMap.employeeLastName].trim()
+            : ''
+        const middleInitial =
+          columnMap.employeeMiddleInitial >= 0
+            ? row[columnMap.employeeMiddleInitial].trim()
+            : ''
+        const employeeName = [firstName, middleInitial, lastName]
+          .filter(Boolean)
+          .join(' ')
 
         // Parse state code
         let stateCode: State | undefined
@@ -250,17 +347,28 @@ export class ADPParser implements PayrollParser {
 
         // Build employer address
         const employerAddress = [
-          columnMap.employerAddress >= 0 ? row[columnMap.employerAddress].trim() : '',
+          columnMap.employerAddress >= 0
+            ? row[columnMap.employerAddress].trim()
+            : '',
           columnMap.employerCity >= 0 ? row[columnMap.employerCity].trim() : '',
-          columnMap.employerState >= 0 ? row[columnMap.employerState].trim() : '',
+          columnMap.employerState >= 0
+            ? row[columnMap.employerState].trim()
+            : '',
           columnMap.employerZip >= 0 ? row[columnMap.employerZip].trim() : ''
-        ].filter(Boolean).join(', ')
+        ]
+          .filter(Boolean)
+          .join(', ')
 
         // Parse Box 12 codes
         const box12: Array<{ code: string; amount: number }> = []
-        for (const boxKey of ['box12a', 'box12b', 'box12c', 'box12d'] as const) {
+        for (const boxKey of [
+          'box12a',
+          'box12b',
+          'box12c',
+          'box12d'
+        ] as const) {
           const parsed = parseBox12(row, columnMap[boxKey])
-          if (parsed?.code && parsed?.amount !== undefined) {
+          if (parsed?.code && parsed.amount !== undefined) {
             box12.push({ code: parsed.code, amount: parsed.amount })
           }
         }
@@ -286,40 +394,85 @@ export class ADPParser implements PayrollParser {
           employeeSSN: ssn,
           employeeName,
           employerEIN: ein || '',
-          employerName: columnMap.employerName >= 0 ? row[columnMap.employerName].trim() : '',
+          employerName:
+            columnMap.employerName >= 0
+              ? row[columnMap.employerName].trim()
+              : '',
           employerAddress,
           wages,
-          federalWithholding: columnMap.box2 >= 0 ? parseMoney(row[columnMap.box2]) : 0,
-          ssWages: columnMap.box3 >= 0 ? parseMoney(row[columnMap.box3]) : undefined,
-          ssTax: columnMap.box4 >= 0 ? parseMoney(row[columnMap.box4]) : undefined,
-          medicareWages: columnMap.box5 >= 0 ? parseMoney(row[columnMap.box5]) : undefined,
-          medicareTax: columnMap.box6 >= 0 ? parseMoney(row[columnMap.box6]) : undefined,
-          ssTips: columnMap.box7 >= 0 ? parseMoney(row[columnMap.box7]) : undefined,
-          allocatedTips: columnMap.box8 >= 0 ? parseMoney(row[columnMap.box8]) : undefined,
-          dependentCareBenefits: columnMap.box10 >= 0 ? parseMoney(row[columnMap.box10]) : undefined,
-          nonQualifiedPlans: columnMap.box11 >= 0 ? parseMoney(row[columnMap.box11]) : undefined,
+          federalWithholding:
+            columnMap.box2 >= 0 ? parseMoney(row[columnMap.box2]) : 0,
+          ssWages:
+            columnMap.box3 >= 0 ? parseMoney(row[columnMap.box3]) : undefined,
+          ssTax:
+            columnMap.box4 >= 0 ? parseMoney(row[columnMap.box4]) : undefined,
+          medicareWages:
+            columnMap.box5 >= 0 ? parseMoney(row[columnMap.box5]) : undefined,
+          medicareTax:
+            columnMap.box6 >= 0 ? parseMoney(row[columnMap.box6]) : undefined,
+          ssTips:
+            columnMap.box7 >= 0 ? parseMoney(row[columnMap.box7]) : undefined,
+          allocatedTips:
+            columnMap.box8 >= 0 ? parseMoney(row[columnMap.box8]) : undefined,
+          dependentCareBenefits:
+            columnMap.box10 >= 0 ? parseMoney(row[columnMap.box10]) : undefined,
+          nonQualifiedPlans:
+            columnMap.box11 >= 0 ? parseMoney(row[columnMap.box11]) : undefined,
           box12,
-          statutoryEmployee: columnMap.box13Statutory >= 0 ?
-            ['yes', 'true', 'x', '1'].includes(row[columnMap.box13Statutory].toLowerCase().trim()) : false,
-          retirementPlan: columnMap.box13Retirement >= 0 ?
-            ['yes', 'true', 'x', '1'].includes(row[columnMap.box13Retirement].toLowerCase().trim()) : false,
-          thirdPartySickPay: columnMap.box13ThirdParty >= 0 ?
-            ['yes', 'true', 'x', '1'].includes(row[columnMap.box13ThirdParty].toLowerCase().trim()) : false,
+          statutoryEmployee:
+            columnMap.box13Statutory >= 0
+              ? ['yes', 'true', 'x', '1'].includes(
+                  row[columnMap.box13Statutory].toLowerCase().trim()
+                )
+              : false,
+          retirementPlan:
+            columnMap.box13Retirement >= 0
+              ? ['yes', 'true', 'x', '1'].includes(
+                  row[columnMap.box13Retirement].toLowerCase().trim()
+                )
+              : false,
+          thirdPartySickPay:
+            columnMap.box13ThirdParty >= 0
+              ? ['yes', 'true', 'x', '1'].includes(
+                  row[columnMap.box13ThirdParty].toLowerCase().trim()
+                )
+              : false,
           box14Description,
           box14Amount,
           stateCode,
-          stateEmployerID: columnMap.stateID >= 0 ? row[columnMap.stateID].trim() : undefined,
-          stateWages: columnMap.stateWages >= 0 ? parseMoney(row[columnMap.stateWages]) : undefined,
-          stateTax: columnMap.stateTax >= 0 ? parseMoney(row[columnMap.stateTax]) : undefined,
-          localWages: columnMap.localWages >= 0 ? parseMoney(row[columnMap.localWages]) : undefined,
-          localTax: columnMap.localTax >= 0 ? parseMoney(row[columnMap.localTax]) : undefined,
-          localityName: columnMap.localityName >= 0 ? row[columnMap.localityName].trim() : undefined,
+          stateEmployerID:
+            columnMap.stateID >= 0 ? row[columnMap.stateID].trim() : undefined,
+          stateWages:
+            columnMap.stateWages >= 0
+              ? parseMoney(row[columnMap.stateWages])
+              : undefined,
+          stateTax:
+            columnMap.stateTax >= 0
+              ? parseMoney(row[columnMap.stateTax])
+              : undefined,
+          localWages:
+            columnMap.localWages >= 0
+              ? parseMoney(row[columnMap.localWages])
+              : undefined,
+          localTax:
+            columnMap.localTax >= 0
+              ? parseMoney(row[columnMap.localTax])
+              : undefined,
+          localityName:
+            columnMap.localityName >= 0
+              ? row[columnMap.localityName].trim()
+              : undefined,
           source: 'ADP'
         }
 
         w2s.push(w2Data)
       } catch (e) {
-        errors.push({ row: i + 1, message: `Error parsing row: ${e instanceof Error ? e.message : String(e)}` })
+        errors.push({
+          row: i + 1,
+          message: `Error parsing row: ${
+            e instanceof Error ? e.message : String(e)
+          }`
+        })
       }
     }
 
@@ -357,9 +510,15 @@ export class ADPParser implements PayrollParser {
     // Add Box 12 codes
     if (data.box12 && data.box12.length > 0) {
       for (const item of data.box12) {
-        if (item.code === 'D' || item.code === 'E' || item.code === 'G' ||
-            item.code === 'H' || item.code === 'S' || item.code === 'AA' ||
-            item.code === 'BB') {
+        if (
+          item.code === 'D' ||
+          item.code === 'E' ||
+          item.code === 'G' ||
+          item.code === 'H' ||
+          item.code === 'S' ||
+          item.code === 'AA' ||
+          item.code === 'BB'
+        ) {
           // 401k and similar retirement contributions
           incomeW2.box12 = incomeW2.box12 || {}
         }
@@ -399,7 +558,7 @@ export class ADPParser implements PayrollParser {
           currentCell = ''
         } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
           currentRow.push(currentCell.trim())
-          if (currentRow.some(cell => cell !== '')) {
+          if (currentRow.some((cell) => cell !== '')) {
             rows.push(currentRow)
           }
           currentRow = []
@@ -413,7 +572,7 @@ export class ADPParser implements PayrollParser {
 
     if (currentCell || currentRow.length > 0) {
       currentRow.push(currentCell.trim())
-      if (currentRow.some(cell => cell !== '')) {
+      if (currentRow.some((cell) => cell !== '')) {
         rows.push(currentRow)
       }
     }

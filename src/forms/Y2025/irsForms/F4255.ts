@@ -22,7 +22,12 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * - Cessation of qualified use triggers recapture
  */
 
-export type CreditType = 'rehabilitation' | 'energy' | 'coal' | 'gasification' | 'advancedEnergy'
+export type CreditType =
+  | 'rehabilitation'
+  | 'energy'
+  | 'coal'
+  | 'gasification'
+  | 'advancedEnergy'
 
 export interface InvestmentCreditRecapture {
   propertyDescription: string
@@ -31,19 +36,24 @@ export interface InvestmentCreditRecapture {
   datePropertyDisposedOrCeased: Date
   originalCreditClaimed: number
   originalCreditYear: number
-  yearsPropertyQualified: number  // Full years property was used
-  dispositionType: 'sale' | 'exchange' | 'gift' | 'involuntaryConversion' | 'cessation'
-  amountRealized?: number  // For sales
+  yearsPropertyQualified: number // Full years property was used
+  dispositionType:
+    | 'sale'
+    | 'exchange'
+    | 'gift'
+    | 'involuntaryConversion'
+    | 'cessation'
+  amountRealized?: number // For sales
 }
 
 // Recapture percentages by year
 const recapturePercentages: Record<number, number> = {
-  1: 100,   // Disposed in year 1: 100% recapture
-  2: 80,    // Disposed in year 2: 80% recapture
-  3: 60,    // Disposed in year 3: 60% recapture
-  4: 40,    // Disposed in year 4: 40% recapture
-  5: 20,    // Disposed in year 5: 20% recapture
-  6: 0      // After year 5: no recapture
+  1: 100, // Disposed in year 1: 100% recapture
+  2: 80, // Disposed in year 2: 80% recapture
+  3: 60, // Disposed in year 3: 60% recapture
+  4: 40, // Disposed in year 4: 40% recapture
+  5: 20, // Disposed in year 5: 20% recapture
+  6: 0 // After year 5: no recapture
 }
 
 export default class F4255 extends F1040Attachment {
@@ -59,7 +69,11 @@ export default class F4255 extends F1040Attachment {
   }
 
   recaptureEvents = (): InvestmentCreditRecapture[] => {
-    return (this.f1040.info.investmentCreditRecaptures as InvestmentCreditRecapture[] | undefined) ?? []
+    return (
+      (this.f1040.info.investmentCreditRecaptures as
+        | InvestmentCreditRecapture[]
+        | undefined) ?? []
+    )
   }
 
   // Calculate recapture percentage based on years qualified
@@ -84,20 +98,29 @@ export default class F4255 extends F1040Attachment {
   l1 = (): string => this.primaryEvent()?.propertyDescription ?? ''
 
   // Line 2: Type of credit
-  l2Rehabilitation = (): boolean => this.primaryEvent()?.creditType === 'rehabilitation'
+  l2Rehabilitation = (): boolean =>
+    this.primaryEvent()?.creditType === 'rehabilitation'
   l2Energy = (): boolean => this.primaryEvent()?.creditType === 'energy'
   l2Coal = (): boolean => this.primaryEvent()?.creditType === 'coal'
-  l2Gasification = (): boolean => this.primaryEvent()?.creditType === 'gasification'
-  l2AdvancedEnergy = (): boolean => this.primaryEvent()?.creditType === 'advancedEnergy'
+  l2Gasification = (): boolean =>
+    this.primaryEvent()?.creditType === 'gasification'
+  l2AdvancedEnergy = (): boolean =>
+    this.primaryEvent()?.creditType === 'advancedEnergy'
 
   // Line 3: Date property was placed in service
   l3 = (): string => {
-    return this.primaryEvent()?.datePropertyPlacedInService?.toLocaleDateString() ?? ''
+    return (
+      this.primaryEvent()?.datePropertyPlacedInService.toLocaleDateString() ??
+      ''
+    )
   }
 
   // Line 4: Date property was disposed or ceased to qualify
   l4 = (): string => {
-    return this.primaryEvent()?.datePropertyDisposedOrCeased?.toLocaleDateString() ?? ''
+    return (
+      this.primaryEvent()?.datePropertyDisposedOrCeased.toLocaleDateString() ??
+      ''
+    )
   }
 
   // Line 5: Original credit claimed
@@ -128,16 +151,23 @@ export default class F4255 extends F1040Attachment {
 
   // Total recapture from all properties
   l10 = (): number => {
-    return this.recaptureEvents()
-      .reduce((sum, event) => sum + this.calculateRecapture(event), 0)
+    return this.recaptureEvents().reduce(
+      (sum, event) => sum + this.calculateRecapture(event),
+      0
+    )
   }
 
   // Part IV - Recapture of Energy Credit Net Increase
 
   // For energy credits, special rules apply for the "net increase" amount
   l11 = (): number => {
-    const energyEvents = this.recaptureEvents().filter(e => e.creditType === 'energy')
-    return energyEvents.reduce((sum, event) => sum + this.calculateRecapture(event), 0)
+    const energyEvents = this.recaptureEvents().filter(
+      (e) => e.creditType === 'energy'
+    )
+    return energyEvents.reduce(
+      (sum, event) => sum + this.calculateRecapture(event),
+      0
+    )
   }
 
   // Summary methods
@@ -150,8 +180,13 @@ export default class F4255 extends F1040Attachment {
 
   // Rehabilitation credit recapture
   rehabilitationCreditRecapture = (): number => {
-    const rehabEvents = this.recaptureEvents().filter(e => e.creditType === 'rehabilitation')
-    return rehabEvents.reduce((sum, event) => sum + this.calculateRecapture(event), 0)
+    const rehabEvents = this.recaptureEvents().filter(
+      (e) => e.creditType === 'rehabilitation'
+    )
+    return rehabEvents.reduce(
+      (sum, event) => sum + this.calculateRecapture(event),
+      0
+    )
   }
 
   fields = (): Field[] => [

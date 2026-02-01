@@ -25,7 +25,12 @@ export interface F8857Data {
   daytimePhone: string
   bestTimeToCall?: string
   // Current spouse/partner
-  currentMaritalStatus: 'married' | 'divorced' | 'separated' | 'widowed' | 'single'
+  currentMaritalStatus:
+    | 'married'
+    | 'divorced'
+    | 'separated'
+    | 'widowed'
+    | 'single'
   dateOfDivorce?: Date
   dateOfSeparation?: Date
   // Part II: Information About the Person Who Filed Joint Return With You
@@ -36,7 +41,11 @@ export interface F8857Data {
   // Part III: Tax Years for Relief
   taxYearsRequested: number[]
   // Part IV: Type of Relief Requested
-  reliefType: 'innocent_spouse' | 'separation_of_liability' | 'equitable_relief' | 'all'
+  reliefType:
+    | 'innocent_spouse'
+    | 'separation_of_liability'
+    | 'equitable_relief'
+    | 'all'
   // Part V: Reason for Relief
   didNotKnowAboutUnderstatement: boolean
   knewSomethingWasWrong?: boolean
@@ -164,7 +173,7 @@ export default class F8857 extends F1040Attachment {
       data?.currentIncome ?? 0,
       data?.monthlyExpenses ?? 0,
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? ''
+      data?.signatureDate.toLocaleDateString() ?? ''
     ]
   }
 }

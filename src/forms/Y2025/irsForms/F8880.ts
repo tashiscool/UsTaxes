@@ -63,7 +63,8 @@ export default class F8880 extends F1040Attachment {
 
     // Must be 18+, not a full-time student, and not claimed as dependent
     // These checks are simplified - in practice need more verification
-    const notDependent = !this.f1040.info.taxPayer.primaryPerson.isTaxpayerDependent
+    const notDependent =
+      !this.f1040.info.taxPayer.primaryPerson.isTaxpayerDependent
 
     return agi <= limit && notDependent
   }
@@ -74,11 +75,11 @@ export default class F8880 extends F1040Attachment {
     const agi = this.f1040.l11()
 
     if (agi <= saversCredit.fiftyPercentLimit[fs]) {
-      return 0.50
+      return 0.5
     } else if (agi <= saversCredit.twentyPercentLimit[fs]) {
-      return 0.20
+      return 0.2
     } else if (agi <= saversCredit.tenPercentLimit[fs]) {
-      return 0.10
+      return 0.1
     }
     return 0
   }
@@ -88,8 +89,11 @@ export default class F8880 extends F1040Attachment {
   l1a = (): number => {
     const contributions = this.f1040.info.iraContributions ?? []
     return contributions
-      .filter(c => c.personRole === PersonRole.PRIMARY)
-      .reduce((sum, c) => sum + c.traditionalContributions + c.rothContributions, 0)
+      .filter((c) => c.personRole === PersonRole.PRIMARY)
+      .reduce(
+        (sum, c) => sum + c.traditionalContributions + c.rothContributions,
+        0
+      )
   }
 
   // Line 1b: Traditional and Roth IRA contributions (spouse)
@@ -97,22 +101,32 @@ export default class F8880 extends F1040Attachment {
     if (this.f1040.info.taxPayer.filingStatus !== FilingStatus.MFJ) return 0
     const contributions = this.f1040.info.iraContributions ?? []
     return contributions
-      .filter(c => c.personRole === PersonRole.SPOUSE)
-      .reduce((sum, c) => sum + c.traditionalContributions + c.rothContributions, 0)
+      .filter((c) => c.personRole === PersonRole.SPOUSE)
+      .reduce(
+        (sum, c) => sum + c.traditionalContributions + c.rothContributions,
+        0
+      )
   }
 
   // Line 2a: Elective deferrals from W-2 box 12 (you)
   // Codes D, E, F, G, S, AA, BB, EE
   l2a = (): number => {
-    return this.f1040.validW2s()
-      .filter(w2 => w2.personRole === PersonRole.PRIMARY)
+    return this.f1040
+      .validW2s()
+      .filter((w2) => w2.personRole === PersonRole.PRIMARY)
       .reduce((sum, w2) => {
         // Sum box 12 codes for retirement contributions
         // W2Box12Info is an object with code keys, not an array
         const box12 = w2.box12 ?? {}
         const retirementTotal =
-          (box12.D ?? 0) + (box12.E ?? 0) + (box12.F ?? 0) + (box12.G ?? 0) +
-          (box12.S ?? 0) + (box12.AA ?? 0) + (box12.BB ?? 0) + (box12.EE ?? 0)
+          (box12.D ?? 0) +
+          (box12.E ?? 0) +
+          (box12.F ?? 0) +
+          (box12.G ?? 0) +
+          (box12.S ?? 0) +
+          (box12.AA ?? 0) +
+          (box12.BB ?? 0) +
+          (box12.EE ?? 0)
         return sum + retirementTotal
       }, 0)
   }
@@ -120,13 +134,20 @@ export default class F8880 extends F1040Attachment {
   // Line 2b: Elective deferrals (spouse)
   l2b = (): number => {
     if (this.f1040.info.taxPayer.filingStatus !== FilingStatus.MFJ) return 0
-    return this.f1040.validW2s()
-      .filter(w2 => w2.personRole === PersonRole.SPOUSE)
+    return this.f1040
+      .validW2s()
+      .filter((w2) => w2.personRole === PersonRole.SPOUSE)
       .reduce((sum, w2) => {
         const box12 = w2.box12 ?? {}
         const retirementTotal =
-          (box12.D ?? 0) + (box12.E ?? 0) + (box12.F ?? 0) + (box12.G ?? 0) +
-          (box12.S ?? 0) + (box12.AA ?? 0) + (box12.BB ?? 0) + (box12.EE ?? 0)
+          (box12.D ?? 0) +
+          (box12.E ?? 0) +
+          (box12.F ?? 0) +
+          (box12.G ?? 0) +
+          (box12.S ?? 0) +
+          (box12.AA ?? 0) +
+          (box12.BB ?? 0) +
+          (box12.EE ?? 0)
         return sum + retirementTotal
       }, 0)
   }
@@ -140,15 +161,17 @@ export default class F8880 extends F1040Attachment {
   // Line 4: Certain distributions received after 2021 and before the due date
   // From Form 1099-R (simplified - uses current year distributions)
   l4a = (): number => {
-    return this.f1040.f1099rs()
-      .filter(f => f.personRole === PersonRole.PRIMARY)
+    return this.f1040
+      .f1099rs()
+      .filter((f) => f.personRole === PersonRole.PRIMARY)
       .reduce((sum, f) => sum + f.form.grossDistribution, 0)
   }
 
   l4b = (): number => {
     if (this.f1040.info.taxPayer.filingStatus !== FilingStatus.MFJ) return 0
-    return this.f1040.f1099rs()
-      .filter(f => f.personRole === PersonRole.SPOUSE)
+    return this.f1040
+      .f1099rs()
+      .filter((f) => f.personRole === PersonRole.SPOUSE)
       .reduce((sum, f) => sum + f.form.grossDistribution, 0)
   }
 

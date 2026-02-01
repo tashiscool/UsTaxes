@@ -32,37 +32,32 @@ export class NJ1040 extends Form {
 
   // Taxpayer information
   primaryFirstName = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.firstName
+    this.info.taxPayer.primaryPerson.firstName
 
   primaryLastName = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.lastName
+    this.info.taxPayer.primaryPerson.lastName
 
-  primarySSN = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.ssid
+  primarySSN = (): string | undefined => this.info.taxPayer.primaryPerson.ssid
 
   spouseFirstName = (): string | undefined =>
     this.info.taxPayer.spouse?.firstName
 
-  spouseLastName = (): string | undefined =>
-    this.info.taxPayer.spouse?.lastName
+  spouseLastName = (): string | undefined => this.info.taxPayer.spouse?.lastName
 
-  spouseSSN = (): string | undefined =>
-    this.info.taxPayer.spouse?.ssid
+  spouseSSN = (): string | undefined => this.info.taxPayer.spouse?.ssid
 
   address = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.address
+    this.info.taxPayer.primaryPerson.address.address
 
   city = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.city
+    this.info.taxPayer.primaryPerson.address.city
 
   stateField = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.state
+    this.info.taxPayer.primaryPerson.address.state
 
-  zip = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.zip
+  zip = (): string | undefined => this.info.taxPayer.primaryPerson.address.zip
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Income Section
   // Line 15 - Wages, salaries, tips
@@ -141,7 +136,7 @@ export class NJ1040 extends Form {
     exemptions += numDependents * parameters.dependentExemption
 
     // Add senior/blind exemptions
-    const primaryAge = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const primaryAge = this.info.taxPayer.primaryPerson.dateOfBirth
       ? new Date().getFullYear() -
         new Date(this.info.taxPayer.primaryPerson.dateOfBirth).getFullYear()
       : 0
@@ -196,7 +191,8 @@ export class NJ1040 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -245,7 +241,8 @@ export class NJ1040 extends Form {
   l41 = (): number | undefined => undefined
 
   // Line 42 - Total credits
-  l42 = (): number => sumFields([this.l38(), this.l39(), this.l40(), this.l41()])
+  l42 = (): number =>
+    sumFields([this.l38(), this.l39(), this.l40(), this.l41()])
 
   // Line 43 - Balance of tax (Line 37 minus Line 42)
   l43 = (): number => Math.max(0, this.l37() - this.l42())

@@ -32,8 +32,7 @@ export default class F2439 extends F1040Attachment {
    * Line 1a - Total undistributed long-term capital gains
    * This amount is included in Schedule D, Part II, Line 11
    */
-  l1a = (): number =>
-    this.f2439s.reduce((total, f) => total + f.box1a, 0)
+  l1a = (): number => this.f2439s.reduce((total, f) => total + f.box1a, 0)
 
   /**
    * Line 1b - Unrecaptured section 1250 gain
@@ -60,8 +59,7 @@ export default class F2439 extends F1040Attachment {
    * Line 2 - Tax paid by the RIC or REIT
    * This is the credit amount that goes to Schedule 3, Line 13a
    */
-  l2 = (): number =>
-    this.f2439s.reduce((total, f) => total + f.box2, 0)
+  l2 = (): number => this.f2439s.reduce((total, f) => total + f.box2, 0)
 
   /**
    * Credit for tax paid by RIC/REIT

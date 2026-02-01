@@ -60,10 +60,10 @@ const parameters = {
   },
 
   // Delaware Earned Income Tax Credit (20% of federal)
-  eicPercentage: 0.20,
+  eicPercentage: 0.2,
 
   // Child care credit (50% of federal, max $500)
-  childCareRate: 0.50,
+  childCareRate: 0.5,
   childCareCreditMax: 500
 }
 

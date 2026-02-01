@@ -22,7 +22,7 @@ const parameters = {
   // Personal exemption
   personalExemption: {
     [FilingStatus.S]: 2700,
-    [FilingStatus.MFJ]: 7400,  // Taxpayer + spouse
+    [FilingStatus.MFJ]: 7400, // Taxpayer + spouse
     [FilingStatus.MFS]: 2700,
     [FilingStatus.HOH]: 2700,
     [FilingStatus.W]: 2700

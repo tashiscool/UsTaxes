@@ -162,7 +162,11 @@ export const PrintPreview = ({
       <DialogTitle disableTypography className={classes.dialogTitle}>
         <Typography variant="h6">{title}</Typography>
         <Box className={classes.zoomControls}>
-          <IconButton size="small" onClick={handleZoomOut} aria-label="Zoom out">
+          <IconButton
+            size="small"
+            onClick={handleZoomOut}
+            aria-label="Zoom out"
+          >
             <ZoomOut />
           </IconButton>
           <Typography variant="body2">{Math.round(zoom * 100)}%</Typography>
@@ -198,14 +202,17 @@ export const PrintPreview = ({
               {info.taxPayer.primaryPerson?.ssid && (
                 <div className={classes.formLine}>
                   <span>SSN:</span>
-                  <span>XXX-XX-{info.taxPayer.primaryPerson.ssid.slice(-4)}</span>
+                  <span>
+                    XXX-XX-{info.taxPayer.primaryPerson.ssid.slice(-4)}
+                  </span>
                 </div>
               )}
               {info.taxPayer.spouse && (
                 <div className={classes.formLine}>
                   <span>Spouse:</span>
                   <span>
-                    {info.taxPayer.spouse.firstName} {info.taxPayer.spouse.lastName}
+                    {info.taxPayer.spouse.firstName}{' '}
+                    {info.taxPayer.spouse.lastName}
                   </span>
                 </div>
               )}
@@ -227,26 +234,27 @@ export const PrintPreview = ({
               </div>
             </Box>
 
-            {info.taxPayer.dependents && info.taxPayer.dependents.length > 0 && (
-              <Box className={classes.formSection}>
-                <Typography variant="subtitle1" className={classes.formTitle}>
-                  Dependents ({info.taxPayer.dependents.length})
-                </Typography>
-                {info.taxPayer.dependents.map((dep, idx) => (
-                  <div key={idx} className={classes.formLine}>
-                    <span>{dep.firstName} {dep.lastName}</span>
-                    <span>{dep.relationship}</span>
-                  </div>
-                ))}
-              </Box>
-            )}
+            {info.taxPayer.dependents &&
+              info.taxPayer.dependents.length > 0 && (
+                <Box className={classes.formSection}>
+                  <Typography variant="subtitle1" className={classes.formTitle}>
+                    Dependents ({info.taxPayer.dependents.length})
+                  </Typography>
+                  {info.taxPayer.dependents.map((dep, idx) => (
+                    <div key={idx} className={classes.formLine}>
+                      <span>
+                        {dep.firstName} {dep.lastName}
+                      </span>
+                      <span>{dep.relationship}</span>
+                    </div>
+                  ))}
+                </Box>
+              )}
 
             {children}
           </Paper>
 
-          <div className={classes.pageBreakIndicator}>
-            --- Page Break ---
-          </div>
+          <div className={classes.pageBreakIndicator}>--- Page Break ---</div>
 
           {/* Page 2 - Income Summary */}
           <Paper
@@ -264,8 +272,10 @@ export const PrintPreview = ({
                 </Typography>
                 {info.w2s.map((w2, idx) => (
                   <div key={idx} className={classes.formLine}>
-                    <span>{w2.employer?.employerName || `Employer ${idx + 1}`}</span>
-                    <span>${w2.income?.toLocaleString() || '0'}</span>
+                    <span>
+                      {w2.employer?.employerName || `Employer ${idx + 1}`}
+                    </span>
+                    <span>${w2.income.toLocaleString() || '0'}</span>
                   </div>
                 ))}
               </Box>

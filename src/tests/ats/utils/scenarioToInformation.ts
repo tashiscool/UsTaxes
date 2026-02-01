@@ -526,7 +526,7 @@ export function compareResults(
     l37?: () => number
   },
   expected: ATSExpectedOutput,
-  tolerance: number = 1
+  tolerance = 1
 ): { passed: boolean; discrepancies: string[] } {
   const discrepancies: string[] = []
 

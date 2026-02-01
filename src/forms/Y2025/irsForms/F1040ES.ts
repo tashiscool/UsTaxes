@@ -44,7 +44,7 @@ export interface F1040ESData {
   estimatedTax: number
   estimatedCredits: number
   estimatedSelfEmploymentTax: number
-  estimatedOtherTaxes: number  // AMT, household employment tax, etc.
+  estimatedOtherTaxes: number // AMT, household employment tax, etc.
 
   // Withholding and payments
   expectedWithholding: number
@@ -56,10 +56,10 @@ export interface F1040ESData {
 
 // Quarterly due dates for 2025 tax year
 const QUARTERLY_DUE_DATES: { [key in QuarterNumber]: Date } = {
-  1: new Date(2025, 3, 15),   // April 15, 2025
-  2: new Date(2025, 5, 15),   // June 15, 2025
-  3: new Date(2025, 8, 15),   // September 15, 2025
-  4: new Date(2026, 0, 15)    // January 15, 2026
+  1: new Date(2025, 3, 15), // April 15, 2025
+  2: new Date(2025, 5, 15), // June 15, 2025
+  3: new Date(2025, 8, 15), // September 15, 2025
+  4: new Date(2026, 0, 15) // January 15, 2026
 }
 
 // High income threshold for 110% safe harbor rule
@@ -68,7 +68,7 @@ const HIGH_INCOME_THRESHOLD_MFS = 75000
 
 export default class F1040ES extends F1040Attachment {
   tag: FormTag = 'f1040es'
-  sequenceIndex = 0  // Payment voucher - filed separately
+  sequenceIndex = 0 // Payment voucher - filed separately
 
   isNeeded = (): boolean => {
     // Form is needed if estimated tax payments are required
@@ -76,22 +76,23 @@ export default class F1040ES extends F1040Attachment {
   }
 
   f1040ESData = (): F1040ESData | undefined => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
     return (this.f1040.info as any).estimatedTaxData as F1040ESData | undefined
   }
 
   // Check if taxpayer is subject to 110% safe harbor rule (high income)
   requiresHigherSafeHarbor = (): boolean => {
     const priorYearAGI = this.f1040ESData()?.priorYearAGI ?? 0
-    const threshold = this.f1040.info.taxPayer.filingStatus === FilingStatus.MFS
-      ? HIGH_INCOME_THRESHOLD_MFS
-      : HIGH_INCOME_THRESHOLD
+    const threshold =
+      this.f1040.info.taxPayer.filingStatus === FilingStatus.MFS
+        ? HIGH_INCOME_THRESHOLD_MFS
+        : HIGH_INCOME_THRESHOLD
     return priorYearAGI > threshold
   }
 
   // Safe harbor percentage (100% or 110% of prior year tax)
   safeHarborPercentage = (): number => {
-    return this.requiresHigherSafeHarbor() ? 1.10 : 1.00
+    return this.requiresHigherSafeHarbor() ? 1.1 : 1.0
   }
 
   // ============================================================================
@@ -212,7 +213,7 @@ export default class F1040ES extends F1040Attachment {
 
   // 90% of current year tax
   ninetyPercentCurrentYear = (): number => {
-    return Math.round(this.l9() * 0.90)
+    return Math.round(this.l9() * 0.9)
   }
 
   // Required annual payment (lesser of safe harbor or 90% current year)
@@ -262,8 +263,10 @@ export default class F1040ES extends F1040Attachment {
   }
 
   // Get payment for a specific quarter
-  quarterPayment = (quarter: QuarterNumber): EstimatedTaxPayment | undefined => {
-    return this.payments().find(p => p.quarter === quarter)
+  quarterPayment = (
+    quarter: QuarterNumber
+  ): EstimatedTaxPayment | undefined => {
+    return this.payments().find((p) => p.quarter === quarter)
   }
 
   // Total payments made so far
@@ -347,7 +350,7 @@ export default class F1040ES extends F1040Attachment {
       this.l13(),
       // Safe harbor
       this.priorYearTax(),
-      this.safeHarborPercentage() === 1.10,  // Uses 110% rule
+      this.safeHarborPercentage() === 1.1, // Uses 110% rule
       this.safeHarborAmount(),
       this.ninetyPercentCurrentYear(),
       this.requiredAnnualPayment(),
@@ -380,6 +383,6 @@ export default class F1040ES extends F1040Attachment {
   copies = (): F1040ES[] => {
     // Each quarter gets its own voucher
     // The main form serves as Q1, copies for Q2-Q4
-    return []  // Payment vouchers are typically separate filings
+    return [] // Payment vouchers are typically separate filings
   }
 }

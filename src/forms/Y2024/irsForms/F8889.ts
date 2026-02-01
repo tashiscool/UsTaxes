@@ -224,8 +224,8 @@ export default class F8889 extends F1040Attachment {
 
       // Apply user-configurable allocation to family coverage portion
       const familyContribution: number =
-        (familyMonths * healthSavingsAccounts.contributionLimit['family']) /
-        12 *
+        ((familyMonths * healthSavingsAccounts.contributionLimit['family']) /
+          12) *
         allocationFactor
 
       // Add this to the contributions of the self-only portion of the year

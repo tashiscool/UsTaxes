@@ -32,10 +32,7 @@ export {
   getHabutaxSections
 } from './habutaxParser'
 
-export type {
-  ParsedIni,
-  IniSection
-} from './habutaxParser'
+export type { ParsedIni, IniSection } from './habutaxParser'
 
 // =============================================================================
 // Tax-Calculator Policy Importer
@@ -120,7 +117,9 @@ export function parseWithValidation<T>(
     } catch (error) {
       return {
         success: false,
-        errors: [error instanceof Error ? error.message : 'Unknown parsing error']
+        errors: [
+          error instanceof Error ? error.message : 'Unknown parsing error'
+        ]
       }
     }
   }

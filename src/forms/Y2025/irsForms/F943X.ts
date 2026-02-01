@@ -55,7 +55,7 @@ export default class F943X extends F1040Attachment {
   }
 
   hasF943XData = (): boolean => {
-    return false  // Would check if corrections needed
+    return false // Would check if corrections needed
   }
 
   f943XData = (): F943XData | undefined => {
@@ -86,7 +86,9 @@ export default class F943X extends F1040Attachment {
 
   medicareWagesDifference = (): number => {
     const data = this.f943XData()
-    return (data?.correctedMedicareWages ?? 0) - (data?.originalMedicareWages ?? 0)
+    return (
+      (data?.correctedMedicareWages ?? 0) - (data?.originalMedicareWages ?? 0)
+    )
   }
 
   medicareTaxDifference = (): number => {
@@ -109,7 +111,7 @@ export default class F943X extends F1040Attachment {
 
     return [
       data?.yearBeingCorrected ?? 0,
-      data?.dateOriginalReturnFiled?.toLocaleDateString() ?? '',
+      data?.dateOriginalReturnFiled.toLocaleDateString() ?? '',
       data?.isAdjustedReturn ?? true,
       data?.isClaimForRefund ?? false,
       data?.originalWages ?? 0,

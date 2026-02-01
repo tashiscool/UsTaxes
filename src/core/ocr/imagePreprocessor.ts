@@ -293,11 +293,7 @@ const detectSkewAngle = (imageData: ImageData): number => {
   const sampleLines = 20
   const lineSpacing = Math.floor(height / sampleLines)
 
-  for (
-    let angle = -angleRange;
-    angle <= angleRange;
-    angle += angleStep
-  ) {
+  for (let angle = -angleRange; angle <= angleRange; angle += angleStep) {
     let score = 0
     const radians = (angle * Math.PI) / 180
 
@@ -313,7 +309,8 @@ const detectSkewAngle = (imageData: ImageData): number => {
         if (rotY < 0 || rotY >= height) continue
 
         const idx = (rotY * width + x) * 4
-        const gray = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114
+        const gray =
+          data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114
 
         if (gray < 128) {
           darkPixels++
@@ -409,7 +406,7 @@ export const preprocessImage = async (
 
   // Create initial canvas
   let canvas = createCanvasFromImage(img, width, height)
-  let ctx = canvas.getContext('2d')
+  const ctx = canvas.getContext('2d')
 
   if (!ctx) {
     throw new Error('Could not get canvas context')

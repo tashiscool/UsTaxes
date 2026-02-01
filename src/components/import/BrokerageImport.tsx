@@ -154,10 +154,15 @@ const GenericMappingUI = ({
         {GENERIC_FIELDS.map((field) => (
           <Grid item xs={12} sm={6} md={4} key={field.key}>
             <FormControl fullWidth size="small">
-              <InputLabel>{field.label}{field.required ? ' *' : ''}</InputLabel>
+              <InputLabel>
+                {field.label}
+                {field.required ? ' *' : ''}
+              </InputLabel>
               <Select
                 value={columnMapping[field.key] ?? -1}
-                onChange={(e) => onMappingChange(field.key, e.target.value as number)}
+                onChange={(e) =>
+                  onMappingChange(field.key, e.target.value as number)
+                }
                 className={classes.columnSelect}
               >
                 <MenuItem value={-1}>-- Not mapped --</MenuItem>
@@ -193,7 +198,10 @@ const GenericMappingUI = ({
                 {previewRows.slice(0, 3).map((row, rowIndex) => (
                   <TableRow key={rowIndex}>
                     {row.map((cell, cellIndex) => (
-                      <TableCell key={cellIndex} className={classes.previewCell}>
+                      <TableCell
+                        key={cellIndex}
+                        className={classes.previewCell}
+                      >
                         {cell}
                       </TableCell>
                     ))}
@@ -249,8 +257,14 @@ const TransactionTable = ({
           <TableRow>
             <TableCell padding="checkbox">
               <Checkbox
-                checked={selectedIndices.size === transactions.length && transactions.length > 0}
-                indeterminate={selectedIndices.size > 0 && selectedIndices.size < transactions.length}
+                checked={
+                  selectedIndices.size === transactions.length &&
+                  transactions.length > 0
+                }
+                indeterminate={
+                  selectedIndices.size > 0 &&
+                  selectedIndices.size < transactions.length
+                }
                 onChange={toggleAll}
               />
             </TableCell>
@@ -277,15 +291,22 @@ const TransactionTable = ({
               <TableCell>
                 <strong>{tx.symbol}</strong>
                 {tx.description && (
-                  <Typography variant="caption" display="block" color="textSecondary">
-                    {tx.description.slice(0, 30)}{tx.description.length > 30 ? '...' : ''}
+                  <Typography
+                    variant="caption"
+                    display="block"
+                    color="textSecondary"
+                  >
+                    {tx.description.slice(0, 30)}
+                    {tx.description.length > 30 ? '...' : ''}
                   </Typography>
                 )}
               </TableCell>
               <TableCell>{formatDate(tx.dateAcquired)}</TableCell>
               <TableCell>{formatDate(tx.dateSold)}</TableCell>
               <TableCell align="right">{formatCurrency(tx.proceeds)}</TableCell>
-              <TableCell align="right">{formatCurrency(tx.costBasis)}</TableCell>
+              <TableCell align="right">
+                {formatCurrency(tx.costBasis)}
+              </TableCell>
               <TableCell
                 align="right"
                 style={{ color: tx.gainLoss >= 0 ? 'green' : 'red' }}
@@ -296,12 +317,16 @@ const TransactionTable = ({
                 <Chip
                   size="small"
                   label={tx.isShortTerm ? 'Short' : 'Long'}
-                  className={`${classes.chip} ${tx.isShortTerm ? classes.shortTerm : classes.longTerm}`}
+                  className={`${classes.chip} ${
+                    tx.isShortTerm ? classes.shortTerm : classes.longTerm
+                  }`}
                 />
                 <Chip
                   size="small"
                   label={tx.isCovered ? 'Covered' : 'Non-Covered'}
-                  className={`${classes.chip} ${tx.isCovered ? classes.covered : classes.nonCovered}`}
+                  className={`${classes.chip} ${
+                    tx.isCovered ? classes.covered : classes.nonCovered
+                  }`}
                 />
                 {tx.washSaleDisallowed && (
                   <Chip
@@ -327,11 +352,16 @@ export const BrokerageImport = (): ReactElement => {
   const dispatch = useDispatch()
 
   // State
-  const [selectedBrokerage, setSelectedBrokerage] = useState<BrokerageType | ''>('')
+  const [selectedBrokerage, setSelectedBrokerage] = useState<
+    BrokerageType | ''
+  >('')
   const [csvContent, setCsvContent] = useState<string>('')
   const [parseResult, setParseResult] = useState<ParseResult | null>(null)
-  const [detectedBrokerage, setDetectedBrokerage] = useState<BrokerageType | null>(null)
-  const [selectedTransactions, setSelectedTransactions] = useState<Set<number>>(new Set())
+  const [detectedBrokerage, setDetectedBrokerage] =
+    useState<BrokerageType | null>(null)
+  const [selectedTransactions, setSelectedTransactions] = useState<Set<number>>(
+    new Set()
+  )
   const [skipHeaderRows, setSkipHeaderRows] = useState<number>(1)
   const [importSuccess, setImportSuccess] = useState<boolean>(false)
 
@@ -348,7 +378,7 @@ export const BrokerageImport = (): ReactElement => {
   const csvData = useMemo(() => {
     if (!csvContent) return { headers: [], rows: [] }
 
-    const lines = csvContent.split('\n').filter(line => line.trim())
+    const lines = csvContent.split('\n').filter((line) => line.trim())
     if (lines.length === 0) return { headers: [], rows: [] }
 
     // Simple CSV parsing for preview
@@ -383,27 +413,29 @@ export const BrokerageImport = (): ReactElement => {
       return null
     }
 
-    const selected = parseResult.transactions.filter((_, i) => selectedTransactions.has(i))
+    const selected = parseResult.transactions.filter((_, i) =>
+      selectedTransactions.has(i)
+    )
     const txs = selected.length > 0 ? selected : parseResult.transactions
 
     const shortTermGain = txs
-      .filter(tx => tx.isShortTerm && tx.gainLoss > 0)
+      .filter((tx) => tx.isShortTerm && tx.gainLoss > 0)
       .reduce((sum, tx) => sum + tx.gainLoss, 0)
 
     const shortTermLoss = txs
-      .filter(tx => tx.isShortTerm && tx.gainLoss < 0)
+      .filter((tx) => tx.isShortTerm && tx.gainLoss < 0)
       .reduce((sum, tx) => sum + tx.gainLoss, 0)
 
     const longTermGain = txs
-      .filter(tx => !tx.isShortTerm && tx.gainLoss > 0)
+      .filter((tx) => !tx.isShortTerm && tx.gainLoss > 0)
       .reduce((sum, tx) => sum + tx.gainLoss, 0)
 
     const longTermLoss = txs
-      .filter(tx => !tx.isShortTerm && tx.gainLoss < 0)
+      .filter((tx) => !tx.isShortTerm && tx.gainLoss < 0)
       .reduce((sum, tx) => sum + tx.gainLoss, 0)
 
     const washSaleTotal = txs
-      .filter(tx => tx.washSaleDisallowed)
+      .filter((tx) => tx.washSaleDisallowed)
       .reduce((sum, tx) => sum + (tx.washSaleDisallowed ?? 0), 0)
 
     return {
@@ -415,8 +447,8 @@ export const BrokerageImport = (): ReactElement => {
       longTermLoss,
       longTermNet: longTermGain + longTermLoss,
       washSaleTotal,
-      coveredCount: txs.filter(tx => tx.isCovered).length,
-      nonCoveredCount: txs.filter(tx => !tx.isCovered).length
+      coveredCount: txs.filter((tx) => tx.isCovered).length,
+      nonCoveredCount: txs.filter((tx) => !tx.isCovered).length
     }
   }, [parseResult, selectedTransactions])
 
@@ -471,14 +503,18 @@ export const BrokerageImport = (): ReactElement => {
   const handleImport = () => {
     if (!parseResult || !selectedBrokerage) return
 
-    const toImport = parseResult.transactions.filter((_, i) => selectedTransactions.has(i))
+    const toImport = parseResult.transactions.filter((_, i) =>
+      selectedTransactions.has(i)
+    )
     if (toImport.length === 0) return
 
     const assets = transactionsToAssets(toImport)
-    dispatch(actions.importBrokerageTransactions({
-      brokerageType: selectedBrokerage,
-      transactions: assets
-    }))
+    dispatch(
+      actions.importBrokerageTransactions({
+        brokerageType: selectedBrokerage,
+        transactions: assets
+      })
+    )
 
     setImportSuccess(true)
     // Reset state
@@ -512,8 +548,11 @@ export const BrokerageImport = (): ReactElement => {
   /**
    * Handle column mapping change for generic parser
    */
-  const handleMappingChange = (field: keyof ColumnMapping, columnIndex: number) => {
-    setColumnMapping(prev => ({
+  const handleMappingChange = (
+    field: keyof ColumnMapping,
+    columnIndex: number
+  ) => {
+    setColumnMapping((prev) => ({
       ...prev,
       [field]: columnIndex
     }))
@@ -525,12 +564,16 @@ export const BrokerageImport = (): ReactElement => {
         Import Brokerage Transactions
       </Typography>
       <Typography variant="body2" color="textSecondary" paragraph>
-        Import capital gains/losses from your brokerage CSV export.
-        Transactions will be added to Form 8949 and Schedule D.
+        Import capital gains/losses from your brokerage CSV export. Transactions
+        will be added to Form 8949 and Schedule D.
       </Typography>
 
       {importSuccess && (
-        <Alert severity="success" onClose={() => setImportSuccess(false)} className={classes.section}>
+        <Alert
+          severity="success"
+          onClose={() => setImportSuccess(false)}
+          className={classes.section}
+        >
           Transactions imported successfully! View them in Other Investments.
         </Alert>
       )}
@@ -546,7 +589,9 @@ export const BrokerageImport = (): ReactElement => {
               <InputLabel>Brokerage</InputLabel>
               <Select
                 value={selectedBrokerage}
-                onChange={(e) => setSelectedBrokerage(e.target.value as BrokerageType)}
+                onChange={(e) =>
+                  setSelectedBrokerage(e.target.value as BrokerageType)
+                }
               >
                 <MenuItem value="">-- Select Brokerage --</MenuItem>
                 {getSupportedBrokerages().map((type) => (
@@ -572,7 +617,8 @@ export const BrokerageImport = (): ReactElement => {
 
         {detectedBrokerage && (
           <Alert severity="info" style={{ marginTop: 16 }}>
-            Auto-detected format: <strong>{getBrokerageName(detectedBrokerage)}</strong>
+            Auto-detected format:{' '}
+            <strong>{getBrokerageName(detectedBrokerage)}</strong>
           </Alert>
         )}
       </Paper>
@@ -590,7 +636,9 @@ export const BrokerageImport = (): ReactElement => {
                 type="number"
                 label="Skip Header Rows"
                 value={skipHeaderRows}
-                onChange={(e) => setSkipHeaderRows(Math.max(0, parseInt(e.target.value) || 0))}
+                onChange={(e) =>
+                  setSkipHeaderRows(Math.max(0, parseInt(e.target.value) || 0))
+                }
                 InputProps={{ inputProps: { min: 0 } }}
                 helperText="Number of header rows to skip"
               />
@@ -607,9 +655,13 @@ export const BrokerageImport = (): ReactElement => {
               variant="contained"
               color="primary"
               onClick={handleParse}
-              disabled={columnMapping.symbol < 0 || columnMapping.dateAcquired < 0 ||
-                        columnMapping.dateSold < 0 || columnMapping.proceeds < 0 ||
-                        columnMapping.costBasis < 0}
+              disabled={
+                columnMapping.symbol < 0 ||
+                columnMapping.dateAcquired < 0 ||
+                columnMapping.dateSold < 0 ||
+                columnMapping.proceeds < 0 ||
+                columnMapping.costBasis < 0
+              }
             >
               Parse Transactions
             </Button>
@@ -618,19 +670,23 @@ export const BrokerageImport = (): ReactElement => {
       )}
 
       {/* Parse button for non-generic (if auto-parse didn't work) */}
-      {selectedBrokerage && selectedBrokerage !== 'generic' && csvContent && !parseResult && (
-        <Paper className={`${classes.root} ${classes.section}`}>
-          <Button variant="contained" color="primary" onClick={handleParse}>
-            Parse Transactions
-          </Button>
-        </Paper>
-      )}
+      {selectedBrokerage &&
+        selectedBrokerage !== 'generic' &&
+        csvContent &&
+        !parseResult && (
+          <Paper className={`${classes.root} ${classes.section}`}>
+            <Button variant="contained" color="primary" onClick={handleParse}>
+              Parse Transactions
+            </Button>
+          </Paper>
+        )}
 
       {/* Step 3: Parse Results */}
       {parseResult && (
         <Paper className={`${classes.root} ${classes.section}`}>
           <Typography variant="h6" gutterBottom>
-            {selectedBrokerage === 'generic' ? 'Step 3' : 'Step 2'}: Review Transactions
+            {selectedBrokerage === 'generic' ? 'Step 3' : 'Step 2'}: Review
+            Transactions
           </Typography>
 
           {/* Errors */}
@@ -638,13 +694,18 @@ export const BrokerageImport = (): ReactElement => {
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography color="error">
-                  {parseResult.errors.length} Error{parseResult.errors.length !== 1 ? 's' : ''}
+                  {parseResult.errors.length} Error
+                  {parseResult.errors.length !== 1 ? 's' : ''}
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Box>
                   {parseResult.errors.map((error, index) => (
-                    <Alert severity="error" key={index} style={{ marginBottom: 8 }}>
+                    <Alert
+                      severity="error"
+                      key={index}
+                      style={{ marginBottom: 8 }}
+                    >
                       Row {error.row}: {error.message}
                     </Alert>
                   ))}
@@ -658,13 +719,18 @@ export const BrokerageImport = (): ReactElement => {
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography color="textSecondary">
-                  {parseResult.warnings.length} Warning{parseResult.warnings.length !== 1 ? 's' : ''}
+                  {parseResult.warnings.length} Warning
+                  {parseResult.warnings.length !== 1 ? 's' : ''}
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Box>
                   {parseResult.warnings.map((warning, index) => (
-                    <Alert severity="warning" key={index} style={{ marginBottom: 8 }}>
+                    <Alert
+                      severity="warning"
+                      key={index}
+                      style={{ marginBottom: 8 }}
+                    >
                       {warning}
                     </Alert>
                   ))}
@@ -676,9 +742,15 @@ export const BrokerageImport = (): ReactElement => {
           {/* Transaction Table */}
           {parseResult.transactions.length > 0 ? (
             <>
-              <Typography variant="subtitle1" gutterBottom style={{ marginTop: 16 }}>
-                {parseResult.transactions.length} transaction{parseResult.transactions.length !== 1 ? 's' : ''} found
-                {selectedTransactions.size > 0 && selectedTransactions.size < parseResult.transactions.length &&
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                style={{ marginTop: 16 }}
+              >
+                {parseResult.transactions.length} transaction
+                {parseResult.transactions.length !== 1 ? 's' : ''} found
+                {selectedTransactions.size > 0 &&
+                  selectedTransactions.size < parseResult.transactions.length &&
                   ` (${selectedTransactions.size} selected)`}
               </Typography>
               <TransactionTable
@@ -689,7 +761,8 @@ export const BrokerageImport = (): ReactElement => {
             </>
           ) : (
             <Alert severity="warning">
-              No transactions found in the CSV file. Please check the format and try again.
+              No transactions found in the CSV file. Please check the format and
+              try again.
             </Alert>
           )}
 
@@ -701,36 +774,55 @@ export const BrokerageImport = (): ReactElement => {
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Short-Term Capital Gains</Typography>
+                  <Typography variant="subtitle2">
+                    Short-Term Capital Gains
+                  </Typography>
                   <Typography>
-                    Gains: {formatCurrency(summary.shortTermGain)} |
-                    Losses: {formatCurrency(summary.shortTermLoss)}
+                    Gains: {formatCurrency(summary.shortTermGain)} | Losses:{' '}
+                    {formatCurrency(summary.shortTermLoss)}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    Net: <strong style={{ color: summary.shortTermNet >= 0 ? 'green' : 'red' }}>
+                    Net:{' '}
+                    <strong
+                      style={{
+                        color: summary.shortTermNet >= 0 ? 'green' : 'red'
+                      }}
+                    >
                       {formatCurrency(summary.shortTermNet)}
                     </strong>
                   </Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Long-Term Capital Gains</Typography>
+                  <Typography variant="subtitle2">
+                    Long-Term Capital Gains
+                  </Typography>
                   <Typography>
-                    Gains: {formatCurrency(summary.longTermGain)} |
-                    Losses: {formatCurrency(summary.longTermLoss)}
+                    Gains: {formatCurrency(summary.longTermGain)} | Losses:{' '}
+                    {formatCurrency(summary.longTermLoss)}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
-                    Net: <strong style={{ color: summary.longTermNet >= 0 ? 'green' : 'red' }}>
+                    Net:{' '}
+                    <strong
+                      style={{
+                        color: summary.longTermNet >= 0 ? 'green' : 'red'
+                      }}
+                    >
                       {formatCurrency(summary.longTermNet)}
                     </strong>
                   </Typography>
                 </Grid>
                 <Grid item xs={12}>
                   <Typography variant="body2">
-                    Covered: {summary.coveredCount} | Non-Covered: {summary.nonCoveredCount}
+                    Covered: {summary.coveredCount} | Non-Covered:{' '}
+                    {summary.nonCoveredCount}
                     {summary.washSaleTotal > 0 && (
-                      <span> | Wash Sale Disallowed: <strong style={{ color: 'red' }}>
-                        {formatCurrency(summary.washSaleTotal)}
-                      </strong></span>
+                      <span>
+                        {' '}
+                        | Wash Sale Disallowed:{' '}
+                        <strong style={{ color: 'red' }}>
+                          {formatCurrency(summary.washSaleTotal)}
+                        </strong>
+                      </span>
                     )}
                   </Typography>
                 </Grid>
@@ -746,7 +838,8 @@ export const BrokerageImport = (): ReactElement => {
               onClick={handleImport}
               disabled={selectedTransactions.size === 0}
             >
-              Import {selectedTransactions.size} Transaction{selectedTransactions.size !== 1 ? 's' : ''}
+              Import {selectedTransactions.size} Transaction
+              {selectedTransactions.size !== 1 ? 's' : ''}
             </Button>
             <Button variant="outlined" onClick={handleReset}>
               Reset

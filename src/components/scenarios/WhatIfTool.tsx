@@ -211,9 +211,7 @@ const WhatIfTool = (): ReactElement => {
    * Create a new empty scenario
    */
   const handleCreateScenario = useCallback(() => {
-    const newScenario = createEmptyScenario(
-      `Scenario ${scenarios.length + 1}`
-    )
+    const newScenario = createEmptyScenario(`Scenario ${scenarios.length + 1}`)
     setEditingScenario(newScenario)
     setActiveTab(1) // Switch to builder tab
   }, [scenarios.length])
@@ -233,30 +231,27 @@ const WhatIfTool = (): ReactElement => {
   /**
    * Save edited scenario
    */
-  const handleSaveScenario = useCallback(
-    (scenario: Scenario) => {
-      setScenarios((prev) => {
-        const existingIndex = prev.findIndex((s) => s.id === scenario.id)
-        if (existingIndex >= 0) {
-          // Update existing
-          const updated = [...prev]
-          updated[existingIndex] = scenario
-          return updated
-        } else {
-          // Add new
-          return [...prev, scenario]
-        }
-      })
-      setEditingScenario(null)
-      setActiveTab(0) // Back to scenarios tab
-      setSnackbar({
-        open: true,
-        message: 'Scenario saved successfully',
-        severity: 'success'
-      })
-    },
-    []
-  )
+  const handleSaveScenario = useCallback((scenario: Scenario) => {
+    setScenarios((prev) => {
+      const existingIndex = prev.findIndex((s) => s.id === scenario.id)
+      if (existingIndex >= 0) {
+        // Update existing
+        const updated = [...prev]
+        updated[existingIndex] = scenario
+        return updated
+      } else {
+        // Add new
+        return [...prev, scenario]
+      }
+    })
+    setEditingScenario(null)
+    setActiveTab(0) // Back to scenarios tab
+    setSnackbar({
+      open: true,
+      message: 'Scenario saved successfully',
+      severity: 'success'
+    })
+  }, [])
 
   /**
    * Cancel editing
@@ -482,11 +477,7 @@ const WhatIfTool = (): ReactElement => {
           textColor="primary"
         >
           <Tab label="Scenarios" icon={<Assessment />} />
-          <Tab
-            label="Builder"
-            icon={<Edit />}
-            disabled={!editingScenario}
-          />
+          <Tab label="Builder" icon={<Edit />} disabled={!editingScenario} />
           <Tab
             label="Comparison"
             icon={<CompareArrows />}
@@ -538,7 +529,9 @@ const WhatIfTool = (): ReactElement => {
                 return (
                   <ListItem
                     key={scenario.id}
-                    className={`${classes.scenarioItem} ${isSelected ? classes.selectedScenario : ''}`}
+                    className={`${classes.scenarioItem} ${
+                      isSelected ? classes.selectedScenario : ''
+                    }`}
                     button
                     onClick={() => handleToggleSelection(scenario.id)}
                   >
@@ -639,7 +632,8 @@ const WhatIfTool = (): ReactElement => {
             <CompareArrows className={classes.emptyIcon} />
             <Typography variant="h6">No comparison available</Typography>
             <Typography variant="body2">
-              Select scenarios and click &quot;Compare Selected&quot; to see a comparison
+              Select scenarios and click &quot;Compare Selected&quot; to see a
+              comparison
             </Typography>
           </Paper>
         )}

@@ -23,18 +23,18 @@ export interface F8879Data {
   spouseName?: string
   spouseSSN?: string
   // Tax return information (from the return)
-  adjustedGrossIncome: number           // From Form 1040 Line 11
-  totalTax: number                       // From Form 1040 Line 24
-  federalIncomeTaxWithheld: number       // From Form 1040 Line 25d
-  refundAmount?: number                  // From Form 1040 Line 34
-  amountOwed?: number                    // From Form 1040 Line 37
+  adjustedGrossIncome: number // From Form 1040 Line 11
+  totalTax: number // From Form 1040 Line 24
+  federalIncomeTaxWithheld: number // From Form 1040 Line 25d
+  refundAmount?: number // From Form 1040 Line 34
+  amountOwed?: number // From Form 1040 Line 37
   // Part II: Declaration and Signature
-  taxpayerPIN: string                    // 5-digit PIN
-  spousePIN?: string                     // 5-digit PIN (if joint)
+  taxpayerPIN: string // 5-digit PIN
+  spousePIN?: string // 5-digit PIN (if joint)
   eroFirmName: string
   eroAddress: string
   eroEIN: string
-  eroPIN: string                         // ERO's PIN
+  eroPIN: string // ERO's PIN
   // Authorization type
   selfSelectPIN: boolean
   practitionerPIN: boolean
@@ -58,7 +58,7 @@ export default class F8879 extends F1040Attachment {
   }
 
   hasF8879Data = (): boolean => {
-    return false  // Would be true when e-filing
+    return false // Would be true when e-filing
   }
 
   f8879Data = (): F8879Data | undefined => {
@@ -72,7 +72,8 @@ export default class F8879 extends F1040Attachment {
   // Key amounts (must match the return exactly)
   adjustedGrossIncome = (): number => this.f8879Data()?.adjustedGrossIncome ?? 0
   totalTax = (): number => this.f8879Data()?.totalTax ?? 0
-  federalIncomeTaxWithheld = (): number => this.f8879Data()?.federalIncomeTaxWithheld ?? 0
+  federalIncomeTaxWithheld = (): number =>
+    this.f8879Data()?.federalIncomeTaxWithheld ?? 0
   refundAmount = (): number => this.f8879Data()?.refundAmount ?? 0
   amountOwed = (): number => this.f8879Data()?.amountOwed ?? 0
 
@@ -96,7 +97,8 @@ export default class F8879 extends F1040Attachment {
 
     // PIN must be 5 digits
     if (data.taxpayerPIN.length !== 5) return false
-    if (this.isJointReturn() && (data.spousePIN?.length ?? 0) !== 5) return false
+    if (this.isJointReturn() && (data.spousePIN?.length ?? 0) !== 5)
+      return false
 
     return true
   }
@@ -127,9 +129,9 @@ export default class F8879 extends F1040Attachment {
       data?.eroEIN ?? '',
       data?.eroPIN ?? '',
       // Signatures
-      data?.taxpayerSignatureDate?.toLocaleDateString() ?? '',
+      data?.taxpayerSignatureDate.toLocaleDateString() ?? '',
       data?.spouseSignatureDate?.toLocaleDateString() ?? '',
-      data?.eroSignatureDate?.toLocaleDateString() ?? '',
+      data?.eroSignatureDate.toLocaleDateString() ?? '',
       // Part III: Paid Preparer
       data?.preparerName ?? '',
       data?.preparerPTIN ?? '',

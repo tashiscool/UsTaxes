@@ -36,7 +36,7 @@ export interface F8453Data {
   attachForm2848: boolean
   attachForm8332: boolean
   attachForm8949: boolean
-  attachForm8453FE: boolean  // Foreign earned income
+  attachForm8453FE: boolean // Foreign earned income
   attachOther: boolean
   otherDescription?: string
   // Signatures
@@ -53,7 +53,7 @@ export default class F8453 extends F1040Attachment {
   }
 
   hasF8453Data = (): boolean => {
-    return false  // Would be true when paper documents needed
+    return false // Would be true when paper documents needed
   }
 
   f8453Data = (): F8453Data | undefined => {
@@ -75,8 +75,13 @@ export default class F8453 extends F1040Attachment {
   hasAttachments = (): boolean => {
     const data = this.f8453Data()
     if (!data) return false
-    return data.attachForm2848 || data.attachForm8332 ||
-           data.attachForm8949 || data.attachForm8453FE || data.attachOther
+    return (
+      data.attachForm2848 ||
+      data.attachForm8332 ||
+      data.attachForm8949 ||
+      data.attachForm8453FE ||
+      data.attachOther
+    )
   }
 
   numberOfAttachments = (): number => {
@@ -117,7 +122,7 @@ export default class F8453 extends F1040Attachment {
       data?.attachOther ?? false,
       data?.otherDescription ?? '',
       // Signatures
-      data?.taxpayerSignatureDate?.toLocaleDateString() ?? '',
+      data?.taxpayerSignatureDate.toLocaleDateString() ?? '',
       data?.spouseSignatureDate?.toLocaleDateString() ?? '',
       // Summary
       this.hasAttachments(),

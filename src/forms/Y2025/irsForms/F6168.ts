@@ -39,7 +39,7 @@ export interface PriorYearContractAllocation {
   estimatedGrossProfit: number
   actualGrossProfit: number
   taxRateForYear: number
-  interestRate: number  // Federal short-term rate + 3%
+  interestRate: number // Federal short-term rate + 3%
 }
 
 export default class F6168 extends F1040Attachment {
@@ -51,7 +51,11 @@ export default class F6168 extends F1040Attachment {
   }
 
   longTermContracts = (): LongTermContractData[] => {
-    return (this.f1040.info.longTermContracts as LongTermContractData[] | undefined) ?? []
+    return (
+      (this.f1040.info.longTermContracts as
+        | LongTermContractData[]
+        | undefined) ?? []
+    )
   }
 
   // Part I - Regular Method
@@ -89,7 +93,8 @@ export default class F6168 extends F1040Attachment {
     for (const contract of this.longTermContracts()) {
       for (const allocation of contract.priorYearAllocations) {
         // Difference between actual and estimated profit
-        const profitDifference = allocation.actualGrossProfit - allocation.estimatedGrossProfit
+        const profitDifference =
+          allocation.actualGrossProfit - allocation.estimatedGrossProfit
 
         // Tax difference
         const taxDifference = profitDifference * allocation.taxRateForYear
@@ -123,7 +128,7 @@ export default class F6168 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Part I
     this.l1(),
     this.l2(),

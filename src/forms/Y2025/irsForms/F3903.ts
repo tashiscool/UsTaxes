@@ -44,7 +44,7 @@ export interface MovingExpenses {
 }
 
 // 2025 standard mileage rate for moving (military only)
-const movingMileageRate = 0.22  // 22 cents per mile
+const movingMileageRate = 0.22 // 22 cents per mile
 
 export default class F3903 extends F1040Attachment {
   tag: FormTag = 'f3903'
@@ -76,15 +76,12 @@ export default class F3903 extends F1040Attachment {
     if (!info) return 0
 
     // Calculate mileage OR actual expenses
-    const mileageExpense = info.mileageExpense > 0
-      ? info.mileageExpense
-      : Math.round(info.distanceMiles * movingMileageRate)
+    const mileageExpense =
+      info.mileageExpense > 0
+        ? info.mileageExpense
+        : Math.round(info.distanceMiles * movingMileageRate)
 
-    return sumFields([
-      info.travelLodging,
-      mileageExpense,
-      info.parkingAndTolls
-    ])
+    return sumFields([info.travelLodging, mileageExpense, info.parkingAndTolls])
   }
 
   // Line 3: Add lines 1 and 2 (total moving expenses)

@@ -208,7 +208,10 @@ const PositionEditor = ({
     }
   })
 
-  const handleTabChange = (_event: React.ChangeEvent<unknown>, newValue: number) => {
+  const handleTabChange = (
+    _event: React.ChangeEvent<unknown>,
+    newValue: number
+  ) => {
     setTabValue(newValue)
   }
 
@@ -345,15 +348,15 @@ const PositionEditor = ({
       {/* Buy Tab */}
       <TabPanel value={tabValue} index={0}>
         <FormProvider {...buyMethods}>
-          <form onSubmit={intentionallyFloat(buyMethods.handleSubmit(handleBuySubmit))}>
+          <form
+            onSubmit={intentionallyFloat(
+              buyMethods.handleSubmit(handleBuySubmit)
+            )}
+          >
             <Grid container spacing={2}>
               {isNewPosition && (
                 <Grid item xs={12} sm={6}>
-                  <LabeledInput
-                    label="Symbol"
-                    name="symbol"
-                    required
-                  />
+                  <LabeledInput label="Symbol" name="symbol" required />
                 </Grid>
               )}
               <Grid item xs={12} sm={6}>
@@ -387,19 +390,17 @@ const PositionEditor = ({
                 />
               </Grid>
               <Grid item xs={12}>
-                <LabeledInput
-                  label="Notes"
-                  name="notes"
-                />
+                <LabeledInput label="Notes" name="notes" />
               </Grid>
             </Grid>
 
             {washSaleWarning.wouldTrigger && (
               <Alert severity="warning" className={classes.warningBox}>
                 <Typography variant="body2">
-                  <strong>Potential Wash Sale Warning:</strong> This purchase is within 30 days of
-                  a sale at a loss for the same security. The loss from the previous sale may be
-                  disallowed and added to the cost basis of these shares.
+                  <strong>Potential Wash Sale Warning:</strong> This purchase is
+                  within 30 days of a sale at a loss for the same security. The
+                  loss from the previous sale may be disallowed and added to the
+                  cost basis of these shares.
                 </Typography>
               </Alert>
             )}
@@ -421,7 +422,11 @@ const PositionEditor = ({
         <TabPanel value={tabValue} index={1}>
           {!showLotSelector ? (
             <FormProvider {...sellMethods}>
-              <form onSubmit={intentionallyFloat(sellMethods.handleSubmit(handleSellInitiate))}>
+              <form
+                onSubmit={intentionallyFloat(
+                  sellMethods.handleSubmit(handleSellInitiate)
+                )}
+              >
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
                     <Typography variant="body2" color="textSecondary">
@@ -459,10 +464,7 @@ const PositionEditor = ({
                     />
                   </Grid>
                   <Grid item xs={12}>
-                    <LabeledInput
-                      label="Notes"
-                      name="notes"
-                    />
+                    <LabeledInput label="Notes" name="notes" />
                   </Grid>
                 </Grid>
 
@@ -512,7 +514,11 @@ const PositionEditor = ({
       {!isNewPosition && (
         <TabPanel value={tabValue} index={2}>
           <FormProvider {...dividendMethods}>
-            <form onSubmit={intentionallyFloat(dividendMethods.handleSubmit(handleDividendSubmit))}>
+            <form
+              onSubmit={intentionallyFloat(
+                dividendMethods.handleSubmit(handleDividendSubmit)
+              )}
+            >
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <DatePicker
@@ -564,7 +570,11 @@ const PositionEditor = ({
       {!isNewPosition && (
         <TabPanel value={tabValue} index={3}>
           <FormProvider {...splitMethods}>
-            <form onSubmit={intentionallyFloat(splitMethods.handleSubmit(handleSplitSubmit))}>
+            <form
+              onSubmit={intentionallyFloat(
+                splitMethods.handleSubmit(handleSplitSubmit)
+              )}
+            >
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <DatePicker
@@ -579,7 +589,12 @@ const PositionEditor = ({
                       row
                       name="splitType"
                       value={splitMethods.watch('splitType')}
-                      onChange={(e) => splitMethods.setValue('splitType', e.target.value as 'forward' | 'reverse')}
+                      onChange={(e) =>
+                        splitMethods.setValue(
+                          'splitType',
+                          e.target.value as 'forward' | 'reverse'
+                        )
+                      }
                     >
                       <FormControlLabel
                         value="forward"
@@ -608,15 +623,25 @@ const PositionEditor = ({
                 <Typography variant="body2">
                   {splitMethods.watch('splitType') === 'forward' ? (
                     <>
-                      <strong>Forward Split:</strong> Your {availableShares.toFixed(4)} shares will
-                      become {(availableShares * parseFloat(splitMethods.watch('ratio') || '1')).toFixed(4)} shares.
-                      The cost per share will be divided by {splitMethods.watch('ratio') || '1'}.
+                      <strong>Forward Split:</strong> Your{' '}
+                      {availableShares.toFixed(4)} shares will become{' '}
+                      {(
+                        availableShares *
+                        parseFloat(splitMethods.watch('ratio') || '1')
+                      ).toFixed(4)}{' '}
+                      shares. The cost per share will be divided by{' '}
+                      {splitMethods.watch('ratio') || '1'}.
                     </>
                   ) : (
                     <>
-                      <strong>Reverse Split:</strong> Your {availableShares.toFixed(4)} shares will
-                      become {(availableShares / parseFloat(splitMethods.watch('ratio') || '1')).toFixed(4)} shares.
-                      The cost per share will be multiplied by {splitMethods.watch('ratio') || '1'}.
+                      <strong>Reverse Split:</strong> Your{' '}
+                      {availableShares.toFixed(4)} shares will become{' '}
+                      {(
+                        availableShares /
+                        parseFloat(splitMethods.watch('ratio') || '1')
+                      ).toFixed(4)}{' '}
+                      shares. The cost per share will be multiplied by{' '}
+                      {splitMethods.watch('ratio') || '1'}.
                     </>
                   )}
                 </Typography>
@@ -639,12 +664,17 @@ const PositionEditor = ({
       {!isNewPosition && onSaveMerger && (
         <TabPanel value={tabValue} index={4}>
           <FormProvider {...mergerMethods}>
-            <form onSubmit={intentionallyFloat(mergerMethods.handleSubmit(handleMergerSubmit))}>
+            <form
+              onSubmit={intentionallyFloat(
+                mergerMethods.handleSubmit(handleMergerSubmit)
+              )}
+            >
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <Alert severity="info">
-                    Record a merger or acquisition where your shares of {investment?.symbol} are
-                    converted to shares of another company.
+                    Record a merger or acquisition where your shares of{' '}
+                    {investment?.symbol} are converted to shares of another
+                    company.
                   </Alert>
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -655,11 +685,7 @@ const PositionEditor = ({
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <LabeledInput
-                    label="New Symbol"
-                    name="newSymbol"
-                    required
-                  />
+                  <LabeledInput label="New Symbol" name="newSymbol" required />
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <LabeledInput
@@ -680,11 +706,22 @@ const PositionEditor = ({
 
               <Paper className={classes.splitInfo} elevation={0}>
                 <Typography variant="body2">
-                  Your {availableShares.toFixed(4)} shares of {investment?.symbol} will become{' '}
-                  {(availableShares * parseFloat(mergerMethods.watch('conversionRatio') || '1')).toFixed(4)} shares
-                  of {mergerMethods.watch('newSymbol') || '[NEW SYMBOL]'}.
-                  {parseFloat(mergerMethods.watch('cashReceived') || '0') > 0 && (
-                    <> You will also receive ${mergerMethods.watch('cashReceived')} in cash, which may be taxable.</>
+                  Your {availableShares.toFixed(4)} shares of{' '}
+                  {investment?.symbol} will become{' '}
+                  {(
+                    availableShares *
+                    parseFloat(mergerMethods.watch('conversionRatio') || '1')
+                  ).toFixed(4)}{' '}
+                  shares of {mergerMethods.watch('newSymbol') || '[NEW SYMBOL]'}
+                  .
+                  {parseFloat(mergerMethods.watch('cashReceived') || '0') >
+                    0 && (
+                    <>
+                      {' '}
+                      You will also receive $
+                      {mergerMethods.watch('cashReceived')} in cash, which may
+                      be taxable.
+                    </>
                   )}
                 </Typography>
               </Paper>

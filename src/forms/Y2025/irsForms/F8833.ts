@@ -22,7 +22,7 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 export interface TreatyPosition {
   treatyCountry: string
   treatyArticle: string
-  irsCodeSections: string[]  // IRC sections being overridden
+  irsCodeSections: string[] // IRC sections being overridden
   positionDescription: string
   incomeAmount: number
   taxReductionAmount: number
@@ -43,7 +43,9 @@ export default class F8833 extends F1040Attachment {
   }
 
   treatyPositions = (): TreatyPosition[] => {
-    return (this.f1040.info.treatyPositions as TreatyPosition[] | undefined) ?? []
+    return (
+      (this.f1040.info.treatyPositions as TreatyPosition[] | undefined) ?? []
+    )
   }
 
   // Get the primary treaty position (form handles one at a time)
@@ -71,7 +73,7 @@ export default class F8833 extends F1040Attachment {
   l4c = (): boolean => false
 
   // Line 5: Name of payor (if withholding position)
-  l5 = (): string => ''  // Would need to capture from 1099 data
+  l5 = (): string => '' // Would need to capture from 1099 data
 
   // Line 6: Check if this is a "residence" position under tie-breaker rules
   l6 = (): boolean => this.primaryPosition()?.isResidenceTiebreaker ?? false
@@ -88,11 +90,15 @@ export default class F8833 extends F1040Attachment {
   // Check if additional forms needed for multiple positions
   hasMultiplePositions = (): boolean => this.treatyPositions().length > 1
 
-  additionalPositionsCount = (): number => Math.max(0, this.treatyPositions().length - 1)
+  additionalPositionsCount = (): number =>
+    Math.max(0, this.treatyPositions().length - 1)
 
   // Total tax benefit from all treaty positions
   totalTaxBenefit = (): number => {
-    return this.treatyPositions().reduce((sum, p) => sum + p.taxReductionAmount, 0)
+    return this.treatyPositions().reduce(
+      (sum, p) => sum + p.taxReductionAmount,
+      0
+    )
   }
 
   fields = (): Field[] => [

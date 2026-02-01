@@ -14,7 +14,7 @@ const parameters = {
   socialSecuritySubtraction: {
     ageThreshold: 65,
     maxSubtraction: {
-      [FilingStatus.S]: Infinity,  // Full exclusion if 65+
+      [FilingStatus.S]: Infinity, // Full exclusion if 65+
       [FilingStatus.MFJ]: Infinity,
       [FilingStatus.MFS]: Infinity,
       [FilingStatus.HOH]: Infinity,
@@ -38,7 +38,7 @@ const parameters = {
   // Colorado Child Tax Credit (refundable)
   // 10% of federal CTC for those with income up to certain limits
   childTaxCredit: {
-    percentage: 0.10,
+    percentage: 0.1,
     incomeLimit: {
       [FilingStatus.S]: 75000,
       [FilingStatus.MFJ]: 85000,
@@ -53,7 +53,7 @@ const parameters = {
   earnedIncomeCreditFactor: 0.25,
 
   // Child Care Expenses Credit (20% of federal)
-  childCarePercentage: 0.20
+  childCarePercentage: 0.2
 }
 
 export default parameters

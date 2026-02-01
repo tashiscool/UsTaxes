@@ -72,8 +72,8 @@ export const getTaxYearValue = (year: TaxYear): number => {
  */
 export const getValidPriorYears = (currentYear: TaxYear): TaxYear[] => {
   const currentYearValue = getTaxYearValue(currentYear)
-  const allYears = Object.keys(TaxYears).filter(
-    (key) => isNaN(Number(key))
+  const allYears = Object.keys(TaxYears).filter((key) =>
+    isNaN(Number(key))
   ) as TaxYear[]
 
   return allYears.filter((year) => getTaxYearValue(year) < currentYearValue)
@@ -82,9 +82,7 @@ export const getValidPriorYears = (currentYear: TaxYear): TaxYear[] => {
 /**
  * Validates that the JSON data matches the Information interface structure
  */
-export const validatePriorYearData = (
-  data: unknown
-): ValidationResult => {
+export const validatePriorYearData = (data: unknown): ValidationResult => {
   const errors: string[] = []
   const warnings: string[] = []
 
@@ -151,7 +149,9 @@ export const validatePriorYearData = (
     }
   } catch (e) {
     // Schema validation failed, but we can still try to extract data
-    warnings.push('Full schema validation failed, but partial import may be possible')
+    warnings.push(
+      'Full schema validation failed, but partial import may be possible'
+    )
   }
 
   return {
@@ -219,14 +219,14 @@ export const extractCarryForwardData = (
   }
 
   // Extract dependents
-  const dependents: DependentDateString[] = (info.taxPayer.dependents ?? []).map(
-    (dep) => ({
-      ...personToDateString(dep as Dependent<Date | string>),
-      relationship: dep.relationship,
-      qualifyingInfo: dep.qualifyingInfo,
-      role: PersonRole.DEPENDENT
-    })
-  )
+  const dependents: DependentDateString[] = (
+    info.taxPayer.dependents ?? []
+  ).map((dep) => ({
+    ...personToDateString(dep as Dependent<Date | string>),
+    relationship: dep.relationship,
+    qualifyingInfo: dep.qualifyingInfo,
+    role: PersonRole.DEPENDENT
+  }))
 
   return {
     primaryPerson,
@@ -277,26 +277,26 @@ export const createImportPreview = (
   }
 
   // Track what's being skipped (dollar amounts)
-  const w2Count = sourceData.w2s?.length ?? 0
+  const w2Count = sourceData.w2s.length ?? 0
   if (w2Count > 0) {
     fieldsSkipped.push(`W2 Income Amounts (${w2Count} form(s))`)
   }
-  const f1099Count = sourceData.f1099s?.length ?? 0
+  const f1099Count = sourceData.f1099s.length ?? 0
   if (f1099Count > 0) {
     fieldsSkipped.push(`1099 Income (${f1099Count} form(s))`)
   }
-  const estimatedTaxCount = sourceData.estimatedTaxes?.length ?? 0
+  const estimatedTaxCount = sourceData.estimatedTaxes.length ?? 0
   if (estimatedTaxCount > 0) {
     fieldsSkipped.push(`Estimated Tax Payments (${estimatedTaxCount})`)
   }
   if (sourceData.itemizedDeductions) {
     fieldsSkipped.push('Itemized Deduction Amounts')
   }
-  const hsaCount = sourceData.healthSavingsAccounts?.length ?? 0
+  const hsaCount = sourceData.healthSavingsAccounts.length ?? 0
   if (hsaCount > 0) {
     fieldsSkipped.push(`HSA Contribution Amounts (${hsaCount})`)
   }
-  const iraCount = sourceData.individualRetirementArrangements?.length ?? 0
+  const iraCount = sourceData.individualRetirementArrangements.length ?? 0
   if (iraCount > 0) {
     fieldsSkipped.push(`IRA Information (${iraCount})`)
   }
@@ -375,7 +375,8 @@ export const parsePriorYearJson = (
   jsonString: string
 ): { data: InformationDateString | null; error: string | null } => {
   try {
-    const parsed = JSON.parse(jsonString)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const parsed: Record<string, unknown> = JSON.parse(jsonString)
 
     // Handle case where the JSON might be wrapped in a year key
     // e.g., { "Y2024": { ... } } or just { ... }
@@ -391,7 +392,7 @@ export const parsePriorYearJson = (
       }
     }
 
-    return { data: data as unknown as InformationDateString, error: null }
+    return { data: data  as InformationDateString, error: null }
   } catch (e) {
     return {
       data: null,
@@ -403,14 +404,15 @@ export const parsePriorYearJson = (
 /**
  * Detects which tax year the data belongs to based on content or metadata
  */
-export const detectSourceYear = (
-  jsonString: string
-): TaxYear | null => {
+export const detectSourceYear = (jsonString: string): TaxYear | null => {
   try {
-    const parsed = JSON.parse(jsonString)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const parsed: Record<string, unknown> = JSON.parse(jsonString)
 
     // Check if this is a full state export with year keys
-    const yearKeys = Object.keys(TaxYears).filter((k) => isNaN(Number(k))) as TaxYear[]
+    const yearKeys = Object.keys(TaxYears).filter((k) =>
+      isNaN(Number(k))
+    ) as TaxYear[]
 
     // Find the year with the most data
     let bestYear: TaxYear | null = null
@@ -424,7 +426,8 @@ export const detectSourceYear = (
         // Score based on populated fields
         if (yearData.taxPayer) score += 10
         if (Array.isArray(yearData.w2s) && yearData.w2s.length > 0) score += 5
-        if (Array.isArray(yearData.f1099s) && yearData.f1099s.length > 0) score += 5
+        if (Array.isArray(yearData.f1099s) && yearData.f1099s.length > 0)
+          score += 5
         if (yearData.refund) score += 3
 
         if (score > bestScore) {

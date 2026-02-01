@@ -31,11 +31,10 @@ export class SC1040 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -64,7 +63,10 @@ export class SC1040 extends Form {
   l7 = (): number | undefined => {
     if (this.getPrimaryAge() >= 65) {
       const retirementIncome = this.f1040.l5b() ?? 0
-      return Math.min(retirementIncome, parameters.retirementDeduction.maxAmount)
+      return Math.min(
+        retirementIncome,
+        parameters.retirementDeduction.maxAmount
+      )
     }
     return undefined
   }
@@ -76,9 +78,8 @@ export class SC1040 extends Form {
   l9 = (): number | undefined => undefined
 
   // Line 10: Total subtractions
-  l10 = (): number => sumFields([
-    this.l5(), this.l6(), this.l7(), this.l8(), this.l9()
-  ])
+  l10 = (): number =>
+    sumFields([this.l5(), this.l6(), this.l7(), this.l8(), this.l9()])
 
   // Line 11: SC adjusted gross income
   l11 = (): number => Math.max(0, this.l1() + this.l4() - this.l10())
@@ -134,7 +135,8 @@ export class SC1040 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -149,7 +151,9 @@ export class SC1040 extends Form {
     if (status === FilingStatus.MFJ) {
       // Credit is lesser of $420 or 1% of lesser-earning spouse's income
       const spouseIncome = this.f1040.l1a() ?? 0
-      const credit = Math.round(spouseIncome * parameters.twoWageEarnerCredit.percentage)
+      const credit = Math.round(
+        spouseIncome * parameters.twoWageEarnerCredit.percentage
+      )
       return Math.min(credit, parameters.twoWageEarnerCredit.maxCredit)
     }
     return undefined
@@ -168,10 +172,8 @@ export class SC1040 extends Form {
   l20 = (): number | undefined => undefined
 
   // Line 21: Total credits (limited to tax)
-  l21 = (): number => Math.min(
-    sumFields([this.l18(), this.l19(), this.l20()]),
-    this.l17()
-  )
+  l21 = (): number =>
+    Math.min(sumFields([this.l18(), this.l19(), this.l20()]), this.l17())
 
   // Line 22: Tax after credits
   l22 = (): number => Math.max(0, this.l17() - this.l21())
@@ -203,15 +205,36 @@ export class SC1040 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l1(), this.l2(), this.l3(), this.l4(),
-    this.l5(), this.l6(), this.l7(), this.l8(), this.l9(), this.l10(),
-    this.l11(), this.l12(), this.l13(), this.l14(), this.l15(), this.l16(),
-    this.l17(), this.l18(), this.l19(), this.l20(), this.l21(), this.l22(),
-    this.l23(), this.l24(), this.l25(),
-    this.l26(), this.l27()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l1(),
+    this.l2(),
+    this.l3(),
+    this.l4(),
+    this.l5(),
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23(),
+    this.l24(),
+    this.l25(),
+    this.l26(),
+    this.l27()
   ]
 }
 

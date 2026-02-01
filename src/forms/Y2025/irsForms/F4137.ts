@@ -74,7 +74,7 @@ export default class F4137 extends F1040Attachment {
   l6 = (): number => {
     // Social security tips would be included in ssWages for most W-2s
     // This represents tips already subject to SS tax
-    return 0  // Would need explicit tip tracking in W-2 data
+    return 0 // Would need explicit tip tracking in W-2 data
   }
 
   // Line 7: Maximum wages subject to social security tax
@@ -103,7 +103,7 @@ export default class F4137 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1(),
     this.l2(),
     this.l3(),

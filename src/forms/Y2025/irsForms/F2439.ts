@@ -84,7 +84,7 @@ export default class F2439 extends F1040Attachment {
     // For multiple 2439s, we aggregate the totals
     return [
       this.f1040.namesString(),
-      this.f1040.info.taxPayer.primaryPerson?.ssid,
+      this.f1040.info.taxPayer.primaryPerson.ssid,
       // Aggregate amounts
       this.totalUndistributedLTCG(),
       this.totalUnrecapturedSection1250(),

@@ -112,7 +112,7 @@ export class StLouisEarningsTax extends Form {
       // Non-residents only pay on wages earned in St. Louis
       return w2s
         .filter((w2) => {
-          const city = w2.employer?.address?.city?.toLowerCase()
+          const city = w2.employer?.address?.city.toLowerCase()
           return (
             city === 'st. louis' ||
             city === 'st louis' ||
@@ -262,7 +262,9 @@ export class StLouisEarningsTax extends Form {
    */
   calculateLatePenalty = (daysLate: number): number => {
     if (daysLate <= 0) return 0
-    return Math.round(this.amountOwed() * parameters.penalties.lateFilingPenalty)
+    return Math.round(
+      this.amountOwed() * parameters.penalties.lateFilingPenalty
+    )
   }
 
   fields = (): Field[] => [

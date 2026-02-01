@@ -132,69 +132,114 @@ export default class Schedule990A extends F1040Attachment {
   isChurch = (): boolean => this.organizationType() === 'church'
   isSchool = (): boolean => this.organizationType() === 'school'
   isHospital = (): boolean => this.organizationType() === 'hospital'
-  isMedicalResearch = (): boolean => this.organizationType() === 'medicalResearch'
-  isGovernmentSupport = (): boolean => this.organizationType() === 'governmentSupport'
+  isMedicalResearch = (): boolean =>
+    this.organizationType() === 'medicalResearch'
+  isGovernmentSupport = (): boolean =>
+    this.organizationType() === 'governmentSupport'
   is509a1 = (): boolean => this.organizationType() === '509a1'
   is509a2 = (): boolean => this.organizationType() === '509a2'
   isSupportingOrg = (): boolean => {
     const type = this.organizationType()
-    return type === 'supportingTypeI' || type === 'supportingTypeII' || type === 'supportingTypeIII'
+    return (
+      type === 'supportingTypeI' ||
+      type === 'supportingTypeII' ||
+      type === 'supportingTypeIII'
+    )
   }
 
   // Part II - Support Schedule for 509(a)(1) Organizations
 
-  publicSupport = (): PublicSupportData | undefined => this.schedule990AInfo()?.publicSupport
+  publicSupport = (): PublicSupportData | undefined =>
+    this.schedule990AInfo()?.publicSupport
 
   // Total gifts/grants/contributions (5-year total)
   totalGifts = (): number => {
     const ps = this.publicSupport()
     if (!ps) return 0
-    return sumFields([ps.giftsYear1, ps.giftsYear2, ps.giftsYear3, ps.giftsYear4, ps.giftsYear5])
+    return sumFields([
+      ps.giftsYear1,
+      ps.giftsYear2,
+      ps.giftsYear3,
+      ps.giftsYear4,
+      ps.giftsYear5
+    ])
   }
 
   // Total membership fees (5-year total)
   totalMembershipFees = (): number => {
     const ps = this.publicSupport()
     if (!ps) return 0
-    return sumFields([ps.membershipFeesYear1, ps.membershipFeesYear2, ps.membershipFeesYear3, ps.membershipFeesYear4, ps.membershipFeesYear5])
+    return sumFields([
+      ps.membershipFeesYear1,
+      ps.membershipFeesYear2,
+      ps.membershipFeesYear3,
+      ps.membershipFeesYear4,
+      ps.membershipFeesYear5
+    ])
   }
 
   // Total tax revenues (5-year total)
   totalTaxRevenues = (): number => {
     const ps = this.publicSupport()
     if (!ps) return 0
-    return sumFields([ps.taxRevenuesYear1, ps.taxRevenuesYear2, ps.taxRevenuesYear3, ps.taxRevenuesYear4, ps.taxRevenuesYear5])
+    return sumFields([
+      ps.taxRevenuesYear1,
+      ps.taxRevenuesYear2,
+      ps.taxRevenuesYear3,
+      ps.taxRevenuesYear4,
+      ps.taxRevenuesYear5
+    ])
   }
 
   // Total government services (5-year total)
   totalGovtServices = (): number => {
     const ps = this.publicSupport()
     if (!ps) return 0
-    return sumFields([ps.govtServicesYear1, ps.govtServicesYear2, ps.govtServicesYear3, ps.govtServicesYear4, ps.govtServicesYear5])
+    return sumFields([
+      ps.govtServicesYear1,
+      ps.govtServicesYear2,
+      ps.govtServicesYear3,
+      ps.govtServicesYear4,
+      ps.govtServicesYear5
+    ])
   }
 
   // Total public support
   totalPublicSupport = (): number => {
-    return sumFields([
-      this.totalGifts(),
-      this.totalMembershipFees(),
-      this.totalTaxRevenues(),
-      this.totalGovtServices()
-    ]) - (this.publicSupport()?.largeContributorExclusions ?? 0)
+    return (
+      sumFields([
+        this.totalGifts(),
+        this.totalMembershipFees(),
+        this.totalTaxRevenues(),
+        this.totalGovtServices()
+      ]) - (this.publicSupport()?.largeContributorExclusions ?? 0)
+    )
   }
 
   // Total investment income (5-year total)
   totalInvestmentIncome = (): number => {
     const ps = this.publicSupport()
     if (!ps) return 0
-    return sumFields([ps.investmentIncomeYear1, ps.investmentIncomeYear2, ps.investmentIncomeYear3, ps.investmentIncomeYear4, ps.investmentIncomeYear5])
+    return sumFields([
+      ps.investmentIncomeYear1,
+      ps.investmentIncomeYear2,
+      ps.investmentIncomeYear3,
+      ps.investmentIncomeYear4,
+      ps.investmentIncomeYear5
+    ])
   }
 
   // Total other income (5-year total)
   totalOtherIncome = (): number => {
     const ps = this.publicSupport()
     if (!ps) return 0
-    return sumFields([ps.otherIncomeYear1, ps.otherIncomeYear2, ps.otherIncomeYear3, ps.otherIncomeYear4, ps.otherIncomeYear5])
+    return sumFields([
+      ps.otherIncomeYear1,
+      ps.otherIncomeYear2,
+      ps.otherIncomeYear3,
+      ps.otherIncomeYear4,
+      ps.otherIncomeYear5
+    ])
   }
 
   // Total support (for ratio calculation)
@@ -213,7 +258,7 @@ export default class Schedule990A extends F1040Attachment {
   publicSupportRatio = (): number => {
     const total = this.totalSupport()
     if (total === 0) return 0
-    return Math.round((this.totalPublicSupport() / total) * 10000) / 100  // Returns percentage with 2 decimal places
+    return Math.round((this.totalPublicSupport() / total) * 10000) / 100 // Returns percentage with 2 decimal places
   }
 
   // Meets 33 1/3% test
@@ -223,19 +268,27 @@ export default class Schedule990A extends F1040Attachment {
 
   // Meets 10% facts and circumstances test
   meets10PercentTest = (): boolean => {
-    return this.publicSupportRatio() >= 10 && (this.schedule990AInfo()?.factsAndCircumstancesTest ?? false)
+    return (
+      this.publicSupportRatio() >= 10 &&
+      (this.schedule990AInfo()?.factsAndCircumstancesTest ?? false)
+    )
   }
 
   // Qualifies as public charity
   qualifiesAsPublicCharity = (): boolean => {
-    if (this.isChurch() || this.isSchool() || this.isHospital() || this.isGovernmentSupport()) {
+    if (
+      this.isChurch() ||
+      this.isSchool() ||
+      this.isHospital() ||
+      this.isGovernmentSupport()
+    ) {
       return true
     }
     if (this.is509a1() || this.is509a2()) {
       return this.meets33PercentTest() || this.meets10PercentTest()
     }
     if (this.isSupportingOrg()) {
-      return true  // Supporting org status determined differently
+      return true // Supporting org status determined differently
     }
     return false
   }

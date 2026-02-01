@@ -27,7 +27,7 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
 
 export default class F1065 extends PartnershipForm {
   tag: FormTag = 'f1065'
-  sequenceIndex = 0  // Main return
+  sequenceIndex = 0 // Main return
 
   data: Form1065Data
 
@@ -69,9 +69,7 @@ export default class F1065 extends PartnershipForm {
 
   // Line 8: Total income (loss) (add lines 3 through 7)
   l8 = (): number => {
-    return sumFields([
-      this.l3(), this.l4(), this.l5(), this.l6(), this.l7()
-    ])
+    return sumFields([this.l3(), this.l4(), this.l5(), this.l6(), this.l7()])
   }
 
   // =========================================================================
@@ -123,9 +121,18 @@ export default class F1065 extends PartnershipForm {
   // Line 21: Total deductions (add lines 9 through 20)
   l21 = (): number => {
     return sumFields([
-      this.l9(), this.l10(), this.l11(), this.l12(), this.l13(),
-      this.l14(), this.l15(), this.l16c(), this.l17(), this.l18(),
-      this.l19(), this.l20()
+      this.l9(),
+      this.l10(),
+      this.l11(),
+      this.l12(),
+      this.l13(),
+      this.l14(),
+      this.l15(),
+      this.l16c(),
+      this.l17(),
+      this.l18(),
+      this.l19(),
+      this.l20()
     ])
   }
 
@@ -142,7 +149,7 @@ export default class F1065 extends PartnershipForm {
   // Question 2: At any time during the tax year, was any partner in the partnership
   // a disregarded entity, a partnership, a trust, an S corporation, etc.?
   hasEntityPartners = (): boolean => {
-    return this.data.partners.some(p => p.tinType === 'EIN')
+    return this.data.partners.some((p) => p.tinType === 'EIN')
   }
 
   // Question 3: At the end of the tax year:
@@ -187,9 +194,9 @@ export default class F1065 extends PartnershipForm {
   kL13a = (): number => this.scheduleK().otherDeductions
 
   // Self-Employment
-  kL14a = (): number => this.scheduleK().netEarningsSE  // General partners
-  kL14b = (): number => 0  // Gross farming/fishing income
-  kL14c = (): number => 0  // Gross non-farm income
+  kL14a = (): number => this.scheduleK().netEarningsSE // General partners
+  kL14b = (): number => 0 // Gross farming/fishing income
+  kL14c = (): number => 0 // Gross non-farm income
 
   // Credits
   kL15a = (): number => this.scheduleK().lowIncomeHousingCredit
@@ -228,7 +235,10 @@ export default class F1065 extends PartnershipForm {
 
   // Line 1: Balance at beginning of year
   capitalBeginning = (): number => {
-    return this.data.partners.reduce((sum, p) => sum + p.beginningCapitalAccount, 0)
+    return this.data.partners.reduce(
+      (sum, p) => sum + p.beginningCapitalAccount,
+      0
+    )
   }
 
   // Line 2: Capital contributed during the year
@@ -246,24 +256,35 @@ export default class F1065 extends PartnershipForm {
 
   // Line 5: Add lines 1 through 4
   l5Total = (): number => {
-    return this.capitalBeginning() + this.capitalContributed() +
-           this.netIncome() + this.otherIncreases()
+    return (
+      this.capitalBeginning() +
+      this.capitalContributed() +
+      this.netIncome() +
+      this.otherIncreases()
+    )
   }
 
   // Line 6: Distributions
   totalDistributions = (): number => {
-    return this.data.partners.reduce((sum, p) => sum + p.withdrawalsDistributions, 0)
+    return this.data.partners.reduce(
+      (sum, p) => sum + p.withdrawalsDistributions,
+      0
+    )
   }
 
   // Line 7: Other decreases
   otherDecreases = (): number => 0
 
   // Line 8: Add lines 6 and 7
-  totalDecreases = (): number => this.totalDistributions() + this.otherDecreases()
+  totalDecreases = (): number =>
+    this.totalDistributions() + this.otherDecreases()
 
   // Line 9: Balance at end of year (line 5 minus line 8)
   capitalEnding = (): number => {
-    return this.data.partners.reduce((sum, p) => sum + p.endingCapitalAccount, 0)
+    return this.data.partners.reduce(
+      (sum, p) => sum + p.endingCapitalAccount,
+      0
+    )
   }
 
   // =========================================================================
@@ -298,9 +319,15 @@ export default class F1065 extends PartnershipForm {
       unrecaptured1250Gain: Math.round(k.unrecaptured1250Gain * profitPct),
       net1231Gain: allocateAmount(k.net1231Gain),
       otherIncome: allocateAmount(k.otherIncome),
-      section179Deduction: Math.round((partner.share179Deduction ?? k.section179Deduction * profitPct)),
-      otherDeductions: Math.round((partner.shareOtherDeductions ?? k.otherDeductions * lossPct)),
-      charitableContributions: Math.round(k.charitableContributions * profitPct),
+      section179Deduction: Math.round(
+        partner.share179Deduction ?? k.section179Deduction * profitPct
+      ),
+      otherDeductions: Math.round(
+        partner.shareOtherDeductions ?? k.otherDeductions * lossPct
+      ),
+      charitableContributions: Math.round(
+        k.charitableContributions * profitPct
+      ),
       lowIncomeHousingCredit: Math.round(k.lowIncomeHousingCredit * profitPct),
       otherCredits: Math.round(k.otherCredits * profitPct),
       // SE earnings only for general partners
@@ -321,11 +348,16 @@ export default class F1065 extends PartnershipForm {
   // =========================================================================
 
   totalRecourseDebt = (): number => this.data.liabilitiesAtYearEnd.recourse
-  totalNonrecourseDebt = (): number => this.data.liabilitiesAtYearEnd.nonrecourse
-  totalQualifiedNonrecourse = (): number => this.data.liabilitiesAtYearEnd.qualifiedNonrecourse
+  totalNonrecourseDebt = (): number =>
+    this.data.liabilitiesAtYearEnd.nonrecourse
+  totalQualifiedNonrecourse = (): number =>
+    this.data.liabilitiesAtYearEnd.qualifiedNonrecourse
   totalLiabilities = (): number => {
-    return this.totalRecourseDebt() + this.totalNonrecourseDebt() +
-           this.totalQualifiedNonrecourse()
+    return (
+      this.totalRecourseDebt() +
+      this.totalNonrecourseDebt() +
+      this.totalQualifiedNonrecourse()
+    )
   }
 
   // =========================================================================
@@ -338,7 +370,9 @@ export default class F1065 extends PartnershipForm {
     this.ein(),
     this.address(),
     this.addressLine(),
-    this.data.entity.dateIncorporated ? this.formatDate(this.data.entity.dateIncorporated) : '',
+    this.data.entity.dateIncorporated
+      ? this.formatDate(this.data.entity.dateIncorporated)
+      : '',
     this.data.entity.totalAssets,
     // Accounting method checkboxes
     this.data.entity.accountingMethod === 'cash',

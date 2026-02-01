@@ -68,7 +68,10 @@ const KRAKEN_TRADES_COLUMNS = {
 /**
  * Maps Kraken transaction types to our internal types
  */
-function mapKrakenType(krakenType: string, subtype?: string): CryptoTransactionType {
+function mapKrakenType(
+  krakenType: string,
+  subtype?: string
+): CryptoTransactionType {
   const type = krakenType.toLowerCase().trim()
   const sub = subtype?.toLowerCase().trim() || ''
 
@@ -124,16 +127,16 @@ function normalizeKrakenAsset(asset: string): string {
 
   // Common Kraken naming differences
   const krakenAliases: Record<string, string> = {
-    'XBT': 'BTC',
-    'XXBT': 'BTC',
-    'XETH': 'ETH',
-    'XXRP': 'XRP',
-    'XLTC': 'LTC',
-    'XXLM': 'XLM',
-    'XXDG': 'DOGE',
-    'ZUSD': 'USD',
-    'ZEUR': 'EUR',
-    'ZGBP': 'GBP'
+    XBT: 'BTC',
+    XXBT: 'BTC',
+    XETH: 'ETH',
+    XXRP: 'XRP',
+    XLTC: 'LTC',
+    XXLM: 'XLM',
+    XXDG: 'DOGE',
+    ZUSD: 'USD',
+    ZEUR: 'EUR',
+    ZGBP: 'GBP'
   }
 
   return krakenAliases[normalized] || normalizeAssetSymbol(normalized)
@@ -171,7 +174,7 @@ function parseKrakenTimestamp(timestamp: string): Date | null {
  */
 function findColumn(headers: string[], possibleNames: string[]): number {
   for (const name of possibleNames) {
-    const index = headers.findIndex(h => h.includes(name))
+    const index = headers.findIndex((h) => h.includes(name))
     if (index >= 0) return index
   }
   return -1
@@ -188,7 +191,7 @@ function isSellPair(pair: string, tradeType: string): boolean {
   // Check if selling to fiat/stablecoin
   const quoteAsset = pair.slice(-3).toUpperCase()
   const stablecoins = ['USD', 'EUR', 'GBP', 'USDT', 'USDC', 'DAI', 'UST']
-  return stablecoins.some(s => quoteAsset.includes(s))
+  return stablecoins.some((s) => quoteAsset.includes(s))
 }
 
 export class KrakenParser extends BaseBrokerageParser {
@@ -243,7 +246,11 @@ export class KrakenParser extends BaseBrokerageParser {
   private detectExportType(headers: string[]): 'ledger' | 'trades' {
     const headerLine = headers.join(' ').toLowerCase()
 
-    if (headerLine.includes('pair') && headerLine.includes('price') && headerLine.includes('vol')) {
+    if (
+      headerLine.includes('pair') &&
+      headerLine.includes('price') &&
+      headerLine.includes('vol')
+    ) {
       return 'trades'
     }
 
@@ -281,16 +288,32 @@ export class KrakenParser extends BaseBrokerageParser {
 
     // Validate required columns
     if (columnMap.time < 0) {
-      errors.push({ row: headerRowIndex, column: 'time', message: 'Could not find Time column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'time',
+        message: 'Could not find Time column'
+      })
     }
     if (columnMap.type < 0) {
-      errors.push({ row: headerRowIndex, column: 'type', message: 'Could not find Type column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'type',
+        message: 'Could not find Type column'
+      })
     }
     if (columnMap.asset < 0) {
-      errors.push({ row: headerRowIndex, column: 'asset', message: 'Could not find Asset column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'asset',
+        message: 'Could not find Asset column'
+      })
     }
     if (columnMap.amount < 0) {
-      errors.push({ row: headerRowIndex, column: 'amount', message: 'Could not find Amount column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'amount',
+        message: 'Could not find Amount column'
+      })
     }
 
     if (errors.length > 0) {
@@ -301,13 +324,14 @@ export class KrakenParser extends BaseBrokerageParser {
     for (let i = headerRowIndex + 1; i < rows.length; i++) {
       const row = rows[i]
 
-      if (row.length === 0 || row.every(c => c === '')) continue
+      if (row.length === 0 || row.every((c) => c === '')) continue
 
       try {
         const txid = columnMap.txid >= 0 ? row[columnMap.txid] : `kraken-${i}`
         const timeStr = row[columnMap.time]
         const typeStr = row[columnMap.type]
-        const subtype = columnMap.subtype >= 0 ? row[columnMap.subtype] : undefined
+        const subtype =
+          columnMap.subtype >= 0 ? row[columnMap.subtype] : undefined
         const asset = row[columnMap.asset]
         const amountStr = row[columnMap.amount]
         const feeStr = columnMap.fee >= 0 ? row[columnMap.fee] : '0'
@@ -316,7 +340,11 @@ export class KrakenParser extends BaseBrokerageParser {
 
         const timestamp = parseKrakenTimestamp(timeStr)
         if (!timestamp) {
-          errors.push({ row: i + 1, column: 'time', message: `Invalid timestamp: ${timeStr}` })
+          errors.push({
+            row: i + 1,
+            column: 'time',
+            message: `Invalid timestamp: ${timeStr}`
+          })
           continue
         }
 
@@ -329,8 +357,10 @@ export class KrakenParser extends BaseBrokerageParser {
 
         // Skip fiat currencies for most transaction types
         const fiatCurrencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF']
-        if (fiatCurrencies.includes(normalizedAsset) &&
-            transactionType !== 'income') {
+        if (
+          fiatCurrencies.includes(normalizedAsset) &&
+          transactionType !== 'income'
+        ) {
           continue
         }
 
@@ -361,10 +391,19 @@ export class KrakenParser extends BaseBrokerageParser {
 
         // Add income tracking
         if (transactionType === 'income') {
-          warnings.push(`Row ${i + 1}: ${normalizedAsset} staking reward of ${Math.abs(amount)} units should be reported as ordinary income`)
+          warnings.push(
+            `Row ${i + 1}: ${normalizedAsset} staking reward of ${Math.abs(
+              amount
+            )} units should be reported as ordinary income`
+          )
         }
       } catch (e) {
-        errors.push({ row: i + 1, message: `Error parsing row: ${e instanceof Error ? e.message : String(e)}` })
+        errors.push({
+          row: i + 1,
+          message: `Error parsing row: ${
+            e instanceof Error ? e.message : String(e)
+          }`
+        })
       }
     }
 
@@ -401,13 +440,25 @@ export class KrakenParser extends BaseBrokerageParser {
 
     // Validate required columns
     if (columnMap.pair < 0) {
-      errors.push({ row: headerRowIndex, column: 'pair', message: 'Could not find Pair column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'pair',
+        message: 'Could not find Pair column'
+      })
     }
     if (columnMap.time < 0) {
-      errors.push({ row: headerRowIndex, column: 'time', message: 'Could not find Time column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'time',
+        message: 'Could not find Time column'
+      })
     }
     if (columnMap.vol < 0) {
-      errors.push({ row: headerRowIndex, column: 'vol', message: 'Could not find Volume column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'vol',
+        message: 'Could not find Volume column'
+      })
     }
 
     if (errors.length > 0) {
@@ -418,10 +469,11 @@ export class KrakenParser extends BaseBrokerageParser {
     for (let i = headerRowIndex + 1; i < rows.length; i++) {
       const row = rows[i]
 
-      if (row.length === 0 || row.every(c => c === '')) continue
+      if (row.length === 0 || row.every((c) => c === '')) continue
 
       try {
-        const txid = columnMap.txid >= 0 ? row[columnMap.txid] : `kraken-trade-${i}`
+        const txid =
+          columnMap.txid >= 0 ? row[columnMap.txid] : `kraken-trade-${i}`
         const pair = row[columnMap.pair]
         const timeStr = row[columnMap.time]
         const typeStr = columnMap.type >= 0 ? row[columnMap.type] : ''
@@ -434,7 +486,11 @@ export class KrakenParser extends BaseBrokerageParser {
 
         const timestamp = parseKrakenTimestamp(timeStr)
         if (!timestamp) {
-          errors.push({ row: i + 1, column: 'time', message: `Invalid timestamp: ${timeStr}` })
+          errors.push({
+            row: i + 1,
+            column: 'time',
+            message: `Invalid timestamp: ${timeStr}`
+          })
           continue
         }
 
@@ -447,7 +503,9 @@ export class KrakenParser extends BaseBrokerageParser {
 
         // Parse trading pair (e.g., XBTUSDT, ETHEUR)
         // Kraken pairs are usually BASE+QUOTE without separator
-        const baseAsset = normalizeKrakenAsset(pair.slice(0, Math.ceil(pair.length / 2)))
+        const baseAsset = normalizeKrakenAsset(
+          pair.slice(0, Math.ceil(pair.length / 2))
+        )
         const isSell = isSellPair(pair, typeStr)
 
         const transaction: CryptoTransaction = {
@@ -457,7 +515,7 @@ export class KrakenParser extends BaseBrokerageParser {
           asset: baseAsset,
           quantity: volume,
           pricePerUnit: price,
-          totalValue: cost || (price * volume),
+          totalValue: cost || price * volume,
           fees: fee,
           exchange: 'Kraken',
           rawData: row
@@ -465,7 +523,12 @@ export class KrakenParser extends BaseBrokerageParser {
 
         transactions.push(transaction)
       } catch (e) {
-        errors.push({ row: i + 1, message: `Error parsing row: ${e instanceof Error ? e.message : String(e)}` })
+        errors.push({
+          row: i + 1,
+          message: `Error parsing row: ${
+            e instanceof Error ? e.message : String(e)
+          }`
+        })
       }
     }
 
@@ -492,17 +555,21 @@ export class KrakenParser extends BaseBrokerageParser {
     // Find header row
     let headerRowIndex = 0
     for (let i = 0; i < Math.min(rows.length, 10); i++) {
-      const rowLower = rows[i].map(c => c.toLowerCase())
+      const rowLower = rows[i].map((c) => c.toLowerCase())
       if (
-        rowLower.some(c => c.includes('txid') || c.includes('time')) &&
-        rowLower.some(c => c.includes('type') || c.includes('pair') || c.includes('asset'))
+        rowLower.some((c) => c.includes('txid') || c.includes('time')) &&
+        rowLower.some(
+          (c) => c.includes('type') || c.includes('pair') || c.includes('asset')
+        )
       ) {
         headerRowIndex = i
         break
       }
     }
 
-    const actualHeaders = rows[headerRowIndex].map(h => h.toLowerCase().trim())
+    const actualHeaders = rows[headerRowIndex].map((h) =>
+      h.toLowerCase().trim()
+    )
     const exportType = this.detectExportType(actualHeaders)
 
     if (exportType === 'trades') {
@@ -516,21 +583,30 @@ export class KrakenParser extends BaseBrokerageParser {
    * Convert crypto transactions to brokerage transactions for Form 8949
    */
   parse(content: string): ParseResult {
-    const { transactions: cryptoTxs, errors, warnings } = this.parseCryptoTransactions(content)
+    const {
+      transactions: cryptoTxs,
+      errors,
+      warnings
+    } = this.parseCryptoTransactions(content)
     const brokerageTransactions: BrokerageTransaction[] = []
 
     // Reset holdings
     this.holdings.clear()
 
     // Sort by timestamp
-    const sortedTxs = [...cryptoTxs].sort((a, b) =>
-      a.timestamp.getTime() - b.timestamp.getTime()
+    const sortedTxs = [...cryptoTxs].sort(
+      (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
     )
 
     // Process transactions
     for (const tx of sortedTxs) {
-      if (tx.type === 'buy' || tx.type === 'receive' || tx.type === 'income' ||
-          tx.type === 'airdrop' || tx.type === 'mining') {
+      if (
+        tx.type === 'buy' ||
+        tx.type === 'receive' ||
+        tx.type === 'income' ||
+        tx.type === 'airdrop' ||
+        tx.type === 'mining'
+      ) {
         // Add to holdings
         const costBasis = tx.type === 'receive' ? 0 : tx.totalValue
         const holding: CryptoHolding = {
@@ -562,7 +638,9 @@ export class KrakenParser extends BaseBrokerageParser {
 
         // Create Form 8949 entries
         for (const lot of result.lotsUsed) {
-          const proceeds = (tx.pricePerUnit * lot.quantitySold) - (tx.fees * (lot.quantitySold / tx.quantity))
+          const proceeds =
+            tx.pricePerUnit * lot.quantitySold -
+            tx.fees * (lot.quantitySold / tx.quantity)
           const gainLoss = proceeds - lot.costBasis
 
           const brokerageTx: BrokerageTransaction = {
@@ -581,7 +659,9 @@ export class KrakenParser extends BaseBrokerageParser {
           brokerageTransactions.push(brokerageTx)
         }
       } else if (tx.type === 'send') {
-        warnings.push(`Row: ${tx.asset} withdrawal of ${tx.quantity} units - verify if this is a taxable event`)
+        warnings.push(
+          `Row: ${tx.asset} withdrawal of ${tx.quantity} units - verify if this is a taxable event`
+        )
       }
     }
 

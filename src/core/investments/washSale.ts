@@ -41,7 +41,7 @@ export const findReplacementPurchases = (
   const saleDate = saleTransaction.date
   const symbol = saleTransaction.symbol
 
-  return allTransactions.filter(t => {
+  return allTransactions.filter((t) => {
     // Must be a buy or dividend reinvestment
     if (
       t.transactionType !== StockTransactionType.Buy &&
@@ -73,13 +73,19 @@ export const findReplacementLots = (
   allTransactions: StockTransaction<Date>[],
   lots: TaxLot<Date>[]
 ): TaxLot<Date>[] => {
-  const replacementPurchases = findReplacementPurchases(saleTransaction, allTransactions)
-  const replacementTransactionIds = new Set(replacementPurchases.map(t => t.id))
+  const replacementPurchases = findReplacementPurchases(
+    saleTransaction,
+    allTransactions
+  )
+  const replacementTransactionIds = new Set(
+    replacementPurchases.map((t) => t.id)
+  )
 
-  return lots.filter(lot =>
-    lot.sourceTransactionId &&
-    replacementTransactionIds.has(lot.sourceTransactionId) &&
-    lot.remainingShares > 0
+  return lots.filter(
+    (lot) =>
+      lot.sourceTransactionId &&
+      replacementTransactionIds.has(lot.sourceTransactionId) &&
+      lot.remainingShares > 0
   )
 }
 
@@ -109,7 +115,11 @@ export const detectWashSale = (
   const loss = Math.abs(gainLoss)
 
   // Find replacement purchases
-  const replacementLots = findReplacementLots(saleTransaction, allTransactions, lots)
+  const replacementLots = findReplacementLots(
+    saleTransaction,
+    allTransactions,
+    lots
+  )
 
   if (replacementLots.length === 0) {
     return {
@@ -167,7 +177,7 @@ export const applyWashSaleAdjustment = (
   lotId: string,
   adjustmentAmount: number
 ): TaxLot<Date>[] => {
-  return lots.map(lot => {
+  return lots.map((lot) => {
     if (lot.id !== lotId) return lot
 
     return {
@@ -186,10 +196,11 @@ export const calculateWashSaleLosses = (
   taxYear: number
 ): number => {
   return transactions
-    .filter(t =>
-      t.transactionType === StockTransactionType.Sell &&
-      t.date.getFullYear() === taxYear &&
-      t.isWashSale
+    .filter(
+      (t) =>
+        t.transactionType === StockTransactionType.Sell &&
+        t.date.getFullYear() === taxYear &&
+        t.isWashSale
     )
     .reduce((total, t) => total + (t.washSaleDisallowedLoss ?? 0), 0)
 }
@@ -214,17 +225,19 @@ export const getWashSaleReport = (
   lots: TaxLot<Date>[],
   taxYear: number
 ): WashSaleReport[] => {
-  const washSaleTransactions = transactions.filter(t =>
-    t.transactionType === StockTransactionType.Sell &&
-    t.date.getFullYear() === taxYear &&
-    t.isWashSale
+  const washSaleTransactions = transactions.filter(
+    (t) =>
+      t.transactionType === StockTransactionType.Sell &&
+      t.date.getFullYear() === taxYear &&
+      t.isWashSale
   )
 
-  return washSaleTransactions.map(sale => {
+  return washSaleTransactions.map((sale) => {
     // Find the replacement lot
-    const replacementLot = lots.find(l =>
-      l.washSaleAdjustment > 0 &&
-      sale.lotSelections?.some(s => s.lotId === l.id)
+    const replacementLot = lots.find(
+      (l) =>
+        l.washSaleAdjustment > 0 &&
+        sale.lotSelections?.some((s) => s.lotId === l.id)
     )
 
     const proceeds = sale.proceeds ?? 0
@@ -257,7 +270,7 @@ export const wouldTriggerWashSale = (
   purchaseDate: Date,
   recentTransactions: StockTransaction<Date>[]
 ): { wouldTrigger: boolean; affectedSales: StockTransaction<Date>[] } => {
-  const affectedSales = recentTransactions.filter(t => {
+  const affectedSales = recentTransactions.filter((t) => {
     // Must be a sale
     if (t.transactionType !== StockTransactionType.Sell) return false
 
@@ -289,7 +302,10 @@ export const getWashSaleHoldingPeriod = (
 ): Date => {
   // The holding period starts from the original purchase date
   // but we need to exclude the day of sale
-  const originalHoldingDays = numberOfDaysBetween(originalPurchaseDate, saleDate)
+  const originalHoldingDays = numberOfDaysBetween(
+    originalPurchaseDate,
+    saleDate
+  )
 
   // Add the original holding period to the replacement purchase date
   const adjustedStartDate = new Date(replacementPurchaseDate)

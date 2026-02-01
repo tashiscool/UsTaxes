@@ -105,7 +105,7 @@ const toLocalTaxInfoUserInput = (
     workCity: data.workCity ?? '',
     workState: data.workState,
     worksInDifferentCity: data.worksInDifferentCity ?? false,
-    localWithholding: data.localWithholding?.toString() ?? '',
+    localWithholding: data.localWithholding.toString() ?? '',
     workCityWithholding: data.workCityWithholding?.toString() ?? '',
     estimatedPayments: data.estimatedPayments?.toString() ?? '',
     otherMunicipalTaxPaid: data.otherMunicipalTaxPaid?.toString() ?? '',
@@ -183,15 +183,17 @@ export default function LocalTaxInfo(): ReactElement {
     // NYC fields
     const isNYCResident =
       residenceState === 'NY' &&
-      (residenceCity?.toLowerCase().includes('new york') ||
-        residenceCity?.toLowerCase() === 'nyc' ||
-        nycBoroughs.some(b => residenceCity?.toLowerCase() === b.toLowerCase()))
+      (residenceCity.toLowerCase().includes('new york') ||
+        residenceCity.toLowerCase() === 'nyc' ||
+        nycBoroughs.some(
+          (b) => residenceCity.toLowerCase() === b.toLowerCase()
+        ))
     setShowNYCFields(isNYCResident)
 
     // Philadelphia fields
     const isPhiladelphiaRelated =
-      residenceCity?.toLowerCase() === 'philadelphia' ||
-      residenceCity?.toLowerCase() === 'phila' ||
+      residenceCity.toLowerCase() === 'philadelphia' ||
+      residenceCity.toLowerCase() === 'phila' ||
       residenceState === 'PA'
     setShowPhiladelphiaFields(isPhiladelphiaRelated)
 
@@ -226,7 +228,12 @@ export default function LocalTaxInfo(): ReactElement {
 
   return (
     <FormProvider {...methods}>
-      <form tabIndex={-1} onSubmit={methods.handleSubmit(onSubmit)}>
+      <form
+        tabIndex={-1}
+        onSubmit={(e) => {
+          void methods.handleSubmit(onSubmit)(e)
+        }}
+      >
         <Helmet>
           <title>Local Tax Information | UsTaxes.org</title>
         </Helmet>
@@ -257,10 +264,7 @@ export default function LocalTaxInfo(): ReactElement {
                 required={false}
                 sizes={{ xs: 12, md: 6 }}
               />
-              <USStateDropDown
-                name="residenceState"
-                label="State"
-              />
+              <USStateDropDown name="residenceState" label="State" />
             </Grid>
 
             {/* NYC Borough Selection */}
@@ -307,10 +311,7 @@ export default function LocalTaxInfo(): ReactElement {
                     required={false}
                     sizes={{ xs: 12, md: 6 }}
                   />
-                  <USStateDropDown
-                    name="workState"
-                    label="Work State"
-                  />
+                  <USStateDropDown name="workState" label="Work State" />
                 </Grid>
               )}
             </Box>
@@ -372,7 +373,9 @@ export default function LocalTaxInfo(): ReactElement {
           <Box marginTop={3}>
             <Paper>
               <Box padding={2}>
-                <Typography variant="h6">Ohio Municipal Tax Information</Typography>
+                <Typography variant="h6">
+                  Ohio Municipal Tax Information
+                </Typography>
                 <Divider style={{ margin: '8px 0 16px' }} />
 
                 <Alert severity="info" style={{ marginBottom: 16 }}>
@@ -476,7 +479,8 @@ export default function LocalTaxInfo(): ReactElement {
                   <Grid item xs={12} md={6}>
                     <Typography variant="body2">
                       <strong>Residence City:</strong>{' '}
-                      {information.localTaxInfo.residenceCity ?? 'Not specified'}
+                      {information.localTaxInfo.residenceCity ??
+                        'Not specified'}
                     </Typography>
                   </Grid>
                   <Grid item xs={12} md={6}>
@@ -502,7 +506,8 @@ export default function LocalTaxInfo(): ReactElement {
                             <strong>Work City Tax Withheld:</strong>{' '}
                             <Currency
                               value={
-                                information.localTaxInfo.workCityWithholding ?? 0
+                                information.localTaxInfo.workCityWithholding ??
+                                0
                               }
                             />
                           </Typography>

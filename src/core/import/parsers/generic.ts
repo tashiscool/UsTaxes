@@ -130,7 +130,7 @@ export const GENERIC_FIELDS: FieldDefinition[] = [
  * Get required fields for validation
  */
 export function getRequiredFields(): (keyof ColumnMapping)[] {
-  return GENERIC_FIELDS.filter(f => f.required).map(f => f.key)
+  return GENERIC_FIELDS.filter((f) => f.required).map((f) => f.key)
 }
 
 export class GenericParser extends BaseBrokerageParser {
@@ -197,7 +197,7 @@ export class GenericParser extends BaseBrokerageParser {
     for (const field of required) {
       const columnIndex = this.config.columnMapping[field]
       if (columnIndex === undefined || columnIndex < 0) {
-        const fieldDef = GENERIC_FIELDS.find(f => f.key === field)
+        const fieldDef = GENERIC_FIELDS.find((f) => f.key === field)
         errors.push(`${fieldDef?.label ?? field} column is not mapped`)
       }
     }
@@ -213,13 +213,16 @@ export class GenericParser extends BaseBrokerageParser {
     // Validate column mapping first
     const mappingErrors = this.validateMapping()
     if (mappingErrors.length > 0) {
-      mappingErrors.forEach(msg => errors.push({ row: 0, message: msg }))
+      mappingErrors.forEach((msg) => errors.push({ row: 0, message: msg }))
       return { transactions, errors, warnings }
     }
 
     const rows = this.parseCSV(content)
     if (rows.length <= this.config.skipHeaderRows) {
-      errors.push({ row: 0, message: 'CSV file has no data rows after skipping headers' })
+      errors.push({
+        row: 0,
+        message: 'CSV file has no data rows after skipping headers'
+      })
       return { transactions, errors, warnings }
     }
 
@@ -230,21 +233,27 @@ export class GenericParser extends BaseBrokerageParser {
       const row = rows[i]
 
       // Skip empty rows
-      if (row.length === 0 || row.every(c => c === '')) continue
+      if (row.length === 0 || row.every((c) => c === '')) continue
 
       // Skip summary/total rows
       const firstCell = row[0].toLowerCase()
-      if (firstCell.includes('total') || firstCell.includes('subtotal')) continue
+      if (firstCell.includes('total') || firstCell.includes('subtotal'))
+        continue
 
       try {
         // Get symbol
-        let symbol = mapping.symbol >= 0 && mapping.symbol < row.length
-          ? row[mapping.symbol]
-          : ''
+        let symbol =
+          mapping.symbol >= 0 && mapping.symbol < row.length
+            ? row[mapping.symbol]
+            : ''
 
         // Try description if symbol is empty
-        if ((!symbol || symbol.trim() === '') && mapping.description !== undefined &&
-            mapping.description >= 0 && mapping.description < row.length) {
+        if (
+          (!symbol || symbol.trim() === '') &&
+          mapping.description !== undefined &&
+          mapping.description >= 0 &&
+          mapping.description < row.length
+        ) {
           symbol = row[mapping.description]
         }
 
@@ -253,29 +262,47 @@ export class GenericParser extends BaseBrokerageParser {
         }
 
         // Parse dates
-        const dateAcquiredStr = mapping.dateAcquired < row.length ? row[mapping.dateAcquired] : ''
-        const dateSoldStr = mapping.dateSold < row.length ? row[mapping.dateSold] : ''
+        const dateAcquiredStr =
+          mapping.dateAcquired < row.length ? row[mapping.dateAcquired] : ''
+        const dateSoldStr =
+          mapping.dateSold < row.length ? row[mapping.dateSold] : ''
 
         const dateAcquired = parseDate(dateAcquiredStr)
         const dateSold = parseDate(dateSoldStr)
 
         if (!dateAcquired) {
-          errors.push({ row: i + 1, column: 'dateAcquired', message: `Invalid date acquired: ${dateAcquiredStr}` })
+          errors.push({
+            row: i + 1,
+            column: 'dateAcquired',
+            message: `Invalid date acquired: ${dateAcquiredStr}`
+          })
           continue
         }
 
         if (!dateSold) {
-          errors.push({ row: i + 1, column: 'dateSold', message: `Invalid date sold: ${dateSoldStr}` })
+          errors.push({
+            row: i + 1,
+            column: 'dateSold',
+            message: `Invalid date sold: ${dateSoldStr}`
+          })
           continue
         }
 
         // Parse monetary values
-        const proceeds = parseCurrency(mapping.proceeds < row.length ? row[mapping.proceeds] : '')
-        const costBasis = parseCurrency(mapping.costBasis < row.length ? row[mapping.costBasis] : '')
+        const proceeds = parseCurrency(
+          mapping.proceeds < row.length ? row[mapping.proceeds] : ''
+        )
+        const costBasis = parseCurrency(
+          mapping.costBasis < row.length ? row[mapping.costBasis] : ''
+        )
 
         // Calculate or parse gain/loss
         let gainLoss: number
-        if (mapping.gainLoss !== undefined && mapping.gainLoss >= 0 && mapping.gainLoss < row.length) {
+        if (
+          mapping.gainLoss !== undefined &&
+          mapping.gainLoss >= 0 &&
+          mapping.gainLoss < row.length
+        ) {
           gainLoss = parseCurrency(row[mapping.gainLoss])
         } else {
           gainLoss = proceeds - costBasis
@@ -283,7 +310,11 @@ export class GenericParser extends BaseBrokerageParser {
 
         // Parse optional quantity
         let quantity = 1
-        if (mapping.quantity !== undefined && mapping.quantity >= 0 && mapping.quantity < row.length) {
+        if (
+          mapping.quantity !== undefined &&
+          mapping.quantity >= 0 &&
+          mapping.quantity < row.length
+        ) {
           const parsedQty = parseFloat(row[mapping.quantity].replace(/,/g, ''))
           if (!isNaN(parsedQty) && parsedQty > 0) {
             quantity = parsedQty
@@ -292,8 +323,11 @@ export class GenericParser extends BaseBrokerageParser {
 
         // Parse optional wash sale
         let washSaleDisallowed: number | undefined
-        if (mapping.washSaleDisallowed !== undefined && mapping.washSaleDisallowed >= 0 &&
-            mapping.washSaleDisallowed < row.length) {
+        if (
+          mapping.washSaleDisallowed !== undefined &&
+          mapping.washSaleDisallowed >= 0 &&
+          mapping.washSaleDisallowed < row.length
+        ) {
           const washSaleValue = parseCurrency(row[mapping.washSaleDisallowed])
           if (washSaleValue !== 0) {
             washSaleDisallowed = Math.abs(washSaleValue)
@@ -304,14 +338,20 @@ export class GenericParser extends BaseBrokerageParser {
         let adjustmentCode: string | undefined
         let adjustmentAmount: number | undefined
 
-        if (mapping.adjustmentCode !== undefined && mapping.adjustmentCode >= 0 &&
-            mapping.adjustmentCode < row.length) {
+        if (
+          mapping.adjustmentCode !== undefined &&
+          mapping.adjustmentCode >= 0 &&
+          mapping.adjustmentCode < row.length
+        ) {
           const code = row[mapping.adjustmentCode].trim()
           if (code) adjustmentCode = code
         }
 
-        if (mapping.adjustmentAmount !== undefined && mapping.adjustmentAmount >= 0 &&
-            mapping.adjustmentAmount < row.length) {
+        if (
+          mapping.adjustmentAmount !== undefined &&
+          mapping.adjustmentAmount >= 0 &&
+          mapping.adjustmentAmount < row.length
+        ) {
           const amount = parseCurrency(row[mapping.adjustmentAmount])
           if (amount !== 0) adjustmentAmount = amount
         }
@@ -326,8 +366,12 @@ export class GenericParser extends BaseBrokerageParser {
 
         // Get description if separate from symbol
         let description: string | undefined
-        if (mapping.description !== undefined && mapping.description >= 0 &&
-            mapping.description < row.length && mapping.description !== mapping.symbol) {
+        if (
+          mapping.description !== undefined &&
+          mapping.description >= 0 &&
+          mapping.description < row.length &&
+          mapping.description !== mapping.symbol
+        ) {
           description = row[mapping.description]
         }
 
@@ -351,16 +395,31 @@ export class GenericParser extends BaseBrokerageParser {
 
         // Add warning for wash sales
         if (washSaleDisallowed) {
-          warnings.push(`Row ${i + 1}: Wash sale disallowed amount of $${washSaleDisallowed.toFixed(2)} for ${symbol}`)
+          warnings.push(
+            `Row ${
+              i + 1
+            }: Wash sale disallowed amount of $${washSaleDisallowed.toFixed(
+              2
+            )} for ${symbol}`
+          )
         }
 
         // Add warning for adjustments
         if (adjustmentCode) {
-          warnings.push(`Row ${i + 1}: Adjustment code "${adjustmentCode}" for ${symbol}` +
-            (adjustmentAmount ? ` with amount $${adjustmentAmount.toFixed(2)}` : ''))
+          warnings.push(
+            `Row ${i + 1}: Adjustment code "${adjustmentCode}" for ${symbol}` +
+              (adjustmentAmount
+                ? ` with amount $${adjustmentAmount.toFixed(2)}`
+                : '')
+          )
         }
       } catch (e) {
-        errors.push({ row: i + 1, message: `Error parsing row: ${e instanceof Error ? e.message : String(e)}` })
+        errors.push({
+          row: i + 1,
+          message: `Error parsing row: ${
+            e instanceof Error ? e.message : String(e)
+          }`
+        })
       }
     }
 
@@ -371,7 +430,9 @@ export class GenericParser extends BaseBrokerageParser {
 /**
  * Create a new generic parser instance
  */
-export function createGenericParser(config?: Partial<GenericParserConfig>): GenericParser {
+export function createGenericParser(
+  config?: Partial<GenericParserConfig>
+): GenericParser {
   return new GenericParser(config)
 }
 

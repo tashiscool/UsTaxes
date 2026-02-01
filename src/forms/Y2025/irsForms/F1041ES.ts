@@ -50,7 +50,7 @@ export interface F1041ESData {
 
 // 2025 Trust Tax Brackets for estimated tax calculation
 const TRUST_TAX_BRACKETS = [
-  { min: 0, max: 3050, rate: 0.10 },
+  { min: 0, max: 3050, rate: 0.1 },
   { min: 3050, max: 11450, rate: 0.24 },
   { min: 11450, max: 15650, rate: 0.35 },
   { min: 15650, max: Infinity, rate: 0.37 }
@@ -87,7 +87,10 @@ export default class F1041ES extends F1040Attachment {
 
     for (const bracket of TRUST_TAX_BRACKETS) {
       if (remainingIncome <= 0) break
-      const taxableInBracket = Math.min(remainingIncome, bracket.max - bracket.min)
+      const taxableInBracket = Math.min(
+        remainingIncome,
+        bracket.max - bracket.min
+      )
       tax += taxableInBracket * bracket.rate
       remainingIncome -= taxableInBracket
     }

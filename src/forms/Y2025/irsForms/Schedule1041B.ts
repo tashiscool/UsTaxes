@@ -54,7 +54,7 @@ export default class Schedule1041B extends F1040Attachment {
   }
 
   schedule1041BData = (): Schedule1041BData | undefined => {
-    return undefined  // Would be populated from estate/trust data
+    return undefined // Would be populated from estate/trust data
   }
 
   // Beneficiary distributions
@@ -76,7 +76,7 @@ export default class Schedule1041B extends F1040Attachment {
   }
 
   // Line 3: Total net gain from Schedule D
-  l3 = (): number => 0  // Capital gains from Schedule D
+  l3 = (): number => 0 // Capital gains from Schedule D
 
   // Line 4: Capital gains allocated to corpus
   l4 = (): number => {
@@ -88,22 +88,34 @@ export default class Schedule1041B extends F1040Attachment {
 
   // Line 6: Capital gains distributed to beneficiaries
   l6 = (): number => {
-    return this.distributions().reduce((sum, d) => sum + d.capitalGainDistribution, 0)
+    return this.distributions().reduce(
+      (sum, d) => sum + d.capitalGainDistribution,
+      0
+    )
   }
 
   // Line 7: Distributable net income (DNI)
   l7 = (): number => {
-    return sumFields([this.l1(), this.l2()]) - sumFields([this.l4(), this.l5(), this.l6()])
+    return (
+      sumFields([this.l1(), this.l2()]) -
+      sumFields([this.l4(), this.l5(), this.l6()])
+    )
   }
 
   // Line 8: Income required to be distributed currently
   l8 = (): number => {
-    return this.distributions().reduce((sum, d) => sum + d.currentDistribution, 0)
+    return this.distributions().reduce(
+      (sum, d) => sum + d.currentDistribution,
+      0
+    )
   }
 
   // Line 9: Other amounts paid, credited, or required to be distributed
   l9 = (): number => {
-    return this.distributions().reduce((sum, d) => sum + d.accumulationDistribution, 0)
+    return this.distributions().reduce(
+      (sum, d) => sum + d.accumulationDistribution,
+      0
+    )
   }
 
   // Line 10: Total distributions (line 8 + line 9)

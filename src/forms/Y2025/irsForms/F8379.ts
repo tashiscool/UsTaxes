@@ -23,7 +23,7 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  */
 
 export interface InjuredSpouseInfo {
-  injuredSpouse: PersonRole  // Which spouse is the injured spouse
+  injuredSpouse: PersonRole // Which spouse is the injured spouse
   spouseHasPastDueChildSupport: boolean
   spouseHasPastDueFederalDebt: boolean
   spouseHasPastDueStateDebt: boolean
@@ -33,7 +33,15 @@ export interface InjuredSpouseInfo {
 
 // Community property states
 const communityPropertyStates = [
-  'AZ', 'CA', 'ID', 'LA', 'NV', 'NM', 'TX', 'WA', 'WI'
+  'AZ',
+  'CA',
+  'ID',
+  'LA',
+  'NV',
+  'NM',
+  'TX',
+  'WA',
+  'WI'
 ]
 
 export default class F8379 extends F1040Attachment {
@@ -41,9 +49,11 @@ export default class F8379 extends F1040Attachment {
   sequenceIndex = 999
 
   isNeeded = (): boolean => {
-    return this.f1040.info.taxPayer.filingStatus === FilingStatus.MFJ &&
-           this.hasInjuredSpouseInfo() &&
-           this.f1040.l34() > 0  // Has refund
+    return (
+      this.f1040.info.taxPayer.filingStatus === FilingStatus.MFJ &&
+      this.hasInjuredSpouseInfo() &&
+      this.f1040.l34() > 0
+    ) // Has refund
   }
 
   hasInjuredSpouseInfo = (): boolean => {
@@ -69,17 +79,21 @@ export default class F8379 extends F1040Attachment {
   // Line 3: Is spouse obligated to pay past-due amount?
   l3 = (): boolean => {
     const info = this.injuredSpouseInfo()
-    return (info?.spouseHasPastDueChildSupport ?? false) ||
-           (info?.spouseHasPastDueFederalDebt ?? false) ||
-           (info?.spouseHasPastDueStateDebt ?? false)
+    return (
+      (info?.spouseHasPastDueChildSupport ?? false) ||
+      (info?.spouseHasPastDueFederalDebt ?? false) ||
+      (info?.spouseHasPastDueStateDebt ?? false)
+    )
   }
 
   // Line 4: Did you make payments or claim refundable credits?
   l4 = (): boolean => {
-    return this.f1040.l25d() > 0 || // Tax withholding
-           this.f1040.l27() > 0 ||  // EIC
-           (this.f1040.l28() ?? 0) > 0 ||  // Child tax credit
-           (this.f1040.l29() ?? 0) > 0     // Education credit
+    return (
+      this.f1040.l25d() > 0 || // Tax withholding
+      this.f1040.l27() > 0 || // EIC
+      (this.f1040.l28() ?? 0) > 0 || // Child tax credit
+      (this.f1040.l29() ?? 0) > 0
+    ) // Education credit
   }
 
   // Part II - Information About the Joint Return
@@ -112,8 +126,9 @@ export default class F8379 extends F1040Attachment {
   // Allocate income between spouses
   incomeAllocation = (role: PersonRole): number => {
     // W-2 income
-    const w2Income = this.f1040.validW2s()
-      .filter(w => w.personRole === role)
+    const w2Income = this.f1040
+      .validW2s()
+      .filter((w) => w.personRole === role)
       .reduce((sum, w) => sum + w.income, 0)
 
     // Add self-employment if applicable
@@ -131,9 +146,10 @@ export default class F8379 extends F1040Attachment {
   l9Injured = (): number => this.incomeAllocation(this.injuredSpouseRole())
 
   l9Other = (): number => {
-    const other = this.injuredSpouseRole() === PersonRole.PRIMARY
-      ? PersonRole.SPOUSE
-      : PersonRole.PRIMARY
+    const other =
+      this.injuredSpouseRole() === PersonRole.PRIMARY
+        ? PersonRole.SPOUSE
+        : PersonRole.PRIMARY
     return this.incomeAllocation(other)
   }
 
@@ -166,12 +182,12 @@ export default class F8379 extends F1040Attachment {
 
   // Line 13: Number of exemptions (dependents claimed by each)
   l13Total = (): number => {
-    return 2 + (this.f1040.info.taxPayer.dependents?.length ?? 0)
+    return 2 + (this.f1040.info.taxPayer.dependents.length ?? 0)
   }
 
   l13Injured = (): number => {
     // Simplified: split equally or allocate based on relationship
-    return 1  // At minimum, the injured spouse claims themselves
+    return 1 // At minimum, the injured spouse claims themselves
   }
 
   l13Other = (): number => this.l13Total() - this.l13Injured()
@@ -195,8 +211,9 @@ export default class F8379 extends F1040Attachment {
   l15Injured = (): number => {
     // Allocate based on W-2 withholding for each spouse
     const injured = this.injuredSpouseRole()
-    const withholding = this.f1040.validW2s()
-      .filter(w => w.personRole === injured)
+    const withholding = this.f1040
+      .validW2s()
+      .filter((w) => w.personRole === injured)
       .reduce((sum, w) => sum + w.fedWithholding, 0)
     // Add proportional share of estimated payments
     const estimatedRatio = this.l9Injured() / Math.max(1, this.l9Total())

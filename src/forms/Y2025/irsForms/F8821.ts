@@ -104,9 +104,11 @@ export default class F8821 extends F1040Attachment {
   isValid = (): boolean => {
     const data = this.f8821Data()
     if (!data) return false
-    return data.taxpayerSignature &&
-           data.designees.length > 0 &&
-           data.taxMatters.length > 0
+    return (
+      data.taxpayerSignature &&
+      data.designees.length > 0 &&
+      data.taxMatters.length > 0
+    )
   }
 
   fields = (): Field[] => {
@@ -145,7 +147,7 @@ export default class F8821 extends F1040Attachment {
       // Line 5: Retention
       data?.retainPriorAuthorizations ?? false,
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? '',
+      data?.signatureDate.toLocaleDateString() ?? '',
       data?.taxpayerSignature ?? false,
       data?.spouseSignature ?? false,
       // Summary

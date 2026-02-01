@@ -235,3 +235,38 @@ export function calculateTaxableSocialSecurity(
     return Math.min(totalBenefits * 0.85, amount1 + amount2)
   }
 }
+
+/**
+ * ATS Test Modules:
+ *
+ * 1. Integration Tests (./integration/)
+ *    - atsIntegration.test.ts: Full calculation engine tests against ATS scenarios
+ *
+ * 2. Scenario Tests (./scenarios/)
+ *    - Individual scenario data files (scenario1.test.ts, etc.)
+ *
+ * 3. XML Serialization Tests (./xml/)
+ *    - xmlSerialization.test.ts: Tests XML generation for ATS scenarios
+ *    - schemaValidation.test.ts: Tests XML against IRS MeF schemas
+ *
+ * 4. Business Entity Tests (./business/)
+ *    - partnership.test.ts: Form 1065 (Partnership) ATS scenarios
+ *    - scorp.test.ts: Form 1120-S (S Corporation) ATS scenarios
+ *    - ccorp.test.ts: Form 1120 (C Corporation) ATS scenarios
+ *
+ * 5. End-to-End Tests (./e2e/)
+ *    - atsSubmission.test.ts: Simulated e-file submission workflow
+ *
+ * 6. State E-File Tests (./state/)
+ *    - stateEfile.test.ts: State tax return calculations and e-file
+ */
+
+// Re-export utility functions from integration module
+export {
+  atsScenarioToInformation,
+  compareResults
+} from './utils/scenarioToInformation'
+export type {
+  ATSScenarioInput,
+  ATSExpectedOutput
+} from './utils/scenarioToInformation'

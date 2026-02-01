@@ -26,7 +26,11 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * Due Date: Attached to income tax return
  */
 
-export type ElectionType = 'section1291' | 'qef' | 'markToMarket' | 'protectiveStatement'
+export type ElectionType =
+  | 'section1291'
+  | 'qef'
+  | 'markToMarket'
+  | 'protectiveStatement'
 
 export interface PFICInfo {
   companyName: string
@@ -120,15 +124,18 @@ export default class F8621 extends F1040Attachment {
   currentFMV = (): number => this.pficInfo()?.currentFMV ?? 0
 
   // Election Type
-  electionType = (): ElectionType => this.f8621Info()?.electionType ?? 'section1291'
+  electionType = (): ElectionType =>
+    this.f8621Info()?.electionType ?? 'section1291'
   isQEFElection = (): boolean => this.electionType() === 'qef'
   isMarkToMarket = (): boolean => this.electionType() === 'markToMarket'
   isSection1291 = (): boolean => this.electionType() === 'section1291'
 
   // Section 1291 - Excess Distribution
-  excessDistribution = (): ExcessDistribution | undefined => this.f8621Info()?.excessDistribution
+  excessDistribution = (): ExcessDistribution | undefined =>
+    this.f8621Info()?.excessDistribution
 
-  totalExcessDistribution = (): number => this.excessDistribution()?.excessDistribution ?? 0
+  totalExcessDistribution = (): number =>
+    this.excessDistribution()?.excessDistribution ?? 0
   deferredTax = (): number => this.excessDistribution()?.deferredTax ?? 0
   interestCharge = (): number => this.excessDistribution()?.interestCharge ?? 0
   totalSection1291Tax = (): number => this.deferredTax() + this.interestCharge()
@@ -138,10 +145,12 @@ export default class F8621 extends F1040Attachment {
 
   qefOrdinaryIncome = (): number => this.qefIncome()?.proRataShareOrdinary ?? 0
   qefCapitalGain = (): number => this.qefIncome()?.proRataShareCapital ?? 0
-  totalQEFIncome = (): number => this.qefOrdinaryIncome() + this.qefCapitalGain()
+  totalQEFIncome = (): number =>
+    this.qefOrdinaryIncome() + this.qefCapitalGain()
 
   // Mark-to-Market
-  markToMarketInfo = (): MarkToMarketInfo | undefined => this.f8621Info()?.markToMarket
+  markToMarketInfo = (): MarkToMarketInfo | undefined =>
+    this.f8621Info()?.markToMarket
 
   mtmUnrealizedGain = (): number => this.markToMarketInfo()?.unrealizedGain ?? 0
   mtmUnrealizedLoss = (): number => this.markToMarketInfo()?.unrealizedLoss ?? 0
@@ -185,7 +194,7 @@ export default class F8621 extends F1040Attachment {
       pfic?.referenceIDNumber ?? '',
       this.sharesOwned(),
       pfic?.shareClass ?? '',
-      pfic?.dateAcquired?.toLocaleDateString() ?? '',
+      pfic?.dateAcquired.toLocaleDateString() ?? '',
       pfic?.initialBasis ?? 0,
       this.currentFMV(),
       pfic?.isControlledForeignCorp ?? false,

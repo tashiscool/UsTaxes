@@ -25,8 +25,25 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * Penalties: 10% of FMV of property transferred (up to $100,000)
  */
 
-export type PropertyType = 'cash' | 'stock' | 'securities' | 'tangibleProperty' | 'intangibleProperty' | 'activeBusinessAssets' | 'inventory' | 'installmentObligation' | 'foreignCurrencyAssets' | 'other'
-export type TransferSection = '351' | '354' | '356' | '361' | '332' | '367' | 'other'
+export type PropertyType =
+  | 'cash'
+  | 'stock'
+  | 'securities'
+  | 'tangibleProperty'
+  | 'intangibleProperty'
+  | 'activeBusinessAssets'
+  | 'inventory'
+  | 'installmentObligation'
+  | 'foreignCurrencyAssets'
+  | 'other'
+export type TransferSection =
+  | '351'
+  | '354'
+  | '356'
+  | '361'
+  | '332'
+  | '367'
+  | 'other'
 
 export interface TransferredProperty {
   description: string
@@ -116,50 +133,64 @@ export default class F926 extends F1040Attachment {
   }
 
   // Foreign Corporation
-  foreignCorp = (): ForeignCorporationInfo | undefined => this.f926Info()?.foreignCorporation
+  foreignCorp = (): ForeignCorporationInfo | undefined =>
+    this.f926Info()?.foreignCorporation
   corpName = (): string => this.foreignCorp()?.name ?? ''
   corpCountry = (): string => this.foreignCorp()?.countryOfIncorporation ?? ''
   isCFC = (): boolean => this.foreignCorp()?.isControlledForeignCorp ?? false
-  isPFIC = (): boolean => this.foreignCorp()?.isPassiveForeignInvestmentCo ?? false
+  isPFIC = (): boolean =>
+    this.foreignCorp()?.isPassiveForeignInvestmentCo ?? false
 
   // Property Transferred
-  propertyTransferred = (): TransferredProperty[] => this.f926Info()?.propertyTransferred ?? []
+  propertyTransferred = (): TransferredProperty[] =>
+    this.f926Info()?.propertyTransferred ?? []
   numberOfTransfers = (): number => this.propertyTransferred().length
 
   totalFMV = (): number => {
-    return this.propertyTransferred().reduce((sum, p) => sum + p.fairMarketValue, 0)
+    return this.propertyTransferred().reduce(
+      (sum, p) => sum + p.fairMarketValue,
+      0
+    )
   }
 
   totalBasis = (): number => {
-    return this.propertyTransferred().reduce((sum, p) => sum + p.adjustedBasis, 0)
+    return this.propertyTransferred().reduce(
+      (sum, p) => sum + p.adjustedBasis,
+      0
+    )
   }
 
   totalGain = (): number => {
-    return this.propertyTransferred().reduce((sum, p) => sum + p.gainRecognized, 0)
+    return this.propertyTransferred().reduce(
+      (sum, p) => sum + p.gainRecognized,
+      0
+    )
   }
 
   // Property by type
   cashTransferred = (): number => {
     return this.propertyTransferred()
-      .filter(p => p.propertyType === 'cash')
+      .filter((p) => p.propertyType === 'cash')
       .reduce((sum, p) => sum + p.fairMarketValue, 0)
   }
 
   stockTransferred = (): number => {
     return this.propertyTransferred()
-      .filter(p => p.propertyType === 'stock' || p.propertyType === 'securities')
+      .filter(
+        (p) => p.propertyType === 'stock' || p.propertyType === 'securities'
+      )
       .reduce((sum, p) => sum + p.fairMarketValue, 0)
   }
 
   intangiblesTransferred = (): number => {
     return this.propertyTransferred()
-      .filter(p => p.isIntangible)
+      .filter((p) => p.isIntangible)
       .reduce((sum, p) => sum + p.fairMarketValue, 0)
   }
 
   taintedAssetsTransferred = (): number => {
     return this.propertyTransferred()
-      .filter(p => p.isTaintedAsset)
+      .filter((p) => p.isTaintedAsset)
       .reduce((sum, p) => sum + p.fairMarketValue, 0)
   }
 
@@ -171,19 +202,26 @@ export default class F926 extends F1040Attachment {
   }
 
   totalOwnershipPercentage = (): number => {
-    return this.stockReceived().reduce((sum, s) => sum + s.percentageOwnership, 0)
+    return this.stockReceived().reduce(
+      (sum, s) => sum + s.percentageOwnership,
+      0
+    )
   }
 
   // Control Analysis
   hadControlBefore = (): boolean => this.f926Info()?.hadControlBefore ?? false
   hasControlAfter = (): boolean => this.f926Info()?.hasControlAfter ?? false
-  controlPercentageBefore = (): number => this.f926Info()?.controlPercentageBefore ?? 0
-  controlPercentageAfter = (): number => this.f926Info()?.controlPercentageAfter ?? 0
+  controlPercentageBefore = (): number =>
+    this.f926Info()?.controlPercentageBefore ?? 0
+  controlPercentageAfter = (): number =>
+    this.f926Info()?.controlPercentageAfter ?? 0
 
   // Section 367 Analysis
   hasGRA = (): boolean => this.f926Info()?.hasGainRecognitionAgreement ?? false
-  isActiveTradeOrBusiness = (): boolean => this.f926Info()?.isActiveTradeOrBusiness ?? false
-  hasIntangibles = (): boolean => this.f926Info()?.hasIntangibleProperty ?? false
+  isActiveTradeOrBusiness = (): boolean =>
+    this.f926Info()?.isActiveTradeOrBusiness ?? false
+  hasIntangibles = (): boolean =>
+    this.f926Info()?.hasIntangibleProperty ?? false
 
   // Reduced Reporting Check
   qualifiesForReducedReporting = (): boolean => {
@@ -210,7 +248,7 @@ export default class F926 extends F1040Attachment {
       corp?.ein ?? '',
       corp?.address ?? '',
       this.corpCountry(),
-      corp?.dateOfIncorporation?.toLocaleDateString() ?? '',
+      corp?.dateOfIncorporation.toLocaleDateString() ?? '',
       this.isCFC(),
       this.isPFIC(),
       corp?.principalBusinessActivity ?? '',

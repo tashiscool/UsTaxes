@@ -43,7 +43,9 @@ export default class F6252 extends F1040Attachment {
 
   // Get first installment sale (form handles one sale, need copies for more)
   sale = (): InstallmentSale | undefined => {
-    const sales = this.f1040.info.installmentSales as InstallmentSale[] | undefined
+    const sales = this.f1040.info.installmentSales as
+      | InstallmentSale[]
+      | undefined
     return sales?.[0]
   }
 
@@ -62,7 +64,7 @@ export default class F6252 extends F1040Attachment {
   l8 = (): number => this.sale()?.adjustedBasis ?? 0
 
   // Line 9: Depreciation allowed
-  l9 = (): number => 0  // Simplified
+  l9 = (): number => 0 // Simplified
 
   // Line 10: Adjusted basis (line 8 - line 9)
   l10 = (): number => Math.max(0, this.l8() - this.l9())
@@ -131,17 +133,17 @@ export default class F6252 extends F1040Attachment {
 
   // Income amounts
   ordinaryIncome = (): number => this.l25()
-  ordinaryGain = (): number => this.l25()  // Alias for Form 4797
+  ordinaryGain = (): number => this.l25() // Alias for Form 4797
   longTermCapitalGain = (): number => this.l26()
-  section1231Gain = (): number => this.l26()  // For Form 4797 - installment gain from Section 1231 property
+  section1231Gain = (): number => this.l26() // For Form 4797 - installment gain from Section 1231 property
   totalInstallmentIncome = (): number => this.l24()
 
   fields = (): Field[] => [
     this.f1040.namesString(),
     this.f1040.info.taxPayer.primaryPerson.ssid,
     this.sale()?.description ?? '',
-    this.sale()?.dateAcquired?.toLocaleDateString() ?? '',
-    this.sale()?.dateSold?.toLocaleDateString() ?? '',
+    this.sale()?.dateAcquired.toLocaleDateString() ?? '',
+    this.sale()?.dateSold.toLocaleDateString() ?? '',
     // Part I
     this.l5(),
     this.l6(),

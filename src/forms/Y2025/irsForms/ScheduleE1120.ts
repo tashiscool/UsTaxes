@@ -47,7 +47,7 @@ export default class ScheduleE1120 extends F1040Attachment {
   }
 
   scheduleE1120Data = (): ScheduleE1120Data | undefined => {
-    return undefined  // Would be populated from entity data
+    return undefined // Would be populated from entity data
   }
 
   officers = (): OfficerCompensation[] => {
@@ -63,7 +63,10 @@ export default class ScheduleE1120 extends F1040Attachment {
 
   // Total expense account allowances
   totalExpenseAllowances = (): number => {
-    return this.officers().reduce((sum, o) => sum + o.expenseAccountAllowances, 0)
+    return this.officers().reduce(
+      (sum, o) => sum + o.expenseAccountAllowances,
+      0
+    )
   }
 
   // Total to Form 1120 Line 12
@@ -73,15 +76,16 @@ export default class ScheduleE1120 extends F1040Attachment {
 
   // Officers owning more than 10%
   majorOfficers = (): OfficerCompensation[] => {
-    return this.officers().filter(o =>
-      o.percentCommonStock > 10 || o.percentPreferredStock > 10
+    return this.officers().filter(
+      (o) => o.percentCommonStock > 10 || o.percentPreferredStock > 10
     )
   }
 
   // Percentage of total stock owned by officers
   totalOfficerStockOwnership = (): number => {
-    return this.officers().reduce((sum, o) =>
-      sum + o.percentCommonStock + o.percentPreferredStock, 0
+    return this.officers().reduce(
+      (sum, o) => sum + o.percentCommonStock + o.percentPreferredStock,
+      0
     )
   }
 

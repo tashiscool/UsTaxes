@@ -36,41 +36,36 @@ export class VA760 extends Form {
 
   // Taxpayer information
   primaryFirstName = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.firstName
+    this.info.taxPayer.primaryPerson.firstName
 
   primaryLastName = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.lastName
+    this.info.taxPayer.primaryPerson.lastName
 
-  primarySSN = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.ssid
+  primarySSN = (): string | undefined => this.info.taxPayer.primaryPerson.ssid
 
   spouseFirstName = (): string | undefined =>
     this.info.taxPayer.spouse?.firstName
 
-  spouseLastName = (): string | undefined =>
-    this.info.taxPayer.spouse?.lastName
+  spouseLastName = (): string | undefined => this.info.taxPayer.spouse?.lastName
 
-  spouseSSN = (): string | undefined =>
-    this.info.taxPayer.spouse?.ssid
+  spouseSSN = (): string | undefined => this.info.taxPayer.spouse?.ssid
 
   address = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.address
+    this.info.taxPayer.primaryPerson.address.address
 
   city = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.city
+    this.info.taxPayer.primaryPerson.address.city
 
   stateField = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.state
+    this.info.taxPayer.primaryPerson.address.state
 
-  zip = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.zip
+  zip = (): string | undefined => this.info.taxPayer.primaryPerson.address.zip
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Helper: Get primary taxpayer's age
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -108,7 +103,8 @@ export class VA760 extends Form {
   l4b = (): number | undefined => {
     const status = this.filingStatus() ?? FilingStatus.S
     const agi = this.l1()
-    const threshold = parameters.socialSecuritySubtraction.incomeThreshold[status]
+    const threshold =
+      parameters.socialSecuritySubtraction.incomeThreshold[status]
 
     // Check if taxpayer is 65+ and under income threshold
     const age = this.getPrimaryAge()
@@ -138,23 +134,22 @@ export class VA760 extends Form {
         deduction += maxDeduction
       } else {
         // Phase out: reduce $1 for each $1 over threshold
-        const reduction = (agi - threshold) * parameters.ageDeduction.phaseOutRate
+        const reduction =
+          (agi - threshold) * parameters.ageDeduction.phaseOutRate
         deduction += Math.max(0, maxDeduction - reduction)
       }
     }
 
     // Spouse age deduction (MFJ only)
-    if (
-      status === FilingStatus.MFJ &&
-      spouseAge >= 65
-    ) {
+    if (status === FilingStatus.MFJ && spouseAge >= 65) {
       const maxDeduction = parameters.ageDeduction.maxDeduction[status]
       const threshold = parameters.ageDeduction.incomeThreshold[status]
 
       if (agi <= threshold) {
         deduction += maxDeduction
       } else {
-        const reduction = (agi - threshold) * parameters.ageDeduction.phaseOutRate
+        const reduction =
+          (agi - threshold) * parameters.ageDeduction.phaseOutRate
         deduction += Math.max(0, maxDeduction - reduction)
       }
     }
@@ -179,7 +174,14 @@ export class VA760 extends Form {
 
   // Line 4 - Total subtractions
   l4 = (): number =>
-    sumFields([this.l4a(), this.l4b(), this.l4c(), this.l4d(), this.l4e(), this.l4f()])
+    sumFields([
+      this.l4a(),
+      this.l4b(),
+      this.l4c(),
+      this.l4d(),
+      this.l4e(),
+      this.l4f()
+    ])
 
   // Line 5 - Virginia Adjusted Gross Income (Line 3 - Line 4)
   l5 = (): number => Math.max(0, this.l3() - this.l4())
@@ -249,7 +251,8 @@ export class VA760 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }

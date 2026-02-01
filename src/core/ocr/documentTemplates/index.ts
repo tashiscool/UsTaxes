@@ -12,13 +12,21 @@ export * from './1099MiscTemplate'
 import { extractW2Data, W2ExtractionResult } from './w2Template'
 import { extract1099IntData, F1099IntExtractionResult } from './1099IntTemplate'
 import { extract1099DivData, F1099DivExtractionResult } from './1099DivTemplate'
-import { extract1099MiscData, F1099MiscExtractionResult } from './1099MiscTemplate'
+import {
+  extract1099MiscData,
+  F1099MiscExtractionResult
+} from './1099MiscTemplate'
 import { OCRResult } from '../ocrEngine'
 
 /**
  * Supported document types for OCR scanning
  */
-export type DocumentType = 'W-2' | '1099-INT' | '1099-DIV' | '1099-B' | '1099-MISC'
+export type DocumentType =
+  | 'W-2'
+  | '1099-INT'
+  | '1099-DIV'
+  | '1099-B'
+  | '1099-MISC'
 
 /**
  * Document type descriptions for UI
@@ -68,7 +76,9 @@ export const extractDocumentData = (
 /**
  * Auto-detect document type from OCR text
  */
-export const detectDocumentType = (ocrResult: OCRResult): DocumentType | null => {
+export const detectDocumentType = (
+  ocrResult: OCRResult
+): DocumentType | null => {
   const text = ocrResult.text.toLowerCase()
 
   // Look for form identifiers

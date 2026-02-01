@@ -90,23 +90,25 @@ class LocalStorageAdapter implements StorageAdapter {
     this.prefix = prefix
   }
 
-  async get(key: string): Promise<string | null> {
-    if (typeof localStorage === 'undefined') return null
-    return localStorage.getItem(this.prefix + key)
+  get(key: string): Promise<string | null> {
+    if (typeof localStorage === 'undefined') return Promise.resolve(null)
+    return Promise.resolve(localStorage.getItem(this.prefix + key))
   }
 
-  async set(key: string, value: string): Promise<void> {
-    if (typeof localStorage === 'undefined') return
+  set(key: string, value: string): Promise<void> {
+    if (typeof localStorage === 'undefined') return Promise.resolve()
     localStorage.setItem(this.prefix + key, value)
+    return Promise.resolve()
   }
 
-  async remove(key: string): Promise<void> {
-    if (typeof localStorage === 'undefined') return
+  remove(key: string): Promise<void> {
+    if (typeof localStorage === 'undefined') return Promise.resolve()
     localStorage.removeItem(this.prefix + key)
+    return Promise.resolve()
   }
 
-  async keys(): Promise<string[]> {
-    if (typeof localStorage === 'undefined') return []
+  keys(): Promise<string[]> {
+    if (typeof localStorage === 'undefined') return Promise.resolve([])
     const result: string[] = []
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
@@ -114,7 +116,7 @@ class LocalStorageAdapter implements StorageAdapter {
         result.push(key.substring(this.prefix.length))
       }
     }
-    return result
+    return Promise.resolve(result)
   }
 }
 
@@ -166,7 +168,8 @@ class IndexedDBAdapter implements StorageAdapter {
       const request = store.get(key)
 
       request.onerror = () => reject(request.error)
-      request.onsuccess = () => resolve(request.result || null)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      request.onsuccess = () => resolve((request.result as string | null) || null)
     })
   }
 
@@ -213,20 +216,22 @@ class IndexedDBAdapter implements StorageAdapter {
 class MemoryStorageAdapter implements StorageAdapter {
   private storage: Map<string, string> = new Map()
 
-  async get(key: string): Promise<string | null> {
-    return this.storage.get(key) || null
+  get(key: string): Promise<string | null> {
+    return Promise.resolve(this.storage.get(key) || null)
   }
 
-  async set(key: string, value: string): Promise<void> {
+  set(key: string, value: string): Promise<void> {
     this.storage.set(key, value)
+    return Promise.resolve()
   }
 
-  async remove(key: string): Promise<void> {
+  remove(key: string): Promise<void> {
     this.storage.delete(key)
+    return Promise.resolve()
   }
 
-  async keys(): Promise<string[]> {
-    return Array.from(this.storage.keys())
+  keys(): Promise<string[]> {
+    return Promise.resolve(Array.from(this.storage.keys()))
   }
 }
 
@@ -238,9 +243,7 @@ export class StatusTracker {
   private storage: StorageAdapter
   private pollingStates: Map<string, PollingState> = new Map()
   private acknowledgmentProcessor: AcknowledgmentProcessor
-  private fetchAcknowledgment?: (
-    submissionId: string
-  ) => Promise<string | null>
+  private fetchAcknowledgment?: (submissionId: string) => Promise<string | null>
 
   constructor(
     options: {
@@ -316,9 +319,7 @@ export class StatusTracker {
    */
   async getAllPending(): Promise<Submission[]> {
     const allSubmissions = await this.getAllSubmissions()
-    return allSubmissions.filter(
-      (sub) => !this.isTerminalState(sub.state)
-    )
+    return allSubmissions.filter((sub) => !this.isTerminalState(sub.state))
   }
 
   /**
@@ -397,7 +398,7 @@ export class StatusTracker {
       timestamp: now,
       details:
         processed.status === 'Accepted'
-          ? `Accepted with confirmation: ${processed.confirmationNumber}`
+          ? `Accepted with confirmation: ${processed.confirmationNumber ?? 'N/A'}`
           : `Rejected with ${processed.errors.length} error(s)`
     })
 
@@ -465,7 +466,7 @@ export class StatusTracker {
     }
 
     this.pollingStates.set(submissionId, pollingState)
-    this.poll(submissionId)
+    void this.poll(submissionId)
   }
 
   /**
@@ -580,7 +581,7 @@ export class StatusTracker {
     )
 
     state.intervalId = setTimeout(() => {
-      this.poll(submissionId)
+      void this.poll(submissionId)
     }, state.currentInterval)
   }
 
@@ -598,7 +599,7 @@ export class StatusTracker {
   }
 
   private serializeSubmission(submission: Submission): string {
-    return JSON.stringify(submission, (key, value) => {
+    return JSON.stringify(submission, (_key, value: unknown) => {
       if (value instanceof Date) {
         return { __type: 'Date', value: value.toISOString() }
       }
@@ -607,12 +608,16 @@ export class StatusTracker {
   }
 
   private deserializeSubmission(data: string): Submission {
-    return JSON.parse(data, (key, value) => {
-      if (value && typeof value === 'object' && value.__type === 'Date') {
-        return new Date(value.value)
+    return JSON.parse(data, (_key, value: unknown) => {
+      if (
+        value &&
+        typeof value === 'object' &&
+        (value as { __type?: string }).__type === 'Date'
+      ) {
+        return new Date((value as { value: string }).value)
       }
       return value
-    })
+    }) as Submission
   }
 
   private isTerminalState(state: SubmissionState): boolean {
@@ -691,8 +696,7 @@ export function getStateIndicator(
  * Calculate time since last state change
  */
 export function timeSinceLastChange(submission: Submission): string {
-  const lastChange =
-    submission.stateHistory[submission.stateHistory.length - 1]
+  const lastChange = submission.stateHistory[submission.stateHistory.length - 1]
   const diff = Date.now() - lastChange.timestamp.getTime()
 
   const minutes = Math.floor(diff / 60000)

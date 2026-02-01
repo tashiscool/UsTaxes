@@ -35,8 +35,23 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * Due Date: 15th day of 5th month after fiscal year end
  */
 
-export type ExemptionType = '501c3' | '501c4' | '501c5' | '501c6' | '501c7' | '501c8' | '501c9' | '501c10' | 'other'
-export type PublicCharityStatus = 'church' | 'school' | 'hospital' | 'publicCharity' | 'supportingOrg' | 'other'
+export type ExemptionType =
+  | '501c3'
+  | '501c4'
+  | '501c5'
+  | '501c6'
+  | '501c7'
+  | '501c8'
+  | '501c9'
+  | '501c10'
+  | 'other'
+export type PublicCharityStatus =
+  | 'church'
+  | 'school'
+  | 'hospital'
+  | 'publicCharity'
+  | 'supportingOrg'
+  | 'other'
 
 export interface OrganizationInfo {
   name: string
@@ -168,10 +183,12 @@ export default class F990 extends F1040Attachment {
   }
 
   // Organization Information
-  organization = (): OrganizationInfo | undefined => this.f990Info()?.organization
+  organization = (): OrganizationInfo | undefined =>
+    this.f990Info()?.organization
   orgName = (): string => this.organization()?.name ?? ''
   ein = (): string => this.organization()?.ein ?? ''
-  exemptionType = (): ExemptionType => this.organization()?.exemptionType ?? '501c3'
+  exemptionType = (): ExemptionType =>
+    this.organization()?.exemptionType ?? '501c3'
 
   // Part I: Summary
 
@@ -218,7 +235,11 @@ export default class F990 extends F1040Attachment {
   l15 = (): number => {
     const exp = this.expenses()
     if (!exp) return 0
-    return sumFields([exp.salariesAndWages, exp.employeeBenefits, exp.payrollTaxes])
+    return sumFields([
+      exp.salariesAndWages,
+      exp.employeeBenefits,
+      exp.payrollTaxes
+    ])
   }
 
   // Line 16: Professional fundraising fees
@@ -229,22 +250,36 @@ export default class F990 extends F1040Attachment {
     const exp = this.expenses()
     if (!exp) return 0
     return sumFields([
-      exp.managementFees, exp.legalFees, exp.accountingFees,
-      exp.advertising, exp.officeExpenses, exp.occupancy,
-      exp.travel, exp.depreciation, exp.insurance, exp.otherExpenses
+      exp.managementFees,
+      exp.legalFees,
+      exp.accountingFees,
+      exp.advertising,
+      exp.officeExpenses,
+      exp.occupancy,
+      exp.travel,
+      exp.depreciation,
+      exp.insurance,
+      exp.otherExpenses
     ])
   }
 
   // Line 18: Total expenses
   l18 = (): number => {
-    return sumFields([this.l13(), this.l14(), this.l15(), this.l16(), this.l17()])
+    return sumFields([
+      this.l13(),
+      this.l14(),
+      this.l15(),
+      this.l16(),
+      this.l17()
+    ])
   }
 
   // Line 19: Revenue less expenses
   l19 = (): number => this.l12() - this.l18()
 
   // Balance Sheet
-  balanceSheet = (): BalanceSheetInfo | undefined => this.f990Info()?.balanceSheet
+  balanceSheet = (): BalanceSheetInfo | undefined =>
+    this.f990Info()?.balanceSheet
 
   // Line 20: Total assets (beginning of year)
   totalAssetsBOY = (): number => {
@@ -257,10 +292,17 @@ export default class F990 extends F1040Attachment {
     const bs = this.balanceSheet()
     if (!bs) return 0
     return sumFields([
-      bs.cashNonInterest, bs.savingsAndInvestments, bs.pledgesReceivable,
-      bs.accountsReceivable, bs.loansReceivable, bs.inventories,
-      bs.prepaidExpenses, bs.landBuildingsEquipment, bs.investments,
-      bs.intangibleAssets, bs.otherAssets
+      bs.cashNonInterest,
+      bs.savingsAndInvestments,
+      bs.pledgesReceivable,
+      bs.accountsReceivable,
+      bs.loansReceivable,
+      bs.inventories,
+      bs.prepaidExpenses,
+      bs.landBuildingsEquipment,
+      bs.investments,
+      bs.intangibleAssets,
+      bs.otherAssets
     ])
   }
 
@@ -269,8 +311,12 @@ export default class F990 extends F1040Attachment {
     const bs = this.balanceSheet()
     if (!bs) return 0
     return sumFields([
-      bs.accountsPayable, bs.grantsPayable, bs.deferredRevenue,
-      bs.taxExemptBonds, bs.mortgages, bs.otherLiabilities
+      bs.accountsPayable,
+      bs.grantsPayable,
+      bs.deferredRevenue,
+      bs.taxExemptBonds,
+      bs.mortgages,
+      bs.otherLiabilities
     ])
   }
 
@@ -279,21 +325,25 @@ export default class F990 extends F1040Attachment {
     const bs = this.balanceSheet()
     if (!bs) return 0
     return sumFields([
-      bs.unrestrictedNetAssets, bs.temporarilyRestricted, bs.permanentlyRestricted
+      bs.unrestrictedNetAssets,
+      bs.temporarilyRestricted,
+      bs.permanentlyRestricted
     ])
   }
 
   // Part VI: Governance
   governance = (): GovernanceInfo | undefined => this.f990Info()?.governance
 
-  numberOfVotingMembers = (): number => this.governance()?.numberOfVotingMembers ?? 0
-  numberOfIndependentMembers = (): number => this.governance()?.numberOfIndependentMembers ?? 0
+  numberOfVotingMembers = (): number =>
+    this.governance()?.numberOfVotingMembers ?? 0
+  numberOfIndependentMembers = (): number =>
+    this.governance()?.numberOfIndependentMembers ?? 0
   totalEmployees = (): number => this.governance()?.totalEmployees ?? 0
   totalVolunteers = (): number => this.governance()?.totalVolunteers ?? 0
 
   // Functional Expense Allocation
-  programExpenses = (): number => Math.round(this.l18() * 0.85)  // Typical allocation
-  managementExpenses = (): number => Math.round(this.l18() * 0.10)
+  programExpenses = (): number => Math.round(this.l18() * 0.85) // Typical allocation
+  managementExpenses = (): number => Math.round(this.l18() * 0.1)
   fundraisingExpenses = (): number => Math.round(this.l18() * 0.05)
 
   // Program efficiency ratio
@@ -318,8 +368,8 @@ export default class F990 extends F1040Attachment {
       org?.yearFormed ?? 0,
       org?.stateOfIncorporation ?? '',
       // Dates
-      this.f990Info()?.fiscalYearStart?.toLocaleDateString() ?? '',
-      this.f990Info()?.fiscalYearEnd?.toLocaleDateString() ?? '',
+      this.f990Info()?.fiscalYearStart.toLocaleDateString() ?? '',
+      this.f990Info()?.fiscalYearEnd.toLocaleDateString() ?? '',
       this.f990Info()?.isFinalReturn ?? false,
       this.f990Info()?.isAmendedReturn ?? false,
       // Part I: Summary - Revenue

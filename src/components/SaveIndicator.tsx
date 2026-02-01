@@ -192,11 +192,17 @@ export const SaveIndicator = ({
       case 'saved':
         return <CheckIcon className={`${classes.icon} ${classes.iconSaved}`} />
       case 'error':
-        return <WarningIcon className={`${classes.icon} ${classes.iconError}`} />
+        return (
+          <WarningIcon className={`${classes.icon} ${classes.iconError}`} />
+        )
       case 'offline':
-        return <CloudOffIcon className={`${classes.icon} ${classes.iconError}`} />
+        return (
+          <CloudOffIcon className={`${classes.icon} ${classes.iconError}`} />
+        )
       default:
-        return <CloudDoneIcon className={`${classes.icon} ${classes.iconIdle}`} />
+        return (
+          <CloudDoneIcon className={`${classes.icon} ${classes.iconIdle}`} />
+        )
     }
   }
 

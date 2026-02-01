@@ -26,7 +26,7 @@ import { Form8844Data } from 'ustaxes/core/data'
 // 2025 parameters
 const empowermentZoneParams = {
   maxWagesPerEmployee: 15000,
-  creditRate: 0.20,
+  creditRate: 0.2,
   maxCreditPerEmployee: 3000
 }
 
@@ -54,8 +54,12 @@ export default class F8844 extends F1040Attachment {
   l1 = (): number => {
     const data = this.creditData()
     if (!data) return 0
-    return data.qualifiedEmployees.reduce((sum, e) =>
-      sum + Math.min(e.qualifiedWages, empowermentZoneParams.maxWagesPerEmployee), 0)
+    return data.qualifiedEmployees.reduce(
+      (sum, e) =>
+        sum +
+        Math.min(e.qualifiedWages, empowermentZoneParams.maxWagesPerEmployee),
+      0
+    )
   }
 
   // Line 2: Multiply line 1 by 20%
@@ -71,11 +75,12 @@ export default class F8844 extends F1040Attachment {
   credit = (): number => this.creditData()?.totalCredit ?? this.l4()
 
   // Number of qualified zone employees
-  qualifiedEmployeeCount = (): number => this.creditData()?.qualifiedEmployees.length ?? 0
+  qualifiedEmployeeCount = (): number =>
+    this.creditData()?.qualifiedEmployees.length ?? 0
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1(),
     this.l2(),
     this.l3(),

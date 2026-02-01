@@ -31,8 +31,7 @@ export class CT1040 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Line 1: Federal adjusted gross income
   l1 = (): number => this.f1040.l11()
@@ -59,7 +58,7 @@ export class CT1040 extends Form {
     const incomeLimit = parameters.socialSecurityExemption.incomeLimit[status]
 
     if (ssIncome > 0 && agi <= incomeLimit) {
-      return ssIncome  // Full exemption if under limit
+      return ssIncome // Full exemption if under limit
     }
     return undefined
   }
@@ -104,7 +103,8 @@ export class CT1040 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -185,7 +185,8 @@ export class CT1040 extends Form {
   }
 
   // Line 23: Total payments and refundable credits
-  l23 = (): number => sumFields([this.l19(), this.l20(), this.l21(), this.l22()])
+  l23 = (): number =>
+    sumFields([this.l19(), this.l20(), this.l21(), this.l22()])
 
   // RESULTS
   // Line 24: Amount due
@@ -204,15 +205,34 @@ export class CT1040 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l1(), this.l2(), this.l3(), this.l4(),
-    this.l5(), this.l6(), this.l7(), this.l8(), this.l9(),
-    this.l10(), this.l11(), this.l12(), this.l13(),
-    this.l14(), this.l15(), this.l16(), this.l17(), this.l18(),
-    this.l19(), this.l20(), this.l21(), this.l22(), this.l23(),
-    this.l24(), this.l25()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l1(),
+    this.l2(),
+    this.l3(),
+    this.l4(),
+    this.l5(),
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23(),
+    this.l24(),
+    this.l25()
   ]
 }
 

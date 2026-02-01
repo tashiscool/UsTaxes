@@ -31,7 +31,7 @@ export interface UncollectedSSTaxWages {
   employerName: string
   employerEIN: string
   wagesReceived: number
-  reasonCode: 'A' | 'C' | 'G' | 'H'  // Reason codes from Form 8919 instructions
+  reasonCode: 'A' | 'C' | 'G' | 'H' // Reason codes from Form 8919 instructions
   // A = Filed SS-8 and received determination
   // C = Received other IRS correspondence
   // G = Section 530 relief requested
@@ -47,7 +47,11 @@ export default class F8919 extends F1040Attachment {
   }
 
   uncollectedWages = (): UncollectedSSTaxWages[] => {
-    return (this.f1040.info.uncollectedSSTaxWages as UncollectedSSTaxWages[] | undefined) ?? []
+    return (
+      (this.f1040.info.uncollectedSSTaxWages as
+        | UncollectedSSTaxWages[]
+        | undefined) ?? []
+    )
   }
 
   // Total wages already subject to Social Security (from W-2s)
@@ -123,7 +127,7 @@ export default class F8919 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Part I - First employer
     this.l1FirmName(),
     this.l1EIN(),

@@ -35,7 +35,9 @@ export const isLongTermHolding = (
   purchaseDate: Date,
   saleDate: Date
 ): boolean => {
-  return numberOfDaysBetween(purchaseDate, saleDate) > LONG_TERM_HOLDING_PERIOD_DAYS
+  return (
+    numberOfDaysBetween(purchaseDate, saleDate) > LONG_TERM_HOLDING_PERIOD_DAYS
+  )
 }
 
 /**
@@ -83,8 +85,8 @@ export const createTaxLot = (
  * Sort lots by purchase date (oldest first for FIFO)
  */
 export const sortLotsByDateAsc = (lots: TaxLot<Date>[]): TaxLot<Date>[] => {
-  return [...lots].sort((a, b) =>
-    a.purchaseDate.getTime() - b.purchaseDate.getTime()
+  return [...lots].sort(
+    (a, b) => a.purchaseDate.getTime() - b.purchaseDate.getTime()
   )
 }
 
@@ -92,8 +94,8 @@ export const sortLotsByDateAsc = (lots: TaxLot<Date>[]): TaxLot<Date>[] => {
  * Sort lots by purchase date (newest first for LIFO)
  */
 export const sortLotsByDateDesc = (lots: TaxLot<Date>[]): TaxLot<Date>[] => {
-  return [...lots].sort((a, b) =>
-    b.purchaseDate.getTime() - a.purchaseDate.getTime()
+  return [...lots].sort(
+    (a, b) => b.purchaseDate.getTime() - a.purchaseDate.getTime()
   )
 }
 
@@ -104,7 +106,9 @@ export const selectLotsFIFO = (
   lots: TaxLot<Date>[],
   sharesToSell: number
 ): TaxLotSelection[] => {
-  const sortedLots = sortLotsByDateAsc(lots.filter(l => l.remainingShares > 0))
+  const sortedLots = sortLotsByDateAsc(
+    lots.filter((l) => l.remainingShares > 0)
+  )
   return selectLotsFromSorted(sortedLots, sharesToSell)
 }
 
@@ -115,7 +119,9 @@ export const selectLotsLIFO = (
   lots: TaxLot<Date>[],
   sharesToSell: number
 ): TaxLotSelection[] => {
-  const sortedLots = sortLotsByDateDesc(lots.filter(l => l.remainingShares > 0))
+  const sortedLots = sortLotsByDateDesc(
+    lots.filter((l) => l.remainingShares > 0)
+  )
   return selectLotsFromSorted(sortedLots, sharesToSell)
 }
 
@@ -171,15 +177,19 @@ export const selectLotsByMethod = (
  * Calculate average cost per share for mutual funds
  */
 export const calculateAverageCost = (lots: TaxLot<Date>[]): number => {
-  const activeLots = lots.filter(l => l.remainingShares > 0)
+  const activeLots = lots.filter((l) => l.remainingShares > 0)
   if (activeLots.length === 0) return 0
 
   const totalCost = activeLots.reduce((sum, lot) => {
-    const proportionalCost = (lot.adjustedCostBasis * lot.remainingShares) / lot.shares
+    const proportionalCost =
+      (lot.adjustedCostBasis * lot.remainingShares) / lot.shares
     return sum + proportionalCost
   }, 0)
 
-  const totalShares = activeLots.reduce((sum, lot) => sum + lot.remainingShares, 0)
+  const totalShares = activeLots.reduce(
+    (sum, lot) => sum + lot.remainingShares,
+    0
+  )
   return totalShares > 0 ? totalCost / totalShares : 0
 }
 
@@ -199,11 +209,11 @@ export const calculateSaleCostBasis = (
 
   // For FIFO, LIFO, and Specific ID, calculate from selected lots
   return selections.reduce((total, selection) => {
-    const lot = lots.find(l => l.id === selection.lotId)
+    const lot = lots.find((l) => l.id === selection.lotId)
     if (!lot) return total
 
     const costPerShareWithFees = lot.adjustedCostBasis / lot.shares
-    return total + (costPerShareWithFees * selection.sharesFromLot)
+    return total + costPerShareWithFees * selection.sharesFromLot
   }, 0)
 }
 
@@ -216,8 +226,8 @@ export const hasShortTermPortion = (
   selections: TaxLotSelection[],
   saleDate: Date
 ): boolean => {
-  return selections.some(selection => {
-    const lot = lots.find(l => l.id === selection.lotId)
+  return selections.some((selection) => {
+    const lot = lots.find((l) => l.id === selection.lotId)
     if (!lot) return false
     return !isLongTermHolding(lot.purchaseDate, saleDate)
   })
@@ -254,9 +264,10 @@ export const calculateSaleGainLoss = (
   if (method === CostBasisMethod.AverageCost) {
     const avgCost = calculateAverageCost(lots)
     // For average cost, use the earliest lot's date to determine holding period
-    const activeLots = lots.filter(l => l.remainingShares > 0)
+    const activeLots = lots.filter((l) => l.remainingShares > 0)
     const sortedActiveLots = sortLotsByDateAsc(activeLots)
-    const oldestLot = sortedActiveLots.length > 0 ? sortedActiveLots[0] : undefined
+    const oldestLot =
+      sortedActiveLots.length > 0 ? sortedActiveLots[0] : undefined
     if (oldestLot && isLongTermHolding(oldestLot.purchaseDate, saleDate)) {
       longTermCostBasis = avgCost * totalShares
       longTermShares = totalShares
@@ -267,7 +278,7 @@ export const calculateSaleGainLoss = (
   } else {
     // Calculate for each selected lot
     for (const selection of selections) {
-      const lot = lots.find(l => l.id === selection.lotId)
+      const lot = lots.find((l) => l.id === selection.lotId)
       if (!lot) continue
 
       const costPerShareWithFees = lot.adjustedCostBasis / lot.shares
@@ -284,12 +295,10 @@ export const calculateSaleGainLoss = (
   }
 
   // Allocate proceeds proportionally
-  const shortTermProceeds = totalShares > 0
-    ? (proceeds * shortTermShares) / totalShares
-    : 0
-  const longTermProceeds = totalShares > 0
-    ? (proceeds * longTermShares) / totalShares
-    : 0
+  const shortTermProceeds =
+    totalShares > 0 ? (proceeds * shortTermShares) / totalShares : 0
+  const longTermProceeds =
+    totalShares > 0 ? (proceeds * longTermShares) / totalShares : 0
 
   const shortTermGain = shortTermProceeds - shortTermCostBasis
   const longTermGain = longTermProceeds - longTermCostBasis
@@ -315,8 +324,8 @@ export const applyLotSelections = (
   lots: TaxLot<Date>[],
   selections: TaxLotSelection[]
 ): TaxLot<Date>[] => {
-  return lots.map(lot => {
-    const selection = selections.find(s => s.lotId === lot.id)
+  return lots.map((lot) => {
+    const selection = selections.find((s) => s.lotId === lot.id)
     if (!selection) return lot
 
     return {
@@ -334,7 +343,7 @@ export const applyStockSplit = (
   symbol: string,
   splitRatio: number // e.g., 2 for a 2:1 split
 ): TaxLot<Date>[] => {
-  return lots.map(lot => {
+  return lots.map((lot) => {
     if (lot.symbol !== symbol) return lot
 
     const newShares = lot.shares * splitRatio
@@ -401,9 +410,10 @@ export const calculateGainLossSummary = (
     longTermWashSaleAdjustment: 0
   }
 
-  const salesInYear = transactions.filter(t =>
-    t.transactionType === StockTransactionType.Sell &&
-    t.date.getFullYear() === taxYear
+  const salesInYear = transactions.filter(
+    (t) =>
+      t.transactionType === StockTransactionType.Sell &&
+      t.date.getFullYear() === taxYear
   )
 
   for (const sale of salesInYear) {
@@ -434,10 +444,11 @@ export const createInvestment = (
   name?: string,
   currentPrice?: number
 ): Investment<Date> => {
-  const activeLots = lots.filter(l => l.remainingShares > 0)
+  const activeLots = lots.filter((l) => l.remainingShares > 0)
   const totalShares = activeLots.reduce((sum, l) => sum + l.remainingShares, 0)
   const totalCostBasis = activeLots.reduce((sum, l) => {
-    const proportionalCost = (l.adjustedCostBasis * l.remainingShares) / l.shares
+    const proportionalCost =
+      (l.adjustedCostBasis * l.remainingShares) / l.shares
     return sum + proportionalCost
   }, 0)
   const averageCostPerShare = totalShares > 0 ? totalCostBasis / totalShares : 0
@@ -476,7 +487,7 @@ export const processBuyTransaction = (
 
   // Find existing investment for this symbol
   const existingInvestmentIndex = portfolio.investments.findIndex(
-    i => i.symbol === transaction.symbol
+    (i) => i.symbol === transaction.symbol
   )
 
   if (existingInvestmentIndex >= 0) {
@@ -527,7 +538,7 @@ export const processSellTransaction = (
   method?: CostBasisMethod
 ): CostBasisPortfolio<Date> => {
   const investmentIndex = portfolio.investments.findIndex(
-    i => i.symbol === transaction.symbol
+    (i) => i.symbol === transaction.symbol
   )
 
   if (investmentIndex < 0) {
@@ -538,14 +549,13 @@ export const processSellTransaction = (
   const sellMethod = method ?? investment.defaultCostBasisMethod
 
   // Select lots if not provided
-  const selections = lotSelections ?? selectLotsByMethod(
-    investment.lots,
-    transaction.shares,
-    sellMethod
-  )
+  const selections =
+    lotSelections ??
+    selectLotsByMethod(investment.lots, transaction.shares, sellMethod)
 
   // Calculate proceeds
-  const proceeds = transaction.pricePerShare * transaction.shares - transaction.fees
+  const proceeds =
+    transaction.pricePerShare * transaction.shares - transaction.fees
 
   // Calculate gain/loss
   const gainLossResult = calculateSaleGainLoss(
@@ -568,10 +578,13 @@ export const processSellTransaction = (
   const updatedTransaction: StockTransaction<Date> = {
     ...transaction,
     proceeds,
-    costBasis: gainLossResult.shortTermCostBasis + gainLossResult.longTermCostBasis,
+    costBasis:
+      gainLossResult.shortTermCostBasis + gainLossResult.longTermCostBasis,
     lotSelections: selections,
     gainLoss: gainLossResult.totalGain,
-    isShortTerm: gainLossResult.shortTermCostBasis > 0 && gainLossResult.longTermCostBasis === 0,
+    isShortTerm:
+      gainLossResult.shortTermCostBasis > 0 &&
+      gainLossResult.longTermCostBasis === 0,
     isWashSale: washSaleInfo.isWashSale,
     washSaleDisallowedLoss: washSaleInfo.disallowedLoss
   }
@@ -625,8 +638,8 @@ export const getTaxLotPreviews = (
   asOfDate: Date = new Date()
 ): TaxLotPreview[] => {
   return lots
-    .filter(l => l.remainingShares > 0)
-    .map(lot => {
+    .filter((l) => l.remainingShares > 0)
+    .map((lot) => {
       const daysHeld = numberOfDaysBetween(lot.purchaseDate, asOfDate)
       const isLongTerm = daysHeld > LONG_TERM_HOLDING_PERIOD_DAYS
       const costPerShare = lot.adjustedCostBasis / lot.shares

@@ -116,7 +116,9 @@ interface NotificationBannerProps {
   onAction?: () => void
 }
 
-const NotificationBanner = (props: NotificationBannerProps): ReactElement | null => {
+const NotificationBanner = (
+  props: NotificationBannerProps
+): ReactElement | null => {
   const {
     deadline,
     reminder,
@@ -134,7 +136,8 @@ const NotificationBanner = (props: NotificationBannerProps): ReactElement | null
 
   // Determine content based on props
   const title = propTitle ?? deadline?.title ?? reminder?.title ?? ''
-  const message = propMessage ?? deadline?.description ?? reminder?.message ?? ''
+  const message =
+    propMessage ?? deadline?.description ?? reminder?.message ?? ''
 
   // Determine variant based on urgency
   const getVariant = (): BannerVariant => {
@@ -312,7 +315,10 @@ export const NotificationBannerList = (
   const { deadlines = [], reminders = [], maxVisible = 3, onDismiss } = props
 
   // Combine and sort by urgency
-  const items: Array<{ type: 'deadline' | 'reminder'; data: DeadlineWithStatus | ScheduledReminder }> = [
+  const items: Array<{
+    type: 'deadline' | 'reminder'
+    data: DeadlineWithStatus | ScheduledReminder
+  }> = [
     ...deadlines.map((d) => ({ type: 'deadline' as const, data: d })),
     ...reminders
       .filter((r) => !r.dismissed && !r.acknowledged)
@@ -321,7 +327,7 @@ export const NotificationBannerList = (
 
   // Sort by urgency (past due first, then by days remaining)
   items.sort((a, b) => {
-    const getUrgency = (item: typeof items[0]): number => {
+    const getUrgency = (item: (typeof items)[0]): number => {
       if (item.type === 'deadline') {
         const d = item.data as DeadlineWithStatus
         if (d.isPast) return -1000
@@ -331,7 +337,9 @@ export const NotificationBannerList = (
         const r = item.data as ScheduledReminder
         const reminderDate = new Date(r.reminderDate)
         const now = new Date()
-        return Math.ceil((reminderDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        return Math.ceil(
+          (reminderDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        )
       }
     }
     return getUrgency(a) - getUrgency(b)

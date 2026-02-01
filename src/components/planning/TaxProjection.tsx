@@ -95,7 +95,11 @@ const quarterlyDeadlines = [
   { quarter: 'Q1', deadline: 'April 15', period: 'Jan 1 - Mar 31' },
   { quarter: 'Q2', deadline: 'June 15', period: 'Apr 1 - May 31' },
   { quarter: 'Q3', deadline: 'September 15', period: 'Jun 1 - Aug 31' },
-  { quarter: 'Q4', deadline: 'January 15 (next year)', period: 'Sep 1 - Dec 31' }
+  {
+    quarter: 'Q4',
+    deadline: 'January 15 (next year)',
+    period: 'Sep 1 - Dec 31'
+  }
 ]
 
 const bracketColors = [
@@ -151,9 +155,7 @@ export default function TaxProjection({
     <Box>
       <Paper className={classes.paper}>
         <Typography variant="h6" gutterBottom>
-          <TrendingUp
-            style={{ verticalAlign: 'middle', marginRight: 8 }}
-          />
+          <TrendingUp style={{ verticalAlign: 'middle', marginRight: 8 }} />
           Next Year Tax Projection
         </Typography>
         <Typography variant="body2" color="textSecondary" paragraph>
@@ -400,7 +402,9 @@ export default function TaxProjection({
                 </TableCell>
                 <TableCell
                   align="right"
-                  className={taxChange > 0 ? classes.negative : classes.positive}
+                  className={
+                    taxChange > 0 ? classes.negative : classes.positive
+                  }
                 >
                   <strong>
                     <Currency value={taxChange} plain />
@@ -424,9 +428,7 @@ export default function TaxProjection({
             <strong>Safe Harbor Rule:</strong> To avoid underpayment penalties,
             you must pay at least the lesser of:
             <ul style={{ marginBottom: 0 }}>
-              <li>
-                90% of your current year tax liability, OR
-              </li>
+              <li>90% of your current year tax liability, OR</li>
               <li>
                 100% of your prior year tax liability (110% if AGI &gt;
                 $150,000)
@@ -524,8 +526,8 @@ export default function TaxProjection({
             {currentInputs.year + 1})
           </Typography>
           <Typography variant="body2" color="textSecondary" paragraph>
-            Tax brackets are adjusted annually for inflation. Here&apos;s how the
-            brackets change:
+            Tax brackets are adjusted annually for inflation. Here&apos;s how
+            the brackets change:
           </Typography>
 
           <Grid container spacing={2}>

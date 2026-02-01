@@ -27,9 +27,9 @@ import { Form8933Data } from 'ustaxes/core/data'
 
 // 2025 credit rates (base rates, inflation-adjusted)
 const carbonCreditRates = {
-  geologicStorage: 85,           // $ per metric ton
-  enhancedOilRecovery: 60,       // $ per metric ton
-  utilization: 60,               // $ per metric ton
+  geologicStorage: 85, // $ per metric ton
+  enhancedOilRecovery: 60, // $ per metric ton
+  utilization: 60, // $ per metric ton
   // Without prevailing wage/apprenticeship (base / 5)
   baseGeologicStorage: 17,
   baseEnhancedOilRecovery: 12,
@@ -46,9 +46,9 @@ export default class F8933 extends F1040Attachment {
 
   hasCarbonSequestrationCredit = (): boolean => {
     const data = this.creditData()
-    return data !== undefined && (
-      data.facilities.length > 0 ||
-      (data.passthrough8933Credit ?? 0) > 0
+    return (
+      data !== undefined &&
+      (data.facilities.length > 0 || (data.passthrough8933Credit ?? 0) > 0)
     )
   }
 
@@ -64,7 +64,7 @@ export default class F8933 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.facilities
-      .filter(f => f.disposalMethod === 'geologicStorage')
+      .filter((f) => f.disposalMethod === 'geologicStorage')
       .reduce((sum, f) => sum + f.metricTonsCaptured, 0)
   }
 
@@ -72,7 +72,7 @@ export default class F8933 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.facilities
-      .filter(f => f.disposalMethod === 'geologicStorage')
+      .filter((f) => f.disposalMethod === 'geologicStorage')
       .reduce((sum, f) => sum + f.creditAmount, 0)
   }
 
@@ -81,7 +81,7 @@ export default class F8933 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.facilities
-      .filter(f => f.disposalMethod === 'enhancedOilRecovery')
+      .filter((f) => f.disposalMethod === 'enhancedOilRecovery')
       .reduce((sum, f) => sum + f.metricTonsCaptured, 0)
   }
 
@@ -89,7 +89,7 @@ export default class F8933 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.facilities
-      .filter(f => f.disposalMethod === 'enhancedOilRecovery')
+      .filter((f) => f.disposalMethod === 'enhancedOilRecovery')
       .reduce((sum, f) => sum + f.creditAmount, 0)
   }
 
@@ -98,7 +98,7 @@ export default class F8933 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.facilities
-      .filter(f => f.disposalMethod === 'utilization')
+      .filter((f) => f.disposalMethod === 'utilization')
       .reduce((sum, f) => sum + f.metricTonsCaptured, 0)
   }
 
@@ -106,7 +106,7 @@ export default class F8933 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.facilities
-      .filter(f => f.disposalMethod === 'utilization')
+      .filter((f) => f.disposalMethod === 'utilization')
       .reduce((sum, f) => sum + f.creditAmount, 0)
   }
 
@@ -132,7 +132,7 @@ export default class F8933 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Geologic storage
     this.l1Tons(),
     this.l1Credit(),

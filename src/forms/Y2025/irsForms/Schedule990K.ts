@@ -79,7 +79,7 @@ export default class Schedule990K extends F1040Attachment {
   }
 
   schedule990KData = (): Schedule990KData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Part I: Bond issues
@@ -101,7 +101,10 @@ export default class Schedule990K extends F1040Attachment {
   }
 
   totalGrossProceeds = (): number => {
-    return this.bondProceeds().reduce((sum, p) => sum + p.grossProceedsAtIssuance, 0)
+    return this.bondProceeds().reduce(
+      (sum, p) => sum + p.grossProceedsAtIssuance,
+      0
+    )
   }
 
   totalUnspentProceeds = (): number => {

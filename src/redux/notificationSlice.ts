@@ -294,7 +294,10 @@ export const notificationReducer = (
         ...state,
         estimatedTaxPayments: state.estimatedTaxPayments.filter(
           (p) =>
-            !(p.quarter === action.payload.quarter && p.year === action.payload.year)
+            !(
+              p.quarter === action.payload.quarter &&
+              p.year === action.payload.year
+            )
         )
       }
 

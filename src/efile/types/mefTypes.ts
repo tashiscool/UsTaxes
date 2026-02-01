@@ -910,8 +910,7 @@ export function createDefaultMeFConfig(
 ): MeFConfig {
   return {
     environment,
-    endpoints:
-      environment === 'ATS' ? ATS_ENDPOINTS : PRODUCTION_ENDPOINTS,
+    endpoints: environment === 'ATS' ? ATS_ENDPOINTS : PRODUCTION_ENDPOINTS,
     timeoutMs: 120000,
     connectionTimeoutMs: 30000,
     tlsConfig,

@@ -30,11 +30,10 @@ export class UTTC40 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -135,17 +134,20 @@ export class UTTC40 extends Form {
   // Line 15: UT Earned Income Credit (20% of federal)
   l15 = (): number | undefined => {
     const federalEIC = this.f1040.scheduleEIC.credit()
-    return federalEIC ? Math.round(federalEIC * parameters.eicPercentage) : undefined
+    return federalEIC
+      ? Math.round(federalEIC * parameters.eicPercentage)
+      : undefined
   }
 
   // Line 16: Other credits
   l16 = (): number | undefined => undefined
 
   // Line 17: Total credits (limited to tax)
-  l17 = (): number => Math.min(
-    sumFields([this.l13(), this.l14(), this.l15(), this.l16()]),
-    this.l12()
-  )
+  l17 = (): number =>
+    Math.min(
+      sumFields([this.l13(), this.l14(), this.l15(), this.l16()]),
+      this.l12()
+    )
 
   // Line 18: Net tax
   l18 = (): number => Math.max(0, this.l12() - this.l17())
@@ -177,15 +179,32 @@ export class UTTC40 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l1(), this.l2(), this.l3(), this.l4(),
-    this.l5(), this.l6(), this.l7(), this.l8(), this.l9(),
-    this.l10(), this.l11(), this.l12(),
-    this.l13(), this.l14(), this.l15(), this.l16(), this.l17(), this.l18(),
-    this.l19(), this.l20(), this.l21(),
-    this.l22(), this.l23()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l1(),
+    this.l2(),
+    this.l3(),
+    this.l4(),
+    this.l5(),
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23()
   ]
 }
 

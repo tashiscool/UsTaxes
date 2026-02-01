@@ -28,11 +28,11 @@ export interface F1099AData {
   // Account number
   accountNumber?: string
   // Property/Transaction details
-  dateOfAcquisition: Date                  // Box 1
-  principalBalance: number                 // Box 2
-  fairMarketValue: number                  // Box 4
-  wasPersonallyLiable: boolean             // Box 5
-  propertyDescription: string              // Box 6
+  dateOfAcquisition: Date // Box 1
+  principalBalance: number // Box 2
+  fairMarketValue: number // Box 4
+  wasPersonallyLiable: boolean // Box 5
+  propertyDescription: string // Box 6
 }
 
 export default class F1099A extends F1040Attachment {
@@ -88,7 +88,10 @@ export default class F1099A extends F1040Attachment {
 
   // Cancellation of debt income (if personally liable and FMV < debt)
   cancellationOfDebtIncome = (): number => {
-    if (this.wasPersonallyLiable() && this.fairMarketValue() < this.principalBalance()) {
+    if (
+      this.wasPersonallyLiable() &&
+      this.fairMarketValue() < this.principalBalance()
+    ) {
       return this.principalBalance() - this.fairMarketValue()
     }
     return 0
@@ -97,7 +100,11 @@ export default class F1099A extends F1040Attachment {
   // Is this residential property?
   isResidentialProperty = (): boolean => {
     const desc = this.propertyDescription().toLowerCase()
-    return desc.includes('home') || desc.includes('residence') || desc.includes('house')
+    return (
+      desc.includes('home') ||
+      desc.includes('residence') ||
+      desc.includes('house')
+    )
   }
 
   fields = (): Field[] => {
@@ -115,11 +122,11 @@ export default class F1099A extends F1040Attachment {
       data?.borrowerTIN ?? '',
       data?.accountNumber ?? '',
       // Transaction details
-      data?.dateOfAcquisition?.toLocaleDateString() ?? '',  // Box 1
-      data?.principalBalance ?? 0,                          // Box 2
-      data?.fairMarketValue ?? 0,                           // Box 4
-      data?.wasPersonallyLiable ?? false,                   // Box 5
-      data?.propertyDescription ?? '',                      // Box 6
+      data?.dateOfAcquisition.toLocaleDateString() ?? '', // Box 1
+      data?.principalBalance ?? 0, // Box 2
+      data?.fairMarketValue ?? 0, // Box 4
+      data?.wasPersonallyLiable ?? false, // Box 5
+      data?.propertyDescription ?? '', // Box 6
       // Calculations
       this.amountRealized(),
       this.cancellationOfDebtIncome(),

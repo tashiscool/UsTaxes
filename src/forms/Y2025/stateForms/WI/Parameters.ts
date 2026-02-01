@@ -9,23 +9,23 @@ const parameters = {
   taxBrackets: {
     [FilingStatus.S]: {
       brackets: [14320, 28640, 315310],
-      rates: [0.0354, 0.0465, 0.0530, 0.0765]
+      rates: [0.0354, 0.0465, 0.053, 0.0765]
     },
     [FilingStatus.MFJ]: {
       brackets: [19090, 38190, 420420],
-      rates: [0.0354, 0.0465, 0.0530, 0.0765]
+      rates: [0.0354, 0.0465, 0.053, 0.0765]
     },
     [FilingStatus.MFS]: {
       brackets: [9550, 19095, 210210],
-      rates: [0.0354, 0.0465, 0.0530, 0.0765]
+      rates: [0.0354, 0.0465, 0.053, 0.0765]
     },
     [FilingStatus.HOH]: {
       brackets: [14320, 28640, 315310],
-      rates: [0.0354, 0.0465, 0.0530, 0.0765]
+      rates: [0.0354, 0.0465, 0.053, 0.0765]
     },
     [FilingStatus.W]: {
       brackets: [19090, 38190, 420420],
-      rates: [0.0354, 0.0465, 0.0530, 0.0765]
+      rates: [0.0354, 0.0465, 0.053, 0.0765]
     }
   },
 
@@ -47,7 +47,7 @@ const parameters = {
       [FilingStatus.HOH]: 18850,
       [FilingStatus.W]: 28580
     },
-    reductionRate: 0.12  // Deduction reduced by 12% of AGI over threshold
+    reductionRate: 0.12 // Deduction reduced by 12% of AGI over threshold
   },
 
   // Personal exemption (Wisconsin eliminated personal exemptions)
@@ -72,7 +72,7 @@ const parameters = {
   },
 
   // Child/Dependent Care Credit (50% of federal credit)
-  childCareCreditFactor: 0.50,
+  childCareCreditFactor: 0.5,
 
   // Retirement income deduction (limited)
   retirementSubtraction: {

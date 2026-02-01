@@ -59,14 +59,16 @@ export default class F8606 extends F1040Attachment {
   }
 
   hasNondeductibleContributions = (): boolean => {
-    const contributions = (this.f1040.info.iraContributions ?? []) as IraContribution[]
+    const contributions = (this.f1040.info.iraContributions ??
+      []) as IraContribution[]
     return contributions.some(
       (c) => c.personRole === this.personRole && c.nondeductible
     )
   }
 
   hasConversions = (): boolean => {
-    const conversions = (this.f1040.info.rothConversions ?? []) as RothConversion[]
+    const conversions = (this.f1040.info.rothConversions ??
+      []) as RothConversion[]
     return conversions.some((c) => c.personRole === this.personRole)
   }
 
@@ -83,7 +85,8 @@ export default class F8606 extends F1040Attachment {
 
   // Line 1: Nondeductible contributions made for current year
   l1 = (): number => {
-    const contributions = (this.f1040.info.iraContributions ?? []) as IraContribution[]
+    const contributions = (this.f1040.info.iraContributions ??
+      []) as IraContribution[]
     let total = 0
     for (const c of contributions) {
       if (c.personRole === this.personRole && c.nondeductible) {
@@ -129,7 +132,8 @@ export default class F8606 extends F1040Attachment {
 
   // Line 9: Conversions to Roth IRA
   l9 = (): number => {
-    const conversions = (this.f1040.info.rothConversions ?? []) as RothConversion[]
+    const conversions = (this.f1040.info.rothConversions ??
+      []) as RothConversion[]
     let total = 0
     for (const c of conversions) {
       if (c.personRole === this.personRole) {
@@ -182,7 +186,8 @@ export default class F8606 extends F1040Attachment {
 
   // Line 19: Total nonqualified distributions from Roth IRAs
   l19 = (): number => {
-    const rothDistributions = (this.f1040.info.rothDistributions ?? []) as RothDistribution[]
+    const rothDistributions = (this.f1040.info.rothDistributions ??
+      []) as RothDistribution[]
     let total = 0
     for (const d of rothDistributions) {
       if (d.personRole === this.personRole && !d.qualified) {

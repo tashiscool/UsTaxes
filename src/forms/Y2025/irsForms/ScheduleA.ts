@@ -71,7 +71,7 @@ export default class ScheduleA extends F1040Attachment {
     const filingStatus = this.f1040.info.taxPayer.filingStatus
     const agi = this.f1040.l11()
     const saltTotal = this.l5d()
-    
+
     // Calculate effective cap with phase-out
     let effectiveCap: number
     if (filingStatus === FilingStatus.MFS) {
@@ -80,7 +80,7 @@ export default class ScheduleA extends F1040Attachment {
     } else {
       effectiveCap = saltCap.effectiveCap(filingStatus, agi)
     }
-    
+
     return Math.min(effectiveCap, saltTotal)
   }
 

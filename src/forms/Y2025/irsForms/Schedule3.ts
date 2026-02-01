@@ -49,25 +49,25 @@ export default class Schedule3 extends F1040Attachment {
 
   isNeeded = (): boolean =>
     this.claimableExcessSSTaxWithholding() > 0 ||
-    (this.f1040.f1116?.isNeeded() ?? false) ||  // Foreign Tax Credit
-    (this.f1040.f2441?.isNeeded() ?? false) ||  // Child and Dependent Care Credit
-    (this.f1040.f8863?.isNeeded() ?? false) ||  // Education Credits
-    (this.f1040.f8880?.isNeeded() ?? false) ||  // Saver's Credit
-    (this.f1040.f5695?.isNeeded() ?? false) ||  // Residential Energy Credits
-    (this.f1040.f8801?.isNeeded() ?? false) ||  // Prior Year AMT Credit
-    (this.f1040.f8839?.isNeeded() ?? false)     // Adoption Credit
+    (this.f1040.f1116?.isNeeded() ?? false) || // Foreign Tax Credit
+    (this.f1040.f2441?.isNeeded() ?? false) || // Child and Dependent Care Credit
+    (this.f1040.f8863?.isNeeded() ?? false) || // Education Credits
+    (this.f1040.f8880?.isNeeded() ?? false) || // Saver's Credit
+    (this.f1040.f5695?.isNeeded() ?? false) || // Residential Energy Credits
+    (this.f1040.f8801?.isNeeded() ?? false) || // Prior Year AMT Credit
+    (this.f1040.f8839?.isNeeded() ?? false) // Adoption Credit
 
   deductions = (): number => 0
   // Part I: Nonrefundable credits
-  l1 = (): number | undefined => this.f1040.f1116?.credit()  // Form 1116: Foreign Tax Credit
-  l2 = (): number | undefined => this.f1040.f2441?.credit()  // Form 2441: Child and Dependent Care Credit
+  l1 = (): number | undefined => this.f1040.f1116?.credit() // Form 1116: Foreign Tax Credit
+  l2 = (): number | undefined => this.f1040.f2441?.credit() // Form 2441: Child and Dependent Care Credit
   l3 = (): number | undefined => this.f1040.f8863?.l19()
-  l4 = (): number | undefined => this.f1040.f8880?.credit()  // Form 8880: Saver's Credit
-  l5 = (): number | undefined => this.f1040.f5695?.totalCredit()  // Form 5695: Residential Energy Credits (Clean Energy + Home Improvement)
-  l6a = (): number | undefined => this.f1040.f8801?.credit()  // Form 8801: Prior Year AMT Credit
+  l4 = (): number | undefined => this.f1040.f8880?.credit() // Form 8880: Saver's Credit
+  l5 = (): number | undefined => this.f1040.f5695?.totalCredit() // Form 5695: Residential Energy Credits (Clean Energy + Home Improvement)
+  l6a = (): number | undefined => this.f1040.f8801?.credit() // Form 8801: Prior Year AMT Credit
   l6b = (): number | undefined => undefined // General business credit (Form 3800)
   l6c = (): number | undefined => undefined // Credit for prior year minimum tax (Form 8801) - already in 6a
-  l6d = (): number | undefined => this.f1040.f8839?.totalCredit()  // Form 8839: Adoption Credit
+  l6d = (): number | undefined => this.f1040.f8839?.totalCredit() // Form 8839: Adoption Credit
   l6e = (): number | undefined => undefined // TODO: other credits
   l6f = (): number | undefined => undefined // TODO: other credits
   l6g = (): number | undefined => undefined // TODO: other credits

@@ -27,7 +27,11 @@ export {
   CRYPTO_FIELDS,
   getRequiredCryptoFields
 } from './generic-crypto'
-export type { CryptoColumnMapping, GenericCryptoParserConfig, CryptoFieldDefinition } from './generic-crypto'
+export type {
+  CryptoColumnMapping,
+  GenericCryptoParserConfig,
+  CryptoFieldDefinition
+} from './generic-crypto'
 
 // Crypto types
 export * from './cryptoTypes'
@@ -68,7 +72,7 @@ export function getParser(brokerageType: BrokerageType): BrokerageParser {
  */
 export function findParser(content: string): BrokerageParser {
   const lines = content.split('\n')
-  const headers = lines[0]?.split(',').map(h => h.toLowerCase().trim()) ?? []
+  const headers = lines[0]?.split(',').map((h) => h.toLowerCase().trim()) ?? []
 
   for (const parser of Object.values(PARSERS)) {
     if (parser.canParse(content, headers)) {
@@ -99,7 +103,8 @@ export function autoParseContent(content: string): {
   // Try each parser
   for (const [type, parser] of Object.entries(PARSERS)) {
     const lines = content.split('\n')
-    const headers = lines[0]?.split(',').map(h => h.toLowerCase().trim()) ?? []
+    const headers =
+      lines[0]?.split(',').map((h) => h.toLowerCase().trim()) ?? []
 
     if (parser.canParse(content, headers)) {
       return {
@@ -114,7 +119,13 @@ export function autoParseContent(content: string): {
     brokerageType: null,
     result: {
       transactions: [],
-      errors: [{ row: 0, message: 'Could not auto-detect brokerage format. Please select a format or use generic mapping.' }],
+      errors: [
+        {
+          row: 0,
+          message:
+            'Could not auto-detect brokerage format. Please select a format or use generic mapping.'
+        }
+      ],
       warnings: []
     }
   }

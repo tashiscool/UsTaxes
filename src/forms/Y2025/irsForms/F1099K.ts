@@ -31,14 +31,14 @@ export interface F1099KData {
   // Account number
   accountNumber?: string
   // Transaction information
-  paymentCardIndicator: boolean      // Box 1a checkbox
+  paymentCardIndicator: boolean // Box 1a checkbox
   thirdPartyNetworkIndicator: boolean // Box 1b checkbox
   merchantCategoryCode?: string
   numberOfTransactions: number
   // Amounts
-  grossAmount: number                // Box 1a/1b
-  cardNotPresent: number             // Box 1c
-  federalTaxWithheld: number         // Box 4
+  grossAmount: number // Box 1a/1b
+  cardNotPresent: number // Box 1c
+  federalTaxWithheld: number // Box 4
   // Monthly breakdown
   januaryAmount: number
   februaryAmount: number
@@ -53,7 +53,7 @@ export interface F1099KData {
   novemberAmount: number
   decemberAmount: number
   // State information
-  stateTaxWithheld: number           // Box 8
+  stateTaxWithheld: number // Box 8
   statePayerNumber: string
   stateIncome: number
 }
@@ -111,10 +111,20 @@ export default class F1099K extends F1040Attachment {
   monthlyTotal = (): number => {
     const data = this.f1099KData()
     if (!data) return 0
-    return data.januaryAmount + data.februaryAmount + data.marchAmount +
-           data.aprilAmount + data.mayAmount + data.juneAmount +
-           data.julyAmount + data.augustAmount + data.septemberAmount +
-           data.octoberAmount + data.novemberAmount + data.decemberAmount
+    return (
+      data.januaryAmount +
+      data.februaryAmount +
+      data.marchAmount +
+      data.aprilAmount +
+      data.mayAmount +
+      data.juneAmount +
+      data.julyAmount +
+      data.augustAmount +
+      data.septemberAmount +
+      data.octoberAmount +
+      data.novemberAmount +
+      data.decemberAmount
+    )
   }
 
   // This typically goes to Schedule C (self-employment) or Schedule 1

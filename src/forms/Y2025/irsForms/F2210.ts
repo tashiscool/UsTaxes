@@ -16,7 +16,7 @@ import { Field } from 'ustaxes/core/pdfFiller'
  */
 
 // 2025 penalty rate (based on federal short-term rate + 3%)
-const penaltyRate = 0.08  // 8% annual rate
+const penaltyRate = 0.08 // 8% annual rate
 
 export default class F2210 extends F1040Attachment {
   tag: FormTag = 'f2210'
@@ -32,11 +32,11 @@ export default class F2210 extends F1040Attachment {
     if (this.l6() < 1000) return true
 
     // No penalty if withholding covered 90% of current year tax
-    if (this.l7() >= this.l6() * 0.90) return true
+    if (this.l7() >= this.l6() * 0.9) return true
 
     // No penalty if withholding covered 100% of prior year tax (110% for high income)
     const priorYearTax = this.f1040.info.priorYearTax ?? 0
-    const threshold = this.requiresHigherSafeHarbor() ? 1.10 : 1.00
+    const threshold = this.requiresHigherSafeHarbor() ? 1.1 : 1.0
     if (this.l7() >= priorYearTax * threshold) return true
 
     return false
@@ -45,9 +45,10 @@ export default class F2210 extends F1040Attachment {
   requiresHigherSafeHarbor = (): boolean => {
     // 110% safe harbor for AGI > $150,000 ($75,000 MFS)
     const agi = this.f1040.l11()
-    const threshold = this.f1040.info.taxPayer.filingStatus === FilingStatus.MFS
-      ? 75000
-      : 150000
+    const threshold =
+      this.f1040.info.taxPayer.filingStatus === FilingStatus.MFS
+        ? 75000
+        : 150000
     return agi > threshold
   }
 
@@ -65,11 +66,11 @@ export default class F2210 extends F1040Attachment {
   // Line 4: Credits
   l4 = (): number => {
     return sumFields([
-      this.f1040.l27(),  // EIC
-      this.f1040.l28(),  // Additional CTC
-      this.f1040.l29(),  // AOTC
-      this.f1040.l30(),  // Other credits
-      this.f1040.l31()   // Schedule 3 credits
+      this.f1040.l27(), // EIC
+      this.f1040.l28(), // Additional CTC
+      this.f1040.l29(), // AOTC
+      this.f1040.l30(), // Other credits
+      this.f1040.l31() // Schedule 3 credits
     ])
   }
 
@@ -87,10 +88,10 @@ export default class F2210 extends F1040Attachment {
 
   // Line 9: Required annual payment (lesser of 90% of line 6 or 100%/110% of prior year)
   l9 = (): number => {
-    const currentYear90 = Math.round(this.l6() * 0.90)
+    const currentYear90 = Math.round(this.l6() * 0.9)
     const priorYearTax = this.f1040.info.priorYearTax ?? 0
     const priorYearRequired = this.requiresHigherSafeHarbor()
-      ? Math.round(priorYearTax * 1.10)
+      ? Math.round(priorYearTax * 1.1)
       : priorYearTax
 
     return Math.min(currentYear90, priorYearRequired)

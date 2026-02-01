@@ -134,16 +134,16 @@
   }
 
   /* Links should show URL in print */
-  a[href^="http"]:after {
-    content: " (" attr(href) ")";
+  a[href^='http']:after {
+    content: ' (' attr(href) ')';
     font-size: 10pt;
     color: #666;
   }
 
   /* Internal links don't need URL */
-  a[href^="#"]:after,
-  a[href^="/"]:after {
-    content: "";
+  a[href^='#']:after,
+  a[href^='/']:after {
+    content: '';
   }
 
   /* Form fields styling for print */
@@ -157,7 +157,7 @@
 
   /* Currency values */
   .currency-value {
-    font-family: "Courier New", monospace;
+    font-family: 'Courier New', monospace;
   }
 
   /* Summary section */
@@ -242,7 +242,7 @@
 
   .MuiCheckbox-root.Mui-checked:before,
   .MuiRadio-root.Mui-checked:before {
-    content: "[X]";
+    content: '[X]';
   }
 }
 
@@ -269,7 +269,7 @@
 }
 
 .print-preview-page-break::after {
-  content: "Page Break";
+  content: 'Page Break';
   position: absolute;
   top: -10px;
   left: 50%;

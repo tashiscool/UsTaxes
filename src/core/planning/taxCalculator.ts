@@ -271,8 +271,7 @@ export function calculateChildTaxCredit(
   const maxCredit = qualifyingChildren * creditPerChild
 
   // Phase-out thresholds
-  const phaseOutThreshold =
-    filingStatus === FilingStatus.MFJ ? 400000 : 200000
+  const phaseOutThreshold = filingStatus === FilingStatus.MFJ ? 400000 : 200000
 
   if (agi <= phaseOutThreshold) {
     return maxCredit
@@ -510,7 +509,8 @@ export function calculateTaxSavingOpportunities(
 
   // Check if itemizing might be beneficial
   const taxData = getFederalTaxData(currentInputs.year)
-  const standardDeduction = taxData.standardDeduction[currentInputs.filingStatus]
+  const standardDeduction =
+    taxData.standardDeduction[currentInputs.filingStatus]
   if (
     !currentInputs.deductions.useItemized &&
     currentInputs.deductions.itemizedAmount > standardDeduction * 0.8
@@ -552,7 +552,9 @@ export function calculateTaxSavingOpportunities(
   } else if (currentBreakdown.refundOrOwed < -1000) {
     opportunities.push({
       strategy: 'Increase W-4 Withholding',
-      description: `You may owe ${Math.abs(currentBreakdown.refundOrOwed).toLocaleString()} at tax time. Consider increasing withholding to avoid penalties`,
+      description: `You may owe ${Math.abs(
+        currentBreakdown.refundOrOwed
+      ).toLocaleString()} at tax time. Consider increasing withholding to avoid penalties`,
       potentialSavings: 0,
       requiredAction: `Submit a new W-4 to your employer to increase withholding`
     })

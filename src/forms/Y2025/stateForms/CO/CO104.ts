@@ -31,12 +31,11 @@ export class CO104 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Helper: Get primary taxpayer's age
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -73,7 +72,10 @@ export class CO104 extends Form {
     const pensionIncome = this.f1040.l5b() ?? 0
 
     if (age >= 65) {
-      return Math.min(pensionIncome, parameters.seniorPensionSubtraction.maxAmount)
+      return Math.min(
+        pensionIncome,
+        parameters.seniorPensionSubtraction.maxAmount
+      )
     } else if (age >= 55) {
       return Math.min(pensionIncome, parameters.pensionSubtraction.maxAmount)
     }
@@ -93,9 +95,15 @@ export class CO104 extends Form {
   l11 = (): number | undefined => undefined
 
   // Line 12: Total subtractions
-  l12 = (): number => sumFields([
-    this.l6(), this.l7(), this.l8(), this.l9(), this.l10(), this.l11()
-  ])
+  l12 = (): number =>
+    sumFields([
+      this.l6(),
+      this.l7(),
+      this.l8(),
+      this.l9(),
+      this.l10(),
+      this.l11()
+    ])
 
   // Line 13: Colorado Taxable Income
   l13 = (): number => Math.max(0, this.l5() - this.l12())
@@ -165,9 +173,8 @@ export class CO104 extends Form {
   }
 
   // Line 27: Total payments and refundable credits
-  l27 = (): number => sumFields([
-    this.l22(), this.l23(), this.l24(), this.l25(), this.l26()
-  ])
+  l27 = (): number =>
+    sumFields([this.l22(), this.l23(), this.l24(), this.l25(), this.l26()])
 
   // RESULTS
   // Line 28: Overpayment
@@ -186,15 +193,38 @@ export class CO104 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l1(), this.l2(), this.l3(), this.l4(), this.l5(),
-    this.l6(), this.l7(), this.l8(), this.l9(), this.l10(), this.l11(), this.l12(),
-    this.l13(), this.l14(), this.l15(), this.l16(), this.l17(),
-    this.l18(), this.l19(), this.l20(), this.l21(),
-    this.l22(), this.l23(), this.l24(), this.l25(), this.l26(), this.l27(),
-    this.l28(), this.l29()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l1(),
+    this.l2(),
+    this.l3(),
+    this.l4(),
+    this.l5(),
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23(),
+    this.l24(),
+    this.l25(),
+    this.l26(),
+    this.l27(),
+    this.l28(),
+    this.l29()
   ]
 }
 

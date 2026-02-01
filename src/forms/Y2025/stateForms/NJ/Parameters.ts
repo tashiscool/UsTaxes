@@ -46,10 +46,10 @@ const parameters = {
   seniorBlindExemption: 1000,
 
   // NJ Earned Income Tax Credit (40% of federal EIC)
-  eicPercentage: 0.40,
+  eicPercentage: 0.4,
 
   // Child and Dependent Care Credit (percentage of federal)
-  childCarePercentage: 0.50,
+  childCarePercentage: 0.5,
 
   // Property tax deduction/credit
   propertyTaxDeductionMax: 15000,

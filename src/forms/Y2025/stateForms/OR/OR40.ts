@@ -32,11 +32,10 @@ export class OR40 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -117,7 +116,8 @@ export class OR40 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -152,8 +152,7 @@ export class OR40 extends Form {
 
     // Must be 62+ and meet income limit
     const qualifies =
-      primaryAge >= 62 ||
-      (status === FilingStatus.MFJ && spouseAge >= 62)
+      primaryAge >= 62 || (status === FilingStatus.MFJ && spouseAge >= 62)
 
     if (!qualifies || agi > parameters.retirementIncomeCredit.incomeLimit) {
       return undefined
@@ -161,7 +160,10 @@ export class OR40 extends Form {
 
     // Calculate retirement income credit
     const retirementIncome = this.f1040.l5b() ?? 0
-    return Math.min(retirementIncome, parameters.retirementIncomeCredit.maxCredit) || undefined
+    return (
+      Math.min(retirementIncome, parameters.retirementIncomeCredit.maxCredit) ||
+      undefined
+    )
   }
 
   // Line 17: Working family dependent care credit
@@ -180,7 +182,8 @@ export class OR40 extends Form {
   l18 = (): number | undefined => undefined
 
   // Line 19: Total credits
-  l19 = (): number => sumFields([this.l14(), this.l15(), this.l16(), this.l17(), this.l18()])
+  l19 = (): number =>
+    sumFields([this.l14(), this.l15(), this.l16(), this.l17(), this.l18()])
 
   // Line 20: Net tax
   l20 = (): number => Math.max(0, this.l13() - this.l19())
@@ -220,9 +223,9 @@ export class OR40 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
     this.filingStatus() === FilingStatus.S,
     this.filingStatus() === FilingStatus.MFJ,
     this.filingStatus() === FilingStatus.MFS,

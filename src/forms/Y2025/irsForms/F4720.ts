@@ -46,7 +46,12 @@ export interface JeopardizingInvestment {
 }
 
 export interface TaxableExpenditure {
-  expenditureType: 'lobbying' | 'electioneering' | 'grants' | 'noncharitable' | 'other'
+  expenditureType:
+    | 'lobbying'
+    | 'electioneering'
+    | 'grants'
+    | 'noncharitable'
+    | 'other'
   description: string
   amount: number
   payeeName: string
@@ -77,14 +82,14 @@ export interface F4720Data {
 }
 
 // Excise tax rates
-const SELF_DEALING_TAX_RATE_FOUNDATION = 0.10  // 10% initial tax on foundation
-const SELF_DEALING_TAX_RATE_MANAGER = 0.05    // 5% on manager if knowing participation
-const UNDISTRIBUTED_INCOME_TAX_RATE = 0.30    // 30% initial tax
-const EXCESS_HOLDINGS_TAX_RATE = 0.10          // 10% initial tax
-const JEOPARDIZING_TAX_RATE = 0.10            // 10% initial tax
-const TAXABLE_EXPENDITURE_TAX_RATE = 0.20     // 20% initial tax
-const POLITICAL_EXPENDITURE_TAX_RATE = 0.10   // 10% initial tax
-const EXCESS_LOBBYING_TAX_RATE = 0.25         // 25% tax
+const SELF_DEALING_TAX_RATE_FOUNDATION = 0.1 // 10% initial tax on foundation
+const SELF_DEALING_TAX_RATE_MANAGER = 0.05 // 5% on manager if knowing participation
+const UNDISTRIBUTED_INCOME_TAX_RATE = 0.3 // 30% initial tax
+const EXCESS_HOLDINGS_TAX_RATE = 0.1 // 10% initial tax
+const JEOPARDIZING_TAX_RATE = 0.1 // 10% initial tax
+const TAXABLE_EXPENDITURE_TAX_RATE = 0.2 // 20% initial tax
+const POLITICAL_EXPENDITURE_TAX_RATE = 0.1 // 10% initial tax
+const EXCESS_LOBBYING_TAX_RATE = 0.25 // 25% tax
 
 export default class F4720 extends F1040Attachment {
   tag: FormTag = 'f4720'
@@ -100,7 +105,7 @@ export default class F4720 extends F1040Attachment {
   }
 
   f4720Data = (): F4720Data | undefined => {
-    return undefined  // Would be populated from foundation data
+    return undefined // Would be populated from foundation data
   }
 
   // Part I: Self-dealing tax
@@ -109,23 +114,31 @@ export default class F4720 extends F1040Attachment {
   }
 
   totalSelfDealingAmounts = (): number => {
-    return this.selfDealingTransactions().reduce((sum, t) => sum + t.amountInvolved, 0)
+    return this.selfDealingTransactions().reduce(
+      (sum, t) => sum + t.amountInvolved,
+      0
+    )
   }
 
   selfDealingTaxOnFoundation = (): number => {
-    return Math.round(this.totalSelfDealingAmounts() * SELF_DEALING_TAX_RATE_FOUNDATION)
+    return Math.round(
+      this.totalSelfDealingAmounts() * SELF_DEALING_TAX_RATE_FOUNDATION
+    )
   }
 
   // Part II: Undistributed income tax
   undistributedIncome = (): number => {
     const data = this.f4720Data()
     if (!data) return 0
-    const shortfall = data.minimumDistributionRequired - data.actualDistributions
+    const shortfall =
+      data.minimumDistributionRequired - data.actualDistributions
     return Math.max(0, shortfall)
   }
 
   undistributedIncomeTax = (): number => {
-    return Math.round(this.undistributedIncome() * UNDISTRIBUTED_INCOME_TAX_RATE)
+    return Math.round(
+      this.undistributedIncome() * UNDISTRIBUTED_INCOME_TAX_RATE
+    )
   }
 
   // Part III: Excess business holdings tax
@@ -134,11 +147,16 @@ export default class F4720 extends F1040Attachment {
   }
 
   totalExcessHoldingsValue = (): number => {
-    return this.excessBusinessHoldings().reduce((sum, h) => sum + h.fmvOfExcessHoldings, 0)
+    return this.excessBusinessHoldings().reduce(
+      (sum, h) => sum + h.fmvOfExcessHoldings,
+      0
+    )
   }
 
   excessHoldingsTax = (): number => {
-    return Math.round(this.totalExcessHoldingsValue() * EXCESS_HOLDINGS_TAX_RATE)
+    return Math.round(
+      this.totalExcessHoldingsValue() * EXCESS_HOLDINGS_TAX_RATE
+    )
   }
 
   // Part IV: Jeopardizing investments tax
@@ -164,21 +182,29 @@ export default class F4720 extends F1040Attachment {
   }
 
   taxableExpendituresTax = (): number => {
-    return Math.round(this.totalTaxableExpenditures() * TAXABLE_EXPENDITURE_TAX_RATE)
+    return Math.round(
+      this.totalTaxableExpenditures() * TAXABLE_EXPENDITURE_TAX_RATE
+    )
   }
 
   // Part VI: Political expenditures tax
-  politicalExpenditures = (): number => this.f4720Data()?.politicalExpenditures ?? 0
+  politicalExpenditures = (): number =>
+    this.f4720Data()?.politicalExpenditures ?? 0
 
   politicalExpendituresTax = (): number => {
-    return Math.round(this.politicalExpenditures() * POLITICAL_EXPENDITURE_TAX_RATE)
+    return Math.round(
+      this.politicalExpenditures() * POLITICAL_EXPENDITURE_TAX_RATE
+    )
   }
 
   // Part VII: Excess lobbying tax
-  excessLobbyingExpenditures = (): number => this.f4720Data()?.excessLobbyingExpenditures ?? 0
+  excessLobbyingExpenditures = (): number =>
+    this.f4720Data()?.excessLobbyingExpenditures ?? 0
 
   excessLobbyingTax = (): number => {
-    return Math.round(this.excessLobbyingExpenditures() * EXCESS_LOBBYING_TAX_RATE)
+    return Math.round(
+      this.excessLobbyingExpenditures() * EXCESS_LOBBYING_TAX_RATE
+    )
   }
 
   // Total tax

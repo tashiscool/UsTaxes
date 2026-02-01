@@ -16,7 +16,7 @@ const parameters = {
   // Ohio uses federal AGI as starting point
 
   // Ohio Earned Income Credit (30% of federal EIC)
-  earnedIncomeCreditFactor: 0.30,
+  earnedIncomeCreditFactor: 0.3,
 
   // Retirement income credit (limited)
   retirementIncomeCredit: {

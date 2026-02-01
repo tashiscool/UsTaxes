@@ -121,7 +121,8 @@ export default class F3520 extends F1040Attachment {
 
   // Part I: Transfers to Foreign Trusts
 
-  foreignTrusts = (): ForeignTrustInfo[] => this.f3520Info()?.foreignTrusts ?? []
+  foreignTrusts = (): ForeignTrustInfo[] =>
+    this.f3520Info()?.foreignTrusts ?? []
   numberOfTrusts = (): number => this.foreignTrusts().length
 
   transfers = (): TrustTransfer[] => this.f3520Info()?.transfers ?? []
@@ -132,11 +133,14 @@ export default class F3520 extends F1040Attachment {
   }
 
   gratuitousTransfers = (): TrustTransfer[] => {
-    return this.transfers().filter(t => t.isGratuitous)
+    return this.transfers().filter((t) => t.isGratuitous)
   }
 
   totalGratuitousValue = (): number => {
-    return this.gratuitousTransfers().reduce((sum, t) => sum + t.fairMarketValue, 0)
+    return this.gratuitousTransfers().reduce(
+      (sum, t) => sum + t.fairMarketValue,
+      0
+    )
   }
 
   // Part II: U.S. Owner Information
@@ -146,7 +150,8 @@ export default class F3520 extends F1040Attachment {
 
   // Part III: Distributions
 
-  distributions = (): TrustDistribution[] => this.f3520Info()?.distributions ?? []
+  distributions = (): TrustDistribution[] =>
+    this.f3520Info()?.distributions ?? []
   numberOfDistributions = (): number => this.distributions().length
 
   totalDistributions = (): number => {
@@ -154,15 +159,21 @@ export default class F3520 extends F1040Attachment {
   }
 
   accumulationDistributions = (): TrustDistribution[] => {
-    return this.distributions().filter(d => d.isAccumulationDistribution)
+    return this.distributions().filter((d) => d.isAccumulationDistribution)
   }
 
   totalAccumulationDistributions = (): number => {
-    return this.accumulationDistributions().reduce((sum, d) => sum + d.amount, 0)
+    return this.accumulationDistributions().reduce(
+      (sum, d) => sum + d.amount,
+      0
+    )
   }
 
   totalThrowbackTax = (): number => {
-    return this.accumulationDistributions().reduce((sum, d) => sum + (d.throwbackTax ?? 0), 0)
+    return this.accumulationDistributions().reduce(
+      (sum, d) => sum + (d.throwbackTax ?? 0),
+      0
+    )
   }
 
   // Part IV: Foreign Gifts
@@ -175,27 +186,36 @@ export default class F3520 extends F1040Attachment {
   }
 
   giftsFromIndividuals = (): ForeignGift[] => {
-    return this.foreignGifts().filter(g =>
-      !g.isFromForeignCorporation && !g.isFromForeignPartnership && !g.isFromForeignEstate
+    return this.foreignGifts().filter(
+      (g) =>
+        !g.isFromForeignCorporation &&
+        !g.isFromForeignPartnership &&
+        !g.isFromForeignEstate
     )
   }
 
   giftsFromEstates = (): ForeignGift[] => {
-    return this.foreignGifts().filter(g => g.isFromForeignEstate)
+    return this.foreignGifts().filter((g) => g.isFromForeignEstate)
   }
 
   giftsFromEntities = (): ForeignGift[] => {
-    return this.foreignGifts().filter(g => g.isFromForeignCorporation || g.isFromForeignPartnership)
+    return this.foreignGifts().filter(
+      (g) => g.isFromForeignCorporation || g.isFromForeignPartnership
+    )
   }
 
   // Countries involved
   countriesWithTrusts = (): string[] => {
-    const countries = new Set<string>(this.foreignTrusts().map(t => t.trustCountry))
+    const countries = new Set<string>(
+      this.foreignTrusts().map((t) => t.trustCountry)
+    )
     return Array.from(countries)
   }
 
   countriesWithGifts = (): string[] => {
-    const countries = new Set<string>(this.foreignGifts().map(g => g.donorCountry))
+    const countries = new Set<string>(
+      this.foreignGifts().map((g) => g.donorCountry)
+    )
     return Array.from(countries)
   }
 

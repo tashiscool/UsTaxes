@@ -1,5 +1,9 @@
 import F1040Attachment from './F1040Attachment'
-import { FilingStatus, PersonRole, DependentCareProvider } from 'ustaxes/core/data'
+import {
+  FilingStatus,
+  PersonRole,
+  DependentCareProvider
+} from 'ustaxes/core/data'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { sumFields } from 'ustaxes/core/irsForms/util'
@@ -19,13 +23,13 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
 
 // 2025 parameters
 const cdccParams = {
-  maxExpensesOne: 3000,     // Maximum for one qualifying person
-  maxExpensesTwo: 6000,     // Maximum for two or more
-  minCreditRate: 0.20,     // 20% minimum credit rate
-  maxCreditRate: 0.35,     // 35% maximum credit rate
-  agiThreshold: 15000,     // AGI at which max rate applies
-  agiPhaseOutEnd: 43000,   // AGI at which min rate applies
-  employerBenefitLimit: 5000  // Maximum employer-provided benefits
+  maxExpensesOne: 3000, // Maximum for one qualifying person
+  maxExpensesTwo: 6000, // Maximum for two or more
+  minCreditRate: 0.2, // 20% minimum credit rate
+  maxCreditRate: 0.35, // 35% maximum credit rate
+  agiThreshold: 15000, // AGI at which max rate applies
+  agiPhaseOutEnd: 43000, // AGI at which min rate applies
+  employerBenefitLimit: 5000 // Maximum employer-provided benefits
 }
 
 export default class F2441 extends F1040Attachment {
@@ -37,8 +41,10 @@ export default class F2441 extends F1040Attachment {
   }
 
   hasQualifyingExpenses = (): boolean => {
-    return (this.f1040.info.dependentCareExpenses ?? 0) > 0 ||
-           (this.f1040.info.employerDependentCareBenefits ?? 0) > 0
+    return (
+      (this.f1040.info.dependentCareExpenses ?? 0) > 0 ||
+      (this.f1040.info.employerDependentCareBenefits ?? 0) > 0
+    )
   }
 
   // Get qualifying dependents (children under 13 or disabled dependents)
@@ -63,8 +69,9 @@ export default class F2441 extends F1040Attachment {
   // Earned income for taxpayer
   earnedIncomePrimary = (): number => {
     // W-2 wages + self-employment income
-    const w2Income = this.f1040.validW2s()
-      .filter(w => w.personRole === PersonRole.PRIMARY)
+    const w2Income = this.f1040
+      .validW2s()
+      .filter((w) => w.personRole === PersonRole.PRIMARY)
       .reduce((sum, w) => sum + w.income, 0)
 
     const selfEmployment = this.f1040.scheduleC?.netProfit() ?? 0
@@ -75,11 +82,12 @@ export default class F2441 extends F1040Attachment {
   // Earned income for spouse
   earnedIncomeSpouse = (): number => {
     if (this.f1040.info.taxPayer.filingStatus !== FilingStatus.MFJ) {
-      return Infinity  // Not applicable, use large number to not limit
+      return Infinity // Not applicable, use large number to not limit
     }
 
-    const w2Income = this.f1040.validW2s()
-      .filter(w => w.personRole === PersonRole.SPOUSE)
+    const w2Income = this.f1040
+      .validW2s()
+      .filter((w) => w.personRole === PersonRole.SPOUSE)
       .reduce((sum, w) => sum + w.income, 0)
 
     return w2Income
@@ -102,14 +110,16 @@ export default class F2441 extends F1040Attachment {
   }
 
   // Line 3: If you had qualifying expenses in prior year, enter amount
-  l3 = (): number => 0  // Simplified - prior year carryover
+  l3 = (): number => 0 // Simplified - prior year carryover
 
   // Line 4: Enter total of lines 2 and 3
   l4 = (): number => this.l2() + this.l3()
 
   // Line 5: Maximum expenses ($3,000 for 1, $6,000 for 2+)
   l5 = (): number => {
-    return this.l1() >= 2 ? cdccParams.maxExpensesTwo : cdccParams.maxExpensesOne
+    return this.l1() >= 2
+      ? cdccParams.maxExpensesTwo
+      : cdccParams.maxExpensesOne
   }
 
   // Line 6: Enter smaller of line 4 or line 5
@@ -121,7 +131,7 @@ export default class F2441 extends F1040Attachment {
   // Line 8: Earned income (spouse)
   l8 = (): number => {
     if (this.f1040.info.taxPayer.filingStatus !== FilingStatus.MFJ) {
-      return 0  // Not shown if not MFJ
+      return 0 // Not shown if not MFJ
     }
     return this.earnedIncomeSpouse()
   }
@@ -151,17 +161,20 @@ export default class F2441 extends F1040Attachment {
     const agi = this.l12()
 
     if (agi <= cdccParams.agiThreshold) {
-      return cdccParams.maxCreditRate  // 35%
+      return cdccParams.maxCreditRate // 35%
     }
 
     if (agi >= cdccParams.agiPhaseOutEnd) {
-      return cdccParams.minCreditRate  // 20%
+      return cdccParams.minCreditRate // 20%
     }
 
     // Phase out: reduce by 1% for each $2,000 of AGI over $15,000
     const excessAgi = agi - cdccParams.agiThreshold
     const reduction = Math.floor(excessAgi / 2000) * 0.01
-    return Math.max(cdccParams.minCreditRate, cdccParams.maxCreditRate - reduction)
+    return Math.max(
+      cdccParams.minCreditRate,
+      cdccParams.maxCreditRate - reduction
+    )
   }
 
   // Line 14: Multiply line 11 by line 13 (credit amount)
@@ -172,7 +185,7 @@ export default class F2441 extends F1040Attachment {
   // Line 15: Tax liability limitation (not implemented - simplified)
   l15 = (): number => {
     // Credit is limited to tax liability minus other nonrefundable credits
-    return this.f1040.l18()  // Simplified
+    return this.f1040.l18() // Simplified
   }
 
   // Line 16: Credit (smaller of line 14 or line 15)
@@ -232,10 +245,10 @@ export default class F2441 extends F1040Attachment {
     for (let i = 0; i < 3; i++) {
       const provider = this.providers()[i]
       providerFields.push(
-        provider?.name ?? '',
-        provider?.address ?? '',
-        provider?.tin ?? '',
-        provider?.amountPaid ?? 0
+        provider.name ?? '',
+        provider.address ?? '',
+        provider.tin ?? '',
+        provider.amountPaid ?? 0
       )
     }
 

@@ -4,7 +4,12 @@
  * Defines known field positions and labels for extracting data from 1099-INT forms.
  */
 
-import { FieldDefinition, ExtractedField, extractAllFields, extractByBoxNumber } from '../fieldExtractor'
+import {
+  FieldDefinition,
+  ExtractedField,
+  extractAllFields,
+  extractByBoxNumber
+} from '../fieldExtractor'
 import { OCRResult } from '../ocrEngine'
 import { Income1099Int, Income1099Type, PersonRole } from 'ustaxes/core/data'
 
@@ -52,11 +57,7 @@ export const F1099_INT_FIELDS: FieldDefinition[] = [
   {
     id: 'recipientName',
     name: "Recipient's Name",
-    labels: [
-      "RECIPIENT'S name",
-      "Recipient's name",
-      'Recipient name'
-    ],
+    labels: ["RECIPIENT'S name", "Recipient's name", 'Recipient name'],
     type: 'text'
   },
 
@@ -114,22 +115,14 @@ export const F1099_INT_FIELDS: FieldDefinition[] = [
   {
     id: 'investmentExpenses',
     name: 'Investment expenses',
-    labels: [
-      'Investment expenses',
-      'Box 5',
-      '5 Investment'
-    ],
+    labels: ['Investment expenses', 'Box 5', '5 Investment'],
     type: 'currency',
     boxNumber: '5'
   },
   {
     id: 'foreignTaxPaid',
     name: 'Foreign tax paid',
-    labels: [
-      'Foreign tax paid',
-      'Box 6',
-      '6 Foreign tax'
-    ],
+    labels: ['Foreign tax paid', 'Box 6', '6 Foreign tax'],
     type: 'currency',
     boxNumber: '6'
   },
@@ -148,11 +141,7 @@ export const F1099_INT_FIELDS: FieldDefinition[] = [
   {
     id: 'taxExemptInterest',
     name: 'Tax-exempt interest',
-    labels: [
-      'Tax-exempt interest',
-      'Box 8',
-      '8 Tax-exempt'
-    ],
+    labels: ['Tax-exempt interest', 'Box 8', '8 Tax-exempt'],
     type: 'currency',
     boxNumber: '8'
   },
@@ -171,22 +160,14 @@ export const F1099_INT_FIELDS: FieldDefinition[] = [
   {
     id: 'marketDiscount',
     name: 'Market discount',
-    labels: [
-      'Market discount',
-      'Box 10',
-      '10 Market'
-    ],
+    labels: ['Market discount', 'Box 10', '10 Market'],
     type: 'currency',
     boxNumber: '10'
   },
   {
     id: 'bondPremium',
     name: 'Bond premium',
-    labels: [
-      'Bond premium',
-      'Box 11',
-      '11 Bond premium'
-    ],
+    labels: ['Bond premium', 'Box 11', '11 Bond premium'],
     type: 'currency',
     boxNumber: '11'
   },
@@ -219,11 +200,7 @@ export const F1099_INT_FIELDS: FieldDefinition[] = [
   {
     id: 'state',
     name: 'State',
-    labels: [
-      'State',
-      '15 State',
-      'Box 15'
-    ],
+    labels: ['State', '15 State', 'Box 15'],
     type: 'text',
     boxNumber: '15'
   },
@@ -242,12 +219,7 @@ export const F1099_INT_FIELDS: FieldDefinition[] = [
   {
     id: 'stateWithholding',
     name: 'State tax withheld',
-    labels: [
-      'State tax withheld',
-      'State income tax',
-      'Box 17',
-      '17 State'
-    ],
+    labels: ['State tax withheld', 'State income tax', 'Box 17', '17 State'],
     type: 'currency',
     boxNumber: '17'
   }
@@ -266,7 +238,9 @@ export interface F1099IntExtractionResult {
 /**
  * Extract 1099-INT data from OCR result
  */
-export const extract1099IntData = (ocrResult: OCRResult): F1099IntExtractionResult => {
+export const extract1099IntData = (
+  ocrResult: OCRResult
+): F1099IntExtractionResult => {
   const fields = extractAllFields(ocrResult, F1099_INT_FIELDS)
 
   // Also try extracting by box numbers directly

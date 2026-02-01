@@ -24,10 +24,10 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
 
 // 2025 parameters
 const feieParams = {
-  maxExclusion: 130000,           // Maximum foreign earned income exclusion
-  housingBasePercent: 0.16,       // 16% base housing amount
-  housingMaxPercent: 0.30,        // 30% default maximum housing
-  dailyExclusionRate: 130000 / 365  // Daily proration rate
+  maxExclusion: 130000, // Maximum foreign earned income exclusion
+  housingBasePercent: 0.16, // 16% base housing amount
+  housingMaxPercent: 0.3, // 30% default maximum housing
+  dailyExclusionRate: 130000 / 365 // Daily proration rate
 }
 
 export interface ForeignEarnedIncomeData {
@@ -58,12 +58,17 @@ export default class F2555 extends F1040Attachment {
 
   hasForeignEarnedIncome = (): boolean => {
     const fei = this.foreignEarnedIncomeData()
-    return fei !== undefined &&
-      ((fei.foreignEarnedWages ?? 0) > 0 || (fei.foreignEarnedSelfEmployment ?? 0) > 0)
+    return (
+      fei !== undefined &&
+      ((fei.foreignEarnedWages ?? 0) > 0 ||
+        (fei.foreignEarnedSelfEmployment ?? 0) > 0)
+    )
   }
 
   foreignEarnedIncomeData = (): ForeignEarnedIncomeData | undefined => {
-    return this.f1040.info.foreignEarnedIncome as ForeignEarnedIncomeData | undefined
+    return this.f1040.info.foreignEarnedIncome as
+      | ForeignEarnedIncomeData
+      | undefined
   }
 
   // Calculate qualifying days for proration
@@ -74,17 +79,25 @@ export default class F2555 extends F1040Attachment {
     if (data.qualifyingTest === 'bonaFideResident') {
       // Full year for bona fide resident (or partial if started/ended mid-year)
       if (data.residenceStartDate && data.residenceEndDate) {
-        const start = new Date(Math.max(
-          new Date(data.residenceStartDate).getTime(),
-          new Date(2025, 0, 1).getTime()
-        ))
-        const end = new Date(Math.min(
-          new Date(data.residenceEndDate).getTime(),
-          new Date(2025, 11, 31).getTime()
-        ))
-        return Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1)
+        const start = new Date(
+          Math.max(
+            new Date(data.residenceStartDate).getTime(),
+            new Date(2025, 0, 1).getTime()
+          )
+        )
+        const end = new Date(
+          Math.min(
+            new Date(data.residenceEndDate).getTime(),
+            new Date(2025, 11, 31).getTime()
+          )
+        )
+        return Math.max(
+          0,
+          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+            1
+        )
       }
-      return 365  // Full year
+      return 365 // Full year
     } else {
       // Physical presence test
       return data.physicalPresenceDays ?? 0
@@ -126,7 +139,9 @@ export default class F2555 extends F1040Attachment {
   l19 = (): number => {
     const data = this.foreignEarnedIncomeData()
     if (!data) return 0
-    return (data.foreignEarnedWages ?? 0) + (data.foreignEarnedSelfEmployment ?? 0)
+    return (
+      (data.foreignEarnedWages ?? 0) + (data.foreignEarnedSelfEmployment ?? 0)
+    )
   }
 
   // Line 20-23: Employer-provided amounts (simplified)

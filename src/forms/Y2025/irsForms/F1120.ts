@@ -28,7 +28,7 @@ const CORPORATE_TAX_RATE = 0.21
 
 export default class F1120 extends CCorpForm {
   tag: FormTag = 'f1120'
-  sequenceIndex = 0  // Main return
+  sequenceIndex = 0 // Main return
 
   data: Form1120Data
 
@@ -80,8 +80,14 @@ export default class F1120 extends CCorpForm {
   // Line 11: Total income (add lines 3 through 10)
   l11 = (): number => {
     return sumFields([
-      this.l3(), this.l4(), this.l5(), this.l6(), this.l7(),
-      this.l8(), this.l9(), this.l10()
+      this.l3(),
+      this.l4(),
+      this.l5(),
+      this.l6(),
+      this.l7(),
+      this.l8(),
+      this.l9(),
+      this.l10()
     ])
   }
 
@@ -113,10 +119,23 @@ export default class F1120 extends CCorpForm {
   // Line 19: Charitable contributions (limited to 10% of line 30)
   l19 = (): number => {
     // Charitable contributions limited to 10% of taxable income before deduction
-    const incomeBeforeCharity = this.l11() - this.l12() - this.l13() - this.l14() -
-      this.l15() - this.l16() - this.l17() - this.l18() - this.l20() - this.l21() -
-      this.l22() - this.l23() - this.l24() - this.l25() - this.l26()
-    const limit = Math.max(0, incomeBeforeCharity * 0.10)
+    const incomeBeforeCharity =
+      this.l11() -
+      this.l12() -
+      this.l13() -
+      this.l14() -
+      this.l15() -
+      this.l16() -
+      this.l17() -
+      this.l18() -
+      this.l20() -
+      this.l21() -
+      this.l22() -
+      this.l23() -
+      this.l24() -
+      this.l25() -
+      this.l26()
+    const limit = Math.max(0, incomeBeforeCharity * 0.1)
     return Math.min(this.data.deductions.charitableContributions, limit)
   }
 
@@ -144,9 +163,21 @@ export default class F1120 extends CCorpForm {
   // Line 27: Total deductions (add lines 12 through 26)
   l27 = (): number => {
     return sumFields([
-      this.l12(), this.l13(), this.l14(), this.l15(), this.l16(),
-      this.l17(), this.l18(), this.l19(), this.l20(), this.l21(),
-      this.l22(), this.l23(), this.l24(), this.l25(), this.l26()
+      this.l12(),
+      this.l13(),
+      this.l14(),
+      this.l15(),
+      this.l16(),
+      this.l17(),
+      this.l18(),
+      this.l19(),
+      this.l20(),
+      this.l21(),
+      this.l22(),
+      this.l23(),
+      this.l24(),
+      this.l25(),
+      this.l26()
     ])
   }
 
@@ -274,7 +305,8 @@ export default class F1120 extends CCorpForm {
    * Personal Holding Company Tax (IRC Section 541)
    * 20% tax on undistributed PHC income
    */
-  personalHoldingCompanyTax = (): number => this.data.personalHoldingCompanyTax ?? 0
+  personalHoldingCompanyTax = (): number =>
+    this.data.personalHoldingCompanyTax ?? 0
 
   otherTaxes = (): number => {
     return sumFields([
@@ -347,7 +379,9 @@ export default class F1120 extends CCorpForm {
     this.ein(),
     this.address(),
     this.addressLine(),
-    this.data.entity.dateIncorporated ? this.formatDate(this.data.entity.dateIncorporated) : '',
+    this.data.entity.dateIncorporated
+      ? this.formatDate(this.data.entity.dateIncorporated)
+      : '',
     this.data.entity.totalAssets,
     // Accounting method checkboxes
     this.data.entity.accountingMethod === 'cash',

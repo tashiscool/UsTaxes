@@ -31,7 +31,13 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * - Small business owners with retirement plans
  */
 
-export type PlanType = 'definedBenefit' | 'definedContribution' | '401k' | 'profitSharing' | 'esop' | 'welfare'
+export type PlanType =
+  | 'definedBenefit'
+  | 'definedContribution'
+  | '401k'
+  | 'profitSharing'
+  | 'esop'
+  | 'welfare'
 export type FundingType = 'trust' | 'insurance' | 'generalAssets'
 
 export interface PlanSponsorInfo {
@@ -89,7 +95,7 @@ export interface ParticipantInfo {
 export interface Form5500Info {
   // Plan identification
   planName: string
-  planNumber: string  // Usually 001, 002, etc.
+  planNumber: string // Usually 001, 002, etc.
   planType: PlanType
   fundingType: FundingType
   planYearBegin: Date
@@ -105,8 +111,8 @@ export interface Form5500Info {
   // Participants
   participantInfo: ParticipantInfo
   // Other
-  isSmallPlan: boolean  // < 100 participants
-  requiresAudit: boolean  // Generally > 100 participants
+  isSmallPlan: boolean // < 100 participants
+  requiresAudit: boolean // Generally > 100 participants
   hasFidelityBond: boolean
   fidelityBondAmount: number
 }
@@ -133,8 +139,10 @@ export default class F5500 extends F1040Attachment {
   planType = (): PlanType => this.f5500Info()?.planType ?? 'definedContribution'
   fundingType = (): FundingType => this.f5500Info()?.fundingType ?? 'trust'
 
-  planYearBegin = (): string => this.f5500Info()?.planYearBegin?.toLocaleDateString() ?? ''
-  planYearEnd = (): string => this.f5500Info()?.planYearEnd?.toLocaleDateString() ?? ''
+  planYearBegin = (): string =>
+    this.f5500Info()?.planYearBegin.toLocaleDateString() ?? ''
+  planYearEnd = (): string =>
+    this.f5500Info()?.planYearEnd.toLocaleDateString() ?? ''
 
   isFirstYearPlan = (): boolean => this.f5500Info()?.isFirstYearPlan ?? false
   isLastYearPlan = (): boolean => this.f5500Info()?.isLastYearPlan ?? false
@@ -147,42 +155,56 @@ export default class F5500 extends F1040Attachment {
   sponsorAddress = (): string => this.planSponsor()?.address ?? ''
 
   // Plan Administrator
-  planAdministrator = (): PlanAdministratorInfo | undefined => this.f5500Info()?.planAdministrator
+  planAdministrator = (): PlanAdministratorInfo | undefined =>
+    this.f5500Info()?.planAdministrator
 
   adminName = (): string => this.planAdministrator()?.name ?? ''
   adminEin = (): string => this.planAdministrator()?.ein ?? ''
-  isSameAsSponsor = (): boolean => this.planAdministrator()?.isSameAsSponsor ?? true
+  isSameAsSponsor = (): boolean =>
+    this.planAdministrator()?.isSameAsSponsor ?? true
 
   // Financial Information
-  financialInfo = (): PlanFinancialInfo | undefined => this.f5500Info()?.financialInfo
+  financialInfo = (): PlanFinancialInfo | undefined =>
+    this.f5500Info()?.financialInfo
 
-  beginningYearAssets = (): number => this.financialInfo()?.beginningYearAssets ?? 0
+  beginningYearAssets = (): number =>
+    this.financialInfo()?.beginningYearAssets ?? 0
   endOfYearAssets = (): number => this.financialInfo()?.endOfYearAssets ?? 0
 
-  employerContributions = (): number => this.financialInfo()?.employerContributions ?? 0
-  participantContributions = (): number => this.financialInfo()?.participantContributions ?? 0
+  employerContributions = (): number =>
+    this.financialInfo()?.employerContributions ?? 0
+  participantContributions = (): number =>
+    this.financialInfo()?.participantContributions ?? 0
   totalContributions = (): number => {
-    return this.financialInfo()?.totalContributions ??
-           sumFields([
-             this.employerContributions(),
-             this.participantContributions(),
-             this.financialInfo()?.otherContributions ?? 0
-           ])
+    return (
+      this.financialInfo()?.totalContributions ??
+      sumFields([
+        this.employerContributions(),
+        this.participantContributions(),
+        this.financialInfo()?.otherContributions ?? 0
+      ])
+    )
   }
 
   benefitsPaid = (): number => this.financialInfo()?.benefitsPaid ?? 0
-  administrativeExpenses = (): number => this.financialInfo()?.administrativeExpenses ?? 0
-  totalDistributionsAndExpenses = (): number => this.financialInfo()?.totalDistributionsAndExpenses ?? 0
+  administrativeExpenses = (): number =>
+    this.financialInfo()?.administrativeExpenses ?? 0
+  totalDistributionsAndExpenses = (): number =>
+    this.financialInfo()?.totalDistributionsAndExpenses ?? 0
 
   totalIncome = (): number => this.financialInfo()?.totalIncome ?? 0
   netAssetChange = (): number => this.financialInfo()?.netAssetChange ?? 0
 
   // Participants
-  participantInfo = (): ParticipantInfo | undefined => this.f5500Info()?.participantInfo
+  participantInfo = (): ParticipantInfo | undefined =>
+    this.f5500Info()?.participantInfo
 
-  activeParticipants = (): number => this.participantInfo()?.activeParticipants ?? 0
-  retiredParticipants = (): number => this.participantInfo()?.retiredParticipants ?? 0
-  totalParticipants = (): number => this.participantInfo()?.totalParticipants ?? 0
+  activeParticipants = (): number =>
+    this.participantInfo()?.activeParticipants ?? 0
+  retiredParticipants = (): number =>
+    this.participantInfo()?.retiredParticipants ?? 0
+  totalParticipants = (): number =>
+    this.participantInfo()?.totalParticipants ?? 0
 
   // Other
   isSmallPlan = (): boolean => this.f5500Info()?.isSmallPlan ?? true

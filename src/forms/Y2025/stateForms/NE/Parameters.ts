@@ -65,7 +65,7 @@ const parameters = {
   // (Full exemption starting 2025)
 
   // Earned Income Tax Credit (percentage of federal EITC)
-  eitcPercentage: 0.10
+  eitcPercentage: 0.1
 }
 
 export default parameters

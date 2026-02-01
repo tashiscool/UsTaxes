@@ -32,12 +32,21 @@ export default class F8586 extends F1040Attachment {
 
   hasLowIncomeHousingCredit = (): boolean => {
     const data = this.creditData()
-    return data !== undefined && (data.buildings.length > 0 || (data.passthrough8586Credit ?? 0) > 0)
+    return (
+      data !== undefined &&
+      (data.buildings.length > 0 || (data.passthrough8586Credit ?? 0) > 0)
+    )
   }
 
   creditData = (): Form8586Data | undefined => {
-    return this.f1040.info.generalBusinessCredits?.creditComponents?.lowIncomeHousingCredit
-      ? { buildings: [], totalCredit: this.f1040.info.generalBusinessCredits.creditComponents.lowIncomeHousingCredit } as Form8586Data
+    return this.f1040.info.generalBusinessCredits?.creditComponents
+      .lowIncomeHousingCredit
+      ? ({
+          buildings: [],
+          totalCredit:
+            this.f1040.info.generalBusinessCredits.creditComponents
+              .lowIncomeHousingCredit
+        } as Form8586Data)
       : undefined
   }
 
@@ -68,7 +77,8 @@ export default class F8586 extends F1040Attachment {
   carryforwardFromPriorYears = (): number => 0
 
   // Total available credit
-  totalAvailableCredit = (): number => this.l5() + this.carryforwardFromPriorYears()
+  totalAvailableCredit = (): number =>
+    this.l5() + this.carryforwardFromPriorYears()
 
   // Credit for Form 3800
   credit = (): number => this.creditData()?.totalCredit ?? this.l5()
@@ -78,7 +88,7 @@ export default class F8586 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1(),
     this.l2(),
     this.l3(),

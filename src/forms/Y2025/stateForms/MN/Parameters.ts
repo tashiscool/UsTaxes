@@ -40,7 +40,7 @@ const parameters = {
 
   // Minnesota Working Family Credit (percentage of federal EIC)
   workingFamilyCredit: {
-    percentage: 0.34,  // 34% of federal EIC
+    percentage: 0.34, // 34% of federal EIC
     maxCredit: 2500
   },
 
@@ -51,7 +51,7 @@ const parameters = {
   },
 
   // Child and Dependent Care Credit (based on federal)
-  childCareCreditPercentage: 1.0,  // 100% of federal credit for low income
+  childCareCreditPercentage: 1.0, // 100% of federal credit for low income
 
   // Social Security subtraction (partial exemption)
   socialSecuritySubtraction: {

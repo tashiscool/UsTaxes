@@ -448,7 +448,9 @@ const formReducer = (
           ...(newState.trumpSavingsAccounts ?? []),
           {
             ...action.formData,
-            beneficiaryDateOfBirth: new Date(action.formData.beneficiaryDateOfBirth),
+            beneficiaryDateOfBirth: new Date(
+              action.formData.beneficiaryDateOfBirth
+            ),
             accountOpenDate: action.formData.accountOpenDate
               ? new Date(action.formData.accountOpenDate)
               : undefined
@@ -460,7 +462,9 @@ const formReducer = (
       const newAccounts = [...(newState.trumpSavingsAccounts ?? [])]
       newAccounts.splice(action.formData.index, 1, {
         ...action.formData.value,
-        beneficiaryDateOfBirth: new Date(action.formData.value.beneficiaryDateOfBirth),
+        beneficiaryDateOfBirth: new Date(
+          action.formData.value.beneficiaryDateOfBirth
+        ),
         accountOpenDate: action.formData.value.accountOpenDate
           ? new Date(action.formData.value.accountOpenDate)
           : undefined
@@ -506,7 +510,9 @@ const formReducer = (
           primaryPerson: importedData.taxPayer?.primaryPerson
             ? {
                 ...importedData.taxPayer.primaryPerson,
-                dateOfBirth: new Date(importedData.taxPayer.primaryPerson.dateOfBirth)
+                dateOfBirth: new Date(
+                  importedData.taxPayer.primaryPerson.dateOfBirth
+                )
               }
             : newState.taxPayer.primaryPerson,
           // Import spouse if present in imported data
@@ -528,13 +534,15 @@ const formReducer = (
             importedData.taxPayer?.contactPhoneNumber ??
             newState.taxPayer.contactPhoneNumber,
           contactEmail:
-            importedData.taxPayer?.contactEmail ?? newState.taxPayer.contactEmail
+            importedData.taxPayer?.contactEmail ??
+            newState.taxPayer.contactEmail
         },
         // Import refund/bank info
         refund: importedData.refund ?? newState.refund,
         // Import state residencies
         stateResidencies:
-          importedData.stateResidencies && importedData.stateResidencies.length > 0
+          importedData.stateResidencies &&
+          importedData.stateResidencies.length > 0
             ? importedData.stateResidencies
             : newState.stateResidencies
       }

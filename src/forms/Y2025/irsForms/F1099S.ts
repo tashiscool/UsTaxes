@@ -29,12 +29,12 @@ export interface F1099SData {
   // Account number
   accountNumber?: string
   // Transaction details
-  dateOfClosing: Date                       // Box 1
-  grossProceeds: number                     // Box 2
-  propertyAddress: string                   // Box 3
-  transferorReceivedProperty: boolean       // Box 4 checkbox
-  partOfPropertySold: boolean               // Box 5 checkbox
-  buyerPropertyTaxReimbursement: number     // Box 6
+  dateOfClosing: Date // Box 1
+  grossProceeds: number // Box 2
+  propertyAddress: string // Box 3
+  transferorReceivedProperty: boolean // Box 4 checkbox
+  partOfPropertySold: boolean // Box 5 checkbox
+  buyerPropertyTaxReimbursement: number // Box 6
   // Property type
   propertyType: 'residence' | 'commercial' | 'land' | 'other'
 }
@@ -98,12 +98,12 @@ export default class F1099S extends F1040Attachment {
       data?.transferorTIN ?? '',
       data?.accountNumber ?? '',
       // Transaction details
-      data?.dateOfClosing?.toLocaleDateString() ?? '',    // Box 1
-      data?.grossProceeds ?? 0,                            // Box 2
-      data?.propertyAddress ?? '',                         // Box 3
-      data?.transferorReceivedProperty ?? false,           // Box 4
-      data?.partOfPropertySold ?? false,                   // Box 5
-      data?.buyerPropertyTaxReimbursement ?? 0,            // Box 6
+      data?.dateOfClosing.toLocaleDateString() ?? '', // Box 1
+      data?.grossProceeds ?? 0, // Box 2
+      data?.propertyAddress ?? '', // Box 3
+      data?.transferorReceivedProperty ?? false, // Box 4
+      data?.partOfPropertySold ?? false, // Box 5
+      data?.buyerPropertyTaxReimbursement ?? 0, // Box 6
       // Property type
       data?.propertyType ?? '',
       this.isResidence(),

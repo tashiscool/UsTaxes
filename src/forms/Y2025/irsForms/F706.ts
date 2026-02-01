@@ -58,7 +58,7 @@ export interface EstateAsset {
   location?: string
   dateAcquired?: Date
   fairMarketValue: number
-  alternateValue?: number  // Alternate valuation (6 months after death)
+  alternateValue?: number // Alternate valuation (6 months after death)
   scheduleType: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I'
 }
 
@@ -92,7 +92,7 @@ export interface Form706Info {
 
 // 2025 Estate Tax Constants
 const BASIC_EXCLUSION_2025 = 13990000
-const TOP_ESTATE_TAX_RATE = 0.40
+const TOP_ESTATE_TAX_RATE = 0.4
 
 export default class F706 extends F1040Attachment {
   tag: FormTag = 'f706'
@@ -114,7 +114,8 @@ export default class F706 extends F1040Attachment {
   decedent = (): DecedentInfo | undefined => this.f706Info()?.decedent
   decedentName = (): string => this.decedent()?.name ?? ''
   decedentSSN = (): string => this.decedent()?.ssn ?? ''
-  dateOfDeath = (): string => this.decedent()?.dateOfDeath?.toLocaleDateString() ?? ''
+  dateOfDeath = (): string =>
+    this.decedent()?.dateOfDeath.toLocaleDateString() ?? ''
 
   // Executor Information
   executor = (): ExecutorInfo | undefined => this.f706Info()?.executor
@@ -122,15 +123,18 @@ export default class F706 extends F1040Attachment {
 
   // Schedule A: Real Estate
   realEstateAssets = (): EstateAsset[] => {
-    return this.f706Info()?.assets.filter(a => a.scheduleType === 'A') ?? []
+    return this.f706Info()?.assets.filter((a) => a.scheduleType === 'A') ?? []
   }
   totalRealEstate = (): number => {
-    return this.realEstateAssets().reduce((sum, a) => sum + a.fairMarketValue, 0)
+    return this.realEstateAssets().reduce(
+      (sum, a) => sum + a.fairMarketValue,
+      0
+    )
   }
 
   // Schedule B: Stocks and Bonds
   stocksAndBonds = (): EstateAsset[] => {
-    return this.f706Info()?.assets.filter(a => a.scheduleType === 'B') ?? []
+    return this.f706Info()?.assets.filter((a) => a.scheduleType === 'B') ?? []
   }
   totalStocksAndBonds = (): number => {
     return this.stocksAndBonds().reduce((sum, a) => sum + a.fairMarketValue, 0)
@@ -138,15 +142,18 @@ export default class F706 extends F1040Attachment {
 
   // Schedule C: Mortgages, Notes, Cash
   mortgagesNotesCash = (): EstateAsset[] => {
-    return this.f706Info()?.assets.filter(a => a.scheduleType === 'C') ?? []
+    return this.f706Info()?.assets.filter((a) => a.scheduleType === 'C') ?? []
   }
   totalMortgagesNotesCash = (): number => {
-    return this.mortgagesNotesCash().reduce((sum, a) => sum + a.fairMarketValue, 0)
+    return this.mortgagesNotesCash().reduce(
+      (sum, a) => sum + a.fairMarketValue,
+      0
+    )
   }
 
   // Schedule D: Life Insurance
   lifeInsurance = (): EstateAsset[] => {
-    return this.f706Info()?.assets.filter(a => a.scheduleType === 'D') ?? []
+    return this.f706Info()?.assets.filter((a) => a.scheduleType === 'D') ?? []
   }
   totalLifeInsurance = (): number => {
     return this.lifeInsurance().reduce((sum, a) => sum + a.fairMarketValue, 0)
@@ -154,15 +161,18 @@ export default class F706 extends F1040Attachment {
 
   // Schedule E: Jointly Owned Property
   jointlyOwnedProperty = (): EstateAsset[] => {
-    return this.f706Info()?.assets.filter(a => a.scheduleType === 'E') ?? []
+    return this.f706Info()?.assets.filter((a) => a.scheduleType === 'E') ?? []
   }
   totalJointlyOwned = (): number => {
-    return this.jointlyOwnedProperty().reduce((sum, a) => sum + a.fairMarketValue, 0)
+    return this.jointlyOwnedProperty().reduce(
+      (sum, a) => sum + a.fairMarketValue,
+      0
+    )
   }
 
   // Schedule F: Other Property
   otherProperty = (): EstateAsset[] => {
-    return this.f706Info()?.assets.filter(a => a.scheduleType === 'F') ?? []
+    return this.f706Info()?.assets.filter((a) => a.scheduleType === 'F') ?? []
   }
   totalOtherProperty = (): number => {
     return this.otherProperty().reduce((sum, a) => sum + a.fairMarketValue, 0)
@@ -182,31 +192,41 @@ export default class F706 extends F1040Attachment {
 
   // Deductions
   funeralExpenses = (): number => {
-    return this.f706Info()?.deductions
-      .filter(d => d.scheduleType === 'J')
-      .reduce((sum, d) => sum + d.amount, 0) ?? 0
+    return (
+      this.f706Info()
+        ?.deductions.filter((d) => d.scheduleType === 'J')
+        .reduce((sum, d) => sum + d.amount, 0) ?? 0
+    )
   }
 
   debts = (): number => {
-    return this.f706Info()?.deductions
-      .filter(d => d.scheduleType === 'K')
-      .reduce((sum, d) => sum + d.amount, 0) ?? 0
+    return (
+      this.f706Info()
+        ?.deductions.filter((d) => d.scheduleType === 'K')
+        .reduce((sum, d) => sum + d.amount, 0) ?? 0
+    )
   }
 
   maritalDeduction = (): number => {
-    return this.f706Info()?.deductions
-      .filter(d => d.scheduleType === 'M')
-      .reduce((sum, d) => sum + d.amount, 0) ?? 0
+    return (
+      this.f706Info()
+        ?.deductions.filter((d) => d.scheduleType === 'M')
+        .reduce((sum, d) => sum + d.amount, 0) ?? 0
+    )
   }
 
   charitableDeduction = (): number => {
-    return this.f706Info()?.deductions
-      .filter(d => d.scheduleType === 'O')
-      .reduce((sum, d) => sum + d.amount, 0) ?? 0
+    return (
+      this.f706Info()
+        ?.deductions.filter((d) => d.scheduleType === 'O')
+        .reduce((sum, d) => sum + d.amount, 0) ?? 0
+    )
   }
 
   totalDeductions = (): number => {
-    return this.f706Info()?.deductions.reduce((sum, d) => sum + d.amount, 0) ?? 0
+    return (
+      this.f706Info()?.deductions.reduce((sum, d) => sum + d.amount, 0) ?? 0
+    )
   }
 
   // Taxable Estate
@@ -215,7 +235,8 @@ export default class F706 extends F1040Attachment {
   }
 
   // Add adjusted taxable gifts
-  adjustedTaxableGifts = (): number => this.f706Info()?.adjustedTaxableGifts ?? 0
+  adjustedTaxableGifts = (): number =>
+    this.f706Info()?.adjustedTaxableGifts ?? 0
 
   // Tax Base
   taxBase = (): number => {
@@ -249,7 +270,8 @@ export default class F706 extends F1040Attachment {
   }
 
   // Credits
-  foreignDeathTaxCredit = (): number => this.f706Info()?.foreignDeathTaxCredit ?? 0
+  foreignDeathTaxCredit = (): number =>
+    this.f706Info()?.foreignDeathTaxCredit ?? 0
   priorTransferCredit = (): number => this.f706Info()?.priorTransferCredit ?? 0
   giftTaxPaid = (): number => this.f706Info()?.giftTaxPaid ?? 0
 
@@ -273,7 +295,9 @@ export default class F706 extends F1040Attachment {
 
   // Filing requirement check
   requiresFiling = (): boolean => {
-    return (this.grossEstate() + this.adjustedTaxableGifts()) > BASIC_EXCLUSION_2025
+    return (
+      this.grossEstate() + this.adjustedTaxableGifts() > BASIC_EXCLUSION_2025
+    )
   }
 
   fields = (): Field[] => {
@@ -286,7 +310,7 @@ export default class F706 extends F1040Attachment {
       this.decedentSSN(),
       dec?.domicileAtDeath ?? '',
       this.dateOfDeath(),
-      dec?.dateOfBirth?.toLocaleDateString() ?? '',
+      dec?.dateOfBirth.toLocaleDateString() ?? '',
       this.executorName(),
       exec?.address ?? '',
       exec?.phone ?? '',

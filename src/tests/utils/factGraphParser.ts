@@ -260,7 +260,10 @@ function unwrapString(wrapper: StringWrapper | undefined): string | undefined {
 /**
  * Unwrap a BooleanWrapper to get the raw boolean value
  */
-function unwrapBoolean(wrapper: BooleanWrapper | undefined, defaultValue = false): boolean {
+function unwrapBoolean(
+  wrapper: BooleanWrapper | undefined,
+  defaultValue = false
+): boolean {
   return wrapper?.value ?? defaultValue
 }
 
@@ -268,7 +271,10 @@ function unwrapBoolean(wrapper: BooleanWrapper | undefined, defaultValue = false
  * Unwrap a MoneyWrapper to get the numeric value
  * Assumes values are in dollars (not cents)
  */
-function unwrapMoney(wrapper: MoneyWrapper | undefined, defaultValue = 0): number {
+function unwrapMoney(
+  wrapper: MoneyWrapper | undefined,
+  defaultValue = 0
+): number {
   return wrapper?.value ?? defaultValue
 }
 
@@ -293,7 +299,11 @@ function unwrapTin(wrapper: TinWrapper | undefined): string {
 function unwrapDate(wrapper: DateWrapper | undefined): Date {
   if (!wrapper) return new Date()
 
-  if (wrapper.year !== undefined && wrapper.month !== undefined && wrapper.day !== undefined) {
+  if (
+    wrapper.year !== undefined &&
+    wrapper.month !== undefined &&
+    wrapper.day !== undefined
+  ) {
     return new Date(wrapper.year, wrapper.month - 1, wrapper.day)
   }
 
@@ -336,11 +346,57 @@ function parseAddress(wrapper: AddressWrapper | undefined): Address {
 function isValidState(state: string | undefined): state is State {
   if (!state) return false
   const validStates: State[] = [
-    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL',
-    'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME',
-    'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH',
-    'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI',
-    'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+    'AL',
+    'AK',
+    'AZ',
+    'AR',
+    'CA',
+    'CO',
+    'CT',
+    'DE',
+    'DC',
+    'FL',
+    'GA',
+    'HI',
+    'ID',
+    'IL',
+    'IN',
+    'IA',
+    'KS',
+    'KY',
+    'LA',
+    'ME',
+    'MD',
+    'MA',
+    'MI',
+    'MN',
+    'MS',
+    'MO',
+    'MT',
+    'NE',
+    'NV',
+    'NH',
+    'NJ',
+    'NM',
+    'NY',
+    'NC',
+    'ND',
+    'OH',
+    'OK',
+    'OR',
+    'PA',
+    'RI',
+    'SC',
+    'SD',
+    'TN',
+    'TX',
+    'UT',
+    'VT',
+    'VA',
+    'WA',
+    'WV',
+    'WI',
+    'WY'
   ]
   return validStates.includes(state as State)
 }
@@ -348,24 +404,26 @@ function isValidState(state: string | undefined): state is State {
 /**
  * Parse filing status string to FilingStatus enum
  */
-function parseFilingStatus(status: string | undefined): FilingStatus | undefined {
+function parseFilingStatus(
+  status: string | undefined
+): FilingStatus | undefined {
   if (!status) return undefined
 
   const normalized = status.toUpperCase().replace(/[^A-Z]/g, '')
 
   const statusMap: Record<string, FilingStatus> = {
-    'SINGLE': FilingStatus.S,
-    'S': FilingStatus.S,
-    'MARRIEDFILINGJOINTLY': FilingStatus.MFJ,
-    'MFJ': FilingStatus.MFJ,
-    'MARRIEDFILINGSEPARATELY': FilingStatus.MFS,
-    'MFS': FilingStatus.MFS,
-    'HEADOFHOUSEHOLD': FilingStatus.HOH,
-    'HOH': FilingStatus.HOH,
-    'QUALIFYINGWIDOWER': FilingStatus.W,
-    'WIDOW': FilingStatus.W,
-    'WIDOWER': FilingStatus.W,
-    'W': FilingStatus.W
+    SINGLE: FilingStatus.S,
+    S: FilingStatus.S,
+    MARRIEDFILINGJOINTLY: FilingStatus.MFJ,
+    MFJ: FilingStatus.MFJ,
+    MARRIEDFILINGSEPARATELY: FilingStatus.MFS,
+    MFS: FilingStatus.MFS,
+    HEADOFHOUSEHOLD: FilingStatus.HOH,
+    HOH: FilingStatus.HOH,
+    QUALIFYINGWIDOWER: FilingStatus.W,
+    WIDOW: FilingStatus.W,
+    WIDOWER: FilingStatus.W,
+    W: FilingStatus.W
   }
 
   return statusMap[normalized]
@@ -378,7 +436,9 @@ function parseFilingStatus(status: string | undefined): FilingStatus | undefined
 /**
  * Parse a primary filer from fact graph format
  */
-function parsePrimaryPerson(filer: FilerWrapper | undefined): PrimaryPerson | undefined {
+function parsePrimaryPerson(
+  filer: FilerWrapper | undefined
+): PrimaryPerson | undefined {
   if (!filer) return undefined
 
   return {
@@ -416,7 +476,7 @@ function parseSpouse(filer: FilerWrapper | undefined): Spouse | undefined {
 function parseDependents(deps: DependentWrapper[] | undefined): Dependent[] {
   if (!deps) return []
 
-  return deps.map(dep => ({
+  return deps.map((dep) => ({
     firstName: unwrapString(dep.firstName) ?? '',
     lastName: unwrapString(dep.lastName) ?? '',
     ssid: unwrapTin(dep.ssn ?? dep.tin),
@@ -437,13 +497,15 @@ function parseDependents(deps: DependentWrapper[] | undefined): Dependent[] {
 function parseW2s(w2s: W2Wrapper[] | undefined): IncomeW2[] {
   if (!w2s) return []
 
-  return w2s.map(w2 => {
+  return w2s.map((w2) => {
     const stateStr = unwrapString(w2.state)
-    const employer: Employer | undefined = w2.employer ? {
-      EIN: unwrapTin(w2.employer.ein),
-      employerName: unwrapString(w2.employer.name),
-      address: parseAddress(w2.employer.address)
-    } : undefined
+    const employer: Employer | undefined = w2.employer
+      ? {
+          EIN: unwrapTin(w2.employer.ein),
+          employerName: unwrapString(w2.employer.name),
+          address: parseAddress(w2.employer.address)
+        }
+      : undefined
 
     return {
       occupation: unwrapString(w2.occupation) ?? 'Employee',
@@ -465,10 +527,12 @@ function parseW2s(w2s: W2Wrapper[] | undefined): IncomeW2[] {
 /**
  * Parse 1099-INT forms from fact graph format
  */
-function parse1099Ints(forms: Form1099IntWrapper[] | undefined): Supported1099[] {
+function parse1099Ints(
+  forms: Form1099IntWrapper[] | undefined
+): Supported1099[] {
   if (!forms) return []
 
-  return forms.map(form => ({
+  return forms.map((form) => ({
     payer: unwrapString(form.payer) ?? 'Unknown Bank',
     type: Income1099Type.INT as const,
     form: {
@@ -481,10 +545,12 @@ function parse1099Ints(forms: Form1099IntWrapper[] | undefined): Supported1099[]
 /**
  * Parse 1099-DIV forms from fact graph format
  */
-function parse1099Divs(forms: Form1099DivWrapper[] | undefined): Supported1099[] {
+function parse1099Divs(
+  forms: Form1099DivWrapper[] | undefined
+): Supported1099[] {
   if (!forms) return []
 
-  return forms.map(form => ({
+  return forms.map((form) => ({
     payer: unwrapString(form.payer) ?? 'Unknown Broker',
     type: Income1099Type.DIV as const,
     form: {
@@ -499,7 +565,9 @@ function parse1099Divs(forms: Form1099DivWrapper[] | undefined): Supported1099[]
 /**
  * Parse bank account for refund
  */
-function parseRefund(bankAccount: BankAccountWrapper | undefined): Refund | undefined {
+function parseRefund(
+  bankAccount: BankAccountWrapper | undefined
+): Refund | undefined {
   if (!bankAccount) return undefined
 
   const routingNumber = unwrapString(bankAccount.routingNumber)
@@ -508,9 +576,8 @@ function parseRefund(bankAccount: BankAccountWrapper | undefined): Refund | unde
   if (!routingNumber || !accountNumber) return undefined
 
   const accountTypeStr = unwrapString(bankAccount.accountType)?.toLowerCase()
-  const accountType = accountTypeStr === 'savings'
-    ? AccountType.savings
-    : AccountType.checking
+  const accountType =
+    accountTypeStr === 'savings' ? AccountType.savings : AccountType.checking
 
   return {
     routingNumber,
@@ -522,7 +589,9 @@ function parseRefund(bankAccount: BankAccountWrapper | undefined): Refund | unde
 /**
  * Parse state residencies
  */
-function parseStateResidencies(state: StringWrapper | undefined): StateResidency[] {
+function parseStateResidencies(
+  state: StringWrapper | undefined
+): StateResidency[] {
   const stateStr = unwrapString(state)
   if (!stateStr || !isValidState(stateStr)) return []
   return [{ state: stateStr }]
@@ -573,10 +642,12 @@ function parseF1098es(studentLoanInterest: MoneyWrapper | undefined): F1098e[] {
   const interest = unwrapMoney(studentLoanInterest)
   if (interest <= 0) return []
 
-  return [{
-    lender: 'Student Loan Servicer',
-    interest
-  }]
+  return [
+    {
+      lender: 'Student Loan Servicer',
+      interest
+    }
+  ]
 }
 
 /**
@@ -589,16 +660,18 @@ function parseHSA(data: FactGraphData): HealthSavingsAccount[] {
   const coverageType = unwrapString(data.hsaCoverageType)?.toLowerCase()
   const taxYear = unwrapMoney(data.taxYear, 2024)
 
-  return [{
-    label: 'HSA Account',
-    coverageType: coverageType === 'family' ? 'family' : 'self-only',
-    contributions,
-    personRole: PersonRole.PRIMARY,
-    startDate: new Date(taxYear, 0, 1),
-    endDate: new Date(taxYear, 11, 31),
-    totalDistributions: unwrapMoney(data.hsaDistributions),
-    qualifiedDistributions: unwrapMoney(data.hsaDistributions)
-  }]
+  return [
+    {
+      label: 'HSA Account',
+      coverageType: coverageType === 'family' ? 'family' : 'self-only',
+      contributions,
+      personRole: PersonRole.PRIMARY,
+      startDate: new Date(taxYear, 0, 1),
+      endDate: new Date(taxYear, 11, 31),
+      totalDistributions: unwrapMoney(data.hsaDistributions),
+      qualifiedDistributions: unwrapMoney(data.hsaDistributions)
+    }
+  ]
 }
 
 // =============================================================================
@@ -611,10 +684,14 @@ function parseHSA(data: FactGraphData): HealthSavingsAccount[] {
  * @param factGraphJson - Raw JSON string or parsed object from IRS Direct File
  * @returns Information object compatible with UsTaxes
  */
-export function parseFactGraph(factGraphJson: string | FactGraphData): Information {
-  const data: FactGraphData = typeof factGraphJson === 'string'
-    ? JSON.parse(factGraphJson)
-    : factGraphJson
+export function parseFactGraph(
+  factGraphJson: string | FactGraphData
+): Information {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const data: FactGraphData =
+    typeof factGraphJson === 'string'
+      ? JSON.parse(factGraphJson)
+      : factGraphJson
 
   const primaryPerson = parsePrimaryPerson(data.primaryFiler)
   const spouse = parseSpouse(data.spouse)
@@ -710,4 +787,10 @@ export function validateFactGraph(data: FactGraphData): {
 }
 
 // Export types for external use
-export type { FactGraphData, FilerWrapper, W2Wrapper, Form1099IntWrapper, Form1099DivWrapper }
+export type {
+  FactGraphData,
+  FilerWrapper,
+  W2Wrapper,
+  Form1099IntWrapper,
+  Form1099DivWrapper
+}

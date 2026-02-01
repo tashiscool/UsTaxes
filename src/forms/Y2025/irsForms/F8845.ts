@@ -27,7 +27,7 @@ import { Form8845Data } from 'ustaxes/core/data'
 // 2025 parameters
 const indianEmploymentParams = {
   maxAmountPerEmployee: 20000,
-  creditRate: 0.20
+  creditRate: 0.2
 }
 
 export default class F8845 extends F1040Attachment {
@@ -54,15 +54,25 @@ export default class F8845 extends F1040Attachment {
   l1 = (): number => {
     const data = this.creditData()
     if (!data) return 0
-    return data.qualifiedEmployees.reduce((sum, e) =>
-      sum + Math.min(e.totalQualifiedAmount, indianEmploymentParams.maxAmountPerEmployee), 0)
+    return data.qualifiedEmployees.reduce(
+      (sum, e) =>
+        sum +
+        Math.min(
+          e.totalQualifiedAmount,
+          indianEmploymentParams.maxAmountPerEmployee
+        ),
+      0
+    )
   }
 
   // Line 2: Prior year amounts for same employees
   l2 = (): number => {
     const data = this.creditData()
     if (!data) return 0
-    return data.qualifiedEmployees.reduce((sum, e) => sum + e.priorYearAmount, 0)
+    return data.qualifiedEmployees.reduce(
+      (sum, e) => sum + e.priorYearAmount,
+      0
+    )
   }
 
   // Line 3: Incremental increase (line 1 minus line 2)
@@ -81,11 +91,12 @@ export default class F8845 extends F1040Attachment {
   credit = (): number => this.creditData()?.totalCredit ?? this.l6()
 
   // Number of qualified employees
-  qualifiedEmployeeCount = (): number => this.creditData()?.qualifiedEmployees.length ?? 0
+  qualifiedEmployeeCount = (): number =>
+    this.creditData()?.qualifiedEmployees.length ?? 0
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1(),
     this.l2(),
     this.l3(),

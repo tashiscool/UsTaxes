@@ -1,7 +1,11 @@
 import { BusinessForm } from './BusinessForm'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
-import { Form941Data, BusinessEntity, QuarterlyPayrollData } from 'ustaxes/core/data'
+import {
+  Form941Data,
+  BusinessEntity,
+  QuarterlyPayrollData
+} from 'ustaxes/core/data'
 import { sumFields } from 'ustaxes/core/irsForms/util'
 
 /**
@@ -31,9 +35,9 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
 
 // 2025 tax rates
 const SS_WAGE_BASE = 176100
-const SS_RATE = 0.062  // 6.2% each for employer and employee
-const MEDICARE_RATE = 0.0145  // 1.45% each for employer and employee
-const ADDITIONAL_MEDICARE_RATE = 0.009  // 0.9% employee only
+const SS_RATE = 0.062 // 6.2% each for employer and employee
+const MEDICARE_RATE = 0.0145 // 1.45% each for employer and employee
+const ADDITIONAL_MEDICARE_RATE = 0.009 // 0.9% employee only
 const ADDITIONAL_MEDICARE_THRESHOLD = 200000
 
 export default class F941 extends BusinessForm {
@@ -75,7 +79,7 @@ export default class F941 extends BusinessForm {
 
   // Line 5a: Taxable social security wages
   l5aCol1 = (): number => this.quarterData().totalSocialSecurityWages
-  l5aCol2 = (): number => Math.round(this.l5aCol1() * SS_RATE * 2 * 100) / 100  // 12.4% total
+  l5aCol2 = (): number => Math.round(this.l5aCol1() * SS_RATE * 2 * 100) / 100 // 12.4% total
 
   // Line 5b: Taxable social security tips (reported separately)
   l5bCol1 = (): number => this.quarterData().totalTipsReported
@@ -83,7 +87,8 @@ export default class F941 extends BusinessForm {
 
   // Line 5c: Taxable Medicare wages & tips
   l5cCol1 = (): number => this.quarterData().totalMedicareWages
-  l5cCol2 = (): number => Math.round(this.l5cCol1() * MEDICARE_RATE * 2 * 100) / 100  // 2.9% total
+  l5cCol2 = (): number =>
+    Math.round(this.l5cCol1() * MEDICARE_RATE * 2 * 100) / 100 // 2.9% total
 
   // Line 5d: Taxable wages & tips subject to Additional Medicare Tax withholding
   l5dCol1 = (): number => {
@@ -93,11 +98,17 @@ export default class F941 extends BusinessForm {
       return sum + excess
     }, 0)
   }
-  l5dCol2 = (): number => Math.round(this.l5dCol1() * ADDITIONAL_MEDICARE_RATE * 100) / 100
+  l5dCol2 = (): number =>
+    Math.round(this.l5dCol1() * ADDITIONAL_MEDICARE_RATE * 100) / 100
 
   // Line 5e: Total social security and Medicare taxes (add 5a through 5d, column 2)
   l5e = (): number => {
-    return sumFields([this.l5aCol2(), this.l5bCol2(), this.l5cCol2(), this.l5dCol2()])
+    return sumFields([
+      this.l5aCol2(),
+      this.l5bCol2(),
+      this.l5cCol2(),
+      this.l5dCol2()
+    ])
   }
 
   // Line 5f: Section 3121(q) Notice and Demand - Tax due on unreported tips
@@ -174,11 +185,13 @@ export default class F941 extends BusinessForm {
   // =========================================================================
 
   // Deposit schedule
-  isMonthlyDepositor = (): boolean => this.formData.depositSchedule === 'monthly'
-  isSemiweeklyDepositor = (): boolean => this.formData.depositSchedule === 'semiweekly'
+  isMonthlyDepositor = (): boolean =>
+    this.formData.depositSchedule === 'monthly'
+  isSemiweeklyDepositor = (): boolean =>
+    this.formData.depositSchedule === 'semiweekly'
 
   // Monthly tax liability (if monthly depositor)
-  month1Liability = (): number => 0  // Would need monthly breakdown
+  month1Liability = (): number => 0 // Would need monthly breakdown
   month2Liability = (): number => 0
   month3Liability = (): number => 0
   totalQuarterLiability = (): number => this.formData.totalLiabilityForQuarter
@@ -207,10 +220,14 @@ export default class F941 extends BusinessForm {
     const q = this.quarter()
     const year = this.year()
     switch (q) {
-      case 1: return `March 31, ${year}`
-      case 2: return `June 30, ${year}`
-      case 3: return `September 30, ${year}`
-      case 4: return `December 31, ${year}`
+      case 1:
+        return `March 31, ${year}`
+      case 2:
+        return `June 30, ${year}`
+      case 3:
+        return `September 30, ${year}`
+      case 4:
+        return `December 31, ${year}`
     }
   }
 
@@ -218,10 +235,14 @@ export default class F941 extends BusinessForm {
     const q = this.quarter()
     const year = this.year()
     switch (q) {
-      case 1: return `April 30, ${year}`
-      case 2: return `July 31, ${year}`
-      case 3: return `October 31, ${year}`
-      case 4: return `January 31, ${year + 1}`
+      case 1:
+        return `April 30, ${year}`
+      case 2:
+        return `July 31, ${year}`
+      case 3:
+        return `October 31, ${year}`
+      case 4:
+        return `January 31, ${year + 1}`
     }
   }
 
@@ -241,14 +262,21 @@ export default class F941 extends BusinessForm {
     const cappedSSWages = Math.min(ssWages, SS_WAGE_BASE)
 
     return {
-      federalWithholding: 0,  // Determined by W-4
+      federalWithholding: 0, // Determined by W-4
       ssEmployerTax: Math.round(cappedSSWages * SS_RATE * 100) / 100,
       ssEmployeeTax: Math.round(cappedSSWages * SS_RATE * 100) / 100,
-      medicareEmployerTax: Math.round(medicareWages * MEDICARE_RATE * 100) / 100,
-      medicareEmployeeTax: Math.round(medicareWages * MEDICARE_RATE * 100) / 100,
-      additionalMedicare: wages > ADDITIONAL_MEDICARE_THRESHOLD
-        ? Math.round((wages - ADDITIONAL_MEDICARE_THRESHOLD) * ADDITIONAL_MEDICARE_RATE * 100) / 100
-        : 0
+      medicareEmployerTax:
+        Math.round(medicareWages * MEDICARE_RATE * 100) / 100,
+      medicareEmployeeTax:
+        Math.round(medicareWages * MEDICARE_RATE * 100) / 100,
+      additionalMedicare:
+        wages > ADDITIONAL_MEDICARE_THRESHOLD
+          ? Math.round(
+              (wages - ADDITIONAL_MEDICARE_THRESHOLD) *
+                ADDITIONAL_MEDICARE_RATE *
+                100
+            ) / 100
+          : 0
     }
   }
 

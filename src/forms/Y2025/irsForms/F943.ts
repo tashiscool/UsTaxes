@@ -22,8 +22,8 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * Due date: January 31 following the tax year
  */
 
-const SS_RATE = 0.124  // Combined 12.4%
-const MEDICARE_RATE = 0.029  // Combined 2.9%
+const SS_RATE = 0.124 // Combined 12.4%
+const MEDICARE_RATE = 0.029 // Combined 2.9%
 const ADDITIONAL_MEDICARE_RATE = 0.009
 
 export default class F943 extends BusinessForm {
@@ -65,7 +65,8 @@ export default class F943 extends BusinessForm {
   }
 
   // Line 7: Additional Medicare Tax (line 6 × 0.9%)
-  l7 = (): number => Math.round(this.l6() * ADDITIONAL_MEDICARE_RATE * 100) / 100
+  l7 = (): number =>
+    Math.round(this.l6() * ADDITIONAL_MEDICARE_RATE * 100) / 100
 
   // Line 8: Federal income tax withheld
   l8 = (): number => this.formData.federalWithholding
@@ -95,8 +96,10 @@ export default class F943 extends BusinessForm {
   l16 = (): number => Math.max(0, this.l14() - this.l13())
 
   // Deposit schedule
-  isMonthlyDepositor = (): boolean => this.formData.depositSchedule === 'monthly'
-  isSemiweeklyDepositor = (): boolean => this.formData.depositSchedule === 'semiweekly'
+  isMonthlyDepositor = (): boolean =>
+    this.formData.depositSchedule === 'monthly'
+  isSemiweeklyDepositor = (): boolean =>
+    this.formData.depositSchedule === 'semiweekly'
 
   taxYear = (): number => this.formData.taxYear
   totalTax = (): number => this.l13()

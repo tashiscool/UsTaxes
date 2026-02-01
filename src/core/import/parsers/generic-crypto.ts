@@ -66,29 +66,29 @@ export interface GenericCryptoParserConfig {
  * Default transaction type mappings
  */
 const DEFAULT_TYPE_MAP: Record<string, CryptoTransactionType> = {
-  'buy': 'buy',
-  'purchase': 'buy',
-  'bought': 'buy',
-  'sell': 'sell',
-  'sold': 'sell',
-  'convert': 'convert',
-  'swap': 'convert',
-  'trade': 'other', // Need context to determine buy/sell
-  'send': 'send',
-  'withdraw': 'send',
-  'withdrawal': 'send',
+  buy: 'buy',
+  purchase: 'buy',
+  bought: 'buy',
+  sell: 'sell',
+  sold: 'sell',
+  convert: 'convert',
+  swap: 'convert',
+  trade: 'other', // Need context to determine buy/sell
+  send: 'send',
+  withdraw: 'send',
+  withdrawal: 'send',
   'transfer out': 'send',
-  'receive': 'receive',
-  'deposit': 'receive',
+  receive: 'receive',
+  deposit: 'receive',
   'transfer in': 'receive',
-  'income': 'income',
-  'reward': 'income',
-  'staking': 'income',
-  'interest': 'income',
-  'earn': 'income',
-  'airdrop': 'airdrop',
-  'fork': 'fork',
-  'mining': 'mining',
+  income: 'income',
+  reward: 'income',
+  staking: 'income',
+  interest: 'income',
+  earn: 'income',
+  airdrop: 'airdrop',
+  fork: 'fork',
+  mining: 'mining',
   'gift sent': 'gift_sent',
   'gift received': 'gift_received'
 }
@@ -173,7 +173,7 @@ export const CRYPTO_FIELDS: CryptoFieldDefinition[] = [
  * Get required fields for validation
  */
 export function getRequiredCryptoFields(): (keyof CryptoColumnMapping)[] {
-  return CRYPTO_FIELDS.filter(f => f.required).map(f => f.key)
+  return CRYPTO_FIELDS.filter((f) => f.required).map((f) => f.key)
 }
 
 export class GenericCryptoParser extends BaseBrokerageParser {
@@ -203,10 +203,16 @@ export class GenericCryptoParser extends BaseBrokerageParser {
   setConfig(config: Partial<GenericCryptoParserConfig>): void {
     this.config = { ...this.config, ...config }
     if (config.columnMapping) {
-      this.config.columnMapping = { ...this.config.columnMapping, ...config.columnMapping }
+      this.config.columnMapping = {
+        ...this.config.columnMapping,
+        ...config.columnMapping
+      }
     }
     if (config.transactionTypeMap) {
-      this.config.transactionTypeMap = { ...this.config.transactionTypeMap, ...config.transactionTypeMap }
+      this.config.transactionTypeMap = {
+        ...this.config.transactionTypeMap,
+        ...config.transactionTypeMap
+      }
     }
   }
 
@@ -220,7 +226,10 @@ export class GenericCryptoParser extends BaseBrokerageParser {
   /**
    * Update a single column mapping
    */
-  setColumnMapping(field: keyof CryptoColumnMapping, columnIndex: number): void {
+  setColumnMapping(
+    field: keyof CryptoColumnMapping,
+    columnIndex: number
+  ): void {
     this.config.columnMapping = {
       ...this.config.columnMapping,
       [field]: columnIndex
@@ -258,7 +267,7 @@ export class GenericCryptoParser extends BaseBrokerageParser {
     for (const field of required) {
       const columnIndex = this.config.columnMapping[field]
       if (columnIndex === undefined || columnIndex < 0) {
-        const fieldDef = CRYPTO_FIELDS.find(f => f.key === field)
+        const fieldDef = CRYPTO_FIELDS.find((f) => f.key === field)
         errors.push(`${fieldDef?.label ?? field} column is not mapped`)
       }
     }
@@ -274,8 +283,13 @@ export class GenericCryptoParser extends BaseBrokerageParser {
 
     // Check custom mappings first
     if (this.config.transactionTypeMap) {
-      for (const [key, value] of Object.entries(this.config.transactionTypeMap)) {
-        if (normalized === key.toLowerCase() || normalized.includes(key.toLowerCase())) {
+      for (const [key, value] of Object.entries(
+        this.config.transactionTypeMap
+      )) {
+        if (
+          normalized === key.toLowerCase() ||
+          normalized.includes(key.toLowerCase())
+        ) {
           return value
         }
       }
@@ -283,7 +297,10 @@ export class GenericCryptoParser extends BaseBrokerageParser {
 
     // Fall back to default mappings
     for (const [key, value] of Object.entries(DEFAULT_TYPE_MAP)) {
-      if (normalized === key.toLowerCase() || normalized.includes(key.toLowerCase())) {
+      if (
+        normalized === key.toLowerCase() ||
+        normalized.includes(key.toLowerCase())
+      ) {
         return value
       }
     }
@@ -312,7 +329,11 @@ export class GenericCryptoParser extends BaseBrokerageParser {
       case 'YYYY-MM-DD': {
         const match = cleaned.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
         if (match) {
-          return new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10))
+          return new Date(
+            parseInt(match[1], 10),
+            parseInt(match[2], 10) - 1,
+            parseInt(match[3], 10)
+          )
         }
         break
       }
@@ -344,13 +365,16 @@ export class GenericCryptoParser extends BaseBrokerageParser {
     // Validate mapping
     const mappingErrors = this.validateMapping()
     if (mappingErrors.length > 0) {
-      mappingErrors.forEach(msg => errors.push({ row: 0, message: msg }))
+      mappingErrors.forEach((msg) => errors.push({ row: 0, message: msg }))
       return { transactions, errors, warnings }
     }
 
     const rows = this.parseCSV(content)
     if (rows.length <= this.config.skipHeaderRows) {
-      errors.push({ row: 0, message: 'CSV file has no data rows after skipping headers' })
+      errors.push({
+        row: 0,
+        message: 'CSV file has no data rows after skipping headers'
+      })
       return { transactions, errors, warnings }
     }
 
@@ -360,30 +384,42 @@ export class GenericCryptoParser extends BaseBrokerageParser {
     for (let i = this.config.skipHeaderRows; i < rows.length; i++) {
       const row = rows[i]
 
-      if (row.length === 0 || row.every(c => c === '')) continue
+      if (row.length === 0 || row.every((c) => c === '')) continue
 
       // Skip summary rows
       const firstCell = row[0].toLowerCase()
-      if (firstCell.includes('total') || firstCell.includes('subtotal')) continue
+      if (firstCell.includes('total') || firstCell.includes('subtotal'))
+        continue
 
       try {
         // Get required fields
-        const timestampStr = mapping.timestamp < row.length ? row[mapping.timestamp] : ''
-        const typeStr = mapping.transactionType < row.length ? row[mapping.transactionType] : ''
+        const timestampStr =
+          mapping.timestamp < row.length ? row[mapping.timestamp] : ''
+        const typeStr =
+          mapping.transactionType < row.length
+            ? row[mapping.transactionType]
+            : ''
         const assetStr = mapping.asset < row.length ? row[mapping.asset] : ''
-        const quantityStr = mapping.quantity < row.length ? row[mapping.quantity] : ''
+        const quantityStr =
+          mapping.quantity < row.length ? row[mapping.quantity] : ''
 
         if (!assetStr || assetStr.trim() === '') continue
 
         // Parse timestamp
         const timestamp = this.parseConfiguredDate(timestampStr)
         if (!timestamp) {
-          errors.push({ row: i + 1, column: 'timestamp', message: `Invalid date: ${timestampStr}` })
+          errors.push({
+            row: i + 1,
+            column: 'timestamp',
+            message: `Invalid date: ${timestampStr}`
+          })
           continue
         }
 
         // Parse quantity
-        const quantity = Math.abs(parseFloat(quantityStr.replace(/[,\s]/g, '')) || 0)
+        const quantity = Math.abs(
+          parseFloat(quantityStr.replace(/[,\s]/g, '')) || 0
+        )
         if (quantity === 0) {
           warnings.push(`Row ${i + 1}: Zero quantity, skipping`)
           continue
@@ -393,21 +429,33 @@ export class GenericCryptoParser extends BaseBrokerageParser {
         const transactionType = this.mapTransactionType(typeStr)
 
         // Parse optional fields
-        const pricePerUnit = mapping.pricePerUnit !== undefined && mapping.pricePerUnit >= 0 && mapping.pricePerUnit < row.length
-          ? parseCurrency(row[mapping.pricePerUnit])
-          : 0
+        const pricePerUnit =
+          mapping.pricePerUnit !== undefined &&
+          mapping.pricePerUnit >= 0 &&
+          mapping.pricePerUnit < row.length
+            ? parseCurrency(row[mapping.pricePerUnit])
+            : 0
 
-        const totalValue = mapping.totalValue !== undefined && mapping.totalValue >= 0 && mapping.totalValue < row.length
-          ? parseCurrency(row[mapping.totalValue])
-          : (pricePerUnit * quantity)
+        const totalValue =
+          mapping.totalValue !== undefined &&
+          mapping.totalValue >= 0 &&
+          mapping.totalValue < row.length
+            ? parseCurrency(row[mapping.totalValue])
+            : pricePerUnit * quantity
 
-        const fees = mapping.fees !== undefined && mapping.fees >= 0 && mapping.fees < row.length
-          ? parseCurrency(row[mapping.fees])
-          : 0
+        const fees =
+          mapping.fees !== undefined &&
+          mapping.fees >= 0 &&
+          mapping.fees < row.length
+            ? parseCurrency(row[mapping.fees])
+            : 0
 
-        const notes = mapping.notes !== undefined && mapping.notes >= 0 && mapping.notes < row.length
-          ? row[mapping.notes]
-          : undefined
+        const notes =
+          mapping.notes !== undefined &&
+          mapping.notes >= 0 &&
+          mapping.notes < row.length
+            ? row[mapping.notes]
+            : undefined
 
         const normalizedAsset = normalizeAssetSymbol(assetStr)
 
@@ -417,8 +465,8 @@ export class GenericCryptoParser extends BaseBrokerageParser {
           type: transactionType,
           asset: normalizedAsset,
           quantity,
-          pricePerUnit: pricePerUnit || (totalValue / quantity) || 0,
-          totalValue: totalValue || (pricePerUnit * quantity) || 0,
+          pricePerUnit: pricePerUnit || totalValue / quantity || 0,
+          totalValue: totalValue || pricePerUnit * quantity || 0,
           fees,
           notes,
           exchange: this.config.exchangeName,
@@ -427,24 +475,53 @@ export class GenericCryptoParser extends BaseBrokerageParser {
 
         // Handle convert transactions
         if (transactionType === 'convert') {
-          if (mapping.convertToAsset !== undefined && mapping.convertToAsset >= 0 && mapping.convertToAsset < row.length) {
+          if (
+            mapping.convertToAsset !== undefined &&
+            mapping.convertToAsset >= 0 &&
+            mapping.convertToAsset < row.length
+          ) {
             transaction.convertFromAsset = normalizedAsset
             transaction.convertFromQuantity = quantity
-            transaction.convertToAsset = normalizeAssetSymbol(row[mapping.convertToAsset])
+            transaction.convertToAsset = normalizeAssetSymbol(
+              row[mapping.convertToAsset]
+            )
           }
-          if (mapping.convertToQuantity !== undefined && mapping.convertToQuantity >= 0 && mapping.convertToQuantity < row.length) {
-            transaction.convertToQuantity = Math.abs(parseFloat(row[mapping.convertToQuantity].replace(/[,\s]/g, '')) || 0)
+          if (
+            mapping.convertToQuantity !== undefined &&
+            mapping.convertToQuantity >= 0 &&
+            mapping.convertToQuantity < row.length
+          ) {
+            transaction.convertToQuantity = Math.abs(
+              parseFloat(
+                row[mapping.convertToQuantity].replace(/[,\s]/g, '')
+              ) || 0
+            )
           }
         }
 
         transactions.push(transaction)
 
         // Add income warnings
-        if (transactionType === 'income' || transactionType === 'airdrop' || transactionType === 'mining') {
-          warnings.push(`Row ${i + 1}: ${normalizedAsset} ${transactionType} of $${transaction.totalValue.toFixed(2)} should be reported as ordinary income`)
+        if (
+          transactionType === 'income' ||
+          transactionType === 'airdrop' ||
+          transactionType === 'mining'
+        ) {
+          warnings.push(
+            `Row ${
+              i + 1
+            }: ${normalizedAsset} ${transactionType} of $${transaction.totalValue.toFixed(
+              2
+            )} should be reported as ordinary income`
+          )
         }
       } catch (e) {
-        errors.push({ row: i + 1, message: `Error parsing row: ${e instanceof Error ? e.message : String(e)}` })
+        errors.push({
+          row: i + 1,
+          message: `Error parsing row: ${
+            e instanceof Error ? e.message : String(e)
+          }`
+        })
       }
     }
 
@@ -455,23 +532,36 @@ export class GenericCryptoParser extends BaseBrokerageParser {
    * Convert crypto transactions to brokerage transactions for Form 8949
    */
   parse(content: string): ParseResult {
-    const { transactions: cryptoTxs, errors, warnings } = this.parseCryptoTransactions(content)
+    const {
+      transactions: cryptoTxs,
+      errors,
+      warnings
+    } = this.parseCryptoTransactions(content)
     const brokerageTransactions: BrokerageTransaction[] = []
 
     // Reset holdings
     this.holdings.clear()
 
     // Sort by timestamp
-    const sortedTxs = [...cryptoTxs].sort((a, b) =>
-      a.timestamp.getTime() - b.timestamp.getTime()
+    const sortedTxs = [...cryptoTxs].sort(
+      (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
     )
 
     // Process transactions
     for (const tx of sortedTxs) {
-      if (tx.type === 'buy' || tx.type === 'receive' || tx.type === 'income' ||
-          tx.type === 'airdrop' || tx.type === 'mining' || tx.type === 'gift_received') {
+      if (
+        tx.type === 'buy' ||
+        tx.type === 'receive' ||
+        tx.type === 'income' ||
+        tx.type === 'airdrop' ||
+        tx.type === 'mining' ||
+        tx.type === 'gift_received'
+      ) {
         // Add to holdings
-        const costBasis = tx.type === 'receive' || tx.type === 'gift_received' ? 0 : tx.totalValue
+        const costBasis =
+          tx.type === 'receive' || tx.type === 'gift_received'
+            ? 0
+            : tx.totalValue
         const holding: CryptoHolding = {
           asset: tx.asset,
           quantity: tx.quantity,
@@ -501,13 +591,18 @@ export class GenericCryptoParser extends BaseBrokerageParser {
 
         // Create Form 8949 entries (gifts sent don't get proceeds)
         for (const lot of result.lotsUsed) {
-          const proceeds = tx.type === 'gift_sent' ? 0 :
-            (tx.pricePerUnit * lot.quantitySold) - (tx.fees * (lot.quantitySold / tx.quantity))
+          const proceeds =
+            tx.type === 'gift_sent'
+              ? 0
+              : tx.pricePerUnit * lot.quantitySold -
+                tx.fees * (lot.quantitySold / tx.quantity)
           const gainLoss = proceeds - lot.costBasis
 
           const brokerageTx: BrokerageTransaction = {
             symbol: tx.asset,
-            description: `${tx.asset ?? 'Unknown'} - ${this.config.exchangeName ?? 'Exchange'}`,
+            description: `${tx.asset ?? 'Unknown'} - ${
+              this.config.exchangeName ?? 'Exchange'
+            }`,
             dateAcquired: lot.acquiredDate,
             dateSold: tx.timestamp,
             proceeds,
@@ -532,18 +627,24 @@ export class GenericCryptoParser extends BaseBrokerageParser {
           this.holdings.set(tx.convertFromAsset, result.remainingHoldings)
 
           for (const lot of result.lotsUsed) {
-            const proceeds = tx.totalValue * (lot.quantitySold / tx.convertFromQuantity)
+            const proceeds =
+              tx.totalValue * (lot.quantitySold / tx.convertFromQuantity)
             const gainLoss = proceeds - lot.costBasis
 
             const brokerageTx: BrokerageTransaction = {
               symbol: tx.convertFromAsset,
-              description: `${tx.convertFromAsset} converted to ${tx.convertToAsset || 'unknown'}`,
+              description: `${tx.convertFromAsset} converted to ${
+                tx.convertToAsset || 'unknown'
+              }`,
               dateAcquired: lot.acquiredDate,
               dateSold: tx.timestamp,
               proceeds,
               costBasis: lot.costBasis,
               gainLoss,
-              isShortTerm: isShortTermTransaction(lot.acquiredDate, tx.timestamp),
+              isShortTerm: isShortTermTransaction(
+                lot.acquiredDate,
+                tx.timestamp
+              ),
               isCovered: false,
               quantity: lot.quantitySold
             }
@@ -568,7 +669,9 @@ export class GenericCryptoParser extends BaseBrokerageParser {
           }
         }
       } else if (tx.type === 'send') {
-        warnings.push(`Row: ${tx.asset} send of ${tx.quantity} - verify if taxable`)
+        warnings.push(
+          `Row: ${tx.asset} send of ${tx.quantity} - verify if taxable`
+        )
       }
     }
 
@@ -604,7 +707,9 @@ export class GenericCryptoParser extends BaseBrokerageParser {
 /**
  * Create a new generic crypto parser
  */
-export function createGenericCryptoParser(config?: Partial<GenericCryptoParserConfig>): GenericCryptoParser {
+export function createGenericCryptoParser(
+  config?: Partial<GenericCryptoParserConfig>
+): GenericCryptoParser {
   return new GenericCryptoParser(config)
 }
 

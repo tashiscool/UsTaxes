@@ -30,8 +30,8 @@ import { Form8835Data } from 'ustaxes/core/data'
 
 // 2025 credit rates per kWh (inflation-adjusted from 1992 base of 1.5 cents)
 const renewableCreditRates = {
-  fullRate: 0.029,      // ~2.9 cents for wind, closed-loop biomass, geothermal
-  halfRate: 0.0145      // ~1.45 cents for other qualifying facilities
+  fullRate: 0.029, // ~2.9 cents for wind, closed-loop biomass, geothermal
+  halfRate: 0.0145 // ~1.45 cents for other qualifying facilities
 }
 
 export default class F8835 extends F1040Attachment {
@@ -44,9 +44,9 @@ export default class F8835 extends F1040Attachment {
 
   hasRenewableElectricityCredit = (): boolean => {
     const data = this.creditData()
-    return data !== undefined && (
-      data.facilities.length > 0 ||
-      (data.passthrough8835Credit ?? 0) > 0
+    return (
+      data !== undefined &&
+      (data.facilities.length > 0 || (data.passthrough8835Credit ?? 0) > 0)
     )
   }
 
@@ -67,7 +67,7 @@ export default class F8835 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.facilities
-      .filter(f => this.isFullRateFacility(f.facilityType))
+      .filter((f) => this.isFullRateFacility(f.facilityType))
       .reduce((sum, f) => sum + f.kilowattHoursProduced, 0)
   }
 
@@ -75,7 +75,7 @@ export default class F8835 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.facilities
-      .filter(f => this.isFullRateFacility(f.facilityType))
+      .filter((f) => this.isFullRateFacility(f.facilityType))
       .reduce((sum, f) => sum + f.creditAmount, 0)
   }
 
@@ -84,7 +84,7 @@ export default class F8835 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.facilities
-      .filter(f => !this.isFullRateFacility(f.facilityType))
+      .filter((f) => !this.isFullRateFacility(f.facilityType))
       .reduce((sum, f) => sum + f.kilowattHoursProduced, 0)
   }
 
@@ -92,20 +92,20 @@ export default class F8835 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.facilities
-      .filter(f => !this.isFullRateFacility(f.facilityType))
+      .filter((f) => !this.isFullRateFacility(f.facilityType))
       .reduce((sum, f) => sum + f.creditAmount, 0)
   }
 
   // Part II - Phaseout for Government Grants, Tax-Exempt Bonds, Subsidized Financing
 
   // Line 3: Government grants received
-  l3 = (): number => 0  // Would reduce credit
+  l3 = (): number => 0 // Would reduce credit
 
   // Line 4: Tax-exempt bond financing
-  l4 = (): number => 0  // Would reduce credit
+  l4 = (): number => 0 // Would reduce credit
 
   // Line 5: Subsidized energy financing
-  l5 = (): number => 0  // Would reduce credit
+  l5 = (): number => 0 // Would reduce credit
 
   // Part III - Total Credit
 
@@ -135,7 +135,7 @@ export default class F8835 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Full rate facilities
     this.l1kWh(),
     this.l1Credit(),

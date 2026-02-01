@@ -23,8 +23,8 @@
   .MuiButton-root,
   .MuiIconButton-root,
   .MuiListItem-button,
-  input[type="checkbox"],
-  input[type="radio"],
+  input[type='checkbox'],
+  input[type='radio'],
   select,
   a {
     min-height: var(--touch-target-min);
@@ -32,12 +32,12 @@
   }
 
   /* Form inputs sizing */
-  input[type="text"],
-  input[type="email"],
-  input[type="tel"],
-  input[type="number"],
-  input[type="password"],
-  input[type="date"],
+  input[type='text'],
+  input[type='email'],
+  input[type='tel'],
+  input[type='number'],
+  input[type='password'],
+  input[type='date'],
   textarea,
   select,
   .MuiInputBase-root,

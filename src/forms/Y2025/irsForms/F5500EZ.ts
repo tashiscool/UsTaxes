@@ -25,7 +25,10 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
  * Can request extension using Form 5558
  */
 
-export type OneParticipantPlanType = 'definedBenefit' | 'definedContribution' | 'both'
+export type OneParticipantPlanType =
+  | 'definedBenefit'
+  | 'definedContribution'
+  | 'both'
 
 export interface Form5500EZInfo {
   // Plan identification
@@ -62,7 +65,7 @@ export interface Form5500EZInfo {
   // Participant count
   numberOfParticipantsEndOfYear: number
   // Compliance questions
-  wasMinDistributionMade: boolean  // For participants 72+
+  wasMinDistributionMade: boolean // For participants 72+
   wasExcessContributionCorrected: boolean
   wereLoansInDefault: boolean
   wasProhibitedTransactionCorrected: boolean
@@ -87,10 +90,13 @@ export default class F5500EZ extends F1040Attachment {
   // Plan Identification
   planName = (): string => this.f5500EZInfo()?.planName ?? ''
   planNumber = (): string => this.f5500EZInfo()?.planNumber ?? '001'
-  planType = (): OneParticipantPlanType => this.f5500EZInfo()?.planType ?? 'definedContribution'
+  planType = (): OneParticipantPlanType =>
+    this.f5500EZInfo()?.planType ?? 'definedContribution'
 
-  planYearBegin = (): string => this.f5500EZInfo()?.planYearBegin?.toLocaleDateString() ?? ''
-  planYearEnd = (): string => this.f5500EZInfo()?.planYearEnd?.toLocaleDateString() ?? ''
+  planYearBegin = (): string =>
+    this.f5500EZInfo()?.planYearBegin.toLocaleDateString() ?? ''
+  planYearEnd = (): string =>
+    this.f5500EZInfo()?.planYearEnd.toLocaleDateString() ?? ''
 
   // Plan Status
   isFirstYearPlan = (): boolean => this.f5500EZInfo()?.isFirstYearPlan ?? false
@@ -111,8 +117,10 @@ export default class F5500EZ extends F1040Attachment {
   // Plan Features
   has401kFeature = (): boolean => this.f5500EZInfo()?.has401kFeature ?? false
   hasRothFeature = (): boolean => this.f5500EZInfo()?.hasRothFeature ?? false
-  hasProfitSharing = (): boolean => this.f5500EZInfo()?.hasProfitSharing ?? false
-  hasMoneyPurchase = (): boolean => this.f5500EZInfo()?.hasMoneyPurchase ?? false
+  hasProfitSharing = (): boolean =>
+    this.f5500EZInfo()?.hasProfitSharing ?? false
+  hasMoneyPurchase = (): boolean =>
+    this.f5500EZInfo()?.hasMoneyPurchase ?? false
 
   isDefinedBenefit = (): boolean => {
     const type = this.planType()
@@ -126,27 +134,38 @@ export default class F5500EZ extends F1040Attachment {
 
   // Financial Information
   totalPlanAssets = (): number => this.f5500EZInfo()?.totalPlanAssets ?? 0
-  totalPlanLiabilities = (): number => this.f5500EZInfo()?.totalPlanLiabilities ?? 0
+  totalPlanLiabilities = (): number =>
+    this.f5500EZInfo()?.totalPlanLiabilities ?? 0
   netPlanAssets = (): number => {
-    return this.f5500EZInfo()?.netPlanAssets ??
-           (this.totalPlanAssets() - this.totalPlanLiabilities())
+    return (
+      this.f5500EZInfo()?.netPlanAssets ??
+      this.totalPlanAssets() - this.totalPlanLiabilities()
+    )
   }
 
-  employerContributions = (): number => this.f5500EZInfo()?.employerContributions ?? 0
-  participantContributions = (): number => this.f5500EZInfo()?.participantContributions ?? 0
-  totalContributions = (): number => this.employerContributions() + this.participantContributions()
+  employerContributions = (): number =>
+    this.f5500EZInfo()?.employerContributions ?? 0
+  participantContributions = (): number =>
+    this.f5500EZInfo()?.participantContributions ?? 0
+  totalContributions = (): number =>
+    this.employerContributions() + this.participantContributions()
 
   // Participant Count
-  numberOfParticipants = (): number => this.f5500EZInfo()?.numberOfParticipantsEndOfYear ?? 1
+  numberOfParticipants = (): number =>
+    this.f5500EZInfo()?.numberOfParticipantsEndOfYear ?? 1
 
   // Filing threshold check ($250,000)
   meetsFilingThreshold = (): boolean => this.totalPlanAssets() > 250000
 
   // Compliance Questions
-  wasMinDistributionMade = (): boolean => this.f5500EZInfo()?.wasMinDistributionMade ?? true
-  wasExcessContributionCorrected = (): boolean => this.f5500EZInfo()?.wasExcessContributionCorrected ?? true
-  wereLoansInDefault = (): boolean => this.f5500EZInfo()?.wereLoansInDefault ?? false
-  wasProhibitedTransactionCorrected = (): boolean => this.f5500EZInfo()?.wasProhibitedTransactionCorrected ?? true
+  wasMinDistributionMade = (): boolean =>
+    this.f5500EZInfo()?.wasMinDistributionMade ?? true
+  wasExcessContributionCorrected = (): boolean =>
+    this.f5500EZInfo()?.wasExcessContributionCorrected ?? true
+  wereLoansInDefault = (): boolean =>
+    this.f5500EZInfo()?.wereLoansInDefault ?? false
+  wasProhibitedTransactionCorrected = (): boolean =>
+    this.f5500EZInfo()?.wasProhibitedTransactionCorrected ?? true
 
   fields = (): Field[] => [
     // Plan Identification

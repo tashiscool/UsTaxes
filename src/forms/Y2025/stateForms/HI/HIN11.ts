@@ -31,11 +31,10 @@ export class HIN11 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -76,7 +75,8 @@ export class HIN11 extends Form {
   l15 = (): number | undefined => undefined
 
   // Line 16: Total subtractions
-  l16 = (): number => sumFields([this.l12(), this.l13(), this.l14(), this.l15()])
+  l16 = (): number =>
+    sumFields([this.l12(), this.l13(), this.l14(), this.l15()])
 
   // Line 17: Hawaii adjusted gross income
   l17 = (): number => Math.max(0, this.l11() - this.l16())
@@ -130,7 +130,8 @@ export class HIN11 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -205,15 +206,35 @@ export class HIN11 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l7(), this.l8(), this.l9(), this.l10(), this.l11(),
-    this.l12(), this.l13(), this.l14(), this.l15(), this.l16(),
-    this.l17(), this.l18(), this.l19(), this.l20(), this.l21(),
-    this.l22(), this.l23(), this.l24(), this.l25(), this.l26(),
-    this.l27(), this.l28(), this.l29(), this.l30(),
-    this.l31(), this.l32()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23(),
+    this.l24(),
+    this.l25(),
+    this.l26(),
+    this.l27(),
+    this.l28(),
+    this.l29(),
+    this.l30(),
+    this.l31(),
+    this.l32()
   ]
 }
 

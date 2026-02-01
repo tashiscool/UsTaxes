@@ -60,7 +60,7 @@ export default class F945 extends BusinessForm {
   l6 = (): number => Math.max(0, this.l4() - this.l3())
 
   // Monthly tax liability (if monthly depositor)
-  month1 = (): number => 0  // Would need monthly breakdown
+  month1 = (): number => 0 // Would need monthly breakdown
   month2 = (): number => 0
   month3 = (): number => 0
   month4 = (): number => 0
@@ -75,15 +75,26 @@ export default class F945 extends BusinessForm {
 
   totalMonthlyLiability = (): number => {
     return sumFields([
-      this.month1(), this.month2(), this.month3(), this.month4(),
-      this.month5(), this.month6(), this.month7(), this.month8(),
-      this.month9(), this.month10(), this.month11(), this.month12()
+      this.month1(),
+      this.month2(),
+      this.month3(),
+      this.month4(),
+      this.month5(),
+      this.month6(),
+      this.month7(),
+      this.month8(),
+      this.month9(),
+      this.month10(),
+      this.month11(),
+      this.month12()
     ])
   }
 
   // Deposit schedule
-  isMonthlyDepositor = (): boolean => this.formData.depositSchedule === 'monthly'
-  isSemiweeklyDepositor = (): boolean => this.formData.depositSchedule === 'semiweekly'
+  isMonthlyDepositor = (): boolean =>
+    this.formData.depositSchedule === 'monthly'
+  isSemiweeklyDepositor = (): boolean =>
+    this.formData.depositSchedule === 'semiweekly'
 
   taxYear = (): number => this.formData.taxYear
   totalTax = (): number => this.l3()

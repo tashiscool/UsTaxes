@@ -31,11 +31,10 @@ export class OK511 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -48,7 +47,8 @@ export class OK511 extends Form {
 
   private getNumQualifyingChildren(): number {
     return this.info.taxPayer.dependents.filter(
-      (d) => new Date().getFullYear() - new Date(d.dateOfBirth).getFullYear() < 17
+      (d) =>
+        new Date().getFullYear() - new Date(d.dateOfBirth).getFullYear() < 17
     ).length
   }
 
@@ -145,7 +145,8 @@ export class OK511 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -204,9 +205,9 @@ export class OK511 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
     this.filingStatus() === FilingStatus.S,
     this.filingStatus() === FilingStatus.MFJ,
     this.filingStatus() === FilingStatus.MFS,

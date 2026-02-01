@@ -32,12 +32,12 @@ export interface F1099LTCData {
   // Account number
   accountNumber?: string
   // Payment details
-  grossBenefitsPaid: number                // Box 1
-  acceleratedDeathBenefits: number         // Box 2
-  benefitsPaidOnPerDiemBasis: boolean      // Box 3 checkbox
-  qualifiedContract: boolean               // Box 4 checkbox
-  statusOfInsured: 'chronically_ill' | 'terminally_ill'  // Box 5
-  dateInsuredCertified?: Date              // Date status certified
+  grossBenefitsPaid: number // Box 1
+  acceleratedDeathBenefits: number // Box 2
+  benefitsPaidOnPerDiemBasis: boolean // Box 3 checkbox
+  qualifiedContract: boolean // Box 4 checkbox
+  statusOfInsured: 'chronically_ill' | 'terminally_ill' // Box 5
+  dateInsuredCertified?: Date // Date status certified
 }
 
 // 2025 per diem limitation
@@ -110,7 +110,8 @@ export default class F1099LTC extends F1040Attachment {
     // 3. If per diem, doesn't exceed limit (or actual costs)
     if (!this.isQualifiedContract()) return false
     if (!this.isChronicallyIll() && !this.isTerminallyIll()) return false
-    if (this.isPaidOnPerDiemBasis() && this.perDiemLimitExcess() > 0) return false
+    if (this.isPaidOnPerDiemBasis() && this.perDiemLimitExcess() > 0)
+      return false
     return true
   }
 
@@ -137,12 +138,12 @@ export default class F1099LTC extends F1040Attachment {
       data?.insuredSSN ?? '',
       data?.accountNumber ?? '',
       // Payment details
-      data?.grossBenefitsPaid ?? 0,               // Box 1
-      data?.acceleratedDeathBenefits ?? 0,        // Box 2
-      this.isPaidOnPerDiemBasis(),                // Box 3
-      this.isQualifiedContract(),                 // Box 4
-      this.isChronicallyIll(),                    // Box 5 - Chronically ill
-      this.isTerminallyIll(),                     // Box 5 - Terminally ill
+      data?.grossBenefitsPaid ?? 0, // Box 1
+      data?.acceleratedDeathBenefits ?? 0, // Box 2
+      this.isPaidOnPerDiemBasis(), // Box 3
+      this.isQualifiedContract(), // Box 4
+      this.isChronicallyIll(), // Box 5 - Chronically ill
+      this.isTerminallyIll(), // Box 5 - Terminally ill
       data?.dateInsuredCertified?.toLocaleDateString() ?? '',
       // Calculations
       this.totalBenefitsPaid(),

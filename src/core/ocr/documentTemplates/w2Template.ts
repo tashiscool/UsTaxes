@@ -4,7 +4,12 @@
  * Defines known field positions and labels for extracting data from W-2 forms.
  */
 
-import { FieldDefinition, ExtractedField, extractAllFields, extractByBoxNumber } from '../fieldExtractor'
+import {
+  FieldDefinition,
+  ExtractedField,
+  extractAllFields,
+  extractByBoxNumber
+} from '../fieldExtractor'
 import { OCRResult } from '../ocrEngine'
 import { IncomeW2, PersonRole, State } from 'ustaxes/core/data'
 
@@ -31,7 +36,7 @@ export const W2_FIELDS: FieldDefinition[] = [
     id: 'employerEIN',
     name: "Employer's EIN",
     labels: [
-      "Employer identification number",
+      'Employer identification number',
       "Employer's identification number (EIN)",
       'EIN',
       'b Employer',
@@ -152,12 +157,7 @@ export const W2_FIELDS: FieldDefinition[] = [
   {
     id: 'medicareWithholding',
     name: 'Medicare tax withheld',
-    labels: [
-      'Medicare tax withheld',
-      'Medicare tax',
-      'Box 6',
-      '6 Medicare'
-    ],
+    labels: ['Medicare tax withheld', 'Medicare tax', 'Box 6', '6 Medicare'],
     type: 'currency',
     required: true,
     boxNumber: '6'
@@ -165,45 +165,28 @@ export const W2_FIELDS: FieldDefinition[] = [
   {
     id: 'ssTips',
     name: 'Social security tips',
-    labels: [
-      'Social security tips',
-      'SS tips',
-      'Box 7',
-      '7 Social'
-    ],
+    labels: ['Social security tips', 'SS tips', 'Box 7', '7 Social'],
     type: 'currency',
     boxNumber: '7'
   },
   {
     id: 'allocatedTips',
     name: 'Allocated tips',
-    labels: [
-      'Allocated tips',
-      'Box 8',
-      '8 Allocated'
-    ],
+    labels: ['Allocated tips', 'Box 8', '8 Allocated'],
     type: 'currency',
     boxNumber: '8'
   },
   {
     id: 'dependentCareBenefits',
     name: 'Dependent care benefits',
-    labels: [
-      'Dependent care benefits',
-      'Box 10',
-      '10 Dependent'
-    ],
+    labels: ['Dependent care benefits', 'Box 10', '10 Dependent'],
     type: 'currency',
     boxNumber: '10'
   },
   {
     id: 'nonqualifiedPlans',
     name: 'Nonqualified plans',
-    labels: [
-      'Nonqualified plans',
-      'Box 11',
-      '11 Nonqualified'
-    ],
+    labels: ['Nonqualified plans', 'Box 11', '11 Nonqualified'],
     type: 'currency',
     boxNumber: '11'
   },
@@ -212,11 +195,7 @@ export const W2_FIELDS: FieldDefinition[] = [
   {
     id: 'state',
     name: 'State',
-    labels: [
-      'State',
-      '15 State',
-      'Box 15'
-    ],
+    labels: ['State', '15 State', 'Box 15'],
     type: 'text',
     boxNumber: '15'
   },
@@ -235,59 +214,35 @@ export const W2_FIELDS: FieldDefinition[] = [
   {
     id: 'stateWages',
     name: 'State wages, tips, etc.',
-    labels: [
-      'State wages, tips, etc.',
-      'State wages',
-      'Box 16',
-      '16 State'
-    ],
+    labels: ['State wages, tips, etc.', 'State wages', 'Box 16', '16 State'],
     type: 'currency',
     boxNumber: '16'
   },
   {
     id: 'stateWithholding',
     name: 'State income tax',
-    labels: [
-      'State income tax',
-      'State tax',
-      'Box 17',
-      '17 State'
-    ],
+    labels: ['State income tax', 'State tax', 'Box 17', '17 State'],
     type: 'currency',
     boxNumber: '17'
   },
   {
     id: 'localWages',
     name: 'Local wages, tips, etc.',
-    labels: [
-      'Local wages, tips, etc.',
-      'Local wages',
-      'Box 18',
-      '18 Local'
-    ],
+    labels: ['Local wages, tips, etc.', 'Local wages', 'Box 18', '18 Local'],
     type: 'currency',
     boxNumber: '18'
   },
   {
     id: 'localWithholding',
     name: 'Local income tax',
-    labels: [
-      'Local income tax',
-      'Local tax',
-      'Box 19',
-      '19 Local'
-    ],
+    labels: ['Local income tax', 'Local tax', 'Box 19', '19 Local'],
     type: 'currency',
     boxNumber: '19'
   },
   {
     id: 'localityName',
     name: 'Locality name',
-    labels: [
-      'Locality name',
-      'Box 20',
-      '20 Locality'
-    ],
+    labels: ['Locality name', 'Box 20', '20 Locality'],
     type: 'text',
     boxNumber: '20'
   }
@@ -299,7 +254,10 @@ export const W2_FIELDS: FieldDefinition[] = [
 export const BOX_12_CODES = [
   { code: 'A', label: 'Uncollected social security or RRTA tax on tips' },
   { code: 'B', label: 'Uncollected Medicare tax on tips' },
-  { code: 'C', label: 'Taxable cost of group-term life insurance over $50,000' },
+  {
+    code: 'C',
+    label: 'Taxable cost of group-term life insurance over $50,000'
+  },
   { code: 'D', label: 'Elective deferrals to 401(k)' },
   { code: 'E', label: 'Elective deferrals to 403(b)' },
   { code: 'F', label: 'Elective deferrals to 408(k)(6) SEP' },
@@ -307,8 +265,14 @@ export const BOX_12_CODES = [
   { code: 'H', label: 'Elective deferrals to 501(c)(18)(D)' },
   { code: 'J', label: 'Nontaxable sick pay' },
   { code: 'K', label: '20% excise tax on golden parachute' },
-  { code: 'L', label: 'Substantiated employee business expense reimbursements' },
-  { code: 'M', label: 'Uncollected SS or RRTA tax on group-term life insurance' },
+  {
+    code: 'L',
+    label: 'Substantiated employee business expense reimbursements'
+  },
+  {
+    code: 'M',
+    label: 'Uncollected SS or RRTA tax on group-term life insurance'
+  },
   { code: 'N', label: 'Uncollected Medicare tax on group-term life insurance' },
   { code: 'P', label: 'Excludable moving expense reimbursements' },
   { code: 'Q', label: 'Nontaxable combat pay' },
@@ -317,7 +281,10 @@ export const BOX_12_CODES = [
   { code: 'T', label: 'Adoption benefits' },
   { code: 'V', label: 'Income from nonstatutory stock options' },
   { code: 'W', label: 'Employer contributions to HSA' },
-  { code: 'Y', label: 'Deferrals under 409A nonqualified deferred compensation' },
+  {
+    code: 'Y',
+    label: 'Deferrals under 409A nonqualified deferred compensation'
+  },
   { code: 'Z', label: 'Income under 409A nonqualified deferred compensation' },
   { code: 'AA', label: 'Designated Roth contributions to 401(k)' },
   { code: 'BB', label: 'Designated Roth contributions to 403(b)' },

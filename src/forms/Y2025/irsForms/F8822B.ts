@@ -58,7 +58,14 @@ export interface F8822BData {
   newResponsiblePartyPhone?: string
   dateOfChange?: Date
   // Entity type
-  entityType: 'sole_prop' | 'partnership' | 'corporation' | 'llc' | 'nonprofit' | 'government' | 'other'
+  entityType:
+    | 'sole_prop'
+    | 'partnership'
+    | 'corporation'
+    | 'llc'
+    | 'nonprofit'
+    | 'government'
+    | 'other'
   // Signature
   signatureDate: Date
   signerName: string
@@ -133,7 +140,7 @@ export default class F8822B extends F1040Attachment {
       data.oldMailingCity,
       data.oldMailingState,
       data.oldMailingZip
-    ].filter(p => p && p.length > 0)
+    ].filter((p) => p && p.length > 0)
     return parts.join(', ')
   }
 
@@ -147,7 +154,7 @@ export default class F8822B extends F1040Attachment {
       data.newMailingCity,
       data.newMailingState,
       data.newMailingZip
-    ].filter(p => p && p.length > 0)
+    ].filter((p) => p && p.length > 0)
     return parts.join(', ')
   }
 
@@ -209,7 +216,7 @@ export default class F8822B extends F1040Attachment {
       this.fullOldMailingAddress(),
       this.fullNewMailingAddress(),
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? '',
+      data?.signatureDate.toLocaleDateString() ?? '',
       data?.signerName ?? '',
       data?.signerTitle ?? '',
       data?.signerPhone ?? ''

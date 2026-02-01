@@ -32,37 +32,32 @@ export class NYIT201 extends Form {
 
   // Taxpayer information
   primaryFirstName = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.firstName
+    this.info.taxPayer.primaryPerson.firstName
 
   primaryLastName = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.lastName
+    this.info.taxPayer.primaryPerson.lastName
 
-  primarySSN = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.ssid
+  primarySSN = (): string | undefined => this.info.taxPayer.primaryPerson.ssid
 
   spouseFirstName = (): string | undefined =>
     this.info.taxPayer.spouse?.firstName
 
-  spouseLastName = (): string | undefined =>
-    this.info.taxPayer.spouse?.lastName
+  spouseLastName = (): string | undefined => this.info.taxPayer.spouse?.lastName
 
-  spouseSSN = (): string | undefined =>
-    this.info.taxPayer.spouse?.ssid
+  spouseSSN = (): string | undefined => this.info.taxPayer.spouse?.ssid
 
   address = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.address
+    this.info.taxPayer.primaryPerson.address.address
 
   city = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.city
+    this.info.taxPayer.primaryPerson.address.city
 
   stateField = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.state
+    this.info.taxPayer.primaryPerson.address.state
 
-  zip = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.zip
+  zip = (): string | undefined => this.info.taxPayer.primaryPerson.address.zip
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Income section
   // Line 1 - Wages, salaries, tips
@@ -145,7 +140,8 @@ export class NYIT201 extends Form {
   l25 = (): number | undefined => undefined
 
   // Line 26 - Total NY subtractions
-  l26 = (): number => sumFields([this.l21(), this.l22(), this.l23(), this.l24(), this.l25()])
+  l26 = (): number =>
+    sumFields([this.l21(), this.l22(), this.l23(), this.l24(), this.l25()])
 
   // Line 27 - NY adjusted gross income
   l27 = (): number => Math.max(0, this.l20() - this.l26())
@@ -192,7 +188,8 @@ export class NYIT201 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -207,22 +204,28 @@ export class NYIT201 extends Form {
   // Line 33 - NY Earned Income Credit (30% of federal)
   l33 = (): number | undefined => {
     const federalEIC = this.f1040.scheduleEIC.credit()
-    return federalEIC ? Math.round(federalEIC * parameters.eicPercentage) : undefined
+    return federalEIC
+      ? Math.round(federalEIC * parameters.eicPercentage)
+      : undefined
   }
 
   // Line 34 - Empire State child credit
   l34 = (): number | undefined => {
     const numChildren = this.info.taxPayer.dependents.filter(
-      (d) => new Date().getFullYear() - new Date(d.dateOfBirth).getFullYear() < 17
+      (d) =>
+        new Date().getFullYear() - new Date(d.dateOfBirth).getFullYear() < 17
     ).length
-    return numChildren > 0 ? numChildren * parameters.empireStateChildCredit : undefined
+    return numChildren > 0
+      ? numChildren * parameters.empireStateChildCredit
+      : undefined
   }
 
   // Line 35 - Other credits
   l35 = (): number | undefined => undefined
 
   // Line 36 - Total credits
-  l36 = (): number => sumFields([this.l32(), this.l33(), this.l34(), this.l35()])
+  l36 = (): number =>
+    sumFields([this.l32(), this.l33(), this.l34(), this.l35()])
 
   // Line 37 - Tax after credits
   l37 = (): number => Math.max(0, this.l31() - this.l36())

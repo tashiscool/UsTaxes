@@ -41,7 +41,10 @@ import WarningIcon from '@material-ui/icons/Warning'
 
 import { TaxesState } from 'ustaxes/redux'
 import { Refund } from 'ustaxes/core/data'
-import { IdentityVerification, IdentityVerificationData } from './IdentityVerification'
+import {
+  IdentityVerification,
+  IdentityVerificationData
+} from './IdentityVerification'
 import { ESignature, ESignatureData } from './ESignature'
 import { EFileStatus } from './EFileStatus'
 import { LabeledInput, LabeledRadio } from '../input'
@@ -169,14 +172,20 @@ export function EFileWizard(): ReactElement {
   const classes = useStyles()
 
   // Redux state
-  const taxYear = useSelector((state: TaxesState) => state.activeYear)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+  const taxYear: string = useSelector((state: TaxesState) => state.activeYear)
   const information = useSelector((state: TaxesState) => state.information)
-  const refundInfo = useSelector((state: TaxesState) => state.information.refund)
+  const refundInfo = useSelector(
+    (state: TaxesState) => state.information.refund
+  )
 
   // Local state
   const [activeStep, setActiveStep] = useState(0)
-  const [identityData, setIdentityData] = useState<IdentityVerificationData | null>(null)
-  const [signatureData, setSignatureData] = useState<ESignatureData | null>(null)
+  const [identityData, setIdentityData] =
+    useState<IdentityVerificationData | null>(null)
+  const [signatureData, setSignatureData] = useState<ESignatureData | null>(
+    null
+  )
   const [bankData, setBankData] = useState<Partial<Refund>>(refundInfo || {})
   const [efileResult, setEfileResult] = useState<EFileResult | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -197,12 +206,14 @@ export function EFileWizard(): ReactElement {
   // Calculate amounts (mock for now - in real app would come from F1040)
   const taxLiability = 5000 // Mock value
   const totalPayments = 6500 // Mock value
-  const refundAmount = totalPayments > taxLiability ? totalPayments - taxLiability : 0
-  const amountOwed = taxLiability > totalPayments ? taxLiability - totalPayments : 0
+  const refundAmount =
+    totalPayments > taxLiability ? totalPayments - taxLiability : 0
+  const amountOwed =
+    taxLiability > totalPayments ? taxLiability - totalPayments : 0
 
-  const primaryPerson = information.taxPayer?.primaryPerson
-  const spouse = information.taxPayer?.spouse
-  const isJoint = information.taxPayer?.filingStatus === 'MFJ'
+  const primaryPerson = information.taxPayer.primaryPerson
+  const spouse = information.taxPayer.spouse
+  const isJoint = information.taxPayer.filingStatus === 'MFJ'
 
   // Prior tax year
   const priorTaxYear = String(parseInt(taxYear.replace('Y', '')) - 1)
@@ -217,11 +228,11 @@ export function EFileWizard(): ReactElement {
 
   // Handle step navigation
   const handleNext = () => {
-    setActiveStep(prev => Math.min(prev + 1, WIZARD_STEPS.length - 1))
+    setActiveStep((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1))
   }
 
   const handleBack = () => {
-    setActiveStep(prev => Math.max(prev - 1, 0))
+    setActiveStep((prev) => Math.max(prev - 1, 0))
   }
 
   // Handle identity data change
@@ -248,7 +259,11 @@ export function EFileWizard(): ReactElement {
       case 1: // Identity
         return identityData !== null
       case 2: // Bank
-        return !!(bankData.routingNumber && bankData.accountNumber && bankData.accountType)
+        return !!(
+          bankData.routingNumber &&
+          bankData.accountNumber &&
+          bankData.accountType
+        )
       case 3: // Signature
         return signatureData !== null && signatureData.form8879Consent
       case 4: // Submit
@@ -304,12 +319,14 @@ export function EFileWizard(): ReactElement {
       const transmitter = new EFileTransmitter(transmitterConfig)
 
       // Set status callback
-      transmitter.setStatusCallback((step: EFileStep, message: string, progress?: number) => {
-        setSubmitMessage(message)
-        if (progress !== undefined) {
-          setSubmitProgress(progress)
+      transmitter.setStatusCallback(
+        (step: EFileStep, message: string, progress?: number) => {
+          setSubmitMessage(message)
+          if (progress !== undefined) {
+            setSubmitProgress(progress)
+          }
         }
-      })
+      )
 
       // Build identity verification
       const identity: IdentityVerificationType = {
@@ -343,18 +360,20 @@ export function EFileWizard(): ReactElement {
               lastName: primaryPerson?.lastName || 'Doe',
               ssid: primaryPerson?.ssid || '123-45-6789',
               address: {
-                address: primaryPerson?.address?.address || '123 Main St',
-                city: primaryPerson?.address?.city || 'Anytown',
-                state: primaryPerson?.address?.state || 'CA',
-                zip: primaryPerson?.address?.zip || '12345'
+                address: primaryPerson?.address.address || '123 Main St',
+                city: primaryPerson?.address.city || 'Anytown',
+                state: primaryPerson?.address.state || 'CA',
+                zip: primaryPerson?.address.zip || '12345'
               }
             },
-            spouse: spouse ? {
-              firstName: spouse.firstName,
-              lastName: spouse.lastName,
-              ssid: spouse.ssid
-            } : undefined,
-            filingStatus: information.taxPayer?.filingStatus || 'S'
+            spouse: spouse
+              ? {
+                  firstName: spouse.firstName,
+                  lastName: spouse.lastName,
+                  ssid: spouse.ssid
+                }
+              : undefined,
+            filingStatus: information.taxPayer.filingStatus || 'S'
           },
           refund: bankData as Refund
         },
@@ -376,7 +395,9 @@ export function EFileWizard(): ReactElement {
         setError(result.error?.message || 'An error occurred during submission')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred')
+      setError(
+        err instanceof Error ? err.message : 'An unexpected error occurred'
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -392,13 +413,16 @@ export function EFileWizard(): ReactElement {
               Tax Return Summary
             </Typography>
             <Typography variant="body2" color="textSecondary" paragraph>
-              Please review your return information before proceeding with e-file.
+              Please review your return information before proceeding with
+              e-file.
             </Typography>
 
             <Grid container spacing={3} className={classes.summaryGrid}>
               <Grid item xs={12} sm={6}>
                 <Box className={classes.summaryItem}>
-                  <Typography className={classes.summaryLabel}>Tax Year</Typography>
+                  <Typography className={classes.summaryLabel}>
+                    Tax Year
+                  </Typography>
                   <Typography className={classes.summaryValue}>
                     {taxYear.replace('Y', '')}
                   </Typography>
@@ -407,16 +431,20 @@ export function EFileWizard(): ReactElement {
 
               <Grid item xs={12} sm={6}>
                 <Box className={classes.summaryItem}>
-                  <Typography className={classes.summaryLabel}>Filing Status</Typography>
+                  <Typography className={classes.summaryLabel}>
+                    Filing Status
+                  </Typography>
                   <Typography className={classes.summaryValue}>
-                    {information.taxPayer?.filingStatus || 'Not specified'}
+                    {information.taxPayer.filingStatus || 'Not specified'}
                   </Typography>
                 </Box>
               </Grid>
 
               <Grid item xs={12} sm={6}>
                 <Box className={classes.summaryItem}>
-                  <Typography className={classes.summaryLabel}>Primary Taxpayer</Typography>
+                  <Typography className={classes.summaryLabel}>
+                    Primary Taxpayer
+                  </Typography>
                   <Typography className={classes.summaryValue}>
                     {primaryPerson
                       ? `${primaryPerson.firstName} ${primaryPerson.lastName}`
@@ -428,7 +456,9 @@ export function EFileWizard(): ReactElement {
               {isJoint && spouse && (
                 <Grid item xs={12} sm={6}>
                   <Box className={classes.summaryItem}>
-                    <Typography className={classes.summaryLabel}>Spouse</Typography>
+                    <Typography className={classes.summaryLabel}>
+                      Spouse
+                    </Typography>
                     <Typography className={classes.summaryValue}>
                       {spouse.firstName} {spouse.lastName}
                     </Typography>
@@ -442,7 +472,9 @@ export function EFileWizard(): ReactElement {
 
               <Grid item xs={12} sm={4}>
                 <Box className={classes.summaryItem}>
-                  <Typography className={classes.summaryLabel}>Total Tax</Typography>
+                  <Typography className={classes.summaryLabel}>
+                    Total Tax
+                  </Typography>
                   <Typography className={classes.summaryValue}>
                     {formatCurrency(taxLiability)}
                   </Typography>
@@ -451,7 +483,9 @@ export function EFileWizard(): ReactElement {
 
               <Grid item xs={12} sm={4}>
                 <Box className={classes.summaryItem}>
-                  <Typography className={classes.summaryLabel}>Total Payments</Typography>
+                  <Typography className={classes.summaryLabel}>
+                    Total Payments
+                  </Typography>
                   <Typography className={classes.summaryValue}>
                     {formatCurrency(totalPayments)}
                   </Typography>
@@ -463,7 +497,13 @@ export function EFileWizard(): ReactElement {
                   <Typography className={classes.summaryLabel}>
                     {refundAmount > 0 ? 'Refund Amount' : 'Amount Owed'}
                   </Typography>
-                  <Typography className={refundAmount > 0 ? classes.refundAmount : classes.owedAmount}>
+                  <Typography
+                    className={
+                      refundAmount > 0
+                        ? classes.refundAmount
+                        : classes.owedAmount
+                    }
+                  >
                     {refundAmount > 0
                       ? formatCurrency(refundAmount)
                       : formatCurrency(amountOwed)}
@@ -484,8 +524,14 @@ export function EFileWizard(): ReactElement {
         return (
           <IdentityVerification
             isJoint={isJoint}
-            primaryName={primaryPerson ? `${primaryPerson.firstName} ${primaryPerson.lastName}` : 'Taxpayer'}
-            spouseName={spouse ? `${spouse.firstName} ${spouse.lastName}` : undefined}
+            primaryName={
+              primaryPerson
+                ? `${primaryPerson.firstName} ${primaryPerson.lastName}`
+                : 'Taxpayer'
+            }
+            spouseName={
+              spouse ? `${spouse.firstName} ${spouse.lastName}` : undefined
+            }
             priorTaxYear={priorTaxYear}
             initialValues={identityData || undefined}
             onChange={handleIdentityChange}
@@ -495,10 +541,16 @@ export function EFileWizard(): ReactElement {
       case 2: // Bank Account
         return (
           <FormProvider {...bankMethods}>
-            <form onSubmit={bankMethods.handleSubmit(handleBankSubmit)}>
+            <form
+              onSubmit={(e) => {
+                void bankMethods.handleSubmit(handleBankSubmit)(e)
+              }}
+            >
               <Paper className={classes.paper} elevation={2}>
                 <Typography variant="h6" gutterBottom>
-                  {refundAmount > 0 ? 'Refund Direct Deposit' : 'Payment Information'}
+                  {refundAmount > 0
+                    ? 'Refund Direct Deposit'
+                    : 'Payment Information'}
                 </Typography>
                 <Typography variant="body2" color="textSecondary" paragraph>
                   {refundAmount > 0
@@ -559,8 +611,14 @@ export function EFileWizard(): ReactElement {
         return (
           <ESignature
             isJoint={isJoint}
-            primaryName={primaryPerson ? `${primaryPerson.firstName} ${primaryPerson.lastName}` : 'Taxpayer'}
-            spouseName={spouse ? `${spouse.firstName} ${spouse.lastName}` : undefined}
+            primaryName={
+              primaryPerson
+                ? `${primaryPerson.firstName} ${primaryPerson.lastName}`
+                : 'Taxpayer'
+            }
+            spouseName={
+              spouse ? `${spouse.firstName} ${spouse.lastName}` : undefined
+            }
             taxYear={taxYear.replace('Y', '')}
             refundAmount={refundAmount}
             amountOwed={amountOwed}
@@ -592,22 +650,27 @@ export function EFileWizard(): ReactElement {
               Ready to Submit
             </Typography>
             <Typography variant="body2" color="textSecondary" paragraph>
-              Your return is ready to be submitted to the IRS. Please review the following
-              before clicking Submit.
+              Your return is ready to be submitted to the IRS. Please review the
+              following before clicking Submit.
             </Typography>
 
             <Alert severity="info" style={{ marginBottom: 16 }}>
               <Typography variant="body2">
-                <strong>Important:</strong> Once submitted, you cannot make changes.
-                If errors are found, you will need to file an amended return (Form 1040-X).
+                <strong>Important:</strong> Once submitted, you cannot make
+                changes. If errors are found, you will need to file an amended
+                return (Form 1040-X).
               </Typography>
             </Alert>
 
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <Typography variant="caption" color="textSecondary">Taxpayer</Typography>
+                <Typography variant="caption" color="textSecondary">
+                  Taxpayer
+                </Typography>
                 <Typography variant="body1">
-                  {primaryPerson ? `${primaryPerson.firstName} ${primaryPerson.lastName}` : 'N/A'}
+                  {primaryPerson
+                    ? `${primaryPerson.firstName} ${primaryPerson.lastName}`
+                    : 'N/A'}
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -615,7 +678,9 @@ export function EFileWizard(): ReactElement {
                   {refundAmount > 0 ? 'Refund' : 'Amount Due'}
                 </Typography>
                 <Typography variant="body1">
-                  {refundAmount > 0 ? formatCurrency(refundAmount) : formatCurrency(amountOwed)}
+                  {refundAmount > 0
+                    ? formatCurrency(refundAmount)
+                    : formatCurrency(amountOwed)}
                 </Typography>
               </Grid>
             </Grid>
@@ -652,12 +717,19 @@ export function EFileWizard(): ReactElement {
           <EFileStatus
             submissionId={efileResult?.submission?.submissionId}
             status={
-              efileResult?.currentStep === 'accepted' ? 'Accepted' :
-              efileResult?.currentStep === 'rejected' ? 'Rejected' : 'Pending'
+              efileResult?.currentStep === 'accepted'
+                ? 'Accepted'
+                : efileResult?.currentStep === 'rejected'
+                ? 'Rejected'
+                : 'Pending'
             }
             acknowledgment={efileResult?.acknowledgment?.acknowledgment}
             taxYear={taxYear.replace('Y', '')}
-            primaryName={primaryPerson ? `${primaryPerson.firstName} ${primaryPerson.lastName}` : 'Taxpayer'}
+            primaryName={
+              primaryPerson
+                ? `${primaryPerson.firstName} ${primaryPerson.lastName}`
+                : 'Taxpayer'
+            }
             refundAmount={refundAmount}
             amountOwed={amountOwed}
             electronicPostmark={efileResult?.submission?.electronicPostmark}
@@ -679,10 +751,15 @@ export function EFileWizard(): ReactElement {
         E-File Your Tax Return
       </Typography>
       <Typography variant="body1" color="textSecondary" paragraph>
-        Electronically file your {taxYear.replace('Y', '')} federal tax return with the IRS.
+        Electronically file your {taxYear.replace('Y', '')} federal tax return
+        with the IRS.
       </Typography>
 
-      <Stepper activeStep={activeStep} orientation="vertical" className={classes.stepper}>
+      <Stepper
+        activeStep={activeStep}
+        orientation="vertical"
+        className={classes.stepper}
+      >
         {WIZARD_STEPS.map((step, index) => (
           <Step key={step.label}>
             <StepLabel>
@@ -736,15 +813,22 @@ export function EFileWizard(): ReactElement {
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            You are about to submit your {taxYear.replace('Y', '')} federal tax return to the IRS.
-            This action cannot be undone. Are you sure you want to proceed?
+            You are about to submit your {taxYear.replace('Y', '')} federal tax
+            return to the IRS. This action cannot be undone. Are you sure you
+            want to proceed?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowConfirmDialog(false)} color="default">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} color="primary" variant="contained">
+          <Button
+            onClick={() => {
+              void handleSubmit()
+            }}
+            color="primary"
+            variant="contained"
+          >
             Yes, Submit My Return
           </Button>
         </DialogActions>

@@ -28,9 +28,9 @@ import { Form8864Data } from 'ustaxes/core/data'
 
 // 2025 credit rates per gallon
 const biodieselCreditRates = {
-  biodiesel: 1.00,
-  agribiodiesel: 1.00,
-  renewableDiesel: 1.00
+  biodiesel: 1.0,
+  agribiodiesel: 1.0,
+  renewableDiesel: 1.0
 }
 
 export default class F8864 extends F1040Attachment {
@@ -43,11 +43,12 @@ export default class F8864 extends F1040Attachment {
 
   hasBiodieselCredit = (): boolean => {
     const data = this.creditData()
-    return data !== undefined && (
-      data.biodieselGallons > 0 ||
-      data.agribiodieselGallons > 0 ||
-      data.renewableDieselGallons > 0 ||
-      (data.passthrough8864Credit ?? 0) > 0
+    return (
+      data !== undefined &&
+      (data.biodieselGallons > 0 ||
+        data.agribiodieselGallons > 0 ||
+        data.renewableDieselGallons > 0 ||
+        (data.passthrough8864Credit ?? 0) > 0)
     )
   }
 
@@ -93,7 +94,7 @@ export default class F8864 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Biodiesel
     this.l1a(),
     this.l1b(),

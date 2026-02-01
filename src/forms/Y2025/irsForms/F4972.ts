@@ -39,7 +39,9 @@ export default class F4972 extends F1040Attachment {
 
   // Line 1: Was this participant born before January 2, 1936?
   l1 = (): boolean => {
-    return this.lumpSumDistributions().some(d => d.participantBirthYear < 1936)
+    return this.lumpSumDistributions().some(
+      (d) => d.participantBirthYear < 1936
+    )
   }
 
   // Line 2: Was this a lump-sum distribution from a qualified plan?
@@ -50,20 +52,26 @@ export default class F4972 extends F1040Attachment {
   // Line 3: Capital gain part (for pre-1974 participation)
   l3 = (): number => {
     return this.lumpSumDistributions()
-      .filter(d => d.electCapitalGainTreatment)
+      .filter((d) => d.electCapitalGainTreatment)
       .reduce((sum, d) => sum + (d.capitalGainPortion ?? 0), 0)
   }
 
   // Line 4: Multiply line 3 by 20% (0.20) for capital gains tax
-  l4 = (): number => Math.round(this.l3() * 0.20)
+  l4 = (): number => Math.round(this.l3() * 0.2)
 
   // Part III - Tax on 10-Year Average (If Applicable)
 
   // Line 5: Ordinary income portion
   l5 = (): number => {
     return this.lumpSumDistributions()
-      .filter(d => d.elect10YearAveraging)
-      .reduce((sum, d) => sum + (d.ordinaryIncomePortion ?? d.totalDistribution - (d.capitalGainPortion ?? 0)), 0)
+      .filter((d) => d.elect10YearAveraging)
+      .reduce(
+        (sum, d) =>
+          sum +
+          (d.ordinaryIncomePortion ??
+            d.totalDistribution - (d.capitalGainPortion ?? 0)),
+        0
+      )
   }
 
   // Line 6: Death benefit exclusion (if applicable) - $5,000 max
@@ -74,15 +82,17 @@ export default class F4972 extends F1040Attachment {
 
   // Line 8: Current actuarial value of annuity (if any)
   l8 = (): number => {
-    return this.lumpSumDistributions()
-      .reduce((sum, d) => sum + (d.currentActuarialValue ?? 0), 0)
+    return this.lumpSumDistributions().reduce(
+      (sum, d) => sum + (d.currentActuarialValue ?? 0),
+      0
+    )
   }
 
   // Line 9: Adjusted total taxable amount
   l9 = (): number => this.l7() + this.l8()
 
   // Line 10: Multiply line 9 by 10%
-  l10 = (): number => Math.round(this.l9() * 0.10)
+  l10 = (): number => Math.round(this.l9() * 0.1)
 
   // Line 11: Tax on amount on line 10 (using 1986 single tax rates)
   l11 = (): number => this.calculate1986Tax(this.l10())
@@ -113,10 +123,10 @@ export default class F4972 extends F1040Attachment {
       { limit: 9170, rate: 0.15 },
       { limit: 11440, rate: 0.16 },
       { limit: 13710, rate: 0.18 },
-      { limit: 17160, rate: 0.20 },
+      { limit: 17160, rate: 0.2 },
       { limit: 22880, rate: 0.23 },
       { limit: 28600, rate: 0.26 },
-      { limit: 34320, rate: 0.30 },
+      { limit: 34320, rate: 0.3 },
       { limit: 42300, rate: 0.34 },
       { limit: 57190, rate: 0.38 },
       { limit: 85790, rate: 0.42 },
@@ -152,7 +162,7 @@ export default class F4972 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Part I
     this.l1(),
     this.l2(),

@@ -1,5 +1,11 @@
 import Form from 'ustaxes/core/irsForms/Form'
-import { BusinessEntity, Form1120SData, Form1065Data, Form1120Data, State } from 'ustaxes/core/data'
+import {
+  BusinessEntity,
+  Form1120SData,
+  Form1065Data,
+  Form1120Data,
+  State
+} from 'ustaxes/core/data'
 
 /**
  * Base class for business entity tax returns (1120, 1120-S, 1065, etc.)
@@ -8,7 +14,7 @@ import { BusinessEntity, Form1120SData, Form1065Data, Form1120Data, State } from
  * for business entities rather than attachments to individual returns.
  */
 export abstract class BusinessForm extends Form {
-  abstract entityData: BusinessEntity
+  abstract get entityData(): BusinessEntity
 
   isNeeded = (): boolean => true
   copies = (): BusinessForm[] => []
@@ -26,16 +32,23 @@ export abstract class BusinessForm extends Form {
     return `${addr.city}, ${addr.state ?? ''} ${addr.zip ?? ''}`.trim()
   }
 
-  principalBusinessActivity = (): string => this.entityData.principalBusinessActivity
-  principalProductOrService = (): string => this.entityData.principalProductOrService
-  accountingMethod = (): 'cash' | 'accrual' | 'other' => this.entityData.accountingMethod
+  principalBusinessActivity = (): string =>
+    this.entityData.principalBusinessActivity
+  principalProductOrService = (): string =>
+    this.entityData.principalProductOrService
+  accountingMethod = (): 'cash' | 'accrual' | 'other' =>
+    this.entityData.accountingMethod
   taxYear = (): number => this.entityData.taxYear
   totalAssets = (): number => this.entityData.totalAssets
 
   // Date formatting helpers
   formatDate = (date: Date | undefined): string => {
     if (!date) return ''
-    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+    return date.toLocaleDateString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric'
+    })
   }
 }
 

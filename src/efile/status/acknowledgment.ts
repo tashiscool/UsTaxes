@@ -86,7 +86,7 @@ export const ERROR_CODES: Record<string, ErrorResolution> = {
   'IND-032': {
     message: "Primary taxpayer's SSN and name do not match IRS records",
     resolution:
-      "Verify SSN and name match exactly as shown on Social Security card. If recently changed, contact SSA to update records before filing.",
+      'Verify SSN and name match exactly as shown on Social Security card. If recently changed, contact SSA to update records before filing.',
     severity: 'Critical',
     helpUrl: 'https://www.ssa.gov/myaccount/'
   },
@@ -132,7 +132,7 @@ export const ERROR_CODES: Record<string, ErrorResolution> = {
   'IND-039': {
     message: 'Primary taxpayer is deceased according to IRS records',
     resolution:
-      "If taxpayer is alive, contact IRS to correct records. If filing for deceased, ensure proper executor documentation.",
+      'If taxpayer is alive, contact IRS to correct records. If filing for deceased, ensure proper executor documentation.',
     severity: 'Critical'
   },
   'IND-040': {
@@ -144,7 +144,8 @@ export const ERROR_CODES: Record<string, ErrorResolution> = {
 
   // Prior Year AGI/PIN Errors (IND-180 to IND-199)
   'IND-181': {
-    message: 'AGI or Self-Select PIN from prior year does not match IRS records',
+    message:
+      'AGI or Self-Select PIN from prior year does not match IRS records',
     resolution:
       "Use correct prior year AGI from last year's return (Form 1040, line 11). If you didn't file last year, enter 0. First-time filers should enter 0.",
     severity: 'Critical',
@@ -168,7 +169,8 @@ export const ERROR_CODES: Record<string, ErrorResolution> = {
     resolution:
       'Enter the 6-digit IP PIN from IRS Letter CP01A. If lost, request a new one at IRS.gov/getanippin.',
     severity: 'Critical',
-    helpUrl: 'https://www.irs.gov/identity-theft-fraud-scams/get-an-identity-protection-pin'
+    helpUrl:
+      'https://www.irs.gov/identity-theft-fraud-scams/get-an-identity-protection-pin'
   },
   'IND-185': {
     message: 'Spouse IP PIN is missing or incorrect',
@@ -191,8 +193,7 @@ export const ERROR_CODES: Record<string, ErrorResolution> = {
     severity: 'Warning'
   },
   'IND-052': {
-    message:
-      'Married Filing Separately requires spouse information',
+    message: 'Married Filing Separately requires spouse information',
     resolution:
       "When filing Married Filing Separately, you must provide spouse's name and SSN.",
     severity: 'Critical'
@@ -214,7 +215,7 @@ export const ERROR_CODES: Record<string, ErrorResolution> = {
   'IND-101': {
     message: 'W-2 employer EIN not found in IRS records',
     resolution:
-      "Verify the Employer Identification Number (EIN) from your W-2 box b is entered correctly. Contact employer if W-2 appears incorrect.",
+      'Verify the Employer Identification Number (EIN) from your W-2 box b is entered correctly. Contact employer if W-2 appears incorrect.',
     severity: 'Warning'
   },
   'IND-102': {
@@ -348,7 +349,7 @@ export const ERROR_CODES: Record<string, ErrorResolution> = {
   'IND-302': {
     message: 'Prior year overpayment applied does not match',
     resolution:
-      'The amount applied from last year differs from IRS records. Check last year\'s return or IRS account.',
+      "The amount applied from last year differs from IRS records. Check last year's return or IRS account.",
     severity: 'Warning'
   },
   'IND-303': {
@@ -406,8 +407,7 @@ export const ERROR_CODES: Record<string, ErrorResolution> = {
   },
   'IND-403': {
     message: 'Schedule C vehicle expenses require Form 4562',
-    resolution:
-      'If claiming vehicle depreciation, Form 4562 must be attached.',
+    resolution: 'If claiming vehicle depreciation, Form 4562 must be attached.',
     severity: 'Warning',
     formReference: 'Form 4562'
   },
@@ -597,7 +597,7 @@ export class AcknowledgmentProcessor {
 
     const getElementText = (tagName: string): string | undefined => {
       const element = doc.getElementsByTagName(tagName)[0]
-      return element?.textContent || undefined
+      return element.textContent || undefined
     }
 
     const status =
@@ -612,7 +612,7 @@ export class AcknowledgmentProcessor {
       const errorEl = errorElements[i]
       const getErrorText = (tag: string): string | undefined => {
         const el = errorEl.getElementsByTagName(tag)[0]
-        return el?.textContent || undefined
+        return el.textContent || undefined
       }
 
       errors.push({
@@ -659,8 +659,7 @@ export class AcknowledgmentProcessor {
       extractTag('AcceptanceStatusTxt') === 'Accepted' ? 'Accepted' : 'Rejected'
 
     const errors: AcknowledgmentError[] = []
-    const errorRegex =
-      /<Error>([\s\S]*?)<\/Error>/gi
+    const errorRegex = /<Error>([\s\S]*?)<\/Error>/gi
     let errorMatch
 
     while ((errorMatch = errorRegex.exec(xml)) !== null) {
@@ -803,7 +802,9 @@ export class AcknowledgmentProcessor {
       lines.push('')
       lines.push(`Errors (${ack.errors.length}):`)
       ack.errors.forEach((error, index) => {
-        lines.push(`  ${index + 1}. [${error.errorCode}] ${error.userFriendlyMessage}`)
+        lines.push(
+          `  ${index + 1}. [${error.errorCode}] ${error.userFriendlyMessage}`
+        )
         lines.push(`     Resolution: ${error.resolution}`)
       })
     }

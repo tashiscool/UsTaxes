@@ -34,7 +34,11 @@ export interface ScheduleOptions {
   message: string
 }
 
-export type BrowserPermissionStatus = 'default' | 'granted' | 'denied' | 'unsupported'
+export type BrowserPermissionStatus =
+  | 'default'
+  | 'granted'
+  | 'denied'
+  | 'unsupported'
 
 // ============================================================================
 // Browser Push API Support Detection
@@ -176,7 +180,7 @@ export const showEstimatedTaxNotification = (
  */
 export const showFilingDeadlineNotification = (
   daysRemaining: number,
-  isExtension: boolean = false
+  isExtension = false
 ): Notification | null => {
   const title = isExtension
     ? 'Extension Filing Deadline'
@@ -326,7 +330,10 @@ export const scheduleEstimatedTaxReminders2025 = (
   preferences: NotificationPreferences,
   onReminderCreated?: (reminder: ScheduledReminder) => void
 ): ScheduledReminder[] => {
-  if (!preferences.enabled || !preferences.types[NotificationType.ESTIMATED_TAX]) {
+  if (
+    !preferences.enabled ||
+    !preferences.types[NotificationType.ESTIMATED_TAX]
+  ) {
     return []
   }
 
@@ -395,7 +402,9 @@ export const scheduleEstimatedTaxReminders2025 = (
  * Check if we should use the fallback UI instead of native notifications
  */
 export const shouldUseFallback = (): boolean => {
-  return !isPushNotificationSupported() || getNotificationPermission() === 'denied'
+  return (
+    !isPushNotificationSupported() || getNotificationPermission() === 'denied'
+  )
 }
 
 /**
@@ -427,14 +436,14 @@ export const getNotificationSupportMessage = (): string => {
  * Initialize the notification service
  * Checks for support and existing permission
  */
-export const initializeNotificationService = async (): Promise<{
+export const initializeNotificationService = (): Promise<{
   supported: boolean
   permission: BrowserPermissionStatus
 }> => {
   const supported = isPushNotificationSupported()
   const permission = getNotificationPermission()
 
-  return { supported, permission }
+  return Promise.resolve({ supported, permission })
 }
 
 /**
@@ -474,7 +483,10 @@ export const setupNotifications = async (
   }
 
   // Schedule reminders for 2025 estimated taxes
-  const reminders = scheduleEstimatedTaxReminders2025(preferences, onReminderCreated)
+  const reminders = scheduleEstimatedTaxReminders2025(
+    preferences,
+    onReminderCreated
+  )
 
   return {
     success: true,

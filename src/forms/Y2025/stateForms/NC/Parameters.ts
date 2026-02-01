@@ -27,7 +27,7 @@ const parameters = {
       [FilingStatus.HOH]: 50000,
       [FilingStatus.W]: 60000
     },
-    phaseOutRate: 0.05  // Reduced $1 for each $2,000 over limit
+    phaseOutRate: 0.05 // Reduced $1 for each $2,000 over limit
   },
 
   // NC does not allow itemized deductions - uses fixed standard deduction

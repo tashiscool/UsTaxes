@@ -96,10 +96,7 @@ export default class ScheduleM1 extends F1040Attachment {
   l4 = (): number => {
     const data = this.m1Data()
     if (!data) return 0
-    return sumFields([
-      data.incomeRecordedNotOnReturn,
-      data.taxExemptInterest
-    ])
+    return sumFields([data.incomeRecordedNotOnReturn, data.taxExemptInterest])
   }
 
   // Line 5: Expenses recorded on books not deducted on return
@@ -118,16 +115,14 @@ export default class ScheduleM1 extends F1040Attachment {
   }
 
   // Line 6: Add lines 1 through 5
-  l6 = (): number => sumFields([this.l1(), this.l2(), this.l3(), this.l4(), this.l5()])
+  l6 = (): number =>
+    sumFields([this.l1(), this.l2(), this.l3(), this.l4(), this.l5()])
 
   // Line 7: Income included on return not recorded on books
   l7 = (): number => {
     const data = this.m1Data()
     if (!data) return 0
-    return sumFields([
-      data.incomeOnReturnNotOnBooks,
-      data.prepaidIncome
-    ])
+    return sumFields([data.incomeOnReturnNotOnBooks, data.prepaidIncome])
   }
 
   // Line 8: Deductions on return not charged to books
@@ -155,19 +150,27 @@ export default class ScheduleM1 extends F1040Attachment {
     if (!data) return descriptions
 
     if (data.mealsAndEntertainment > 0) {
-      descriptions.push(`Meals and entertainment: $${data.mealsAndEntertainment}`)
+      descriptions.push(
+        `Meals and entertainment: $${data.mealsAndEntertainment}`
+      )
     }
     if (data.finesAndPenalties > 0) {
       descriptions.push(`Fines and penalties: $${data.finesAndPenalties}`)
     }
     if (data.politicalContributions > 0) {
-      descriptions.push(`Political contributions: $${data.politicalContributions}`)
+      descriptions.push(
+        `Political contributions: $${data.politicalContributions}`
+      )
     }
     if (data.lifeInsurancePremiums > 0) {
-      descriptions.push(`Life insurance premiums: $${data.lifeInsurancePremiums}`)
+      descriptions.push(
+        `Life insurance premiums: $${data.lifeInsurancePremiums}`
+      )
     }
     if (data.depreciationDifference !== 0) {
-      descriptions.push(`Depreciation difference: $${data.depreciationDifference}`)
+      descriptions.push(
+        `Depreciation difference: $${data.depreciationDifference}`
+      )
     }
 
     return descriptions

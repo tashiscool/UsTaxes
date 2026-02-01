@@ -53,7 +53,7 @@ export class TaxExplainerClient {
       throw new Error(`API Error (${response.status}): ${errorText}`)
     }
 
-    return response.json()
+    return response.json() as Promise<T>
   }
 
   /**

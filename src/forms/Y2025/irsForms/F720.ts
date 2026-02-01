@@ -48,7 +48,7 @@ export default class F720 extends BusinessForm {
 
   // Fuel taxes
   fuelTaxItems = (): ExciseTaxItem[] => {
-    return this.exciseTaxItems().filter(i => i.category === 'fuel')
+    return this.exciseTaxItems().filter((i) => i.category === 'fuel')
   }
 
   fuelTaxTotal = (): number => {
@@ -57,7 +57,7 @@ export default class F720 extends BusinessForm {
 
   // Environmental taxes
   environmentalTaxItems = (): ExciseTaxItem[] => {
-    return this.exciseTaxItems().filter(i => i.category === 'environmental')
+    return this.exciseTaxItems().filter((i) => i.category === 'environmental')
   }
 
   environmentalTaxTotal = (): number => {
@@ -66,25 +66,33 @@ export default class F720 extends BusinessForm {
 
   // Communications taxes
   communicationsTaxItems = (): ExciseTaxItem[] => {
-    return this.exciseTaxItems().filter(i => i.category === 'communications')
+    return this.exciseTaxItems().filter((i) => i.category === 'communications')
   }
 
   communicationsTaxTotal = (): number => {
-    return this.communicationsTaxItems().reduce((sum, i) => sum + i.taxAmount, 0)
+    return this.communicationsTaxItems().reduce(
+      (sum, i) => sum + i.taxAmount,
+      0
+    )
   }
 
   // Air transportation taxes
   airTransportationTaxItems = (): ExciseTaxItem[] => {
-    return this.exciseTaxItems().filter(i => i.category === 'airTransportation')
+    return this.exciseTaxItems().filter(
+      (i) => i.category === 'airTransportation'
+    )
   }
 
   airTransportationTaxTotal = (): number => {
-    return this.airTransportationTaxItems().reduce((sum, i) => sum + i.taxAmount, 0)
+    return this.airTransportationTaxItems().reduce(
+      (sum, i) => sum + i.taxAmount,
+      0
+    )
   }
 
   // Manufacturer's taxes
   manufacturerTaxItems = (): ExciseTaxItem[] => {
-    return this.exciseTaxItems().filter(i => i.category === 'manufacturer')
+    return this.exciseTaxItems().filter((i) => i.category === 'manufacturer')
   }
 
   manufacturerTaxTotal = (): number => {
@@ -93,7 +101,7 @@ export default class F720 extends BusinessForm {
 
   // Indoor tanning
   indoorTanningTaxItems = (): ExciseTaxItem[] => {
-    return this.exciseTaxItems().filter(i => i.category === 'indoorTanning')
+    return this.exciseTaxItems().filter((i) => i.category === 'indoorTanning')
   }
 
   indoorTanningTaxTotal = (): number => {
@@ -121,18 +129,34 @@ export default class F720 extends BusinessForm {
   netTax = (): number => this.formData.netTax
 
   // Balance due or overpayment
-  balanceDue = (): number => Math.max(0, this.totalTaxLiability() - this.depositsForQuarter() - this.claimsForRefund())
-  overpayment = (): number => Math.max(0, this.depositsForQuarter() + this.claimsForRefund() - this.totalTaxLiability())
+  balanceDue = (): number =>
+    Math.max(
+      0,
+      this.totalTaxLiability() -
+        this.depositsForQuarter() -
+        this.claimsForRefund()
+    )
+  overpayment = (): number =>
+    Math.max(
+      0,
+      this.depositsForQuarter() +
+        this.claimsForRefund() -
+        this.totalTaxLiability()
+    )
 
   // Due date
   dueDate = (): string => {
     const q = this.quarter()
     const year = this.year()
     switch (q) {
-      case 1: return `April 30, ${year}`
-      case 2: return `July 31, ${year}`
-      case 3: return `October 31, ${year}`
-      case 4: return `January 31, ${year + 1}`
+      case 1:
+        return `April 30, ${year}`
+      case 2:
+        return `July 31, ${year}`
+      case 3:
+        return `October 31, ${year}`
+      case 4:
+        return `January 31, ${year + 1}`
     }
   }
 

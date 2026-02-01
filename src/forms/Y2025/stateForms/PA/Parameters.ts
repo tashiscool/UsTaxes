@@ -28,7 +28,7 @@ const parameters = {
     // Forgiveness percentage table (simplified)
     // Full forgiveness if income <= eligibility
     // Partial forgiveness phases out
-    phaseOutRate: 0.10
+    phaseOutRate: 0.1
   },
 
   // PA does not tax:
@@ -40,14 +40,14 @@ const parameters = {
 
   // Classes of income (PA taxes 8 classes separately)
   incomeClasses: [
-    'compensation',      // Wages, salaries, tips
-    'interest',          // Interest income
-    'dividends',         // Dividend income
-    'netProfits',        // Business/profession net profits
-    'netGains',          // Net gains from property sales
-    'netRents',          // Rents and royalties
-    'estateOrTrust',     // Estate or trust income
-    'gambling'           // Gambling/lottery winnings
+    'compensation', // Wages, salaries, tips
+    'interest', // Interest income
+    'dividends', // Dividend income
+    'netProfits', // Business/profession net profits
+    'netGains', // Net gains from property sales
+    'netRents', // Rents and royalties
+    'estateOrTrust', // Estate or trust income
+    'gambling' // Gambling/lottery winnings
   ],
 
   // Local Earned Income Tax (EIT) - varies by municipality

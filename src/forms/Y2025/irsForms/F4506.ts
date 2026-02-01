@@ -16,10 +16,10 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 
 export interface F4506Data {
   // Line 1a-2b: Taxpayer Information
-  name1a: string                           // Name as shown on return (line 1a)
-  ssn1b: string                            // SSN (line 1b)
-  name2a?: string                          // Spouse name if joint return (line 2a)
-  ssn2b?: string                           // Spouse SSN (line 2b)
+  name1a: string // Name as shown on return (line 1a)
+  ssn1b: string // SSN (line 1b)
+  name2a?: string // Spouse name if joint return (line 2a)
+  ssn2b?: string // Spouse SSN (line 2b)
   // Line 3: Current address
   currentAddress: string
   currentCity: string
@@ -37,16 +37,16 @@ export interface F4506Data {
   thirdPartyState?: string
   thirdPartyZip?: string
   // Line 6: Tax form requested
-  taxFormNumber: string                    // e.g., "1040", "1040-SR", "1120"
+  taxFormNumber: string // e.g., "1040", "1040-SR", "1120"
   // Line 7: Tax year(s) requested
   taxYears: number[]
   // Line 8: Total cost
-  costPerReturn: number                    // Usually $50
+  costPerReturn: number // Usually $50
   // Line 9: Specific use (optional)
   specificUse?: string
   // Signature
   signatureDate: Date
-  title?: string                           // If signed by corporate officer
+  title?: string // If signed by corporate officer
   phone: string
 }
 
@@ -138,7 +138,7 @@ export default class F4506 extends F1040Attachment {
       // Line 9: Specific use
       data?.specificUse ?? '',
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? '',
+      data?.signatureDate.toLocaleDateString() ?? '',
       data?.title ?? '',
       data?.phone ?? ''
     ]

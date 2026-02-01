@@ -20,7 +20,12 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * Collects detailed business financial information.
  */
 
-export type BusinessEntityType = 'soleProprietor' | 'partnership' | 'corporation' | 'llc' | 'other'
+export type BusinessEntityType =
+  | 'soleProprietor'
+  | 'partnership'
+  | 'corporation'
+  | 'llc'
+  | 'other'
 
 export interface BusinessInfo {
   businessName: string
@@ -110,7 +115,9 @@ export default class F433B extends F1040Attachment {
   }
 
   collectionInfo = (): BusinessCollectionInfo | undefined => {
-    return this.f1040.info.businessCollectionStatement as BusinessCollectionInfo | undefined
+    return this.f1040.info.businessCollectionStatement as
+      | BusinessCollectionInfo
+      | undefined
   }
 
   // Section 1: Business Information
@@ -121,7 +128,8 @@ export default class F433B extends F1040Attachment {
   businessName = (): string => this.businessInfo()?.businessName ?? ''
   ein = (): string => this.businessInfo()?.ein ?? ''
   businessType = (): string => this.businessInfo()?.businessType ?? ''
-  entityType = (): BusinessEntityType => this.businessInfo()?.entityType ?? 'soleProprietor'
+  entityType = (): BusinessEntityType =>
+    this.businessInfo()?.entityType ?? 'soleProprietor'
   numberOfEmployees = (): number => this.businessInfo()?.numberOfEmployees ?? 0
 
   // Section 2: Bank Accounts
@@ -140,7 +148,7 @@ export default class F433B extends F1040Attachment {
 
   totalReceivables = (): number => {
     return this.accountsReceivable()
-      .filter(ar => ar.status !== 'uncollectible')
+      .filter((ar) => ar.status !== 'uncollectible')
       .reduce((sum, ar) => sum + ar.amount, 0)
   }
 
@@ -150,7 +158,10 @@ export default class F433B extends F1040Attachment {
   }
 
   totalAssetValue = (): number => {
-    return this.businessAssets().reduce((sum, a) => sum + a.currentMarketValue, 0)
+    return this.businessAssets().reduce(
+      (sum, a) => sum + a.currentMarketValue,
+      0
+    )
   }
 
   totalAssetEquity = (): number => {
@@ -202,8 +213,10 @@ export default class F433B extends F1040Attachment {
   }
 
   totalAssets = (): number => {
-    return this.collectionInfo()?.totalAssetsValue ??
-           this.totalBankBalance() + this.totalReceivables() + this.totalAssetValue()
+    return (
+      this.collectionInfo()?.totalAssetsValue ??
+      this.totalBankBalance() + this.totalReceivables() + this.totalAssetValue()
+    )
   }
 
   totalLiabilities = (): number => {
@@ -230,12 +243,14 @@ export default class F433B extends F1040Attachment {
       // Section 1: Business Info
       this.businessName(),
       biz?.businessAddress ?? '',
-      `${biz?.businessCity ?? ''}, ${biz?.businessState ?? ''} ${biz?.businessZip ?? ''}`,
+      `${biz?.businessCity ?? ''}, ${biz?.businessState ?? ''} ${
+        biz?.businessZip ?? ''
+      }`,
       this.ein(),
       biz?.businessPhone ?? '',
       this.businessType(),
       this.entityType(),
-      biz?.dateEstablished?.toLocaleDateString() ?? '',
+      biz?.dateEstablished.toLocaleDateString() ?? '',
       this.numberOfEmployees(),
       biz?.averageGrossPayroll ?? 0,
       biz?.accountingMethod ?? '',
@@ -249,10 +264,12 @@ export default class F433B extends F1040Attachment {
       this.totalBankBalance(),
       // Section 3: Accounts Receivable
       this.totalReceivables(),
-      ar.filter(a => a.status === 'current').reduce((s, a) => s + a.amount, 0),
-      ar.filter(a => a.status === 'past30').reduce((s, a) => s + a.amount, 0),
-      ar.filter(a => a.status === 'past60').reduce((s, a) => s + a.amount, 0),
-      ar.filter(a => a.status === 'past90').reduce((s, a) => s + a.amount, 0),
+      ar
+        .filter((a) => a.status === 'current')
+        .reduce((s, a) => s + a.amount, 0),
+      ar.filter((a) => a.status === 'past30').reduce((s, a) => s + a.amount, 0),
+      ar.filter((a) => a.status === 'past60').reduce((s, a) => s + a.amount, 0),
+      ar.filter((a) => a.status === 'past90').reduce((s, a) => s + a.amount, 0),
       // Section 4: Assets
       assets[0]?.description ?? '',
       assets[0]?.currentMarketValue ?? 0,

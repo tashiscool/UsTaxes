@@ -43,7 +43,7 @@ const parameters = {
   dependentExemption: 2625,
 
   // Illinois Earned Income Credit (20% of federal EIC for 2024)
-  earnedIncomeCreditFactor: 0.20,
+  earnedIncomeCreditFactor: 0.2,
 
   // IL EIC dependent credit
   eicDependentCredit: 2625,

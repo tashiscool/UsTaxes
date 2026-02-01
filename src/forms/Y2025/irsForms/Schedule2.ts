@@ -8,10 +8,10 @@ export default class Schedule2 extends F1040Attachment {
   sequenceIndex = 2
 
   // Part I: Tax
-  l1a = (): number | undefined => this.f1040.f8962?.excessAptcRepayment()  // Excess advance premium tax credit repayment (Form 8962)
+  l1a = (): number | undefined => this.f1040.f8962?.excessAptcRepayment() // Excess advance premium tax credit repayment (Form 8962)
   l1b = (): number | undefined => undefined // TODO: Form 8936
   l1c = (): number | undefined => undefined // TODO: Form 8936
-  l1d = (): number | undefined => this.f1040.f4255?.totalRecapture()  // Form 4255: Recapture of Investment Credit
+  l1d = (): number | undefined => this.f1040.f4255?.totalRecapture() // Form 4255: Recapture of Investment Credit
   l1ei = (): boolean | undefined => undefined
   l1eii = (): boolean | undefined => undefined
   l1eiii = (): boolean | undefined => undefined
@@ -42,8 +42,8 @@ export default class Schedule2 extends F1040Attachment {
   l6 = (): number | undefined => undefined // TODO: additional tax on retirement accounts
   l7 = (): number | undefined => sumFields([this.l5(), this.l6()])
   l8box = (): boolean => this.f1040.f5329?.isNeeded() ?? false
-  l8 = (): number | undefined => this.f1040.f5329?.totalAdditionalTax()  // Form 5329: Additional tax on IRAs/retirement plans
-  l9 = (): number | undefined => this.f1040.scheduleH?.totalTax()  // Schedule H: Household employment taxes
+  l8 = (): number | undefined => this.f1040.f5329?.totalAdditionalTax() // Form 5329: Additional tax on IRAs/retirement plans
+  l9 = (): number | undefined => this.f1040.scheduleH?.totalTax() // Schedule H: Household employment taxes
   l10 = (): number | undefined => undefined // repayment of firsttime homebuyer credit, form 5405
   l11 = (): number | undefined => this.f1040.f8959.toSchedule2l11()
   l12 = (): number | undefined => this.f1040.f8960.toSchedule2l12()

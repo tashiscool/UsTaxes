@@ -31,11 +31,10 @@ export class ID40 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -73,7 +72,10 @@ export class ID40 extends Form {
   l13 = (): number | undefined => {
     const retirementIncome = this.f1040.l5b() ?? 0
     if (retirementIncome > 0) {
-      return Math.min(retirementIncome, parameters.retirementBenefitsDeduction.maxDeduction)
+      return Math.min(
+        retirementIncome,
+        parameters.retirementBenefitsDeduction.maxDeduction
+      )
     }
     return undefined
   }
@@ -123,7 +125,8 @@ export class ID40 extends Form {
   // Line 21: Child tax credit
   l21 = (): number | undefined => {
     const qualifyingChildren = this.info.taxPayer.dependents.filter(
-      (d) => new Date().getFullYear() - new Date(d.dateOfBirth).getFullYear() < 17
+      (d) =>
+        new Date().getFullYear() - new Date(d.dateOfBirth).getFullYear() < 17
     ).length
     return qualifyingChildren > 0
       ? qualifyingChildren * parameters.childTaxCredit
@@ -206,16 +209,37 @@ export class ID40 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l6(), this.l7(), this.l8(), this.l9(), this.l10(),
-    this.l11(), this.l12(), this.l13(), this.l14(), this.l15(),
-    this.l16(), this.l17(), this.l18(), this.l19(),
-    this.l20(), this.l21(), this.l22(), this.l23(), this.l24(),
-    this.l25(), this.l26(), this.l27(),
-    this.l28(), this.l29(), this.l30(), this.l31(),
-    this.l32(), this.l33()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23(),
+    this.l24(),
+    this.l25(),
+    this.l26(),
+    this.l27(),
+    this.l28(),
+    this.l29(),
+    this.l30(),
+    this.l31(),
+    this.l32(),
+    this.l33()
   ]
 }
 

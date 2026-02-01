@@ -29,7 +29,7 @@ export interface CorporatePassiveActivity {
   activityType: 'rental' | 'trade' | 'other'
   grossIncome: number
   deductions: number
-  netIncome: number  // Can be negative (loss)
+  netIncome: number // Can be negative (loss)
   priorYearUnallowed: number
   materiallyParticipates: boolean
 }
@@ -57,7 +57,9 @@ export default class F8810 extends F1040Attachment {
   }
 
   corporatePassiveInfo = (): CorporatePassiveInfo | undefined => {
-    return this.f1040.info.corporatePassiveInfo as CorporatePassiveInfo | undefined
+    return this.f1040.info.corporatePassiveInfo as
+      | CorporatePassiveInfo
+      | undefined
   }
 
   activities = (): CorporatePassiveActivity[] => {
@@ -77,21 +79,20 @@ export default class F8810 extends F1040Attachment {
   // Total passive income
   totalPassiveIncome = (): number => {
     return this.activities()
-      .filter(a => a.netIncome > 0)
+      .filter((a) => a.netIncome > 0)
       .reduce((sum, a) => sum + a.netIncome, 0)
   }
 
   // Total passive losses (current year)
   totalPassiveLosses = (): number => {
     return this.activities()
-      .filter(a => a.netIncome < 0)
+      .filter((a) => a.netIncome < 0)
       .reduce((sum, a) => sum + Math.abs(a.netIncome), 0)
   }
 
   // Prior year unallowed losses
   priorYearUnallowed = (): number => {
-    return this.activities()
-      .reduce((sum, a) => sum + a.priorYearUnallowed, 0)
+    return this.activities().reduce((sum, a) => sum + a.priorYearUnallowed, 0)
   }
 
   // Line 1a: Current year passive income
@@ -107,7 +108,7 @@ export default class F8810 extends F1040Attachment {
   l1d = (): number => this.l1a() - this.l1b() - this.l1c()
 
   // Line 2: Net passive loss (if line 1d is negative)
-  l2 = (): number => this.l1d() < 0 ? Math.abs(this.l1d()) : 0
+  l2 = (): number => (this.l1d() < 0 ? Math.abs(this.l1d()) : 0)
 
   // Part II - Closely Held Corporation Special Rules
 
@@ -132,10 +133,16 @@ export default class F8810 extends F1040Attachment {
   l6 = (): number => {
     if (this.isPsc()) {
       // PSCs can only offset passive income with passive losses
-      return Math.min(this.totalPassiveLosses() + this.priorYearUnallowed(), this.l1a())
+      return Math.min(
+        this.totalPassiveLosses() + this.priorYearUnallowed(),
+        this.l1a()
+      )
     } else {
       // Closely held can also offset active income
-      return Math.min(this.totalPassiveLosses() + this.priorYearUnallowed(), this.l1a() + this.l3())
+      return Math.min(
+        this.totalPassiveLosses() + this.priorYearUnallowed(),
+        this.l1a() + this.l3()
+      )
     }
   }
 
@@ -156,7 +163,7 @@ export default class F8810 extends F1040Attachment {
   // Line 9: Tax attributable to passive income
   l9 = (): number => {
     // Simplified calculation
-    return Math.round(this.l1a() * 0.21)  // Corporate tax rate
+    return Math.round(this.l1a() * 0.21) // Corporate tax rate
   }
 
   // Line 10: Allowed passive credits (smaller of line 8 or line 9)

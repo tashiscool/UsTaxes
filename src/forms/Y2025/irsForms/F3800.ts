@@ -1,7 +1,10 @@
 import F1040Attachment from './F1040Attachment'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
-import { Form3800Data, GeneralBusinessCreditComponents } from 'ustaxes/core/data'
+import {
+  Form3800Data,
+  GeneralBusinessCreditComponents
+} from 'ustaxes/core/data'
 import { sumFields } from 'ustaxes/core/irsForms/util'
 
 /**
@@ -42,8 +45,10 @@ export default class F3800 extends F1040Attachment {
   hasGeneralBusinessCredits = (): boolean => {
     const credits = this.creditData()
     if (!credits) return false
-    return this.totalCurrentYearCredits() > 0 ||
-           credits.carryforwardFromPriorYears > 0
+    return (
+      this.totalCurrentYearCredits() > 0 ||
+      credits.carryforwardFromPriorYears > 0
+    )
   }
 
   creditData = (): Form3800Data | undefined => {
@@ -101,7 +106,8 @@ export default class F3800 extends F1040Attachment {
   l1n = (): number => this.creditComponents().smallEmployerPensionStartup ?? 0
 
   // Line 1o: Employer-provided childcare credit (Form 8882)
-  l1o = (): number => this.creditComponents().employerProvidedChildcareCredit ?? 0
+  l1o = (): number =>
+    this.creditComponents().employerProvidedChildcareCredit ?? 0
 
   // Line 1p: Employer differential wage credit (Form 8932)
   l1p = (): number => this.creditComponents().differentialWageCredit ?? 0
@@ -121,10 +127,26 @@ export default class F3800 extends F1040Attachment {
   // Line 2: Add lines 1a through 1t (total current year credits)
   l2 = (): number => {
     return sumFields([
-      this.l1a(), this.l1b(), this.l1c(), this.l1d(), this.l1e(),
-      this.l1f(), this.l1g(), this.l1h(), this.l1i(), this.l1j(),
-      this.l1k(), this.l1l(), this.l1m(), this.l1n(), this.l1o(),
-      this.l1p(), this.l1q(), this.l1r(), this.l1s(), this.l1t()
+      this.l1a(),
+      this.l1b(),
+      this.l1c(),
+      this.l1d(),
+      this.l1e(),
+      this.l1f(),
+      this.l1g(),
+      this.l1h(),
+      this.l1i(),
+      this.l1j(),
+      this.l1k(),
+      this.l1l(),
+      this.l1m(),
+      this.l1n(),
+      this.l1o(),
+      this.l1p(),
+      this.l1q(),
+      this.l1r(),
+      this.l1s(),
+      this.l1t()
     ])
   }
 
@@ -144,7 +166,8 @@ export default class F3800 extends F1040Attachment {
   l5 = (): number => this.l2() + this.l3() + this.l4()
 
   // Line 6: Regular tax before credits
-  l6 = (): number => this.creditData()?.regularTaxLiability ?? this.f1040.l16() ?? 0
+  l6 = (): number =>
+    this.creditData()?.regularTaxLiability ?? this.f1040.l16() ?? 0
 
   // Line 7: Alternative minimum tax (if applicable)
   l7 = (): number => this.creditData()?.tentativeMinimumTax ?? 0
@@ -193,9 +216,9 @@ export default class F3800 extends F1040Attachment {
   specifiedCredits = (): number => {
     // Credits allowed against AMT
     return sumFields([
-      this.l1e(),  // Low-income housing
-      this.l1h(),  // Empowerment zone
-      this.l1k()   // New markets
+      this.l1e(), // Low-income housing
+      this.l1h(), // Empowerment zone
+      this.l1k() // New markets
     ])
   }
 
@@ -234,7 +257,7 @@ export default class F3800 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Part I - Current Year Credits
     this.l1a(),
     this.l1b(),

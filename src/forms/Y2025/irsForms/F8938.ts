@@ -42,7 +42,11 @@ export default class F8938 extends F1040Attachment {
   }
 
   assets = (): ForeignFinancialAsset[] => {
-    return (this.f1040.info.foreignFinancialAssets as ForeignFinancialAsset[] | undefined) ?? []
+    return (
+      (this.f1040.info.foreignFinancialAssets as
+        | ForeignFinancialAsset[]
+        | undefined) ?? []
+    )
   }
 
   livingAbroad = (): boolean => {
@@ -87,11 +91,11 @@ export default class F8938 extends F1040Attachment {
   // Part I - Foreign Deposit and Custodial Accounts Summary
 
   depositAccounts = (): ForeignFinancialAsset[] => {
-    return this.assets().filter(a => a.type === 'depositAccount')
+    return this.assets().filter((a) => a.type === 'depositAccount')
   }
 
   custodialAccounts = (): ForeignFinancialAsset[] => {
-    return this.assets().filter(a => a.type === 'custodialAccount')
+    return this.assets().filter((a) => a.type === 'custodialAccount')
   }
 
   // Line 1: Number of deposit accounts
@@ -99,7 +103,10 @@ export default class F8938 extends F1040Attachment {
 
   // Line 2: Max value of all deposit accounts
   l2 = (): number => {
-    return this.depositAccounts().reduce((sum, a) => sum + a.maxValueDuringYear, 0)
+    return this.depositAccounts().reduce(
+      (sum, a) => sum + a.maxValueDuringYear,
+      0
+    )
   }
 
   // Line 3: Number of custodial accounts
@@ -107,14 +114,17 @@ export default class F8938 extends F1040Attachment {
 
   // Line 4: Max value of all custodial accounts
   l4 = (): number => {
-    return this.custodialAccounts().reduce((sum, a) => sum + a.maxValueDuringYear, 0)
+    return this.custodialAccounts().reduce(
+      (sum, a) => sum + a.maxValueDuringYear,
+      0
+    )
   }
 
   // Part II - Other Foreign Assets Summary
 
   otherAssets = (): ForeignFinancialAsset[] => {
-    return this.assets().filter(a =>
-      a.type !== 'depositAccount' && a.type !== 'custodialAccount'
+    return this.assets().filter(
+      (a) => a.type !== 'depositAccount' && a.type !== 'custodialAccount'
     )
   }
 
@@ -131,14 +141,14 @@ export default class F8938 extends F1040Attachment {
   // Line 7a: Interest
   l7a = (): number => {
     return this.assets()
-      .filter(a => a.type === 'depositAccount')
+      .filter((a) => a.type === 'depositAccount')
       .reduce((sum, a) => sum + a.incomeEarned, 0)
   }
 
   // Line 7b: Dividends
   l7b = (): number => {
     return this.assets()
-      .filter(a => a.type === 'equity' || a.type === 'custodialAccount')
+      .filter((a) => a.type === 'equity' || a.type === 'custodialAccount')
       .reduce((sum, a) => sum + a.incomeEarned, 0)
   }
 
@@ -148,7 +158,7 @@ export default class F8938 extends F1040Attachment {
   // Line 7d: Other income
   l7d = (): number => {
     return this.assets()
-      .filter(a => a.type === 'other' || a.type === 'debt')
+      .filter((a) => a.type === 'other' || a.type === 'debt')
       .reduce((sum, a) => sum + a.incomeEarned, 0)
   }
 

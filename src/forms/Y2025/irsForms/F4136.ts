@@ -31,15 +31,15 @@ const FUEL_CREDIT_RATES: Record<FuelType, number> = {
   exportedDyedFuels: 0.184,
   exportedDyedDiesel: 0.244,
   exportedDyedKerosene: 0.244,
-  biodieselMixture: 1.00,
-  agribiodiesel: 1.00,
-  renewableDiesel: 1.00,
-  alternativeFuel: 0.50,
-  alternativeFuelMixture: 0.50,
-  cngLng: 0.50,
-  liquefiedGasFromBiomass: 0.50,
-  compressedGasFromBiomass: 0.50,
-  sustainableAviationFuel: 1.25  // SAF credit per gallon
+  biodieselMixture: 1.0,
+  agribiodiesel: 1.0,
+  renewableDiesel: 1.0,
+  alternativeFuel: 0.5,
+  alternativeFuelMixture: 0.5,
+  cngLng: 0.5,
+  liquefiedGasFromBiomass: 0.5,
+  compressedGasFromBiomass: 0.5,
+  sustainableAviationFuel: 1.25 // SAF credit per gallon
 }
 
 export default class F4136 extends F1040Attachment {
@@ -63,95 +63,113 @@ export default class F4136 extends F1040Attachment {
   // Line 1: Nontaxable Use of Gasoline
   l1Gallons = (): number => {
     return this.fuelTaxCredits()
-      .filter(e => e.fuelType === 'nontaxableUseGasoline')
+      .filter((e) => e.fuelType === 'nontaxableUseGasoline')
       .reduce((sum, e) => sum + e.gallons, 0)
   }
 
   l1Credit = (): number => {
     return this.fuelTaxCredits()
-      .filter(e => e.fuelType === 'nontaxableUseGasoline')
+      .filter((e) => e.fuelType === 'nontaxableUseGasoline')
       .reduce((sum, e) => sum + this.calculateCredit(e), 0)
   }
 
   // Line 2: Nontaxable Use of Aviation Gasoline
   l2Gallons = (): number => {
     return this.fuelTaxCredits()
-      .filter(e => e.fuelType === 'nontaxableUseAviationGasoline')
+      .filter((e) => e.fuelType === 'nontaxableUseAviationGasoline')
       .reduce((sum, e) => sum + e.gallons, 0)
   }
 
   l2Credit = (): number => {
     return this.fuelTaxCredits()
-      .filter(e => e.fuelType === 'nontaxableUseAviationGasoline')
+      .filter((e) => e.fuelType === 'nontaxableUseAviationGasoline')
       .reduce((sum, e) => sum + this.calculateCredit(e), 0)
   }
 
   // Line 3: Nontaxable Use of Undyed Diesel Fuel
   l3Gallons = (): number => {
     return this.fuelTaxCredits()
-      .filter(e => e.fuelType === 'nontaxableUseUndyedDiesel')
+      .filter((e) => e.fuelType === 'nontaxableUseUndyedDiesel')
       .reduce((sum, e) => sum + e.gallons, 0)
   }
 
   l3Credit = (): number => {
     return this.fuelTaxCredits()
-      .filter(e => e.fuelType === 'nontaxableUseUndyedDiesel')
+      .filter((e) => e.fuelType === 'nontaxableUseUndyedDiesel')
       .reduce((sum, e) => sum + this.calculateCredit(e), 0)
   }
 
   // Line 4: Nontaxable Use of Undyed Kerosene
   l4Gallons = (): number => {
     return this.fuelTaxCredits()
-      .filter(e => e.fuelType === 'nontaxableUseUndyedKerosene')
+      .filter((e) => e.fuelType === 'nontaxableUseUndyedKerosene')
       .reduce((sum, e) => sum + e.gallons, 0)
   }
 
   l4Credit = (): number => {
     return this.fuelTaxCredits()
-      .filter(e => e.fuelType === 'nontaxableUseUndyedKerosene')
+      .filter((e) => e.fuelType === 'nontaxableUseUndyedKerosene')
       .reduce((sum, e) => sum + this.calculateCredit(e), 0)
   }
 
   // Line 5: Kerosene Used in Aviation
   l5Gallons = (): number => {
     return this.fuelTaxCredits()
-      .filter(e => e.fuelType === 'nontaxableUseKeroseneAviation')
+      .filter((e) => e.fuelType === 'nontaxableUseKeroseneAviation')
       .reduce((sum, e) => sum + e.gallons, 0)
   }
 
   l5Credit = (): number => {
     return this.fuelTaxCredits()
-      .filter(e => e.fuelType === 'nontaxableUseKeroseneAviation')
+      .filter((e) => e.fuelType === 'nontaxableUseKeroseneAviation')
       .reduce((sum, e) => sum + this.calculateCredit(e), 0)
   }
 
   // Line 8: Biodiesel or Renewable Diesel Mixture Credit
   l8Gallons = (): number => {
-    const biodieselTypes: FuelType[] = ['biodieselMixture', 'agribiodiesel', 'renewableDiesel']
+    const biodieselTypes: FuelType[] = [
+      'biodieselMixture',
+      'agribiodiesel',
+      'renewableDiesel'
+    ]
     return this.fuelTaxCredits()
-      .filter(e => biodieselTypes.includes(e.fuelType))
+      .filter((e) => biodieselTypes.includes(e.fuelType))
       .reduce((sum, e) => sum + e.gallons, 0)
   }
 
   l8Credit = (): number => {
-    const biodieselTypes: FuelType[] = ['biodieselMixture', 'agribiodiesel', 'renewableDiesel']
+    const biodieselTypes: FuelType[] = [
+      'biodieselMixture',
+      'agribiodiesel',
+      'renewableDiesel'
+    ]
     return this.fuelTaxCredits()
-      .filter(e => biodieselTypes.includes(e.fuelType))
+      .filter((e) => biodieselTypes.includes(e.fuelType))
       .reduce((sum, e) => sum + this.calculateCredit(e), 0)
   }
 
   // Line 9: Alternative Fuel Credit
   l9Gallons = (): number => {
-    const altFuelTypes: FuelType[] = ['alternativeFuel', 'alternativeFuelMixture', 'cngLng', 'liquefiedGasFromBiomass']
+    const altFuelTypes: FuelType[] = [
+      'alternativeFuel',
+      'alternativeFuelMixture',
+      'cngLng',
+      'liquefiedGasFromBiomass'
+    ]
     return this.fuelTaxCredits()
-      .filter(e => altFuelTypes.includes(e.fuelType))
+      .filter((e) => altFuelTypes.includes(e.fuelType))
       .reduce((sum, e) => sum + e.gallons, 0)
   }
 
   l9Credit = (): number => {
-    const altFuelTypes: FuelType[] = ['alternativeFuel', 'alternativeFuelMixture', 'cngLng', 'liquefiedGasFromBiomass']
+    const altFuelTypes: FuelType[] = [
+      'alternativeFuel',
+      'alternativeFuelMixture',
+      'cngLng',
+      'liquefiedGasFromBiomass'
+    ]
     return this.fuelTaxCredits()
-      .filter(e => altFuelTypes.includes(e.fuelType))
+      .filter((e) => altFuelTypes.includes(e.fuelType))
       .reduce((sum, e) => sum + this.calculateCredit(e), 0)
   }
 
@@ -173,7 +191,7 @@ export default class F4136 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Line 1 - Gasoline
     this.l1Gallons(),
     this.l1Credit(),

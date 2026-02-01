@@ -95,7 +95,8 @@ export default class F4972 extends F1040Attachment {
       .reduce(
         (total, d) =>
           total +
-          (d.ordinaryIncomePortion ?? d.totalDistribution - (d.capitalGainPortion ?? 0)),
+          (d.ordinaryIncomePortion ??
+            d.totalDistribution - (d.capitalGainPortion ?? 0)),
         0
       )
 

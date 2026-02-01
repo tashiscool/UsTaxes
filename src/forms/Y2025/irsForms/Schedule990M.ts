@@ -77,11 +77,13 @@ export default class Schedule990M extends F1040Attachment {
   }
 
   schedule990MData = (): Schedule990MData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Contribution type getters
-  getContributionType = (typeKey: string): NoncashContributionType | undefined => {
+  getContributionType = (
+    typeKey: string
+  ): NoncashContributionType | undefined => {
     const contributions = this.schedule990MData()?.contributions
     if (!contributions) return undefined
     return contributions[typeKey as keyof typeof contributions]
@@ -121,25 +123,31 @@ export default class Schedule990M extends F1040Attachment {
   artContributions = (): number => {
     const contributions = this.schedule990MData()?.contributions
     if (!contributions) return 0
-    return (contributions.artworkAntiques?.revenueReported ?? 0) +
-           (contributions.historicalTreasures?.revenueReported ?? 0)
+    return (
+      (contributions.artworkAntiques.revenueReported ?? 0) +
+      (contributions.historicalTreasures.revenueReported ?? 0)
+    )
   }
 
   // Vehicle contributions
   vehicleContributions = (): number => {
     const contributions = this.schedule990MData()?.contributions
     if (!contributions) return 0
-    return (contributions.carsAndVehicles?.revenueReported ?? 0) +
-           (contributions.boatsAndPlanes?.revenueReported ?? 0)
+    return (
+      (contributions.carsAndVehicles.revenueReported ?? 0) +
+      (contributions.boatsAndPlanes.revenueReported ?? 0)
+    )
   }
 
   // Securities contributions
   securitiesContributions = (): number => {
     const contributions = this.schedule990MData()?.contributions
     if (!contributions) return 0
-    return (contributions.publiclyTradedSecurities?.revenueReported ?? 0) +
-           (contributions.closelyHeldStock?.revenueReported ?? 0) +
-           (contributions.partnershipInterests?.revenueReported ?? 0)
+    return (
+      (contributions.publiclyTradedSecurities.revenueReported ?? 0) +
+      (contributions.closelyHeldStock.revenueReported ?? 0) +
+      (contributions.partnershipInterests.revenueReported ?? 0)
+    )
   }
 
   fields = (): Field[] => {
@@ -148,45 +156,45 @@ export default class Schedule990M extends F1040Attachment {
 
     return [
       // Art and collectibles
-      contributions?.artworkAntiques?.numberOfContributions ?? 0,
-      contributions?.artworkAntiques?.revenueReported ?? 0,
-      contributions?.historicalTreasures?.numberOfContributions ?? 0,
-      contributions?.historicalTreasures?.revenueReported ?? 0,
+      contributions?.artworkAntiques.numberOfContributions ?? 0,
+      contributions?.artworkAntiques.revenueReported ?? 0,
+      contributions?.historicalTreasures.numberOfContributions ?? 0,
+      contributions?.historicalTreasures.revenueReported ?? 0,
       // Conservation
-      contributions?.qualifiedConservation?.numberOfContributions ?? 0,
-      contributions?.qualifiedConservation?.revenueReported ?? 0,
+      contributions?.qualifiedConservation.numberOfContributions ?? 0,
+      contributions?.qualifiedConservation.revenueReported ?? 0,
       // Clothing
-      contributions?.clothingAndHousehold?.numberOfContributions ?? 0,
-      contributions?.clothingAndHousehold?.revenueReported ?? 0,
+      contributions?.clothingAndHousehold.numberOfContributions ?? 0,
+      contributions?.clothingAndHousehold.revenueReported ?? 0,
       // Vehicles
-      contributions?.carsAndVehicles?.numberOfContributions ?? 0,
-      contributions?.carsAndVehicles?.revenueReported ?? 0,
-      contributions?.boatsAndPlanes?.numberOfContributions ?? 0,
-      contributions?.boatsAndPlanes?.revenueReported ?? 0,
+      contributions?.carsAndVehicles.numberOfContributions ?? 0,
+      contributions?.carsAndVehicles.revenueReported ?? 0,
+      contributions?.boatsAndPlanes.numberOfContributions ?? 0,
+      contributions?.boatsAndPlanes.revenueReported ?? 0,
       // Real estate
-      contributions?.realEstate?.numberOfContributions ?? 0,
-      contributions?.realEstate?.revenueReported ?? 0,
+      contributions?.realEstate.numberOfContributions ?? 0,
+      contributions?.realEstate.revenueReported ?? 0,
       // Securities
-      contributions?.publiclyTradedSecurities?.numberOfContributions ?? 0,
-      contributions?.publiclyTradedSecurities?.revenueReported ?? 0,
-      contributions?.closelyHeldStock?.numberOfContributions ?? 0,
-      contributions?.closelyHeldStock?.revenueReported ?? 0,
-      contributions?.partnershipInterests?.numberOfContributions ?? 0,
-      contributions?.partnershipInterests?.revenueReported ?? 0,
+      contributions?.publiclyTradedSecurities.numberOfContributions ?? 0,
+      contributions?.publiclyTradedSecurities.revenueReported ?? 0,
+      contributions?.closelyHeldStock.numberOfContributions ?? 0,
+      contributions?.closelyHeldStock.revenueReported ?? 0,
+      contributions?.partnershipInterests.numberOfContributions ?? 0,
+      contributions?.partnershipInterests.revenueReported ?? 0,
       // Intellectual property
-      contributions?.intellectualProperty?.numberOfContributions ?? 0,
-      contributions?.intellectualProperty?.revenueReported ?? 0,
+      contributions?.intellectualProperty.numberOfContributions ?? 0,
+      contributions?.intellectualProperty.revenueReported ?? 0,
       // Food and medical
-      contributions?.foodInventory?.numberOfContributions ?? 0,
-      contributions?.foodInventory?.revenueReported ?? 0,
-      contributions?.drugsAndMedical?.numberOfContributions ?? 0,
-      contributions?.drugsAndMedical?.revenueReported ?? 0,
+      contributions?.foodInventory.numberOfContributions ?? 0,
+      contributions?.foodInventory.revenueReported ?? 0,
+      contributions?.drugsAndMedical.numberOfContributions ?? 0,
+      contributions?.drugsAndMedical.revenueReported ?? 0,
       // Scientific equipment
-      contributions?.scientificEquipment?.numberOfContributions ?? 0,
-      contributions?.scientificEquipment?.revenueReported ?? 0,
+      contributions?.scientificEquipment.numberOfContributions ?? 0,
+      contributions?.scientificEquipment.revenueReported ?? 0,
       // Other
-      contributions?.otherNoncash?.numberOfContributions ?? 0,
-      contributions?.otherNoncash?.revenueReported ?? 0,
+      contributions?.otherNoncash.numberOfContributions ?? 0,
+      contributions?.otherNoncash.revenueReported ?? 0,
       // Questions
       data?.receivedArtOver25000 ?? false,
       data?.receivedArtNotRelatedToExempt ?? false,

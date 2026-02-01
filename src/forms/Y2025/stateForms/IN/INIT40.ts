@@ -31,11 +31,10 @@ export class INIT40 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   private getPrimaryAge(): number {
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (!dob) return 0
     return new Date().getFullYear() - new Date(dob).getFullYear()
   }
@@ -68,7 +67,10 @@ export class INIT40 extends Form {
     // Check if has military retirement income
     const militaryRetirement = this.info.militaryRetirement
     if (militaryRetirement && militaryRetirement > 0) {
-      return Math.min(militaryRetirement, parameters.retirementDeduction.militaryRetirement)
+      return Math.min(
+        militaryRetirement,
+        parameters.retirementDeduction.militaryRetirement
+      )
     }
     return undefined
   }
@@ -83,9 +85,15 @@ export class INIT40 extends Form {
   l11 = (): number | undefined => undefined
 
   // Line 12: Total deductions
-  l12 = (): number => sumFields([
-    this.l6(), this.l7(), this.l8(), this.l9(), this.l10(), this.l11()
-  ])
+  l12 = (): number =>
+    sumFields([
+      this.l6(),
+      this.l7(),
+      this.l8(),
+      this.l9(),
+      this.l10(),
+      this.l11()
+    ])
 
   // Line 13: Indiana adjusted gross income
   l13 = (): number => Math.max(0, this.l1() + this.l5() - this.l12())
@@ -101,7 +109,10 @@ export class INIT40 extends Form {
 
   // Line 15: Dependent exemptions
   l15 = (): number => {
-    return this.info.taxPayer.dependents.length * parameters.dependentExemption.amount
+    return (
+      this.info.taxPayer.dependents.length *
+      parameters.dependentExemption.amount
+    )
   }
 
   // Line 16: Total exemptions
@@ -147,10 +158,11 @@ export class INIT40 extends Form {
   l25 = (): number | undefined => undefined
 
   // Line 26: Total nonrefundable credits (limited to tax)
-  l26 = (): number => Math.min(
-    sumFields([this.l21(), this.l22(), this.l23(), this.l25()]),
-    this.l20()
-  )
+  l26 = (): number =>
+    Math.min(
+      sumFields([this.l21(), this.l22(), this.l23(), this.l25()]),
+      this.l20()
+    )
 
   // Line 27: Tax after nonrefundable credits
   l27 = (): number => Math.max(0, this.l20() - this.l26())
@@ -169,7 +181,8 @@ export class INIT40 extends Form {
   l31 = (): number | undefined => this.l24()
 
   // Line 32: Total payments and refundable credits
-  l32 = (): number => sumFields([this.l28(), this.l29(), this.l30(), this.l31()])
+  l32 = (): number =>
+    sumFields([this.l28(), this.l29(), this.l30(), this.l31()])
 
   // RESULTS
   // Line 33: Amount due
@@ -188,16 +201,43 @@ export class INIT40 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l1(), this.l2(), this.l3(), this.l4(), this.l5(),
-    this.l6(), this.l7(), this.l8(), this.l9(), this.l10(), this.l11(), this.l12(),
-    this.l13(), this.l14(), this.l15(), this.l16(), this.l17(),
-    this.l18(), this.l19(), this.l20(),
-    this.l21(), this.l22(), this.l23(), this.l24(), this.l25(), this.l26(), this.l27(),
-    this.l28(), this.l29(), this.l30(), this.l31(), this.l32(),
-    this.l33(), this.l34()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l1(),
+    this.l2(),
+    this.l3(),
+    this.l4(),
+    this.l5(),
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23(),
+    this.l24(),
+    this.l25(),
+    this.l26(),
+    this.l27(),
+    this.l28(),
+    this.l29(),
+    this.l30(),
+    this.l31(),
+    this.l32(),
+    this.l33(),
+    this.l34()
   ]
 }
 

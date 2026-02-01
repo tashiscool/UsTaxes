@@ -32,11 +32,14 @@ export default class F8888 extends F1040Attachment {
   isNeeded = (): boolean => {
     // Needed if user wants to split refund into multiple accounts
     const allocations = this.refundAllocations()
-    return allocations.length > 1 || allocations.some(a => a.isBondPurchase)
+    return allocations.length > 1 || allocations.some((a) => a.isBondPurchase)
   }
 
   refundAllocations = (): RefundAllocation[] => {
-    return (this.f1040.info.refundAllocations as RefundAllocation[] | undefined) ?? []
+    return (
+      (this.f1040.info.refundAllocations as RefundAllocation[] | undefined) ??
+      []
+    )
   }
 
   // Total refund amount (from Form 1040 line 34)
@@ -66,14 +69,16 @@ export default class F8888 extends F1040Attachment {
 
   // Line 4: Amount to be used to buy paper Series I savings bonds
   l4 = (): number => {
-    const bondAllocation = this.refundAllocations().find(a => a.isBondPurchase)
+    const bondAllocation = this.refundAllocations().find(
+      (a) => a.isBondPurchase
+    )
     return bondAllocation?.amount ?? 0
   }
 
   // Line 5a-c: Bond registration info (owner name)
-  l5a = (): string => this.f1040.info.taxPayer.primaryPerson?.firstName ?? ''
-  l5b = (): string => this.f1040.info.taxPayer.primaryPerson?.lastName ?? ''
-  l5c = (): string => this.f1040.info.taxPayer.primaryPerson?.ssid ?? ''
+  l5a = (): string => this.f1040.info.taxPayer.primaryPerson.firstName ?? ''
+  l5b = (): string => this.f1040.info.taxPayer.primaryPerson.lastName ?? ''
+  l5c = (): string => this.f1040.info.taxPayer.primaryPerson.ssid ?? ''
 
   // Validation: total allocations must equal total refund
   isValid = (): boolean => {
@@ -89,7 +94,7 @@ export default class F8888 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Part I - Direct Deposit
     this.l1a(),
     this.l1b(),

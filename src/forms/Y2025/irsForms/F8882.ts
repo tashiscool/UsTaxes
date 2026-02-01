@@ -29,9 +29,9 @@ import { Form8882Data } from 'ustaxes/core/data'
 
 // 2025 parameters
 const childcareCreditParams = {
-  facilityRate: 0.25,           // 25% of facility costs
-  resourceRate: 0.10,           // 10% of resource/referral costs
-  maxCredit: 150000             // Maximum credit per year
+  facilityRate: 0.25, // 25% of facility costs
+  resourceRate: 0.1, // 10% of resource/referral costs
+  maxCredit: 150000 // Maximum credit per year
 }
 
 export default class F8882 extends F1040Attachment {
@@ -44,10 +44,11 @@ export default class F8882 extends F1040Attachment {
 
   hasChildcareCredit = (): boolean => {
     const data = this.creditData()
-    return data !== undefined && (
-      data.qualifiedChildcareFacilityCosts > 0 ||
-      data.qualifiedChildcareResourceCosts > 0 ||
-      (data.passthrough8882Credit ?? 0) > 0
+    return (
+      data !== undefined &&
+      (data.qualifiedChildcareFacilityCosts > 0 ||
+        data.qualifiedChildcareResourceCosts > 0 ||
+        (data.passthrough8882Credit ?? 0) > 0)
     )
   }
 
@@ -97,7 +98,7 @@ export default class F8882 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Part I
     this.l1(),
     this.l2(),

@@ -25,11 +25,7 @@ import {
   Fade,
   Chip
 } from '@material-ui/core'
-import {
-  createStyles,
-  makeStyles,
-  Theme
-} from '@material-ui/core/styles'
+import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
 import {
   HelpOutline,
   ExpandMore,
@@ -210,7 +206,8 @@ export default function InterviewQuestion({
 }: InterviewQuestionProps): ReactElement {
   const classes = useStyles()
   const [showWhyAsking, setShowWhyAsking] = useState(false)
-  const { getAnswer, setAnswer, hasError, getError, nextQuestion } = useInterview()
+  const { getAnswer, setAnswer, hasError, getError, nextQuestion } =
+    useInterview()
 
   const currentAnswer = getAnswer<unknown>(question.id)
   const error = getError(question.id)
@@ -220,7 +217,11 @@ export default function InterviewQuestion({
     setAnswer(question.id, value)
 
     // Auto-advance for yes/no and multiple choice (after a brief delay for visual feedback)
-    if (autoAdvance && (question.inputType === 'yes_no' || question.inputType === 'multiple_choice')) {
+    if (
+      autoAdvance &&
+      (question.inputType === 'yes_no' ||
+        question.inputType === 'multiple_choice')
+    ) {
       setTimeout(() => {
         nextQuestion()
       }, 300)
@@ -278,7 +279,9 @@ export default function InterviewQuestion({
               control={<Radio color="primary" />}
               label={option.label}
               className={`${classes.radioOption} ${
-                currentAnswer === option.value ? classes.radioOptionSelected : ''
+                currentAnswer === option.value
+                  ? classes.radioOptionSelected
+                  : ''
               }`}
             />
             {option.helpText && (

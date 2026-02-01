@@ -133,21 +133,26 @@ export default class F5471 extends F1040Attachment {
   }
 
   // Filing categories
-  filingCategories = (): FilingCategory[] => this.f5471Info()?.filingCategories ?? []
-  isCategory = (cat: FilingCategory): boolean => this.filingCategories().includes(cat)
+  filingCategories = (): FilingCategory[] =>
+    this.f5471Info()?.filingCategories ?? []
+  isCategory = (cat: FilingCategory): boolean =>
+    this.filingCategories().includes(cat)
 
   // Foreign corporation info
-  foreignCorp = (): ForeignCorporationInfo | undefined => this.f5471Info()?.foreignCorporation
+  foreignCorp = (): ForeignCorporationInfo | undefined =>
+    this.f5471Info()?.foreignCorporation
 
   corpName = (): string => this.foreignCorp()?.name ?? ''
   corpEin = (): string => this.foreignCorp()?.ein ?? ''
   corpReferenceId = (): string => this.foreignCorp()?.referenceId ?? ''
   corpCountry = (): string => this.foreignCorp()?.countryOfIncorporation ?? ''
-  corpFunctionalCurrency = (): string => this.foreignCorp()?.functionalCurrency ?? 'USD'
+  corpFunctionalCurrency = (): string =>
+    this.foreignCorp()?.functionalCurrency ?? 'USD'
   corpExchangeRate = (): number => this.foreignCorp()?.exchangeRateUsed ?? 1
 
   // Schedule A: Stock Information
-  usShareholders = (): USShareholderInfo[] => this.f5471Info()?.usShareholders ?? []
+  usShareholders = (): USShareholderInfo[] =>
+    this.f5471Info()?.usShareholders ?? []
 
   totalSharesOwned = (): number => {
     return this.usShareholders().reduce((sum, s) => sum + s.sharesOwned, 0)
@@ -158,18 +163,22 @@ export default class F5471 extends F1040Attachment {
   }
 
   // Schedule C: Income Statement
-  incomeStatement = (): ForeignCorpIncomeStatement | undefined => this.f5471Info()?.incomeStatement
+  incomeStatement = (): ForeignCorpIncomeStatement | undefined =>
+    this.f5471Info()?.incomeStatement
 
   grossReceipts = (): number => this.incomeStatement()?.grossReceipts ?? 0
   costOfGoodsSold = (): number => this.incomeStatement()?.costOfGoodsSold ?? 0
   grossProfit = (): number => this.incomeStatement()?.grossProfit ?? 0
   totalIncome = (): number => this.incomeStatement()?.totalIncome ?? 0
   totalDeductions = (): number => this.incomeStatement()?.totalDeductions ?? 0
-  netIncomeBeforeTax = (): number => this.incomeStatement()?.netIncomeBeforeTax ?? 0
-  netIncomeAfterTax = (): number => this.incomeStatement()?.netIncomeAfterTax ?? 0
+  netIncomeBeforeTax = (): number =>
+    this.incomeStatement()?.netIncomeBeforeTax ?? 0
+  netIncomeAfterTax = (): number =>
+    this.incomeStatement()?.netIncomeAfterTax ?? 0
 
   // Schedule F: Balance Sheet
-  balanceSheet = (): ForeignCorpBalanceSheet | undefined => this.f5471Info()?.balanceSheet
+  balanceSheet = (): ForeignCorpBalanceSheet | undefined =>
+    this.f5471Info()?.balanceSheet
 
   totalAssets = (): number => this.balanceSheet()?.totalAssets ?? 0
   totalLiabilities = (): number => this.balanceSheet()?.totalLiabilities ?? 0
@@ -181,7 +190,8 @@ export default class F5471 extends F1040Attachment {
   giltiIncome = (): number => this.f5471Info()?.giltiIncome ?? 0
   currentEandP = (): number => this.f5471Info()?.currentEandP ?? 0
   accumulatedEandP = (): number => this.f5471Info()?.accumulatedEandP ?? 0
-  previouslyTaxedEandP = (): number => this.f5471Info()?.previouslyTaxedEandP ?? 0
+  previouslyTaxedEandP = (): number =>
+    this.f5471Info()?.previouslyTaxedEandP ?? 0
 
   // Schedule R: Distributions
   distributions = (): number => this.f5471Info()?.distributions ?? 0
@@ -212,7 +222,7 @@ export default class F5471 extends F1040Attachment {
       this.corpEin(),
       this.corpReferenceId(),
       this.corpCountry(),
-      corp?.dateOfIncorporation?.toLocaleDateString() ?? '',
+      corp?.dateOfIncorporation.toLocaleDateString() ?? '',
       corp?.principalBusinessActivity ?? '',
       corp?.principalBusinessCode ?? '',
       this.corpFunctionalCurrency(),

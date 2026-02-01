@@ -26,7 +26,13 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
  */
 
 export type ClaimType = 'refund' | 'abatement' | 'both'
-export type TaxType = 'employment' | 'excise' | 'penalty' | 'interest' | 'fee' | 'other'
+export type TaxType =
+  | 'employment'
+  | 'excise'
+  | 'penalty'
+  | 'interest'
+  | 'fee'
+  | 'other'
 
 export interface RefundClaimInfo {
   claimType: ClaimType
@@ -35,9 +41,9 @@ export interface RefundClaimInfo {
   amountClaimed: number
 
   // Tax details
-  taxFormNumber: string  // e.g., "941", "940", "720"
+  taxFormNumber: string // e.g., "941", "940", "720"
   taxYear: number
-  taxQuarter?: number  // For quarterly returns
+  taxQuarter?: number // For quarterly returns
 
   // For penalty abatement
   penaltyType?: string
@@ -82,11 +88,11 @@ export default class F843 extends F1040Attachment {
 
   // Line 5a: Tax period ended
   l5a = (): string => {
-    return this.claimInfo()?.taxPeriodEnd?.toLocaleDateString() ?? ''
+    return this.claimInfo()?.taxPeriodEnd.toLocaleDateString() ?? ''
   }
 
   // Line 5b: Date tax paid (if claiming refund)
-  l5b = (): string => ''  // Would need additional data
+  l5b = (): string => '' // Would need additional data
 
   // Line 6: Amount to be refunded or abated
   l6 = (): number => this.claimInfo()?.amountClaimed ?? 0
@@ -110,7 +116,8 @@ export default class F843 extends F1040Attachment {
   hasReasonableCause = (): boolean => this.claimInfo()?.reasonableC ?? false
 
   // First-time abatement request
-  isFirstTimeAbatement = (): boolean => this.claimInfo()?.firstTimeAbatement ?? false
+  isFirstTimeAbatement = (): boolean =>
+    this.claimInfo()?.firstTimeAbatement ?? false
 
   // Penalty type
   penaltyDescription = (): string => this.claimInfo()?.penaltyType ?? ''

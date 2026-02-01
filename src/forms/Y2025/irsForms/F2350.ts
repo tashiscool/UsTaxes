@@ -33,11 +33,11 @@ export interface AbroadExtensionInfo {
   dateLeftUS: Date
   expectedReturnDate?: Date
   qualificationTest: 'bonaFideResident' | 'physicalPresence'
-  expectedQualifyingDate: Date  // Date expect to meet test
+  expectedQualifyingDate: Date // Date expect to meet test
   taxYear: number
   estimatedTax: number
   amountPaid: number
-  requestedDueDate: Date  // Extended due date requested
+  requestedDueDate: Date // Extended due date requested
 }
 
 export default class F2350 extends F1040Attachment {
@@ -67,7 +67,9 @@ export default class F2350 extends F1040Attachment {
   // Line 3: US address (for mailing)
   l3 = (): string => {
     const addr = this.f1040.info.taxPayer.primaryPerson.address
-    return `${addr.address ?? ''}, ${addr.city ?? ''}, ${addr.state ?? ''} ${addr.zip ?? ''}`
+    return `${addr.address ?? ''}, ${addr.city ?? ''}, ${addr.state ?? ''} ${
+      addr.zip ?? ''
+    }`
   }
 
   // Part II - Tax Year and Extension Information
@@ -77,12 +79,15 @@ export default class F2350 extends F1040Attachment {
 
   // Line 5: Date you left the United States
   l5 = (): string => {
-    return this.extensionInfo()?.dateLeftUS?.toLocaleDateString() ?? ''
+    return this.extensionInfo()?.dateLeftUS.toLocaleDateString() ?? ''
   }
 
   // Line 6: Date you expect to return to US (if applicable)
   l6 = (): string => {
-    return this.extensionInfo()?.expectedReturnDate?.toLocaleDateString() ?? 'Indefinite'
+    return (
+      this.extensionInfo()?.expectedReturnDate?.toLocaleDateString() ??
+      'Indefinite'
+    )
   }
 
   // Part III - Qualification Test
@@ -97,7 +102,9 @@ export default class F2350 extends F1040Attachment {
 
   // Line 8: Date you expect to qualify
   l8 = (): string => {
-    return this.extensionInfo()?.expectedQualifyingDate?.toLocaleDateString() ?? ''
+    return (
+      this.extensionInfo()?.expectedQualifyingDate.toLocaleDateString() ?? ''
+    )
   }
 
   // Line 9: Extended due date requested (30 days after qualifying date)
@@ -122,7 +129,7 @@ export default class F2350 extends F1040Attachment {
   l12 = (): number => Math.max(0, this.l10() - this.l11())
 
   // Line 13: Amount paying with this extension
-  l13 = (): number => 0  // Usually $0 as this is just a filing extension
+  l13 = (): number => 0 // Usually $0 as this is just a filing extension
 
   // Calculate days until qualifying
   daysUntilQualifying = (): number => {

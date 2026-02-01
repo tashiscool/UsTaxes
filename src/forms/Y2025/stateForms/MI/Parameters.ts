@@ -36,7 +36,7 @@ const parameters = {
   // Retirement/pension subtraction (public pensions fully exempt)
   retirementSubtraction: {
     publicPensionExempt: true,
-    privatePensionLimit: 61518  // For those born after 1945
+    privatePensionLimit: 61518 // For those born after 1945
   }
 }
 

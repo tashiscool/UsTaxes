@@ -2,7 +2,12 @@ import Form, { FormMethods } from 'ustaxes/core/stateForms/Form'
 import F1040 from '../../irsForms/F1040'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { sumFields } from 'ustaxes/core/irsForms/util'
-import { FilingStatus, State, LocalTaxInfo, PersonRole } from 'ustaxes/core/data'
+import {
+  FilingStatus,
+  State,
+  LocalTaxInfo,
+  PersonRole
+} from 'ustaxes/core/data'
 import parameters from './Parameters'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 
@@ -61,16 +66,20 @@ export class PhiladelphiaWageTax extends Form {
    * Check if taxpayer is a Philadelphia resident
    */
   isPhiladelphiaResident = (): boolean => {
-    return this.localTaxInfo?.residenceCity === 'Philadelphia' ||
-           this.localTaxInfo?.residenceCity === 'PHL'
+    return (
+      this.localTaxInfo?.residenceCity === 'Philadelphia' ||
+      this.localTaxInfo?.residenceCity === 'PHL'
+    )
   }
 
   /**
    * Check if taxpayer works in Philadelphia
    */
   worksInPhiladelphia = (): boolean => {
-    return this.localTaxInfo?.workCity === 'Philadelphia' ||
-           this.localTaxInfo?.workCity === 'PHL'
+    return (
+      this.localTaxInfo?.workCity === 'Philadelphia' ||
+      this.localTaxInfo?.workCity === 'PHL'
+    )
   }
 
   /**
@@ -112,9 +121,9 @@ export class PhiladelphiaWageTax extends Form {
     } else {
       // Non-residents only pay on wages earned in Philadelphia
       return w2s
-        .filter(w2 => {
+        .filter((w2) => {
           // Check if employer is in Philadelphia
-          const city = w2.employer?.address?.city?.toLowerCase()
+          const city = w2.employer?.address?.city.toLowerCase()
           return city === 'philadelphia' || city === 'phila' || city === 'phl'
         })
         .reduce((sum, w2) => sum + w2.income, 0)
@@ -190,7 +199,8 @@ export class PhiladelphiaWageTax extends Form {
 
     // Credit limited to max rate
     const otherMuniTax = this.localTaxInfo?.otherMunicipalTaxPaid ?? 0
-    const maxCredit = this.l1() * parameters.credits.otherMunicipalityTaxCredit.maxCreditRate
+    const maxCredit =
+      this.l1() * parameters.credits.otherMunicipalityTaxCredit.maxCreditRate
 
     return Math.min(otherMuniTax, maxCredit)
   }

@@ -1,7 +1,11 @@
 import { SCorpForm } from './BusinessForm'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
-import { Form1120SData, ScheduleKItems, SCorpShareholder } from 'ustaxes/core/data'
+import {
+  Form1120SData,
+  ScheduleKItems,
+  SCorpShareholder
+} from 'ustaxes/core/data'
 import { sumFields } from 'ustaxes/core/irsForms/util'
 
 /**
@@ -21,11 +25,11 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  */
 
 // 2025 tax rates for built-in gains (if applicable)
-const CCORP_RATE = 0.21  // Built-in gains taxed at C-Corp rate
+const CCORP_RATE = 0.21 // Built-in gains taxed at C-Corp rate
 
 export default class F1120S extends SCorpForm {
   tag: FormTag = 'f1120s'
-  sequenceIndex = 0  // Main return
+  sequenceIndex = 0 // Main return
 
   data: Form1120SData
 
@@ -108,9 +112,19 @@ export default class F1120S extends SCorpForm {
   // Line 20: Total deductions (add lines 7 through 19)
   l20 = (): number => {
     return sumFields([
-      this.l7(), this.l8(), this.l9(), this.l10(), this.l11(),
-      this.l12(), this.l13(), this.l14(), this.l15(), this.l16(),
-      this.l17(), this.l18(), this.l19()
+      this.l7(),
+      this.l8(),
+      this.l9(),
+      this.l10(),
+      this.l11(),
+      this.l12(),
+      this.l13(),
+      this.l14(),
+      this.l15(),
+      this.l16(),
+      this.l17(),
+      this.l18(),
+      this.l19()
     ])
   }
 
@@ -134,7 +148,7 @@ export default class F1120S extends SCorpForm {
   l23a = (): number => this.data.estimatedTaxPayments
 
   // Line 23b: Tax deposited with Form 7004
-  l23b = (): number => 0  // Would need to track
+  l23b = (): number => 0 // Would need to track
 
   // Line 23c: Credit for federal tax paid on fuels
   l23c = (): number => 0
@@ -188,16 +202,17 @@ export default class F1120S extends SCorpForm {
   // =========================================================================
 
   // Question 1: Business activity code
-  businessActivityCode = (): string => this.data.entity.principalBusinessActivity
+  businessActivityCode = (): string =>
+    this.data.entity.principalBusinessActivity
 
   // Question 2: Product or service
   productOrService = (): string => this.data.entity.principalProductOrService
 
   // Question 3: Did S-Corp own 20% or more of any foreign/domestic corporation?
-  ownsOtherCorps = (): boolean => false  // Would need to track
+  ownsOtherCorps = (): boolean => false // Would need to track
 
   // Question 5: At any time during tax year, did corporation have assets abroad?
-  hasAssetsAbroad = (): boolean => false  // Would need to track
+  hasAssetsAbroad = (): boolean => false // Would need to track
 
   // Question 6: Total shareholders at end of year
   totalShareholders = (): number => this.data.shareholders.length
@@ -250,7 +265,7 @@ export default class F1120S extends SCorpForm {
   }
 
   // Beginning of year assets
-  beginningAssets = (): number => 0  // Would need prior year data
+  beginningAssets = (): number => 0 // Would need prior year data
 
   // End of year assets
   endingAssets = (): number => this.data.entity.totalAssets
@@ -268,7 +283,10 @@ export default class F1120S extends SCorpForm {
 
   // Total ownership percentage (should be 100)
   totalOwnership = (): number => {
-    return this.data.shareholders.reduce((sum, s) => sum + s.ownershipPercentage, 0)
+    return this.data.shareholders.reduce(
+      (sum, s) => sum + s.ownershipPercentage,
+      0
+    )
   }
 
   // Get shareholder's K-1 allocation
@@ -294,7 +312,7 @@ export default class F1120S extends SCorpForm {
       charitableContributions: Math.round(k.charitableContributions * pct),
       lowIncomeHousingCredit: Math.round(k.lowIncomeHousingCredit * pct),
       otherCredits: Math.round(k.otherCredits * pct),
-      netEarningsSE: 0,  // S-Corp shareholders don't have SE income from K-1
+      netEarningsSE: 0, // S-Corp shareholders don't have SE income from K-1
       taxExemptInterest: Math.round(k.taxExemptInterest * pct),
       otherTaxExemptIncome: Math.round(k.otherTaxExemptIncome * pct),
       nondeductibleExpenses: Math.round(k.nondeductibleExpenses * pct),
@@ -322,7 +340,9 @@ export default class F1120S extends SCorpForm {
     this.ein(),
     this.address(),
     this.addressLine(),
-    this.data.entity.dateIncorporated ? this.formatDate(this.data.entity.dateIncorporated) : '',
+    this.data.entity.dateIncorporated
+      ? this.formatDate(this.data.entity.dateIncorporated)
+      : '',
     this.data.entity.totalAssets,
     // Accounting method checkboxes
     this.data.entity.accountingMethod === 'cash',

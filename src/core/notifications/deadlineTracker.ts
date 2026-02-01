@@ -66,7 +66,9 @@ export const EXTENSION_DEADLINE_2025 = new Date(2025, 9, 15) // October 15, 2025
 // States that differ from the federal April 15 deadline
 // ============================================================================
 
-export const STATE_FILING_DEADLINES: Partial<Record<State, { date: Date; year: number }>> = {
+export const STATE_FILING_DEADLINES: Partial<
+  Record<State, { date: Date; year: number }>
+> = {
   // Most states follow April 15, but some have different dates
   // Adding common exceptions:
   DE: { date: new Date(2025, 3, 30), year: 2025 }, // Delaware: April 30
@@ -303,7 +305,7 @@ export const addDeadlineStatus = (
 export const getAllDeadlinesForYear = (
   taxYear: number,
   states: State[] = [],
-  includeExtension: boolean = true,
+  includeExtension = true,
   referenceDate: Date = new Date()
 ): DeadlineWithStatus[] => {
   const deadlines: Deadline[] = [
@@ -402,7 +404,9 @@ export const getQuarterFromDeadlineType = (
 /**
  * Get deadline type for a specific quarter
  */
-export const getDeadlineTypeForQuarter = (quarter: 1 | 2 | 3 | 4): DeadlineType => {
+export const getDeadlineTypeForQuarter = (
+  quarter: 1 | 2 | 3 | 4
+): DeadlineType => {
   switch (quarter) {
     case 1:
       return DeadlineType.ESTIMATED_TAX_Q1

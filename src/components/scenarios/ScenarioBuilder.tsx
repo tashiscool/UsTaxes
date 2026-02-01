@@ -281,7 +281,10 @@ const ScenarioBuilder = ({
 
       case 'CHANGE_FILING_STATUS':
         value = newModValue as FilingStatus
-        label = `Change filing status to ${filingStatusOptions.find((o) => o.value === newModValue)?.label || newModValue}`
+        label = `Change filing status to ${
+          filingStatusOptions.find((o) => o.value === newModValue)?.label ||
+          newModValue
+        }`
         break
     }
 
@@ -543,7 +546,9 @@ const ScenarioBuilder = ({
             </Typography>
             <Typography
               variant="h6"
-              className={taxDiff <= 0 ? classes.positiveValue : classes.negativeValue}
+              className={
+                taxDiff <= 0 ? classes.positiveValue : classes.negativeValue
+              }
             >
               {taxDiff > 0 ? '+' : ''}
               {formatCurrency(taxDiff)}
@@ -555,7 +560,9 @@ const ScenarioBuilder = ({
             </Typography>
             <Typography
               variant="h6"
-              className={refundDiff >= 0 ? classes.positiveValue : classes.negativeValue}
+              className={
+                refundDiff >= 0 ? classes.positiveValue : classes.negativeValue
+              }
             >
               {refundDiff > 0 ? '+' : ''}
               {formatCurrency(refundDiff)}
@@ -627,8 +634,7 @@ const ScenarioBuilder = ({
             <Chip
               label="Max 401(k) (+$23,000)"
               onClick={() => {
-                const currentContrib =
-                  currentInfo.w2s[0]?.box12?.D ?? 0
+                const currentContrib = currentInfo.w2s[0]?.box12?.D ?? 0
                 const mod: ScenarioModification = {
                   id: `mod_${Date.now()}`,
                   type: 'ADD_401K_CONTRIBUTION',
@@ -710,8 +716,8 @@ const ScenarioBuilder = ({
                       typeof mod.value === 'number'
                         ? formatCurrency(mod.value)
                         : typeof mod.value === 'string'
-                          ? mod.value
-                          : JSON.stringify(mod.value)
+                        ? mod.value
+                        : JSON.stringify(mod.value)
                     }
                   />
                   <ListItemSecondaryAction>

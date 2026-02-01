@@ -26,10 +26,10 @@ import { Form8826Data } from 'ustaxes/core/data'
 
 // 2025 parameters
 const disabledAccessParams = {
-  minimumExpenditure: 250,    // First $250 not eligible
-  maximumExpenditure: 10250,  // Cap on eligible expenses
-  creditRate: 0.50,           // 50% of eligible amount
-  maxCredit: 5000             // Maximum credit per year
+  minimumExpenditure: 250, // First $250 not eligible
+  maximumExpenditure: 10250, // Cap on eligible expenses
+  creditRate: 0.5, // 50% of eligible amount
+  maxCredit: 5000 // Maximum credit per year
 }
 
 export default class F8826 extends F1040Attachment {
@@ -42,7 +42,10 @@ export default class F8826 extends F1040Attachment {
 
   hasDisabledAccessCredit = (): boolean => {
     const data = this.creditData()
-    return data !== undefined && data.eligibleAccessExpenditures > disabledAccessParams.minimumExpenditure
+    return (
+      data !== undefined &&
+      data.eligibleAccessExpenditures > disabledAccessParams.minimumExpenditure
+    )
   }
 
   creditData = (): Form8826Data | undefined => {
@@ -60,7 +63,9 @@ export default class F8826 extends F1040Attachment {
   l3 = (): number => Math.max(0, this.l1() - this.l2())
 
   // Line 4: Maximum amount of expenditures
-  l4 = (): number => disabledAccessParams.maximumExpenditure - disabledAccessParams.minimumExpenditure
+  l4 = (): number =>
+    disabledAccessParams.maximumExpenditure -
+    disabledAccessParams.minimumExpenditure
 
   // Line 5: Enter smaller of line 3 or line 4
   l5 = (): number => Math.min(this.l3(), this.l4())
@@ -72,14 +77,15 @@ export default class F8826 extends F1040Attachment {
   l7 = (): number => 0
 
   // Line 8: Add lines 6 and 7 (total credit)
-  l8 = (): number => Math.min(this.l6() + this.l7(), disabledAccessParams.maxCredit)
+  l8 = (): number =>
+    Math.min(this.l6() + this.l7(), disabledAccessParams.maxCredit)
 
   // Credit for Form 3800
   credit = (): number => this.creditData()?.totalCredit ?? this.l8()
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1(),
     this.l2(),
     this.l3(),

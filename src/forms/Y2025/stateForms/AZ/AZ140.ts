@@ -34,37 +34,32 @@ export class AZ140 extends Form {
 
   // Taxpayer information
   primaryFirstName = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.firstName
+    this.info.taxPayer.primaryPerson.firstName
 
   primaryLastName = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.lastName
+    this.info.taxPayer.primaryPerson.lastName
 
-  primarySSN = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.ssid
+  primarySSN = (): string | undefined => this.info.taxPayer.primaryPerson.ssid
 
   spouseFirstName = (): string | undefined =>
     this.info.taxPayer.spouse?.firstName
 
-  spouseLastName = (): string | undefined =>
-    this.info.taxPayer.spouse?.lastName
+  spouseLastName = (): string | undefined => this.info.taxPayer.spouse?.lastName
 
-  spouseSSN = (): string | undefined =>
-    this.info.taxPayer.spouse?.ssid
+  spouseSSN = (): string | undefined => this.info.taxPayer.spouse?.ssid
 
   address = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.address
+    this.info.taxPayer.primaryPerson.address.address
 
   city = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.city
+    this.info.taxPayer.primaryPerson.address.city
 
   stateField = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.state
+    this.info.taxPayer.primaryPerson.address.state
 
-  zip = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.zip
+  zip = (): string | undefined => this.info.taxPayer.primaryPerson.address.zip
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Income section
   // Line 12 - Federal adjusted gross income from federal Form 1040
@@ -116,7 +111,7 @@ export class AZ140 extends Form {
   // Line 19 - Age 65+ exemption
   l19 = (): number => {
     let exemption = 0
-    const dob = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const dob = this.info.taxPayer.primaryPerson.dateOfBirth
     if (dob && dob < new Date(CURRENT_YEAR - 65, 0, 2)) {
       exemption += parameters.seniorExemption
     }
@@ -130,7 +125,7 @@ export class AZ140 extends Form {
   // Line 20 - Blind exemption
   l20 = (): number => {
     let exemption = 0
-    if (this.info.taxPayer.primaryPerson?.isBlind) {
+    if (this.info.taxPayer.primaryPerson.isBlind) {
       exemption += parameters.blindExemption
     }
     if (this.info.taxPayer.spouse?.isBlind) {
@@ -140,7 +135,8 @@ export class AZ140 extends Form {
   }
 
   // Line 21 - Total deductions and exemptions
-  l21 = (): number => sumFields([this.l17(), this.l18(), this.l19(), this.l20()])
+  l21 = (): number =>
+    sumFields([this.l17(), this.l18(), this.l19(), this.l20()])
 
   // Line 22 - Arizona taxable income
   l22 = (): number => Math.max(0, this.l16() - this.l21())
@@ -182,7 +178,8 @@ export class AZ140 extends Form {
   l33 = (): number | undefined => undefined
 
   // Line 34 - Total payments and refundable credits
-  l34 = (): number => sumFields([this.l30(), this.l31(), this.l32(), this.l33()])
+  l34 = (): number =>
+    sumFields([this.l30(), this.l31(), this.l32(), this.l33()])
 
   // Results
   // Line 35 - Tax due (if tax > payments)

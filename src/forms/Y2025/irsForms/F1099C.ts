@@ -31,25 +31,25 @@ export interface F1099CData {
   // Account number
   accountNumber?: string
   // Debt cancellation details
-  dateOfIdentifiableEvent: Date             // Box 1
-  amountOfDebtCancelled: number             // Box 2
-  interestIncludedInBox2: number            // Box 3
-  debtDescription: string                   // Box 4
-  personallyLiable: boolean                 // Box 5 checkbox
-  identifiableEventCode: string             // Box 6
-  fairMarketValueOfProperty: number         // Box 7
+  dateOfIdentifiableEvent: Date // Box 1
+  amountOfDebtCancelled: number // Box 2
+  interestIncludedInBox2: number // Box 3
+  debtDescription: string // Box 4
+  personallyLiable: boolean // Box 5 checkbox
+  identifiableEventCode: string // Box 6
+  fairMarketValueOfProperty: number // Box 7
 }
 
 // Identifiable event codes
 const EVENT_CODES: Record<string, string> = {
-  'A': 'Bankruptcy',
-  'B': 'Other judicial debt relief',
-  'C': 'Statute of limitations or expiration of deficiency period',
-  'D': 'Foreclosure election',
-  'E': 'Debt relief from probate or similar proceeding',
-  'F': 'By agreement',
-  'G': 'Decision or policy to discontinue collection',
-  'H': 'Other actual discharge'
+  A: 'Bankruptcy',
+  B: 'Other judicial debt relief',
+  C: 'Statute of limitations or expiration of deficiency period',
+  D: 'Foreclosure election',
+  E: 'Debt relief from probate or similar proceeding',
+  F: 'By agreement',
+  G: 'Decision or policy to discontinue collection',
+  H: 'Other actual discharge'
 }
 
 export default class F1099C extends F1040Attachment {
@@ -122,13 +122,13 @@ export default class F1099C extends F1040Attachment {
       data?.debtorTIN ?? '',
       data?.accountNumber ?? '',
       // Debt details
-      data?.dateOfIdentifiableEvent?.toLocaleDateString() ?? '',  // Box 1
-      data?.amountOfDebtCancelled ?? 0,                           // Box 2
-      data?.interestIncludedInBox2 ?? 0,                          // Box 3
-      data?.debtDescription ?? '',                                 // Box 4
-      data?.personallyLiable ?? false,                            // Box 5
-      data?.identifiableEventCode ?? '',                          // Box 6
-      data?.fairMarketValueOfProperty ?? 0,                       // Box 7
+      data?.dateOfIdentifiableEvent.toLocaleDateString() ?? '', // Box 1
+      data?.amountOfDebtCancelled ?? 0, // Box 2
+      data?.interestIncludedInBox2 ?? 0, // Box 3
+      data?.debtDescription ?? '', // Box 4
+      data?.personallyLiable ?? false, // Box 5
+      data?.identifiableEventCode ?? '', // Box 6
+      data?.fairMarketValueOfProperty ?? 0, // Box 7
       // Analysis
       this.eventCodeDescription(),
       this.wasPersonallyLiable(),

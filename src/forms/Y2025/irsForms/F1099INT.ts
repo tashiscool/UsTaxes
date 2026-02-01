@@ -35,24 +35,24 @@ export interface F1099INTData {
   // FATCA filing requirement
   fatcaFilingRequired: boolean
   // Interest amounts
-  interestIncome: number                    // Box 1
-  earlyWithdrawalPenalty: number            // Box 2
-  interestOnUSSavingsBonds: number          // Box 3
-  federalTaxWithheld: number                // Box 4
-  investmentExpenses: number                // Box 5
-  foreignTaxPaid: number                    // Box 6
-  foreignCountry: string                    // Box 7
-  taxExemptInterest: number                 // Box 8
-  privateActivityBondInterest: number       // Box 9
-  marketDiscount: number                    // Box 10
-  bondPremium: number                       // Box 11
-  bondPremiumTreasury: number               // Box 12
-  bondPremiumTaxExempt: number              // Box 13
-  taxExemptCUSIP: string                    // Box 14
+  interestIncome: number // Box 1
+  earlyWithdrawalPenalty: number // Box 2
+  interestOnUSSavingsBonds: number // Box 3
+  federalTaxWithheld: number // Box 4
+  investmentExpenses: number // Box 5
+  foreignTaxPaid: number // Box 6
+  foreignCountry: string // Box 7
+  taxExemptInterest: number // Box 8
+  privateActivityBondInterest: number // Box 9
+  marketDiscount: number // Box 10
+  bondPremium: number // Box 11
+  bondPremiumTreasury: number // Box 12
+  bondPremiumTaxExempt: number // Box 13
+  taxExemptCUSIP: string // Box 14
   // State tax
-  stateTaxWithheld: number                  // Box 15
-  stateId: string                           // Box 16
-  stateInterest: number                     // Box 17
+  stateTaxWithheld: number // Box 15
+  stateId: string // Box 16
+  stateInterest: number // Box 17
 }
 
 export default class F1099INT extends F1040Attachment {
@@ -136,20 +136,20 @@ export default class F1099INT extends F1040Attachment {
       data?.accountNumber ?? '',
       data?.fatcaFilingRequired ?? false,
       // Interest amounts
-      data?.interestIncome ?? 0,                    // Box 1
-      data?.earlyWithdrawalPenalty ?? 0,            // Box 2
-      data?.interestOnUSSavingsBonds ?? 0,          // Box 3
-      data?.federalTaxWithheld ?? 0,                // Box 4
-      data?.investmentExpenses ?? 0,                // Box 5
-      data?.foreignTaxPaid ?? 0,                    // Box 6
-      data?.foreignCountry ?? '',                   // Box 7
-      data?.taxExemptInterest ?? 0,                 // Box 8
-      data?.privateActivityBondInterest ?? 0,       // Box 9
-      data?.marketDiscount ?? 0,                    // Box 10
-      data?.bondPremium ?? 0,                       // Box 11
-      data?.bondPremiumTreasury ?? 0,               // Box 12
-      data?.bondPremiumTaxExempt ?? 0,              // Box 13
-      data?.taxExemptCUSIP ?? '',                   // Box 14
+      data?.interestIncome ?? 0, // Box 1
+      data?.earlyWithdrawalPenalty ?? 0, // Box 2
+      data?.interestOnUSSavingsBonds ?? 0, // Box 3
+      data?.federalTaxWithheld ?? 0, // Box 4
+      data?.investmentExpenses ?? 0, // Box 5
+      data?.foreignTaxPaid ?? 0, // Box 6
+      data?.foreignCountry ?? '', // Box 7
+      data?.taxExemptInterest ?? 0, // Box 8
+      data?.privateActivityBondInterest ?? 0, // Box 9
+      data?.marketDiscount ?? 0, // Box 10
+      data?.bondPremium ?? 0, // Box 11
+      data?.bondPremiumTreasury ?? 0, // Box 12
+      data?.bondPremiumTaxExempt ?? 0, // Box 13
+      data?.taxExemptCUSIP ?? '', // Box 14
       // State
       data?.stateTaxWithheld ?? 0,
       data?.stateId ?? '',

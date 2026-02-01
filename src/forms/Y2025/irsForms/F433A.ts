@@ -132,7 +132,9 @@ export default class F433A extends F1040Attachment {
   }
 
   collectionInfo = (): CollectionStatementInfo | undefined => {
-    return this.f1040.info.collectionStatement as CollectionStatementInfo | undefined
+    return this.f1040.info.collectionStatement as
+      | CollectionStatementInfo
+      | undefined
   }
 
   // Section 1: Personal Information
@@ -178,7 +180,10 @@ export default class F433A extends F1040Attachment {
   }
 
   totalVehicleEquity = (): number => {
-    return this.vehicles().reduce((sum, v) => sum + (v.currentMarketValue - v.loanBalance), 0)
+    return this.vehicles().reduce(
+      (sum, v) => sum + (v.currentMarketValue - v.loanBalance),
+      0
+    )
   }
 
   // Section 7: Monthly Income
@@ -234,9 +239,13 @@ export default class F433A extends F1040Attachment {
   }
 
   totalAssets = (): number => {
-    return this.collectionInfo()?.totalAssetsValue ??
-           this.totalBankBalance() + this.totalInvestmentValue() +
-           this.totalRealPropertyEquity() + this.totalVehicleEquity()
+    return (
+      this.collectionInfo()?.totalAssetsValue ??
+      this.totalBankBalance() +
+        this.totalInvestmentValue() +
+        this.totalRealPropertyEquity() +
+        this.totalVehicleEquity()
+    )
   }
 
   totalLiabilities = (): number => {
@@ -254,8 +263,8 @@ export default class F433A extends F1040Attachment {
   // Collection potential calculation (for IRS use)
   // Based on assets that could be liquidated plus future income
   collectionPotential = (): number => {
-    const assetsPotential = this.totalAssets() * 0.8  // 80% of quick sale value
-    const incomePotential = this.monthlyDisposableIncome() * 12  // 12 months
+    const assetsPotential = this.totalAssets() * 0.8 // 80% of quick sale value
+    const incomePotential = this.monthlyDisposableIncome() * 12 // 12 months
     return assetsPotential + incomePotential
   }
 

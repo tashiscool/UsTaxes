@@ -25,7 +25,16 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * - Schedule OI: Other Information
  */
 
-export type VisaStatus = 'F1' | 'J1' | 'M1' | 'Q1' | 'H1B' | 'L1' | 'O1' | 'TN' | 'other'
+export type VisaStatus =
+  | 'F1'
+  | 'J1'
+  | 'M1'
+  | 'Q1'
+  | 'H1B'
+  | 'L1'
+  | 'O1'
+  | 'TN'
+  | 'other'
 
 export interface NonresidentAlienInfo {
   // Personal Information
@@ -81,7 +90,7 @@ export interface Form1040NRInfo {
 
 export default class F1040NR extends F1040Attachment {
   tag: FormTag = 'f1040nr'
-  sequenceIndex = 0  // Primary form for nonresidents
+  sequenceIndex = 0 // Primary form for nonresidents
 
   isNeeded = (): boolean => {
     return this.hasNonresidentInfo()
@@ -100,8 +109,10 @@ export default class F1040NR extends F1040Attachment {
   }
 
   // Personal Information
-  countryOfCitizenship = (): string => this.nonresidentInfo()?.countryOfCitizenship ?? ''
-  countryOfResidence = (): string => this.nonresidentInfo()?.countryOfResidence ?? ''
+  countryOfCitizenship = (): string =>
+    this.nonresidentInfo()?.countryOfCitizenship ?? ''
+  countryOfResidence = (): string =>
+    this.nonresidentInfo()?.countryOfResidence ?? ''
   visaType = (): VisaStatus => this.nonresidentInfo()?.visaType ?? 'other'
   daysInUSThisYear = (): number => this.nonresidentInfo()?.daysInUSThisYear ?? 0
 
@@ -110,22 +121,29 @@ export default class F1040NR extends F1040Attachment {
     const info = this.nonresidentInfo()
     if (!info) return 0
     // Current year: 100%, Prior year: 1/3, 2 years prior: 1/6
-    return info.daysInUSThisYear +
-           Math.floor((info.daysInUSPriorYear ?? 0) / 3) +
-           Math.floor((info.daysInUS2YearsPrior ?? 0) / 6)
+    return (
+      info.daysInUSThisYear +
+      Math.floor((info.daysInUSPriorYear ?? 0) / 3) +
+      Math.floor((info.daysInUS2YearsPrior ?? 0) / 6)
+    )
   }
 
   meetsSubstantialPresenceTest = (): boolean => {
     // Must have 31+ days current year and 183+ days calculated
     const info = this.nonresidentInfo()
-    return (info?.daysInUSThisYear ?? 0) >= 31 && this.substantialPresenceDays() >= 183
+    return (
+      (info?.daysInUSThisYear ?? 0) >= 31 &&
+      this.substantialPresenceDays() >= 183
+    )
   }
 
   // Tax Treaty Information
-  claimsTaxTreaty = (): boolean => this.nonresidentInfo()?.claimsTaxTreaty ?? false
+  claimsTaxTreaty = (): boolean =>
+    this.nonresidentInfo()?.claimsTaxTreaty ?? false
   treatyCountry = (): string => this.nonresidentInfo()?.treatyCountry ?? ''
   treatyArticle = (): string => this.nonresidentInfo()?.treatyArticle ?? ''
-  treatyBenefitAmount = (): number => this.nonresidentInfo()?.treatyBenefitAmount ?? 0
+  treatyBenefitAmount = (): number =>
+    this.nonresidentInfo()?.treatyBenefitAmount ?? 0
 
   // Effectively Connected Income (ECI)
   eci = (): EffectivelyConnectedIncome | undefined => {
@@ -178,9 +196,9 @@ export default class F1040NR extends F1040Attachment {
   fdapTaxRate = (): number => {
     if (this.claimsTaxTreaty() && this.treatyBenefitAmount() > 0) {
       // Treaty may reduce rate
-      return 0.30 - (this.treatyBenefitAmount() / this.totalFDAPIncome())
+      return 0.3 - this.treatyBenefitAmount() / this.totalFDAPIncome()
     }
-    return 0.30
+    return 0.3
   }
 
   fdapTax = (): number => {
@@ -203,7 +221,8 @@ export default class F1040NR extends F1040Attachment {
 
   // Payments
   taxWithheld = (): number => this.f1040NRInfo()?.taxWithheld ?? 0
-  estimatedTaxPayments = (): number => this.f1040NRInfo()?.estimatedTaxPayments ?? 0
+  estimatedTaxPayments = (): number =>
+    this.f1040NRInfo()?.estimatedTaxPayments ?? 0
   totalPayments = (): number => this.taxWithheld() + this.estimatedTaxPayments()
 
   fields = (): Field[] => {
@@ -219,7 +238,7 @@ export default class F1040NR extends F1040Attachment {
       this.countryOfCitizenship(),
       this.countryOfResidence(),
       this.visaType(),
-      info?.dateEnteredUS?.toLocaleDateString() ?? '',
+      info?.dateEnteredUS.toLocaleDateString() ?? '',
       this.daysInUSThisYear(),
       this.substantialPresenceDays(),
       this.meetsSubstantialPresenceTest(),

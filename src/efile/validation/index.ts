@@ -40,7 +40,11 @@ export {
 // Import for convenience function
 // ============================================================================
 
-import { SchemaValidator, ValidationResult, ValidationSeverity } from './schemaValidator'
+import {
+  SchemaValidator,
+  ValidationResult,
+  ValidationSeverity
+} from './schemaValidator'
 import {
   BusinessRulesEngine,
   BusinessRuleError,
@@ -194,7 +198,13 @@ export async function validateForSubmission(
   // Run business rule validation
   const businessRuleErrors = businessRulesEngine.check(returnData, taxYear)
 
-  return buildResult(schemaResult, businessRuleErrors, taxYear, stopOnFirstError, includeInfo)
+  return buildResult(
+    schemaResult,
+    businessRuleErrors,
+    taxYear,
+    stopOnFirstError,
+    includeInfo
+  )
 }
 
 /**
@@ -267,8 +277,8 @@ export async function getValidationSummary(
   const result = await validateForSubmission(xml, returnData, { taxYear })
 
   const categories = new Set<string>()
-  result.blockingIssues.forEach(issue => categories.add(issue.source))
-  result.warningsToReview.forEach(issue => categories.add(issue.source))
+  result.blockingIssues.forEach((issue) => categories.add(issue.source))
+  result.warningsToReview.forEach((issue) => categories.add(issue.source))
 
   return {
     isValid: result.valid,
@@ -294,8 +304,12 @@ function buildResult(
 ): SubmissionValidationResult {
   const schemaErrors = schemaResult.errors
   const schemaWarnings = schemaResult.warnings
-  const brErrors = businessRuleErrors.filter(e => e.severity === RuleSeverity.ERROR)
-  const brWarnings = businessRuleErrors.filter(e => e.severity === RuleSeverity.WARNING)
+  const brErrors = businessRuleErrors.filter(
+    (e) => e.severity === RuleSeverity.ERROR
+  )
+  const brWarnings = businessRuleErrors.filter(
+    (e) => e.severity === RuleSeverity.WARNING
+  )
 
   const totalErrors = schemaErrors.length + brErrors.length
   const totalWarnings = schemaWarnings.length + brWarnings.length
@@ -303,7 +317,7 @@ function buildResult(
   // Build blocking issues list
   const blockingIssues: SubmissionValidationResult['blockingIssues'] = []
 
-  schemaErrors.forEach(error => {
+  schemaErrors.forEach((error) => {
     blockingIssues.push({
       source: 'schema',
       code: error.code,
@@ -312,7 +326,7 @@ function buildResult(
     })
   })
 
-  brErrors.forEach(error => {
+  brErrors.forEach((error) => {
     blockingIssues.push({
       source: 'businessRule',
       code: error.ruleId,
@@ -324,7 +338,7 @@ function buildResult(
   // Build warnings list
   const warningsToReview: SubmissionValidationResult['warningsToReview'] = []
 
-  schemaWarnings.forEach(warning => {
+  schemaWarnings.forEach((warning) => {
     warningsToReview.push({
       source: 'schema',
       code: warning.code,
@@ -333,7 +347,7 @@ function buildResult(
     })
   })
 
-  brWarnings.forEach(warning => {
+  brWarnings.forEach((warning) => {
     warningsToReview.push({
       source: 'businessRule',
       code: warning.ruleId,
@@ -401,7 +415,9 @@ export function createBusinessRulesEngine(): BusinessRulesEngine {
  * @param result - The validation result
  * @returns Formatted string of errors
  */
-export function formatValidationErrors(result: SubmissionValidationResult): string {
+export function formatValidationErrors(
+  result: SubmissionValidationResult
+): string {
   const lines: string[] = []
 
   lines.push('=== Validation Results ===')
@@ -425,7 +441,9 @@ export function formatValidationErrors(result: SubmissionValidationResult): stri
   if (result.warningsToReview.length > 0) {
     lines.push('--- WARNINGS (Review) ---')
     result.warningsToReview.forEach((warning, index) => {
-      lines.push(`${index + 1}. [${warning.source.toUpperCase()}] ${warning.code}`)
+      lines.push(
+        `${index + 1}. [${warning.source.toUpperCase()}] ${warning.code}`
+      )
       lines.push(`   ${warning.message}`)
       if (warning.suggestion) {
         lines.push(`   Suggestion: ${warning.suggestion}`)
@@ -437,7 +455,11 @@ export function formatValidationErrors(result: SubmissionValidationResult): stri
   lines.push('--- Summary ---')
   lines.push(`Total Errors: ${result.summary.totalErrors}`)
   lines.push(`Total Warnings: ${result.summary.totalWarnings}`)
-  lines.push(`Ready for Submission: ${result.summary.isReadyForSubmission ? 'Yes' : 'No'}`)
+  lines.push(
+    `Ready for Submission: ${
+      result.summary.isReadyForSubmission ? 'Yes' : 'No'
+    }`
+  )
 
   return lines.join('\n')
 }
@@ -453,25 +475,29 @@ export function filterByForms(
   result: SubmissionValidationResult,
   formTypes: string[]
 ): SubmissionValidationResult {
-  const filteredBusinessErrors = result.businessRules.errors.filter(
-    e => e.forms.some(f => formTypes.includes(f))
+  const filteredBusinessErrors = result.businessRules.errors.filter((e) =>
+    e.forms.some((f) => formTypes.includes(f))
   )
-  const filteredBusinessWarnings = result.businessRules.warnings.filter(
-    e => e.forms.some(f => formTypes.includes(f))
+  const filteredBusinessWarnings = result.businessRules.warnings.filter((e) =>
+    e.forms.some((f) => formTypes.includes(f))
   )
 
-  const filteredBlockingIssues = result.blockingIssues.filter(issue => {
+  const filteredBlockingIssues = result.blockingIssues.filter((issue) => {
     if (issue.source === 'businessRule') {
-      const br = result.businessRules.errors.find(e => e.ruleId === issue.code)
-      return br && br.forms.some(f => formTypes.includes(f))
+      const br = result.businessRules.errors.find(
+        (e) => e.ruleId === issue.code
+      )
+      return br && br.forms.some((f) => formTypes.includes(f))
     }
     return true // Keep all schema errors
   })
 
-  const filteredWarnings = result.warningsToReview.filter(warning => {
+  const filteredWarnings = result.warningsToReview.filter((warning) => {
     if (warning.source === 'businessRule') {
-      const br = result.businessRules.warnings.find(e => e.ruleId === warning.code)
-      return br && br.forms.some(f => formTypes.includes(f))
+      const br = result.businessRules.warnings.find(
+        (e) => e.ruleId === warning.code
+      )
+      return br && br.forms.some((f) => formTypes.includes(f))
     }
     return true // Keep all schema warnings
   })
@@ -489,8 +515,11 @@ export function filterByForms(
       ...result.summary,
       businessRuleErrors: filteredBusinessErrors.length,
       totalErrors: result.summary.schemaErrors + filteredBusinessErrors.length,
-      totalWarnings: result.schemaValidation.warnings.length + filteredBusinessWarnings.length,
-      isReadyForSubmission: result.summary.schemaErrors + filteredBusinessErrors.length === 0
+      totalWarnings:
+        result.schemaValidation.warnings.length +
+        filteredBusinessWarnings.length,
+      isReadyForSubmission:
+        result.summary.schemaErrors + filteredBusinessErrors.length === 0
     }
   }
 }
@@ -504,7 +533,10 @@ export function filterByForms(
 export function groupByCategory(
   result: SubmissionValidationResult
 ): Record<string, Array<SubmissionValidationResult['blockingIssues'][0]>> {
-  const groups: Record<string, Array<SubmissionValidationResult['blockingIssues'][0]>> = {
+  const groups: Record<
+    string,
+    Array<SubmissionValidationResult['blockingIssues'][0]>
+  > = {
     schema: [],
     mathematical: [],
     consistency: [],
@@ -517,11 +549,13 @@ export function groupByCategory(
     other: []
   }
 
-  result.blockingIssues.forEach(issue => {
+  result.blockingIssues.forEach((issue) => {
     if (issue.source === 'schema') {
       groups.schema.push(issue)
     } else {
-      const br = result.businessRules.errors.find(e => e.ruleId === issue.code)
+      const br = result.businessRules.errors.find(
+        (e) => e.ruleId === issue.code
+      )
       if (br) {
         const category = br.category.toLowerCase()
         if (groups[category]) {
@@ -534,7 +568,7 @@ export function groupByCategory(
   })
 
   // Remove empty groups
-  Object.keys(groups).forEach(key => {
+  Object.keys(groups).forEach((key) => {
     if (groups[key].length === 0) {
       delete groups[key]
     }

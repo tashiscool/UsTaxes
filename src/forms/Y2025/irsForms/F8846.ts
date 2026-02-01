@@ -26,8 +26,8 @@ import { Form8846Data } from 'ustaxes/core/data'
 
 // 2025 parameters
 const tipCreditParams = {
-  employerFicaRate: 0.0765,  // 7.65% (6.2% SS + 1.45% Medicare)
-  minimumWage: 7.25          // Federal minimum wage
+  employerFicaRate: 0.0765, // 7.65% (6.2% SS + 1.45% Medicare)
+  minimumWage: 7.25 // Federal minimum wage
 }
 
 export default class F8846 extends F1040Attachment {
@@ -84,11 +84,12 @@ export default class F8846 extends F1040Attachment {
   credit = (): number => this.creditData()?.totalCredit ?? this.l6()
 
   // Number of tipped employees
-  numberOfEmployees = (): number => this.creditData()?.tippedEmployees.length ?? 0
+  numberOfEmployees = (): number =>
+    this.creditData()?.tippedEmployees.length ?? 0
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1(),
     this.l2(),
     this.l3(),

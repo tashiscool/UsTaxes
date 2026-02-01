@@ -26,7 +26,7 @@ const passiveActivityLimits = {
   phaseOutThreshold: {
     [FilingStatus.S]: 100000,
     [FilingStatus.MFJ]: 100000,
-    [FilingStatus.MFS]: 50000,  // If lived apart all year
+    [FilingStatus.MFS]: 50000, // If lived apart all year
     [FilingStatus.HOH]: 100000,
     [FilingStatus.W]: 100000
   },
@@ -34,12 +34,12 @@ const passiveActivityLimits = {
   phaseOutComplete: {
     [FilingStatus.S]: 150000,
     [FilingStatus.MFJ]: 150000,
-    [FilingStatus.MFS]: 75000,  // If lived apart all year
+    [FilingStatus.MFS]: 75000, // If lived apart all year
     [FilingStatus.HOH]: 150000,
     [FilingStatus.W]: 150000
   },
   // Phase-out rate (50 cents per dollar over threshold)
-  phaseOutRate: 0.50
+  phaseOutRate: 0.5
 }
 
 export default class F8582 extends F1040Attachment {
@@ -80,14 +80,14 @@ export default class F8582 extends F1040Attachment {
   otherPassiveIncome = (): number => {
     // From Schedule K-1s marked as passive
     const k1Income = this.f1040.info.scheduleK1Form1065s
-      .filter(k => k.isPassive)
+      .filter((k) => k.isPassive)
       .reduce((sum, k) => sum + Math.max(0, k.ordinaryBusinessIncome), 0)
     return k1Income
   }
 
   otherPassiveLoss = (): number => {
     const k1Loss = this.f1040.info.scheduleK1Form1065s
-      .filter(k => k.isPassive)
+      .filter((k) => k.isPassive)
       .reduce((sum, k) => sum + Math.min(0, k.ordinaryBusinessIncome), 0)
     return k1Loss
   }
@@ -111,7 +111,7 @@ export default class F8582 extends F1040Attachment {
   l1b = (): number => Math.abs(this.totalRentalLoss())
 
   // Line 1c: Prior year unallowed losses (rental real estate)
-  l1c = (): number => 0  // Would need carryover tracking
+  l1c = (): number => 0 // Would need carryover tracking
 
   // Line 1d: Combine lines 1a, 1b, and 1c
   l1d = (): number => this.l1a() - this.l1b() - this.l1c()
@@ -123,7 +123,7 @@ export default class F8582 extends F1040Attachment {
   l2b = (): number => Math.abs(this.otherPassiveLoss())
 
   // Line 2c: Prior year unallowed losses (other passive)
-  l2c = (): number => 0  // Would need carryover tracking
+  l2c = (): number => 0 // Would need carryover tracking
 
   // Line 2d: Combine lines 2a, 2b, and 2c
   l2d = (): number => this.l2a() - this.l2b() - this.l2c()
@@ -212,11 +212,12 @@ export default class F8582 extends F1040Attachment {
 
     // Calculate proportion of each rental's loss to total loss
     const allowedLoss = Math.min(totalRentalLoss, this.totalLossAllowed())
-    const allowanceRatio = totalRentalLoss > 0 ? allowedLoss / totalRentalLoss : 0
+    const allowanceRatio =
+      totalRentalLoss > 0 ? allowedLoss / totalRentalLoss : 0
 
     return rentalNet.map((v) => {
       if (v === undefined || v >= 0) {
-        return v  // Income passes through unchanged
+        return v // Income passes through unchanged
       }
       // Apply limitation proportionally to each property's loss
       return Math.round(v * allowanceRatio)
@@ -225,7 +226,7 @@ export default class F8582 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Part I
     this.l1a(),
     this.l1b(),

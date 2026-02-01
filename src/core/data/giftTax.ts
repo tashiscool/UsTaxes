@@ -44,9 +44,9 @@ export enum GiftType {
  * Gift tax schedule part
  */
 export enum GiftSchedulePart {
-  Part1_GiftTaxOnly = 'Part1',       // Gifts subject only to gift tax
-  Part2_DirectSkips = 'Part2',       // Direct skips (both gift tax and GST)
-  Part3_IndirectSkips = 'Part3'      // Indirect skips and other transfers in trust
+  Part1_GiftTaxOnly = 'Part1', // Gifts subject only to gift tax
+  Part2_DirectSkips = 'Part2', // Direct skips (both gift tax and GST)
+  Part3_IndirectSkips = 'Part3' // Indirect skips and other transfers in trust
 }
 
 // =============================================================================
@@ -291,7 +291,7 @@ export const GIFT_TAX_PARAMETERS_2025: GiftTaxParameters = {
   annualExclusion: 19000,
   basicExclusionAmount: 13990000,
   maxGSTExemption: 13990000,
-  maxTaxRate: 0.40
+  maxTaxRate: 0.4
 }
 
 /**
@@ -300,17 +300,17 @@ export const GIFT_TAX_PARAMETERS_2025: GiftTaxParameters = {
  */
 export const GIFT_TAX_BRACKETS_2025 = [
   { min: 0, max: 10000, rate: 0.18 },
-  { min: 10000, max: 20000, rate: 0.20 },
+  { min: 10000, max: 20000, rate: 0.2 },
   { min: 20000, max: 40000, rate: 0.22 },
   { min: 40000, max: 60000, rate: 0.24 },
   { min: 60000, max: 80000, rate: 0.26 },
   { min: 80000, max: 100000, rate: 0.28 },
-  { min: 100000, max: 150000, rate: 0.30 },
+  { min: 100000, max: 150000, rate: 0.3 },
   { min: 150000, max: 250000, rate: 0.32 },
   { min: 250000, max: 500000, rate: 0.34 },
   { min: 500000, max: 750000, rate: 0.37 },
   { min: 750000, max: 1000000, rate: 0.39 },
-  { min: 1000000, max: Infinity, rate: 0.40 }
+  { min: 1000000, max: Infinity, rate: 0.4 }
 ]
 
 // =============================================================================
@@ -328,10 +328,7 @@ export function calculateGiftTax(taxableAmount: number, year = 2025): number {
   for (const bracket of brackets) {
     if (remaining <= 0) break
 
-    const taxableInBracket = Math.min(
-      remaining,
-      bracket.max - bracket.min
-    )
+    const taxableInBracket = Math.min(remaining, bracket.max - bracket.min)
 
     if (taxableInBracket > 0) {
       tax += taxableInBracket * bracket.rate
@@ -415,12 +412,12 @@ export function calculateTaxableGifts(
 
   // Marital deduction (unlimited for gifts to spouse)
   const maritalDeduction = gifts
-    .filter(g => g.isDeductibleGiftToSpouse)
+    .filter((g) => g.isDeductibleGiftToSpouse)
     .reduce((sum, g) => sum + g.netTransfer, 0)
 
   // Charitable deduction
   const charitableDeduction = gifts
-    .filter(g => g.isCharitableGift)
+    .filter((g) => g.isCharitableGift)
     .reduce((sum, g) => sum + g.netTransfer, 0)
 
   const taxableGifts = Math.max(

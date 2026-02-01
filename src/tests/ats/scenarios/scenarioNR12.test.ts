@@ -402,7 +402,7 @@ describe('ATS Scenario NR-12 - John Harrier (Form 1040-NR MFS Partnership Transf
 
   describe('Schedule D (Capital Gains)', () => {
     it('should have short-term gain on line 3 (Box C)', () => {
-      expect(scheduleD.line3?.gain).toBe(350000)
+      expect(scheduleD.line3.gain).toBe(350000)
     })
 
     it('should have net short-term capital gain', () => {
@@ -504,7 +504,7 @@ describe('ATS Scenario NR-12 - John Harrier (Form 1040-NR MFS Partnership Transf
     })
 
     it('should flow Form 8949 to Schedule D', () => {
-      expect(scheduleD.line3?.gain).toBe(form8949.line2Totals.gain)
+      expect(scheduleD.line3.gain).toBe(form8949.line2Totals.gain)
     })
 
     it('should flow Schedule D to Form 1040-NR', () => {
@@ -546,7 +546,7 @@ describe('ATS Scenario NR-12 - John Harrier (Form 1040-NR MFS Partnership Transf
       expect(form8949.line2Totals.gain).toBe(pGain)
 
       // Schedule D line 3: Same gain
-      expect(scheduleD.line3?.gain).toBe(pGain)
+      expect(scheduleD.line3.gain).toBe(pGain)
 
       // Schedule D line 7: Net short-term
       expect(scheduleD.line7NetShortTerm).toBe(pGain)

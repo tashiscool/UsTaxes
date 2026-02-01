@@ -93,11 +93,12 @@ export default class Schedule990D extends F1040Attachment {
   }
 
   schedule990DData = (): Schedule990DData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Part I: Donor Advised Funds
-  hasDonorAdvisedFunds = (): boolean => this.schedule990DData()?.hasDonorAdvisedFunds ?? false
+  hasDonorAdvisedFunds = (): boolean =>
+    this.schedule990DData()?.hasDonorAdvisedFunds ?? false
 
   totalDonorAdvisedFundValue = (): number => {
     const funds = this.schedule990DData()?.donorAdvisedFunds ?? []
@@ -105,18 +106,21 @@ export default class Schedule990D extends F1040Attachment {
   }
 
   // Part II: Conservation Easements
-  hasConservationEasements = (): boolean => this.schedule990DData()?.hasConservationEasements ?? false
-  totalEasementAcreage = (): number => this.schedule990DData()?.totalEasementAcreage ?? 0
+  hasConservationEasements = (): boolean =>
+    this.schedule990DData()?.hasConservationEasements ?? false
+  totalEasementAcreage = (): number =>
+    this.schedule990DData()?.totalEasementAcreage ?? 0
 
   // Part V: Endowment Funds
-  hasEndowmentFunds = (): boolean => this.schedule990DData()?.hasEndowmentFunds ?? false
+  hasEndowmentFunds = (): boolean =>
+    this.schedule990DData()?.hasEndowmentFunds ?? false
 
   endowmentBeginningBalance = (): number => {
-    return this.schedule990DData()?.endowmentFunds?.beginningBalance ?? 0
+    return this.schedule990DData()?.endowmentFunds.beginningBalance ?? 0
   }
 
   endowmentEndingBalance = (): number => {
-    return this.schedule990DData()?.endowmentFunds?.endingBalance ?? 0
+    return this.schedule990DData()?.endowmentFunds.endingBalance ?? 0
   }
 
   endowmentChange = (): number => {
@@ -177,10 +181,10 @@ export default class Schedule990D extends F1040Attachment {
       // Part V: Endowment Funds
       this.hasEndowmentFunds(),
       this.endowmentBeginningBalance(),
-      data?.endowmentFunds?.contributions ?? 0,
-      data?.endowmentFunds?.investmentEarnings ?? 0,
-      data?.endowmentFunds?.grantsAndScholarships ?? 0,
-      data?.endowmentFunds?.administrativeExpenses ?? 0,
+      data?.endowmentFunds.contributions ?? 0,
+      data?.endowmentFunds.investmentEarnings ?? 0,
+      data?.endowmentFunds.grantsAndScholarships ?? 0,
+      data?.endowmentFunds.administrativeExpenses ?? 0,
       this.endowmentEndingBalance(),
       // Part VI: Fixed Assets
       data?.landValue ?? 0,

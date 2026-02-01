@@ -10,7 +10,11 @@ export * from './fieldExtractor'
 export * from './documentTemplates'
 
 import { OCREngine, getOCREngine, OCRResult } from './ocrEngine'
-import { preprocessForOCR, preprocessForPreview, PreprocessedImage } from './imagePreprocessor'
+import {
+  preprocessForOCR,
+  preprocessForPreview,
+  PreprocessedImage
+} from './imagePreprocessor'
 import {
   DocumentType,
   ExtractionResult,

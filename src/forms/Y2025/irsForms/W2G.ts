@@ -31,39 +31,39 @@ export interface W2GData {
   winnerAddress: string
   winnerSSN: string
   // Winnings details
-  grossWinnings: number                    // Box 1
-  dateWon: Date                            // Box 2
-  typeOfWager: string                      // Box 3
-  federalIncomeTaxWithheld: number         // Box 4
-  transactionDescription: string           // Box 5
-  race?: string                            // Box 6
-  winningsFromIdenticalWagers: number      // Box 7
-  cashier?: string                         // Box 8
-  winnerTINType: 'SSN' | 'EIN'             // Box 9
-  windowNumber?: string                    // Box 10
-  firstId?: string                         // Box 11
-  secondId?: string                        // Box 12
-  stateWinnings?: number                   // Box 13
-  stateIncomeTaxWithheld?: number          // Box 14
-  state?: string                           // Box 15
-  statePayerId?: string                    // Box 16
-  localWinnings?: number                   // Box 17
-  localIncomeTaxWithheld?: number          // Box 18
-  localityName?: string                    // Box 19
+  grossWinnings: number // Box 1
+  dateWon: Date // Box 2
+  typeOfWager: string // Box 3
+  federalIncomeTaxWithheld: number // Box 4
+  transactionDescription: string // Box 5
+  race?: string // Box 6
+  winningsFromIdenticalWagers: number // Box 7
+  cashier?: string // Box 8
+  winnerTINType: 'SSN' | 'EIN' // Box 9
+  windowNumber?: string // Box 10
+  firstId?: string // Box 11
+  secondId?: string // Box 12
+  stateWinnings?: number // Box 13
+  stateIncomeTaxWithheld?: number // Box 14
+  state?: string // Box 15
+  statePayerId?: string // Box 16
+  localWinnings?: number // Box 17
+  localIncomeTaxWithheld?: number // Box 18
+  localityName?: string // Box 19
 }
 
 // Wager type codes
 const WAGER_TYPES: Record<string, string> = {
-  'SL': 'Slot machines',
-  'BG': 'Bingo',
-  'KN': 'Keno',
-  'PK': 'Poker tournaments',
-  'HR': 'Horse racing',
-  'DR': 'Dog racing',
-  'JA': 'Jai alai',
-  'LO': 'Lottery',
-  'SW': 'Sweepstakes',
-  'OT': 'Other'
+  SL: 'Slot machines',
+  BG: 'Bingo',
+  KN: 'Keno',
+  PK: 'Poker tournaments',
+  HR: 'Horse racing',
+  DR: 'Dog racing',
+  JA: 'Jai alai',
+  LO: 'Lottery',
+  SW: 'Sweepstakes',
+  OT: 'Other'
 }
 
 export default class W2G extends F1040Attachment {
@@ -130,9 +130,11 @@ export default class W2G extends F1040Attachment {
 
   // Total tax withheld
   totalTaxWithheld = (): number => {
-    return this.federalIncomeTaxWithheld() +
-           this.stateIncomeTaxWithheld() +
-           this.localIncomeTaxWithheld()
+    return (
+      this.federalIncomeTaxWithheld() +
+      this.stateIncomeTaxWithheld() +
+      this.localIncomeTaxWithheld()
+    )
   }
 
   // To Form 1040 Line 1h (Other income)
@@ -155,27 +157,27 @@ export default class W2G extends F1040Attachment {
       data?.winnerAddress ?? '',
       data?.winnerSSN ?? '',
       // Winnings
-      data?.grossWinnings ?? 0,                    // Box 1
-      data?.dateWon?.toLocaleDateString() ?? '',   // Box 2
-      data?.typeOfWager ?? '',                     // Box 3
-      data?.federalIncomeTaxWithheld ?? 0,         // Box 4
-      data?.transactionDescription ?? '',          // Box 5
-      data?.race ?? '',                            // Box 6
-      data?.winningsFromIdenticalWagers ?? 0,      // Box 7
-      data?.cashier ?? '',                         // Box 8
-      data?.winnerTINType === 'SSN',               // Box 9 SSN
-      data?.winnerTINType === 'EIN',               // Box 9 EIN
-      data?.windowNumber ?? '',                    // Box 10
-      data?.firstId ?? '',                         // Box 11
-      data?.secondId ?? '',                        // Box 12
+      data?.grossWinnings ?? 0, // Box 1
+      data?.dateWon.toLocaleDateString() ?? '', // Box 2
+      data?.typeOfWager ?? '', // Box 3
+      data?.federalIncomeTaxWithheld ?? 0, // Box 4
+      data?.transactionDescription ?? '', // Box 5
+      data?.race ?? '', // Box 6
+      data?.winningsFromIdenticalWagers ?? 0, // Box 7
+      data?.cashier ?? '', // Box 8
+      data?.winnerTINType === 'SSN', // Box 9 SSN
+      data?.winnerTINType === 'EIN', // Box 9 EIN
+      data?.windowNumber ?? '', // Box 10
+      data?.firstId ?? '', // Box 11
+      data?.secondId ?? '', // Box 12
       // State/Local
-      data?.stateWinnings ?? 0,                    // Box 13
-      data?.stateIncomeTaxWithheld ?? 0,           // Box 14
-      data?.state ?? '',                           // Box 15
-      data?.statePayerId ?? '',                    // Box 16
-      data?.localWinnings ?? 0,                    // Box 17
-      data?.localIncomeTaxWithheld ?? 0,           // Box 18
-      data?.localityName ?? '',                    // Box 19
+      data?.stateWinnings ?? 0, // Box 13
+      data?.stateIncomeTaxWithheld ?? 0, // Box 14
+      data?.state ?? '', // Box 15
+      data?.statePayerId ?? '', // Box 16
+      data?.localWinnings ?? 0, // Box 17
+      data?.localIncomeTaxWithheld ?? 0, // Box 18
+      data?.localityName ?? '', // Box 19
       // Calculations
       this.wagerTypeDescription(),
       this.netWinnings(),

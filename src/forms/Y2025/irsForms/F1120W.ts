@@ -59,25 +59,25 @@ const LARGE_CORPORATION_THRESHOLD = 1000000
  * Default annualization factors per IRS instructions
  */
 const ANNUALIZATION_FACTORS = {
-  period1: 4,       // 12/3 months
-  period2: 2.4,     // 12/5 months
-  period3: 1.5,     // 12/8 months
-  period4: 1.09091  // 12/11 months
+  period1: 4, // 12/3 months
+  period2: 2.4, // 12/5 months
+  period3: 1.5, // 12/8 months
+  period4: 1.09091 // 12/11 months
 }
 
 /**
  * Quarterly installment percentages (cumulative)
  */
 const QUARTERLY_PERCENTAGES = {
-  q1: 0.25,   // 25% of annual
-  q2: 0.50,   // 50% of annual (cumulative)
-  q3: 0.75,   // 75% of annual (cumulative)
-  q4: 1.00    // 100% of annual (cumulative)
+  q1: 0.25, // 25% of annual
+  q2: 0.5, // 50% of annual (cumulative)
+  q3: 0.75, // 75% of annual (cumulative)
+  q4: 1.0 // 100% of annual (cumulative)
 }
 
 export default class F1120W extends CCorpForm {
   tag: FormTag = 'f1120w'
-  sequenceIndex = 0  // Standalone form, not an attachment
+  sequenceIndex = 0 // Standalone form, not an attachment
 
   data: Form1120Data
   f1120WData: Form1120WData
@@ -238,9 +238,11 @@ export default class F1120W extends CCorpForm {
     const prior2 = priorInfo.priorYear2TaxableIncome ?? 0
     const prior3 = priorInfo.priorYear3TaxableIncome ?? 0
 
-    return prior1 >= LARGE_CORPORATION_THRESHOLD ||
-           prior2 >= LARGE_CORPORATION_THRESHOLD ||
-           prior3 >= LARGE_CORPORATION_THRESHOLD
+    return (
+      prior1 >= LARGE_CORPORATION_THRESHOLD ||
+      prior2 >= LARGE_CORPORATION_THRESHOLD ||
+      prior3 >= LARGE_CORPORATION_THRESHOLD
+    )
   }
 
   // =========================================================================
@@ -444,11 +446,15 @@ export default class F1120W extends CCorpForm {
         incomeThroughPeriod = seasonalData.incomeThroughQ1
         break
       case 2:
-        cumulativePercentage = seasonalData.q1Percentage + seasonalData.q2Percentage
+        cumulativePercentage =
+          seasonalData.q1Percentage + seasonalData.q2Percentage
         incomeThroughPeriod = seasonalData.incomeThroughQ2
         break
       case 3:
-        cumulativePercentage = seasonalData.q1Percentage + seasonalData.q2Percentage + seasonalData.q3Percentage
+        cumulativePercentage =
+          seasonalData.q1Percentage +
+          seasonalData.q2Percentage +
+          seasonalData.q3Percentage
         incomeThroughPeriod = seasonalData.incomeThroughQ3
         break
       case 4:
@@ -461,10 +467,14 @@ export default class F1120W extends CCorpForm {
     const estimatedAnnualIncome = incomeThroughPeriod / cumulativePercentage
 
     // Tax on estimated annual income
-    const estimatedAnnualTax = Math.round(estimatedAnnualIncome * CORPORATE_TAX_RATE)
+    const estimatedAnnualTax = Math.round(
+      estimatedAnnualIncome * CORPORATE_TAX_RATE
+    )
 
     // Required cumulative amount
-    const cumulativeRequired = Math.round(estimatedAnnualTax * cumulativePercentage)
+    const cumulativeRequired = Math.round(
+      estimatedAnnualTax * cumulativePercentage
+    )
 
     // Prior installments
     let priorInstallments = 0
@@ -487,10 +497,10 @@ export default class F1120W extends CCorpForm {
     const year = this.f1120WData.taxYear
 
     return {
-      q1: new Date(year, 3, 15),   // April 15
-      q2: new Date(year, 5, 15),   // June 15
-      q3: new Date(year, 8, 15),   // September 15
-      q4: new Date(year, 11, 15)   // December 15
+      q1: new Date(year, 3, 15), // April 15
+      q2: new Date(year, 5, 15), // June 15
+      q3: new Date(year, 8, 15), // September 15
+      q4: new Date(year, 11, 15) // December 15
     }
   }
 
@@ -498,7 +508,10 @@ export default class F1120W extends CCorpForm {
    * Total payments made
    */
   totalPaymentsMade = (): number => {
-    return this.f1120WData.payments.reduce((sum, p) => sum + (p.amountPaid ?? 0), 0)
+    return this.f1120WData.payments.reduce(
+      (sum, p) => sum + (p.amountPaid ?? 0),
+      0
+    )
   }
 
   /**
@@ -512,15 +525,23 @@ export default class F1120W extends CCorpForm {
    * Check if payment is sufficient for a quarter
    */
   isQuarterPaid = (quarter: 1 | 2 | 3 | 4): boolean => {
-    const payment = this.f1120WData.payments.find(p => p.quarter === quarter)
+    const payment = this.f1120WData.payments.find((p) => p.quarter === quarter)
     if (!payment || !payment.amountPaid) return false
 
     let requiredAmount: number
     switch (quarter) {
-      case 1: requiredAmount = this.scheduleAQ1(); break
-      case 2: requiredAmount = this.scheduleAQ2(); break
-      case 3: requiredAmount = this.scheduleAQ3(); break
-      case 4: requiredAmount = this.scheduleAQ4(); break
+      case 1:
+        requiredAmount = this.scheduleAQ1()
+        break
+      case 2:
+        requiredAmount = this.scheduleAQ2()
+        break
+      case 3:
+        requiredAmount = this.scheduleAQ3()
+        break
+      case 4:
+        requiredAmount = this.scheduleAQ4()
+        break
     }
 
     return payment.amountPaid >= requiredAmount
@@ -656,23 +677,31 @@ export default class F1120W extends CCorpForm {
       // Q1
       this.formatDate(dueDates.q1),
       this.scheduleAQ1(),
-      payments.find(p => p.quarter === 1)?.amountPaid ?? 0,
-      payments.find(p => p.quarter === 1)?.datePaid ? this.formatDate(payments.find(p => p.quarter === 1)?.datePaid) : '',
+      payments.find((p) => p.quarter === 1)?.amountPaid ?? 0,
+      payments.find((p) => p.quarter === 1)?.datePaid
+        ? this.formatDate(payments.find((p) => p.quarter === 1)?.datePaid)
+        : '',
       // Q2
       this.formatDate(dueDates.q2),
       this.scheduleAQ2(),
-      payments.find(p => p.quarter === 2)?.amountPaid ?? 0,
-      payments.find(p => p.quarter === 2)?.datePaid ? this.formatDate(payments.find(p => p.quarter === 2)?.datePaid) : '',
+      payments.find((p) => p.quarter === 2)?.amountPaid ?? 0,
+      payments.find((p) => p.quarter === 2)?.datePaid
+        ? this.formatDate(payments.find((p) => p.quarter === 2)?.datePaid)
+        : '',
       // Q3
       this.formatDate(dueDates.q3),
       this.scheduleAQ3(),
-      payments.find(p => p.quarter === 3)?.amountPaid ?? 0,
-      payments.find(p => p.quarter === 3)?.datePaid ? this.formatDate(payments.find(p => p.quarter === 3)?.datePaid) : '',
+      payments.find((p) => p.quarter === 3)?.amountPaid ?? 0,
+      payments.find((p) => p.quarter === 3)?.datePaid
+        ? this.formatDate(payments.find((p) => p.quarter === 3)?.datePaid)
+        : '',
       // Q4
       this.formatDate(dueDates.q4),
       this.scheduleAQ4(),
-      payments.find(p => p.quarter === 4)?.amountPaid ?? 0,
-      payments.find(p => p.quarter === 4)?.datePaid ? this.formatDate(payments.find(p => p.quarter === 4)?.datePaid) : '',
+      payments.find((p) => p.quarter === 4)?.amountPaid ?? 0,
+      payments.find((p) => p.quarter === 4)?.datePaid
+        ? this.formatDate(payments.find((p) => p.quarter === 4)?.datePaid)
+        : '',
 
       // Total installments
       this.totalRequiredInstallments(),

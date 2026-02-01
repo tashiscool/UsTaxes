@@ -67,9 +67,9 @@ export interface ScheduleM3Data {
 
 // Asset thresholds for M-3 requirement
 const M3_THRESHOLDS = {
-  partnership: 50000000,  // $50 million
-  scorp: 10000000,        // $10 million
-  ccorp: 10000000         // $10 million
+  partnership: 50000000, // $50 million
+  scorp: 10000000, // $10 million
+  ccorp: 10000000 // $10 million
 }
 
 export default class ScheduleM3 extends F1040Attachment {
@@ -93,18 +93,19 @@ export default class ScheduleM3 extends F1040Attachment {
 
   meetsAssetThreshold = (): boolean => {
     // Would check total assets against threshold
-    return false  // Default to not required
+    return false // Default to not required
   }
 
   m3Data = (): ScheduleM3Data | undefined => {
-    return undefined  // Would be populated from entity data
+    return undefined // Would be populated from entity data
   }
 
   entityType = (): EntityTypeM3 => this.m3Data()?.entityType ?? 'ccorp'
 
   // Part I: Financial Information
 
-  financialInfo = (): FinancialStatementInfo | undefined => this.m3Data()?.financialInfo
+  financialInfo = (): FinancialStatementInfo | undefined =>
+    this.m3Data()?.financialInfo
 
   // Line 1: Worldwide consolidated net income
   l1 = (): number => this.financialInfo()?.worldwideConsolidatedNetIncome ?? 0
@@ -123,42 +124,68 @@ export default class ScheduleM3 extends F1040Attachment {
 
   // Part II: Income Items
 
-  incomeItems = (): IncomeReconciliationItem[] => this.m3Data()?.incomeItems ?? []
+  incomeItems = (): IncomeReconciliationItem[] =>
+    this.m3Data()?.incomeItems ?? []
 
   totalIncomeStatementIncome = (): number => {
-    return this.incomeItems().reduce((sum, item) => sum + item.incomeStatementAmount, 0)
+    return this.incomeItems().reduce(
+      (sum, item) => sum + item.incomeStatementAmount,
+      0
+    )
   }
 
   totalIncomeTemporaryDiff = (): number => {
-    return this.incomeItems().reduce((sum, item) => sum + item.temporaryDifference, 0)
+    return this.incomeItems().reduce(
+      (sum, item) => sum + item.temporaryDifference,
+      0
+    )
   }
 
   totalIncomePermanentDiff = (): number => {
-    return this.incomeItems().reduce((sum, item) => sum + item.permanentDifference, 0)
+    return this.incomeItems().reduce(
+      (sum, item) => sum + item.permanentDifference,
+      0
+    )
   }
 
   totalTaxReturnIncome = (): number => {
-    return this.incomeItems().reduce((sum, item) => sum + item.taxReturnAmount, 0)
+    return this.incomeItems().reduce(
+      (sum, item) => sum + item.taxReturnAmount,
+      0
+    )
   }
 
   // Part III: Expense Items
 
-  expenseItems = (): ExpenseReconciliationItem[] => this.m3Data()?.expenseItems ?? []
+  expenseItems = (): ExpenseReconciliationItem[] =>
+    this.m3Data()?.expenseItems ?? []
 
   totalExpenseStatementAmount = (): number => {
-    return this.expenseItems().reduce((sum, item) => sum + item.incomeStatementAmount, 0)
+    return this.expenseItems().reduce(
+      (sum, item) => sum + item.incomeStatementAmount,
+      0
+    )
   }
 
   totalExpenseTemporaryDiff = (): number => {
-    return this.expenseItems().reduce((sum, item) => sum + item.temporaryDifference, 0)
+    return this.expenseItems().reduce(
+      (sum, item) => sum + item.temporaryDifference,
+      0
+    )
   }
 
   totalExpensePermanentDiff = (): number => {
-    return this.expenseItems().reduce((sum, item) => sum + item.permanentDifference, 0)
+    return this.expenseItems().reduce(
+      (sum, item) => sum + item.permanentDifference,
+      0
+    )
   }
 
   totalTaxReturnExpenses = (): number => {
-    return this.expenseItems().reduce((sum, item) => sum + item.taxReturnAmount, 0)
+    return this.expenseItems().reduce(
+      (sum, item) => sum + item.taxReturnAmount,
+      0
+    )
   }
 
   // Net income per tax return

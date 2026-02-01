@@ -71,7 +71,7 @@ export function useTaxExplanation(
 
   useEffect(() => {
     if (autoFetch && formId && lineNumber) {
-      fetchExplanation()
+      void fetchExplanation()
     }
   }, [autoFetch, formId, lineNumber, fetchExplanation])
 
@@ -148,7 +148,7 @@ export function useIRCSearch() {
 
       try {
         const client = getClient()
-        const result = await client.searchIRC(query, limit, includeRegulations)
+        const result = await client.searchIRC(query, Number(limit), Boolean(includeRegulations))
         setState({ results: result, loading: false, error: null })
         return result
       } catch (err) {
@@ -199,7 +199,7 @@ export function useFormCrossRef(formId: string, autoFetch = true) {
 
   useEffect(() => {
     if (autoFetch && formId) {
-      fetchCrossRef()
+      void fetchCrossRef()
     }
   }, [autoFetch, formId, fetchCrossRef])
 

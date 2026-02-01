@@ -135,17 +135,22 @@ export default class F8865 extends F1040Attachment {
   }
 
   // Filing categories
-  filingCategories = (): PartnershipCategory[] => this.f8865Info()?.filingCategories ?? []
-  isCategory = (cat: PartnershipCategory): boolean => this.filingCategories().includes(cat)
+  filingCategories = (): PartnershipCategory[] =>
+    this.f8865Info()?.filingCategories ?? []
+  isCategory = (cat: PartnershipCategory): boolean =>
+    this.filingCategories().includes(cat)
 
   // Partnership info
-  partnership = (): ForeignPartnershipInfo | undefined => this.f8865Info()?.partnership
+  partnership = (): ForeignPartnershipInfo | undefined =>
+    this.f8865Info()?.partnership
 
   partnershipName = (): string => this.partnership()?.name ?? ''
   partnershipEin = (): string => this.partnership()?.ein ?? ''
   partnershipReferenceId = (): string => this.partnership()?.referenceId ?? ''
-  partnershipCountry = (): string => this.partnership()?.countryOfOrganization ?? ''
-  partnershipCurrency = (): string => this.partnership()?.functionalCurrency ?? 'USD'
+  partnershipCountry = (): string =>
+    this.partnership()?.countryOfOrganization ?? ''
+  partnershipCurrency = (): string =>
+    this.partnership()?.functionalCurrency ?? 'USD'
   exchangeRate = (): number => this.partnership()?.exchangeRateUsed ?? 1
 
   // Partners
@@ -156,30 +161,40 @@ export default class F8865 extends F1040Attachment {
   }
 
   // Schedule B: Income Statement
-  incomeStatement = (): PartnershipIncomeStatement | undefined => this.f8865Info()?.incomeStatement
+  incomeStatement = (): PartnershipIncomeStatement | undefined =>
+    this.f8865Info()?.incomeStatement
 
   grossReceipts = (): number => this.incomeStatement()?.grossReceipts ?? 0
   costOfGoodsSold = (): number => this.incomeStatement()?.costOfGoodsSold ?? 0
   grossProfit = (): number => this.incomeStatement()?.grossProfit ?? 0
   totalIncome = (): number => this.incomeStatement()?.totalIncome ?? 0
   totalDeductions = (): number => this.incomeStatement()?.totalDeductions ?? 0
-  ordinaryBusinessIncome = (): number => this.incomeStatement()?.ordinaryBusinessIncome ?? 0
+  ordinaryBusinessIncome = (): number =>
+    this.incomeStatement()?.ordinaryBusinessIncome ?? 0
 
   // Schedule L: Balance Sheet
-  balanceSheet = (): PartnershipBalanceSheet | undefined => this.f8865Info()?.balanceSheet
+  balanceSheet = (): PartnershipBalanceSheet | undefined =>
+    this.f8865Info()?.balanceSheet
 
   totalAssets = (): number => this.balanceSheet()?.totalAssets ?? 0
   totalLiabilities = (): number => this.balanceSheet()?.totalLiabilities ?? 0
   partnersCapital = (): number => this.balanceSheet()?.partnersCapital ?? 0
 
   // Schedule K: Distributive share items
-  distributiveShareOrdinaryIncome = (): number => this.f8865Info()?.distributiveShareOrdinaryIncome ?? 0
-  distributiveShareRentalIncome = (): number => this.f8865Info()?.distributiveShareRentalIncome ?? 0
-  distributiveShareInterest = (): number => this.f8865Info()?.distributiveShareInterest ?? 0
-  distributiveShareDividends = (): number => this.f8865Info()?.distributiveShareDividends ?? 0
-  distributiveShareCapitalGains = (): number => this.f8865Info()?.distributiveShareCapitalGains ?? 0
-  distributiveShareSection179 = (): number => this.f8865Info()?.distributiveShareSection179 ?? 0
-  distributiveShareCredits = (): number => this.f8865Info()?.distributiveShareCredits ?? 0
+  distributiveShareOrdinaryIncome = (): number =>
+    this.f8865Info()?.distributiveShareOrdinaryIncome ?? 0
+  distributiveShareRentalIncome = (): number =>
+    this.f8865Info()?.distributiveShareRentalIncome ?? 0
+  distributiveShareInterest = (): number =>
+    this.f8865Info()?.distributiveShareInterest ?? 0
+  distributiveShareDividends = (): number =>
+    this.f8865Info()?.distributiveShareDividends ?? 0
+  distributiveShareCapitalGains = (): number =>
+    this.f8865Info()?.distributiveShareCapitalGains ?? 0
+  distributiveShareSection179 = (): number =>
+    this.f8865Info()?.distributiveShareSection179 ?? 0
+  distributiveShareCredits = (): number =>
+    this.f8865Info()?.distributiveShareCredits ?? 0
 
   totalDistributiveShareIncome = (): number => {
     return sumFields([
@@ -197,11 +212,21 @@ export default class F8865 extends F1040Attachment {
   }
 
   totalPropertyTransferValue = (): number => {
-    return this.f8865Info()?.propertyTransfers?.reduce((sum, t) => sum + t.fairMarketValue, 0) ?? 0
+    return (
+      this.f8865Info()?.propertyTransfers?.reduce(
+        (sum, t) => sum + t.fairMarketValue,
+        0
+      ) ?? 0
+    )
   }
 
   totalGainRecognized = (): number => {
-    return this.f8865Info()?.propertyTransfers?.reduce((sum, t) => sum + t.gainRecognized, 0) ?? 0
+    return (
+      this.f8865Info()?.propertyTransfers?.reduce(
+        (sum, t) => sum + t.gainRecognized,
+        0
+      ) ?? 0
+    )
   }
 
   fields = (): Field[] => {
@@ -224,7 +249,7 @@ export default class F8865 extends F1040Attachment {
       this.partnershipEin(),
       this.partnershipReferenceId(),
       this.partnershipCountry(),
-      pship?.dateOfOrganization?.toLocaleDateString() ?? '',
+      pship?.dateOfOrganization.toLocaleDateString() ?? '',
       pship?.principalBusinessActivity ?? '',
       pship?.principalBusinessCode ?? '',
       this.partnershipCurrency(),

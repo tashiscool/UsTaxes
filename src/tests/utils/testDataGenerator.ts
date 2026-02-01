@@ -62,7 +62,7 @@ class SeededRandom {
    */
   next(): number {
     this.state |= 0
-    this.state = (this.state + 0x6D2B79F5) | 0
+    this.state = (this.state + 0x6d2b79f5) | 0
     let t = Math.imul(this.state ^ (this.state >>> 15), 1 | this.state)
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
@@ -110,7 +110,9 @@ class SeededRandom {
 export function generateTestSSN(index: number): string {
   const groupNumber = Math.floor(index / 10000) % 100
   const serialNumber = index % 10000
-  return `000${groupNumber.toString().padStart(2, '0')}${serialNumber.toString().padStart(4, '0')}`
+  return `000${groupNumber.toString().padStart(2, '0')}${serialNumber
+    .toString()
+    .padStart(4, '0')}`
 }
 
 /**
@@ -133,49 +135,175 @@ export function isTestSSN(ssn: string): boolean {
 // =============================================================================
 
 const firstNames = [
-  'James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda',
-  'William', 'Elizabeth', 'David', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica',
-  'Thomas', 'Sarah', 'Charles', 'Karen', 'Christopher', 'Lisa', 'Daniel', 'Nancy'
+  'James',
+  'Mary',
+  'John',
+  'Patricia',
+  'Robert',
+  'Jennifer',
+  'Michael',
+  'Linda',
+  'William',
+  'Elizabeth',
+  'David',
+  'Barbara',
+  'Richard',
+  'Susan',
+  'Joseph',
+  'Jessica',
+  'Thomas',
+  'Sarah',
+  'Charles',
+  'Karen',
+  'Christopher',
+  'Lisa',
+  'Daniel',
+  'Nancy'
 ]
 
 const lastNames = [
-  'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis',
-  'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson',
-  'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White'
+  'Smith',
+  'Johnson',
+  'Williams',
+  'Brown',
+  'Jones',
+  'Garcia',
+  'Miller',
+  'Davis',
+  'Rodriguez',
+  'Martinez',
+  'Hernandez',
+  'Lopez',
+  'Gonzalez',
+  'Wilson',
+  'Anderson',
+  'Thomas',
+  'Taylor',
+  'Moore',
+  'Jackson',
+  'Martin',
+  'Lee',
+  'Perez',
+  'Thompson',
+  'White'
 ]
 
 const streetNames = [
-  'Main St', 'Oak Ave', 'Maple Dr', 'Cedar Ln', 'Pine St', 'Elm Ave',
-  'Washington Blvd', 'Lincoln Ave', 'Park Dr', 'Lake St', 'River Rd', 'Hill St'
+  'Main St',
+  'Oak Ave',
+  'Maple Dr',
+  'Cedar Ln',
+  'Pine St',
+  'Elm Ave',
+  'Washington Blvd',
+  'Lincoln Ave',
+  'Park Dr',
+  'Lake St',
+  'River Rd',
+  'Hill St'
 ]
 
 const cities = [
-  'Springfield', 'Franklin', 'Clinton', 'Madison', 'Georgetown', 'Salem',
-  'Fairview', 'Bristol', 'Manchester', 'Riverside', 'Oakland', 'Burlington'
+  'Springfield',
+  'Franklin',
+  'Clinton',
+  'Madison',
+  'Georgetown',
+  'Salem',
+  'Fairview',
+  'Bristol',
+  'Manchester',
+  'Riverside',
+  'Oakland',
+  'Burlington'
 ]
 
 const states: State[] = [
-  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-  'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-  'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-  'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+  'AL',
+  'AK',
+  'AZ',
+  'AR',
+  'CA',
+  'CO',
+  'CT',
+  'DE',
+  'FL',
+  'GA',
+  'HI',
+  'ID',
+  'IL',
+  'IN',
+  'IA',
+  'KS',
+  'KY',
+  'LA',
+  'ME',
+  'MD',
+  'MA',
+  'MI',
+  'MN',
+  'MS',
+  'MO',
+  'MT',
+  'NE',
+  'NV',
+  'NH',
+  'NJ',
+  'NM',
+  'NY',
+  'NC',
+  'ND',
+  'OH',
+  'OK',
+  'OR',
+  'PA',
+  'RI',
+  'SC',
+  'SD',
+  'TN',
+  'TX',
+  'UT',
+  'VT',
+  'VA',
+  'WA',
+  'WV',
+  'WI',
+  'WY'
 ]
 
 const employers = [
-  'Acme Corporation', 'Global Tech Inc', 'First National Bank', 'City Hospital',
-  'State University', 'Metro Transit', 'Regional Power Co', 'United Manufacturing',
-  'Digital Solutions LLC', 'Healthcare Partners', 'Financial Services Group'
+  'Acme Corporation',
+  'Global Tech Inc',
+  'First National Bank',
+  'City Hospital',
+  'State University',
+  'Metro Transit',
+  'Regional Power Co',
+  'United Manufacturing',
+  'Digital Solutions LLC',
+  'Healthcare Partners',
+  'Financial Services Group'
 ]
 
 const banks = [
-  'First National Bank', 'Citizens Bank', 'Chase', 'Bank of America',
-  'Wells Fargo', 'Capital One', 'PNC Bank', 'TD Bank'
+  'First National Bank',
+  'Citizens Bank',
+  'Chase',
+  'Bank of America',
+  'Wells Fargo',
+  'Capital One',
+  'PNC Bank',
+  'TD Bank'
 ]
 
 const brokers = [
-  'Fidelity Investments', 'Charles Schwab', 'Vanguard', 'TD Ameritrade',
-  'E*TRADE', 'Merrill Lynch', 'Morgan Stanley'
+  'Fidelity Investments',
+  'Charles Schwab',
+  'Vanguard',
+  'TD Ameritrade',
+  'E*TRADE',
+  'Merrill Lynch',
+  'Morgan Stanley'
 ]
 
 // =============================================================================
@@ -203,7 +331,10 @@ function generateEmployer(rng: SeededRandom, index: number): Employer {
 // Person Generation
 // =============================================================================
 
-function generatePrimaryPerson(rng: SeededRandom, index: number): PrimaryPerson {
+function generatePrimaryPerson(
+  rng: SeededRandom,
+  index: number
+): PrimaryPerson {
   const birthYear = rng.nextInt(1950, 2000)
   return {
     firstName: rng.pick(firstNames),
@@ -230,7 +361,11 @@ function generateSpouse(rng: SeededRandom, index: number): Spouse {
   }
 }
 
-function generateDependent(rng: SeededRandom, index: number, taxYear: number): Dependent {
+function generateDependent(
+  rng: SeededRandom,
+  index: number,
+  taxYear: number
+): Dependent {
   const birthYear = rng.nextInt(taxYear - 23, taxYear - 1)
   const isChild = taxYear - birthYear < 19
   return {
@@ -255,7 +390,13 @@ function generateDependent(rng: SeededRandom, index: number, taxYear: number): D
 /**
  * Income level presets for generating W-2s
  */
-export type IncomeLevel = 'minimum_wage' | 'low' | 'median' | 'high' | 'very_high' | 'top_bracket'
+export type IncomeLevel =
+  | 'minimum_wage'
+  | 'low'
+  | 'median'
+  | 'high'
+  | 'very_high'
+  | 'top_bracket'
 
 const incomeLevelRanges: Record<IncomeLevel, [number, number]> = {
   minimum_wage: [15000, 25000],
@@ -279,7 +420,7 @@ function generateW2(
   const fedWithholdingRate = rng.nextFloat(0.15, 0.28)
   const stateWithholdingRate = rng.nextFloat(0.03, 0.09)
 
-  const ssWages = Math.min(income, 168600)  // 2024 SS wage base
+  const ssWages = Math.min(income, 168600) // 2024 SS wage base
   const ssWithholding = Math.round(ssWages * 0.062 * 100) / 100
   const medicareWithholding = Math.round(income * 0.0145 * 100) / 100
 
@@ -329,7 +470,8 @@ function generate1099Div(
     form: {
       dividends,
       qualifiedDividends: Math.round(dividends * qualifiedRatio * 100) / 100,
-      totalCapitalGainsDistributions: Math.round(rng.nextFloat(0, dividends * 0.3) * 100) / 100
+      totalCapitalGainsDistributions:
+        Math.round(rng.nextFloat(0, dividends * 0.3) * 100) / 100
     } as F1099DivData,
     personRole
   }
@@ -352,9 +494,10 @@ function generate1099B(
     type: Income1099Type.B,
     form: {
       shortTermProceeds: stProceeds,
-      shortTermCostBasis: Math.round(stProceeds / (1 + stGainLoss) * 100) / 100,
+      shortTermCostBasis:
+        Math.round((stProceeds / (1 + stGainLoss)) * 100) / 100,
       longTermProceeds: ltProceeds,
-      longTermCostBasis: Math.round(ltProceeds / (1 + ltGainLoss) * 100) / 100
+      longTermCostBasis: Math.round((ltProceeds / (1 + ltGainLoss)) * 100) / 100
     } as F1099BData,
     personRole
   }
@@ -393,7 +536,9 @@ export interface TestScenario {
 /**
  * Generate a complete test scenario
  */
-export function generateTestScenario(options: TestScenarioOptions): TestScenario {
+export function generateTestScenario(
+  options: TestScenarioOptions
+): TestScenario {
   const {
     seed = Date.now(),
     filingStatus,
@@ -413,9 +558,10 @@ export function generateTestScenario(options: TestScenarioOptions): TestScenario
 
   // Generate filers
   const primaryPerson = generatePrimaryPerson(rng, seed)
-  const spouse = (filingStatus === FilingStatus.MFJ || filingStatus === FilingStatus.MFS)
-    ? generateSpouse(rng, seed)
-    : undefined
+  const spouse =
+    filingStatus === FilingStatus.MFJ || filingStatus === FilingStatus.MFS
+      ? generateSpouse(rng, seed)
+      : undefined
 
   // Generate dependents
   const dependents: Dependent[] = []
@@ -454,48 +600,69 @@ export function generateTestScenario(options: TestScenarioOptions): TestScenario
   }
 
   // Calculate totals
-  const totalIncome = w2s.reduce((sum, w2) => sum + w2.income, 0) +
+  const totalIncome =
+    w2s.reduce((sum, w2) => sum + w2.income, 0) +
     f1099s.reduce((sum, f) => {
-      if (f.type === Income1099Type.INT) return sum + (f.form as F1099IntData).income
-      if (f.type === Income1099Type.DIV) return sum + (f.form as F1099DivData).dividends
+      if (f.type === Income1099Type.INT)
+        return sum + (f.form ).income
+      if (f.type === Income1099Type.DIV)
+        return sum + (f.form ).dividends
       return sum
     }, 0)
 
   const totalWithholding = w2s.reduce((sum, w2) => sum + w2.fedWithholding, 0)
 
   // Generate itemized deductions if requested
-  const itemizedDeductions: ItemizedDeductions | undefined = itemizeDeductions ? {
-    medicalAndDental: Math.round(totalIncome * rng.nextFloat(0.05, 0.10) * 100) / 100,
-    stateAndLocalTaxes: Math.round(totalIncome * rng.nextFloat(0.03, 0.08) * 100) / 100,
-    isSalesTax: false,
-    stateAndLocalRealEstateTaxes: Math.round(rng.nextFloat(2000, 15000) * 100) / 100,
-    stateAndLocalPropertyTaxes: Math.round(rng.nextFloat(500, 3000) * 100) / 100,
-    interest8a: Math.round(rng.nextFloat(3000, 20000) * 100) / 100,
-    interest8b: 0,
-    interest8c: 0,
-    interest8d: 0,
-    investmentInterest: 0,
-    charityCashCheck: Math.round(rng.nextFloat(500, 5000) * 100) / 100,
-    charityOther: Math.round(rng.nextFloat(100, 1000) * 100) / 100
-  } : undefined
+  const itemizedDeductions: ItemizedDeductions | undefined = itemizeDeductions
+    ? {
+        medicalAndDental:
+          Math.round(totalIncome * rng.nextFloat(0.05, 0.1) * 100) / 100,
+        stateAndLocalTaxes:
+          Math.round(totalIncome * rng.nextFloat(0.03, 0.08) * 100) / 100,
+        isSalesTax: false,
+        stateAndLocalRealEstateTaxes:
+          Math.round(rng.nextFloat(2000, 15000) * 100) / 100,
+        stateAndLocalPropertyTaxes:
+          Math.round(rng.nextFloat(500, 3000) * 100) / 100,
+        interest8a: Math.round(rng.nextFloat(3000, 20000) * 100) / 100,
+        interest8b: 0,
+        interest8c: 0,
+        interest8d: 0,
+        investmentInterest: 0,
+        charityCashCheck: Math.round(rng.nextFloat(500, 5000) * 100) / 100,
+        charityOther: Math.round(rng.nextFloat(100, 1000) * 100) / 100
+      }
+    : undefined
 
   // Generate HSA if requested
-  const healthSavingsAccounts: HealthSavingsAccount[] = hasHSA ? [{
-    label: 'HSA Account',
-    coverageType: filingStatus === FilingStatus.MFJ ? 'family' : 'self-only',
-    contributions: filingStatus === FilingStatus.MFJ ? 8300 : 4150,
-    personRole: PersonRole.PRIMARY,
-    startDate: new Date(taxYear, 0, 1),
-    endDate: new Date(taxYear, 11, 31),
-    totalDistributions: Math.round(rng.nextFloat(0, 2000) * 100) / 100,
-    qualifiedDistributions: Math.round(rng.nextFloat(0, 2000) * 100) / 100
-  }] : []
+  const healthSavingsAccounts: HealthSavingsAccount[] = hasHSA
+    ? [
+        {
+          label: 'HSA Account',
+          coverageType:
+            filingStatus === FilingStatus.MFJ ? 'family' : 'self-only',
+          contributions: filingStatus === FilingStatus.MFJ ? 8300 : 4150,
+          personRole: PersonRole.PRIMARY,
+          startDate: new Date(taxYear, 0, 1),
+          endDate: new Date(taxYear, 11, 31),
+          totalDistributions: Math.round(rng.nextFloat(0, 2000) * 100) / 100,
+          qualifiedDistributions: Math.round(rng.nextFloat(0, 2000) * 100) / 100
+        }
+      ]
+    : []
 
   // Generate student loan interest if requested
-  const f1098es: F1098e[] = hasStudentLoan ? [{
-    lender: 'Student Loan Servicer',
-    interest: Math.min(2500, Math.round(rng.nextFloat(500, 3000) * 100) / 100)
-  }] : []
+  const f1098es: F1098e[] = hasStudentLoan
+    ? [
+        {
+          lender: 'Student Loan Servicer',
+          interest: Math.min(
+            2500,
+            Math.round(rng.nextFloat(500, 3000) * 100) / 100
+          )
+        }
+      ]
+    : []
 
   // State residency
   const stateResidencies: StateResidency[] = primaryPerson.address.state
@@ -504,13 +671,15 @@ export function generateTestScenario(options: TestScenarioOptions): TestScenario
 
   // Generate refund info
   const refund: Refund = {
-    routingNumber: '021000021',  // Test routing number
+    routingNumber: '021000021', // Test routing number
     accountNumber: '123456789',
     accountType: AccountType.checking
   }
 
   // Estimate AGI (simplified)
-  const estimatedAGI = totalIncome - (hasHSA ? healthSavingsAccounts[0].contributions : 0) -
+  const estimatedAGI =
+    totalIncome -
+    (hasHSA ? healthSavingsAccounts[0].contributions : 0) -
     (hasStudentLoan ? f1098es[0]?.interest ?? 0 : 0)
 
   // Determine if likely to have refund
@@ -543,7 +712,8 @@ export function generateTestScenario(options: TestScenarioOptions): TestScenario
     individualRetirementArrangements: []
   }
 
-  const description = `${FilingStatus[filingStatus]} filer with ${incomeLevel} income` +
+  const description =
+    `${FilingStatus[filingStatus]} filer with ${incomeLevel} income` +
     `${numDependents > 0 ? `, ${numDependents} dependent(s)` : ''}` +
     `${has1099Int ? ', interest income' : ''}` +
     `${has1099Div ? ', dividend income' : ''}` +
@@ -565,32 +735,41 @@ export function generateTestScenario(options: TestScenarioOptions): TestScenario
 /**
  * Simple tax calculation for estimation purposes
  */
-function calculateEstimatedTax(taxableIncome: number, filingStatus: FilingStatus): number {
+function calculateEstimatedTax(
+  taxableIncome: number,
+  filingStatus: FilingStatus
+): number {
   // 2024 tax brackets (simplified)
-  const brackets = filingStatus === FilingStatus.MFJ ? [
-    { threshold: 23200, rate: 0.10 },
-    { threshold: 94300, rate: 0.12 },
-    { threshold: 201050, rate: 0.22 },
-    { threshold: 383900, rate: 0.24 },
-    { threshold: 487450, rate: 0.32 },
-    { threshold: 731200, rate: 0.35 },
-    { threshold: Infinity, rate: 0.37 }
-  ] : [
-    { threshold: 11600, rate: 0.10 },
-    { threshold: 47150, rate: 0.12 },
-    { threshold: 100525, rate: 0.22 },
-    { threshold: 191950, rate: 0.24 },
-    { threshold: 243725, rate: 0.32 },
-    { threshold: 609350, rate: 0.35 },
-    { threshold: Infinity, rate: 0.37 }
-  ]
+  const brackets =
+    filingStatus === FilingStatus.MFJ
+      ? [
+          { threshold: 23200, rate: 0.1 },
+          { threshold: 94300, rate: 0.12 },
+          { threshold: 201050, rate: 0.22 },
+          { threshold: 383900, rate: 0.24 },
+          { threshold: 487450, rate: 0.32 },
+          { threshold: 731200, rate: 0.35 },
+          { threshold: Infinity, rate: 0.37 }
+        ]
+      : [
+          { threshold: 11600, rate: 0.1 },
+          { threshold: 47150, rate: 0.12 },
+          { threshold: 100525, rate: 0.22 },
+          { threshold: 191950, rate: 0.24 },
+          { threshold: 243725, rate: 0.32 },
+          { threshold: 609350, rate: 0.35 },
+          { threshold: Infinity, rate: 0.37 }
+        ]
 
   let tax = 0
   let remainingIncome = taxableIncome
   let prevThreshold = 0
 
   for (const bracket of brackets) {
-    const taxableInBracket = Math.min(remainingIncome, bracket.threshold - prevThreshold)
+    const taxableInBracket = Math.min(
+      remainingIncome,
+      bracket.threshold - prevThreshold
+    )
     if (taxableInBracket <= 0) break
     tax += taxableInBracket * bracket.rate
     remainingIncome -= taxableInBracket
@@ -710,16 +889,28 @@ export function generatePresetScenarios(): TestScenario[] {
 /**
  * Generate a batch of random test scenarios
  */
-export function generateRandomScenarios(count: number, baseSeed = Date.now()): TestScenario[] {
+export function generateRandomScenarios(
+  count: number,
+  baseSeed = Date.now()
+): TestScenario[] {
   const scenarios: TestScenario[] = []
   const rng = new SeededRandom(baseSeed)
 
   const filingStatuses: FilingStatus[] = [
-    FilingStatus.S, FilingStatus.MFJ, FilingStatus.MFS, FilingStatus.HOH, FilingStatus.W
+    FilingStatus.S,
+    FilingStatus.MFJ,
+    FilingStatus.MFS,
+    FilingStatus.HOH,
+    FilingStatus.W
   ]
 
   const incomeLevels: IncomeLevel[] = [
-    'minimum_wage', 'low', 'median', 'high', 'very_high', 'top_bracket'
+    'minimum_wage',
+    'low',
+    'median',
+    'high',
+    'very_high',
+    'top_bracket'
   ]
 
   for (let i = 0; i < count; i++) {
@@ -732,18 +923,20 @@ export function generateRandomScenarios(count: number, baseSeed = Date.now()): T
       maxDependents = rng.nextBoolean(0.7) ? 0 : 2
     }
 
-    scenarios.push(generateTestScenario({
-      seed: baseSeed + i * 1000,
-      filingStatus,
-      incomeLevel,
-      numDependents: rng.nextInt(0, maxDependents),
-      has1099Int: rng.nextBoolean(0.4),
-      has1099Div: rng.nextBoolean(0.3),
-      has1099B: rng.nextBoolean(0.2),
-      hasHSA: rng.nextBoolean(0.25),
-      hasStudentLoan: rng.nextBoolean(0.15),
-      itemizeDeductions: rng.nextBoolean(0.2)
-    }))
+    scenarios.push(
+      generateTestScenario({
+        seed: baseSeed + i * 1000,
+        filingStatus,
+        incomeLevel,
+        numDependents: rng.nextInt(0, maxDependents),
+        has1099Int: rng.nextBoolean(0.4),
+        has1099Div: rng.nextBoolean(0.3),
+        has1099B: rng.nextBoolean(0.2),
+        hasHSA: rng.nextBoolean(0.25),
+        hasStudentLoan: rng.nextBoolean(0.15),
+        itemizeDeductions: rng.nextBoolean(0.2)
+      })
+    )
   }
 
   return scenarios

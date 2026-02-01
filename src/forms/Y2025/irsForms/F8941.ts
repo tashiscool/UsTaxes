@@ -22,13 +22,13 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
 
 // 2025 parameters
 const smallEmployerCreditParams = {
-  maxFtes: 25,                    // Maximum full-time equivalents
-  maxAverageWage: 59100,          // Maximum average annual wage for full credit
-  creditRateTaxable: 0.50,        // 50% for taxable employers
-  creditRateTaxExempt: 0.35,      // 35% for tax-exempt employers
-  minimumPremiumContribution: 0.50,  // Must pay at least 50% of premiums
-  fteLowerLimit: 10,              // FTEs below this get full credit
-  wageLowerLimit: 29550           // Wages below this get full credit (half of max)
+  maxFtes: 25, // Maximum full-time equivalents
+  maxAverageWage: 59100, // Maximum average annual wage for full credit
+  creditRateTaxable: 0.5, // 50% for taxable employers
+  creditRateTaxExempt: 0.35, // 35% for tax-exempt employers
+  minimumPremiumContribution: 0.5, // Must pay at least 50% of premiums
+  fteLowerLimit: 10, // FTEs below this get full credit
+  wageLowerLimit: 29550 // Wages below this get full credit (half of max)
 }
 
 export interface SmallEmployerHealthInfo {
@@ -37,10 +37,10 @@ export interface SmallEmployerHealthInfo {
   totalAnnualWages: number
   averageAnnualWage: number
   premiumsPaidForEmployees: number
-  employeeOnlyPremiumCost: number  // Total of lowest-cost employee-only plans
-  shopPremiumsPaid: number  // Premiums paid through SHOP
+  employeeOnlyPremiumCost: number // Total of lowest-cost employee-only plans
+  shopPremiumsPaid: number // Premiums paid through SHOP
   percentOfPremiumPaid: number
-  isFirstOrSecondYear: boolean  // Credit only available for 2 years
+  isFirstOrSecondYear: boolean // Credit only available for 2 years
   stateAverageSmallGroupPremium?: number
 }
 
@@ -56,14 +56,19 @@ export default class F8941 extends F1040Attachment {
     const info = this.healthInfo()
     if (!info) return false
 
-    return info.totalFtes < smallEmployerCreditParams.maxFtes &&
-           info.averageAnnualWage < smallEmployerCreditParams.maxAverageWage &&
-           info.percentOfPremiumPaid >= smallEmployerCreditParams.minimumPremiumContribution &&
-           info.isFirstOrSecondYear
+    return (
+      info.totalFtes < smallEmployerCreditParams.maxFtes &&
+      info.averageAnnualWage < smallEmployerCreditParams.maxAverageWage &&
+      info.percentOfPremiumPaid >=
+        smallEmployerCreditParams.minimumPremiumContribution &&
+      info.isFirstOrSecondYear
+    )
   }
 
   healthInfo = (): SmallEmployerHealthInfo | undefined => {
-    return this.f1040.info.smallEmployerHealth as SmallEmployerHealthInfo | undefined
+    return this.f1040.info.smallEmployerHealth as
+      | SmallEmployerHealthInfo
+      | undefined
   }
 
   // Part I - Calculation of Credit
@@ -106,7 +111,9 @@ export default class F8941 extends F1040Attachment {
     if (ftes <= smallEmployerCreditParams.fteLowerLimit) return 0
 
     const excessFtes = ftes - smallEmployerCreditParams.fteLowerLimit
-    const fteRange = smallEmployerCreditParams.maxFtes - smallEmployerCreditParams.fteLowerLimit
+    const fteRange =
+      smallEmployerCreditParams.maxFtes -
+      smallEmployerCreditParams.fteLowerLimit
 
     // Phase-out ratio
     return excessFtes / fteRange
@@ -118,7 +125,9 @@ export default class F8941 extends F1040Attachment {
     if (avgWage <= smallEmployerCreditParams.wageLowerLimit) return 0
 
     const excessWage = avgWage - smallEmployerCreditParams.wageLowerLimit
-    const wageRange = smallEmployerCreditParams.maxAverageWage - smallEmployerCreditParams.wageLowerLimit
+    const wageRange =
+      smallEmployerCreditParams.maxAverageWage -
+      smallEmployerCreditParams.wageLowerLimit
 
     // Phase-out ratio
     return Math.min(1, excessWage / wageRange)
@@ -143,7 +152,7 @@ export default class F8941 extends F1040Attachment {
   }
 
   // Line 13: Other general business credits (Form 3800)
-  l13 = (): number => 0  // Simplified
+  l13 = (): number => 0 // Simplified
 
   // Line 14: Subtract line 13 from line 12
   l14 = (): number => Math.max(0, this.l12() - this.l13())
@@ -151,7 +160,7 @@ export default class F8941 extends F1040Attachment {
   // Line 15: Credit allowed (smaller of line 11 or line 14)
   l15 = (): number => {
     if (this.healthInfo()?.isTaxExempt) {
-      return this.l11()  // Tax-exempt employers get full credit (refundable)
+      return this.l11() // Tax-exempt employers get full credit (refundable)
     }
     return Math.min(this.l11(), this.l14())
   }

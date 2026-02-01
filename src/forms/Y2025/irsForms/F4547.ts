@@ -1,15 +1,15 @@
 /**
  * Form 4547 - MAGA/Trump Savings Account Elections
- * 
+ *
  * New form for OBBBA 2025 Trump Savings Account provisions
  * Source: docs/obbba/new-provisions/TRUMP_ACCOUNT.md
- * 
+ *
  * This form reports:
  * - New account establishment
  * - Annual contributions ($5,000 max)
  * - Government initial contribution ($1,000 for newborns)
  * - Fair market value
- * 
+ *
  * Effective: 2025-2028 (sunsets for new accounts)
  */
 
@@ -21,7 +21,7 @@ import { trumpSavingsAccount, CURRENT_YEAR } from '../data/federal'
 
 export default class F4547 extends F1040Attachment {
   tag: FormTag = 'f4547'
-  sequenceIndex = 99  // New form, sequence TBD
+  sequenceIndex = 99 // New form, sequence TBD
 
   // Get all Trump Savings Accounts from taxpayer info
   accounts = (): TrumpSavingsAccount[] => {
@@ -46,12 +46,14 @@ export default class F4547 extends F1040Attachment {
 
   // Line 3: Government initial contributions (for accounts opened this year)
   l3 = (): number => {
-    return this.accounts().filter((acct) => {
-      // Check if account was opened this year
-      if (!acct.accountOpenDate) return false
-      const openYear = new Date(acct.accountOpenDate).getFullYear()
-      return openYear === CURRENT_YEAR
-    }).length * trumpSavingsAccount.initialContribution
+    return (
+      this.accounts().filter((acct) => {
+        // Check if account was opened this year
+        if (!acct.accountOpenDate) return false
+        const openYear = new Date(acct.accountOpenDate).getFullYear()
+        return openYear === CURRENT_YEAR
+      }).length * trumpSavingsAccount.initialContribution
+    )
   }
 
   // Line 4: Total contributions (taxpayer + government)
@@ -60,7 +62,10 @@ export default class F4547 extends F1040Attachment {
   // Line 5: Excess contributions (amounts over $5,000 per account per year)
   l5 = (): number => {
     return this.accounts().reduce((sum, acct) => {
-      const excess = Math.max(0, acct.contributionAmount - trumpSavingsAccount.annualContributionLimit)
+      const excess = Math.max(
+        0,
+        acct.contributionAmount - trumpSavingsAccount.annualContributionLimit
+      )
       return sum + excess
     }, 0)
   }
@@ -99,7 +104,10 @@ export default class F4547 extends F1040Attachment {
   l10 = (): number => {
     return this.accounts().filter((acct) => {
       // Check citizenship
-      if (trumpSavingsAccount.citizenshipRequired && !acct.beneficiaryIsCitizen) {
+      if (
+        trumpSavingsAccount.citizenshipRequired &&
+        !acct.beneficiaryIsCitizen
+      ) {
         return false
       }
       // Check age
@@ -113,12 +121,12 @@ export default class F4547 extends F1040Attachment {
 
   fields = (): Field[] => {
     const accounts = this.accounts()
-    
+
     return [
       // Taxpayer info
       this.f1040.namesString(),
       this.f1040.info.taxPayer.primaryPerson.ssid,
-      
+
       // Part I
       this.l1(),
       this.l2(),
@@ -126,31 +134,31 @@ export default class F4547 extends F1040Attachment {
       this.l4(),
       this.l5(),
       this.l6(),
-      
+
       // Part II
       this.l7(),
-      
+
       // Part III
       this.l8(),
       this.l9(),
       this.l10(),
-      
+
       // Account details (up to 4 accounts)
       accounts[0]?.beneficiaryName,
       accounts[0]?.beneficiarySSN,
       accounts[0]?.contributionAmount,
       accounts[0]?.fairMarketValue,
-      
+
       accounts[1]?.beneficiaryName,
       accounts[1]?.beneficiarySSN,
       accounts[1]?.contributionAmount,
       accounts[1]?.fairMarketValue,
-      
+
       accounts[2]?.beneficiaryName,
       accounts[2]?.beneficiarySSN,
       accounts[2]?.contributionAmount,
       accounts[2]?.fairMarketValue,
-      
+
       accounts[3]?.beneficiaryName,
       accounts[3]?.beneficiarySSN,
       accounts[3]?.contributionAmount,

@@ -24,13 +24,13 @@ import { Field } from 'ustaxes/core/pdfFiller'
  */
 
 // 2025 Standard mileage rate for business use
-const STANDARD_MILEAGE_RATE = 0.67  // 67 cents per mile
+const STANDARD_MILEAGE_RATE = 0.67 // 67 cents per mile
 
 // 2025 Depreciation limits for luxury vehicles (Section 280F)
 const DEPRECIATION_LIMITS = {
-  year1: 12200,   // First year limit
-  year2: 19500,   // Second year limit
-  year3: 11700,   // Third year limit
+  year1: 12200, // First year limit
+  year2: 19500, // Second year limit
+  year3: 11700, // Third year limit
   year4Plus: 6960 // Fourth and subsequent years
 }
 
@@ -75,28 +75,30 @@ export interface EmployeeBusinessExpenses {
   actualExpenses?: ActualVehicleExpenses
 
   // Part I: Employee Business Expenses
-  vehicleExpenses: number           // Line 1
-  parkingTollsTransportation: number  // Line 2
-  travelExpenses: number            // Line 3
-  otherBusinessExpenses: number     // Line 4 (meals at 50%)
+  vehicleExpenses: number // Line 1
+  parkingTollsTransportation: number // Line 2
+  travelExpenses: number // Line 3
+  otherBusinessExpenses: number // Line 4 (meals at 50%)
   otherExpensesDescription: string
 
   // Reimbursements
-  reimbursementsNotIncludedInW2: number  // Line 7 (substantiated)
-  reimbursementsIncludedInW2: number     // From W-2 box 12 code L
+  reimbursementsNotIncludedInW2: number // Line 7 (substantiated)
+  reimbursementsIncludedInW2: number // From W-2 box 12 code L
 }
 
 export default class F2106 extends F1040Attachment {
   tag: FormTag = 'f2106'
-  sequenceIndex = 129  // Sequence number for Form 2106
+  sequenceIndex = 129 // Sequence number for Form 2106
 
   isNeeded = (): boolean => {
     return this.isEligible() && this.totalExpenses() > 0
   }
 
   expenseInfo = (): EmployeeBusinessExpenses | undefined => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (this.f1040.info as any).employeeBusinessExpenses as EmployeeBusinessExpenses | undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+    return (this.f1040.info as any).employeeBusinessExpenses as
+      | EmployeeBusinessExpenses
+      | undefined
   }
 
   // Check if taxpayer is in an eligible category
@@ -105,7 +107,12 @@ export default class F2106 extends F1040Attachment {
     if (!info) return false
 
     // Only these categories can deduct under TCJA
-    const eligibleCategories = ['reservist', 'performer', 'government', 'impairment']
+    const eligibleCategories = [
+      'reservist',
+      'performer',
+      'government',
+      'impairment'
+    ]
     return eligibleCategories.includes(info.eligibleCategory)
   }
 
@@ -154,7 +161,7 @@ export default class F2106 extends F1040Attachment {
   l4 = (): number => {
     const otherExpenses = this.expenseInfo()?.otherBusinessExpenses ?? 0
     // Apply 50% limitation to meal expenses
-    return Math.round(otherExpenses * 0.50)
+    return Math.round(otherExpenses * 0.5)
   }
 
   // Line 5: Total expenses (add lines 1-4)
@@ -267,7 +274,7 @@ export default class F2106 extends F1040Attachment {
   l24 = (): number => this.actualExpenses()?.vehicleRentals ?? 0
 
   // Line 25: Inclusion amount (for leased vehicles)
-  l25 = (): number => 0  // Calculated from IRS tables
+  l25 = (): number => 0 // Calculated from IRS tables
 
   // Line 26: Value of employer-provided vehicle
   l26 = (): number => 0
@@ -313,10 +320,14 @@ export default class F2106 extends F1040Attachment {
   // Maximum depreciation allowed based on year
   maxDepreciation = (year: number): number => {
     switch (year) {
-      case 1: return DEPRECIATION_LIMITS.year1
-      case 2: return DEPRECIATION_LIMITS.year2
-      case 3: return DEPRECIATION_LIMITS.year3
-      default: return DEPRECIATION_LIMITS.year4Plus
+      case 1:
+        return DEPRECIATION_LIMITS.year1
+      case 2:
+        return DEPRECIATION_LIMITS.year2
+      case 3:
+        return DEPRECIATION_LIMITS.year3
+      default:
+        return DEPRECIATION_LIMITS.year4Plus
     }
   }
 
@@ -376,7 +387,7 @@ export default class F2106 extends F1040Attachment {
       this.l10(),
       // Part II - Vehicle Expenses
       // Vehicle 1
-      vehicle1?.dateFirstUsed?.toLocaleDateString() ?? '',
+      vehicle1?.dateFirstUsed.toLocaleDateString() ?? '',
       vehicle1?.totalMiles ?? 0,
       vehicle1?.businessMiles ?? 0,
       vehicle1?.commutingMiles ?? 0,
@@ -388,7 +399,7 @@ export default class F2106 extends F1040Attachment {
       vehicle1?.writtenEvidenceSupport ?? false,
       !(vehicle1?.writtenEvidenceSupport ?? true),
       // Vehicle 2
-      vehicle2?.dateFirstUsed?.toLocaleDateString() ?? '',
+      vehicle2?.dateFirstUsed.toLocaleDateString() ?? '',
       vehicle2?.totalMiles ?? 0,
       vehicle2?.businessMiles ?? 0,
       vehicle2?.commutingMiles ?? 0,

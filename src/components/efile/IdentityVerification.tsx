@@ -61,9 +61,10 @@ const useStyles = makeStyles((theme: Theme) =>
       marginTop: theme.spacing(2)
     },
     infoBox: {
-      backgroundColor: theme.palette.type === 'dark'
-        ? 'rgba(255, 255, 255, 0.05)'
-        : 'rgba(0, 0, 0, 0.02)',
+      backgroundColor:
+        theme.palette.type === 'dark'
+          ? 'rgba(255, 255, 255, 0.05)'
+          : 'rgba(0, 0, 0, 0.02)',
       padding: theme.spacing(2),
       borderRadius: theme.shape.borderRadius,
       marginBottom: theme.spacing(2)
@@ -193,7 +194,10 @@ export function IdentityVerification({
 
   return (
     <FormProvider {...methods}>
-      <form onChange={handleFormChange} onSubmit={handleSubmit(handleFormSubmit)}>
+      <form
+        onChange={handleFormChange}
+        onSubmit={(e) => void handleSubmit(handleFormSubmit)(e)}
+      >
         <Paper className={classes.paper} elevation={2}>
           <Typography variant="h6" className={classes.sectionTitle}>
             Identity Verification for {primaryName}
@@ -204,9 +208,9 @@ export function IdentityVerification({
 
           <Box className={classes.infoBox}>
             <Typography variant="body2" color="textSecondary">
-              To verify your identity, enter your Adjusted Gross Income (AGI) from
-              your {priorTaxYear} tax return. You can find this on Form 1040, Line 11.
-              If you didn&apos;t file last year, enter 0.
+              To verify your identity, enter your Adjusted Gross Income (AGI)
+              from your {priorTaxYear} tax return. You can find this on Form
+              1040, Line 11. If you didn&apos;t file last year, enter 0.
             </Typography>
           </Box>
 
@@ -233,7 +237,12 @@ export function IdentityVerification({
             </Grid>
 
             <Collapse in={!usePrimaryPriorPIN} style={{ width: '100%' }}>
-              <Grid item xs={12} sm={6} style={{ paddingLeft: 24, paddingRight: 24 }}>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                style={{ paddingLeft: 24, paddingRight: 24 }}
+              >
                 <LabeledInput
                   label={`${priorTaxYear} Adjusted Gross Income (AGI)`}
                   name="primaryPriorYearAGI"
@@ -243,7 +252,12 @@ export function IdentityVerification({
             </Collapse>
 
             <Collapse in={usePrimaryPriorPIN} style={{ width: '100%' }}>
-              <Grid item xs={12} sm={6} style={{ paddingLeft: 24, paddingRight: 24 }}>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                style={{ paddingLeft: 24, paddingRight: 24 }}
+              >
                 <LabeledInput
                   label={`${priorTaxYear} Self-Select PIN (5 digits)`}
                   name="primaryPriorYearPIN"
@@ -289,7 +303,12 @@ export function IdentityVerification({
             </Grid>
 
             <Collapse in={primaryHasIPPIN} style={{ width: '100%' }}>
-              <Grid item xs={12} sm={6} style={{ paddingLeft: 24, paddingRight: 24 }}>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                style={{ paddingLeft: 24, paddingRight: 24 }}
+              >
                 <LabeledInput
                   label="Your IP PIN (6 digits)"
                   name="primaryIPPIN"
@@ -301,7 +320,8 @@ export function IdentityVerification({
                   }}
                 />
                 <Typography variant="caption" color="textSecondary">
-                  The IP PIN was mailed to you by the IRS or obtained from your IRS online account.
+                  The IP PIN was mailed to you by the IRS or obtained from your
+                  IRS online account.
                 </Typography>
               </Grid>
             </Collapse>
@@ -338,7 +358,12 @@ export function IdentityVerification({
               </Grid>
 
               <Collapse in={!useSpousePriorPIN} style={{ width: '100%' }}>
-                <Grid item xs={12} sm={6} style={{ paddingLeft: 24, paddingRight: 24 }}>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                  style={{ paddingLeft: 24, paddingRight: 24 }}
+                >
                   <LabeledInput
                     label={`Spouse's ${priorTaxYear} AGI`}
                     name="spousePriorYearAGI"
@@ -348,7 +373,12 @@ export function IdentityVerification({
               </Collapse>
 
               <Collapse in={useSpousePriorPIN} style={{ width: '100%' }}>
-                <Grid item xs={12} sm={6} style={{ paddingLeft: 24, paddingRight: 24 }}>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                  style={{ paddingLeft: 24, paddingRight: 24 }}
+                >
                   <LabeledInput
                     label={`Spouse's ${priorTaxYear} Self-Select PIN`}
                     name="spousePriorYearPIN"
@@ -383,7 +413,12 @@ export function IdentityVerification({
               </Grid>
 
               <Collapse in={spouseHasIPPIN} style={{ width: '100%' }}>
-                <Grid item xs={12} sm={6} style={{ paddingLeft: 24, paddingRight: 24 }}>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                  style={{ paddingLeft: 24, paddingRight: 24 }}
+                >
                   <LabeledInput
                     label="Spouse's IP PIN (6 digits)"
                     name="spouseIPPIN"
@@ -406,7 +441,8 @@ export function IdentityVerification({
             <strong>Can&apos;t find your prior year AGI?</strong>
             <ul style={{ margin: '8px 0', paddingLeft: 20 }}>
               <li>Check your {priorTaxYear} Form 1040, Line 11</li>
-              <li>Request a transcript from the IRS at{' '}
+              <li>
+                Request a transcript from the IRS at{' '}
                 <Link
                   href="https://www.irs.gov/individuals/get-transcript"
                   target="_blank"
@@ -417,7 +453,10 @@ export function IdentityVerification({
                 </Link>
               </li>
               <li>If you didn&apos;t file last year, enter $0</li>
-              <li>If you filed late last year, the IRS may not have processed it yet - try $0</li>
+              <li>
+                If you filed late last year, the IRS may not have processed it
+                yet - try $0
+              </li>
             </ul>
           </Typography>
         </Alert>

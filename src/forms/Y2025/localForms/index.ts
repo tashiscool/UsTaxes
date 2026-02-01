@@ -17,39 +17,66 @@
  */
 
 // NYC Forms
-export { NYCResidentTax, default as makeNYCResidentTax } from './NYC/NYCResidentTax'
+export {
+  NYCResidentTax,
+  default as makeNYCResidentTax
+} from './NYC/NYCResidentTax'
 export { default as nycParameters } from './NYC/Parameters'
 
 // Philadelphia Forms
-export { PhiladelphiaWageTax, default as makePhiladelphiaWageTax } from './Philadelphia/PhiladelphiaWageTax'
+export {
+  PhiladelphiaWageTax,
+  default as makePhiladelphiaWageTax
+} from './Philadelphia/PhiladelphiaWageTax'
 export { default as philadelphiaParameters } from './Philadelphia/Parameters'
 
 // Ohio Municipal Forms
-export { OhioMunicipalTax, default as makeOhioMunicipalTax } from './Ohio/OhioMunicipalTax'
+export {
+  OhioMunicipalTax,
+  default as makeOhioMunicipalTax
+} from './Ohio/OhioMunicipalTax'
 export { default as ohioMunicipalParameters } from './Ohio/Parameters'
 
 // Detroit Forms
-export { DetroitCityTax, default as makeDetroitCityTax } from './Detroit/DetroitCityTax'
+export {
+  DetroitCityTax,
+  default as makeDetroitCityTax
+} from './Detroit/DetroitCityTax'
 export { default as detroitParameters } from './Detroit/Parameters'
 
 // St. Louis Forms
-export { StLouisEarningsTax, default as makeStLouisEarningsTax } from './StLouis/StLouisEarningsTax'
+export {
+  StLouisEarningsTax,
+  default as makeStLouisEarningsTax
+} from './StLouis/StLouisEarningsTax'
 export { default as stLouisParameters } from './StLouis/Parameters'
 
 // Kansas City Forms
-export { KansasCityEarningsTax, default as makeKansasCityEarningsTax } from './KansasCity/KansasCityEarningsTax'
+export {
+  KansasCityEarningsTax,
+  default as makeKansasCityEarningsTax
+} from './KansasCity/KansasCityEarningsTax'
 export { default as kansasCityParameters } from './KansasCity/Parameters'
 
 // Baltimore Forms
-export { BaltimoreCityTax, default as makeBaltimoreCityTax } from './Baltimore/BaltimoreCityTax'
+export {
+  BaltimoreCityTax,
+  default as makeBaltimoreCityTax
+} from './Baltimore/BaltimoreCityTax'
 export { default as baltimoreParameters } from './Baltimore/Parameters'
 
 // Pittsburgh Forms
-export { PittsburghEIT, default as makePittsburghEIT } from './Pittsburgh/PittsburghEIT'
+export {
+  PittsburghEIT,
+  default as makePittsburghEIT
+} from './Pittsburgh/PittsburghEIT'
 export { default as pittsburghParameters } from './Pittsburgh/Parameters'
 
 // Indianapolis/Marion County Forms
-export { MarionCountyTax, default as makeMarionCountyTax } from './Indianapolis/MarionCountyTax'
+export {
+  MarionCountyTax,
+  default as makeMarionCountyTax
+} from './Indianapolis/MarionCountyTax'
 export { default as indianapolisParameters } from './Indianapolis/Parameters'
 
 /**
@@ -202,7 +229,9 @@ export const getLocalTaxFormInfo = (jurisdiction: LocalTaxJurisdictionType) => {
 
   // Check if it's a direct registry entry
   if (jurisdiction in localTaxFormsRegistry) {
-    return localTaxFormsRegistry[jurisdiction as keyof typeof localTaxFormsRegistry]
+    return localTaxFormsRegistry[
+      jurisdiction as keyof typeof localTaxFormsRegistry
+    ]
   }
 
   // For other Ohio cities, return generic Ohio info
@@ -281,10 +310,7 @@ export const michiganCities = [
 /**
  * List of Missouri cities with earnings tax
  */
-export const missouriCities = [
-  'St. Louis',
-  'Kansas City'
-] as const
+export const missouriCities = ['St. Louis', 'Kansas City'] as const
 
 /**
  * Determine which local tax forms are needed based on residency and work location
@@ -303,7 +329,10 @@ export const determineRequiredLocalForms = (
   if (
     resCityLower === 'new york city' ||
     resCityLower === 'nyc' ||
-    (residenceState === 'NY' && ['manhattan', 'brooklyn', 'queens', 'bronx', 'staten island'].includes(resCityLower ?? ''))
+    (residenceState === 'NY' &&
+      ['manhattan', 'brooklyn', 'queens', 'bronx', 'staten island'].includes(
+        resCityLower ?? ''
+      ))
   ) {
     requiredForms.push('NYC-201')
   }
@@ -338,10 +367,7 @@ export const determineRequiredLocalForms = (
   }
 
   // Kansas City earnings tax
-  if (
-    resCityLower === 'kansas city' ||
-    workCityLower === 'kansas city'
-  ) {
+  if (resCityLower === 'kansas city' || workCityLower === 'kansas city') {
     // Only MO Kansas City, not KS
     if (residenceState === 'MO' || workState === 'MO') {
       requiredForms.push('KC-RD109')

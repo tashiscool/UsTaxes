@@ -25,10 +25,14 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
 export interface PassiveActivityCredit {
   activityName: string
   activityType: 'rentalRealEstate' | 'otherRental' | 'otherPassive'
-  creditType: 'lowIncomeHousing' | 'rehabilitation' | 'foreignTax' | 'otherBusiness'
+  creditType:
+    | 'lowIncomeHousing'
+    | 'rehabilitation'
+    | 'foreignTax'
+    | 'otherBusiness'
   currentYearCredit: number
   priorYearUnallowed: number
-  activeParticipation: boolean  // For $25,000 special allowance
+  activeParticipation: boolean // For $25,000 special allowance
 }
 
 export default class F8582CR extends F1040Attachment {
@@ -44,35 +48,43 @@ export default class F8582CR extends F1040Attachment {
   }
 
   passiveActivityCredits = (): PassiveActivityCredit[] => {
-    return (this.f1040.info.passiveActivityCredits as PassiveActivityCredit[] | undefined) ?? []
+    return (
+      (this.f1040.info.passiveActivityCredits as
+        | PassiveActivityCredit[]
+        | undefined) ?? []
+    )
   }
 
   // Part I - Passive Activity Credits
 
   // Credits from rental real estate with active participation (special allowance)
   rentalRealEstateCredits = (): PassiveActivityCredit[] => {
-    return this.passiveActivityCredits().filter(c =>
-      c.activityType === 'rentalRealEstate' && c.activeParticipation
+    return this.passiveActivityCredits().filter(
+      (c) => c.activityType === 'rentalRealEstate' && c.activeParticipation
     )
   }
 
   // All other passive activity credits
   otherPassiveCredits = (): PassiveActivityCredit[] => {
-    return this.passiveActivityCredits().filter(c =>
-      c.activityType !== 'rentalRealEstate' || !c.activeParticipation
+    return this.passiveActivityCredits().filter(
+      (c) => c.activityType !== 'rentalRealEstate' || !c.activeParticipation
     )
   }
 
   // Line 1a: Credits from Worksheet 1 (rental real estate with active participation)
   l1a = (): number => {
-    return this.rentalRealEstateCredits()
-      .reduce((sum, c) => sum + c.currentYearCredit + c.priorYearUnallowed, 0)
+    return this.rentalRealEstateCredits().reduce(
+      (sum, c) => sum + c.currentYearCredit + c.priorYearUnallowed,
+      0
+    )
   }
 
   // Line 1b: Credits from Worksheet 2 (all other passive activities)
   l1b = (): number => {
-    return this.otherPassiveCredits()
-      .reduce((sum, c) => sum + c.currentYearCredit + c.priorYearUnallowed, 0)
+    return this.otherPassiveCredits().reduce(
+      (sum, c) => sum + c.currentYearCredit + c.priorYearUnallowed,
+      0
+    )
   }
 
   // Line 1c: Add lines 1a and 1b
@@ -81,10 +93,12 @@ export default class F8582CR extends F1040Attachment {
   // Line 2: Tax attributable to net passive income
   l2 = (): number => {
     // This would come from Form 8582 passive income
-    const f8582 = this.f1040.f8582 as { netPassiveIncome?: () => number } | undefined
+    const f8582 = this.f1040.f8582 as
+      | { netPassiveIncome?: () => number }
+      | undefined
     const passiveIncome = f8582?.netPassiveIncome?.() ?? 0
     // Calculate tax on passive income (simplified)
-    return Math.round(passiveIncome * 0.22)  // Approximate marginal rate
+    return Math.round(passiveIncome * 0.22) // Approximate marginal rate
   }
 
   // Line 3: Enter the smaller of line 1c or line 2
@@ -121,7 +135,9 @@ export default class F8582CR extends F1040Attachment {
 
   // Line 12: Enter amount from Form 8582 line 10 (special allowance used for losses)
   l12 = (): number => {
-    const f8582 = this.f1040.f8582 as { specialAllowanceUsed?: () => number } | undefined
+    const f8582 = this.f1040.f8582 as
+      | { specialAllowanceUsed?: () => number }
+      | undefined
     return f8582?.specialAllowanceUsed?.() ?? 0
   }
 

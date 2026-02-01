@@ -22,7 +22,7 @@ export type PropertyType = 'personal' | 'business' | 'incomeProducing'
 export interface CasualtyEvent {
   description: string
   dateOfEvent: Date
-  disasterDesignation?: string  // FEMA disaster number if applicable
+  disasterDesignation?: string // FEMA disaster number if applicable
   propertyType: PropertyType
   casualtyType: CasualtyType
 
@@ -51,15 +51,18 @@ export default class F4684 extends F1040Attachment {
   }
 
   personalEvents = (): CasualtyEvent[] => {
-    return this.events().filter(e => e.propertyType === 'personal')
+    return this.events().filter((e) => e.propertyType === 'personal')
   }
 
   businessEvents = (): CasualtyEvent[] => {
-    return this.events().filter(e => e.propertyType !== 'personal')
+    return this.events().filter((e) => e.propertyType !== 'personal')
   }
 
   isFederallyDeclaredDisaster = (event: CasualtyEvent): boolean => {
-    return event.casualtyType === 'disaster' && event.disasterDesignation !== undefined
+    return (
+      event.casualtyType === 'disaster' &&
+      event.disasterDesignation !== undefined
+    )
   }
 
   // Section A - Personal Use Property (disasters only under TCJA)
@@ -116,14 +119,15 @@ export default class F4684 extends F1040Attachment {
   // Line 10: Total personal casualty losses
   l10 = (): number => {
     return this.personalEvents()
-      .filter(e => this.isFederallyDeclaredDisaster(e))
+      .filter((e) => this.isFederallyDeclaredDisaster(e))
       .reduce((sum, _, i) => sum + this.l9(i), 0)
   }
 
   // Line 11: $100 floor per casualty event
   l11 = (): number => {
-    const disasterEvents = this.personalEvents()
-      .filter(e => this.isFederallyDeclaredDisaster(e))
+    const disasterEvents = this.personalEvents().filter((e) =>
+      this.isFederallyDeclaredDisaster(e)
+    )
     return disasterEvents.length * 100
   }
 
@@ -132,8 +136,7 @@ export default class F4684 extends F1040Attachment {
 
   // Line 13: Total personal casualty gains
   l13 = (): number => {
-    return this.personalEvents()
-      .reduce((sum, _, i) => sum + this.l4(i), 0)
+    return this.personalEvents().reduce((sum, _, i) => sum + this.l4(i), 0)
   }
 
   // Line 14: If losses exceed gains
@@ -145,7 +148,7 @@ export default class F4684 extends F1040Attachment {
   }
 
   // Line 15: 10% of AGI floor
-  l15 = (): number => Math.round(this.f1040.l11() * 0.10)
+  l15 = (): number => Math.round(this.f1040.l11() * 0.1)
 
   // Line 16: Subtract line 15 from line 14 (deductible personal loss)
   l16 = (): number => Math.max(0, this.l14() - this.l15())
@@ -192,9 +195,9 @@ export default class F4684 extends F1040Attachment {
     for (let i = 0; i < 4; i++) {
       const event = this.personalEvents()[i]
       fields.push(
-        event?.description ?? '',
-        event?.dateOfEvent?.toLocaleDateString() ?? '',
-        event?.disasterDesignation ?? '',
+        event.description ?? '',
+        event.dateOfEvent.toLocaleDateString() ?? '',
+        event.disasterDesignation ?? '',
         this.l2(i),
         this.l3(i),
         this.l4(i),

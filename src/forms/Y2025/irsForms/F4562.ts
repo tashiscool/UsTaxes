@@ -139,29 +139,29 @@ export default class F4562 extends F1040Attachment {
     // l7 = gross income, then subtract expenses EXCEPT l13 (depreciation) and l30
     const grossIncome = schedC.l7()
     const expensesExcludingDepreciationAndHomeOffice =
-      (schedC.l8?.() ?? 0) +
-      (schedC.l9?.() ?? 0) +
-      (schedC.l10?.() ?? 0) +
-      (schedC['l11']?.() ?? 0) + // Contract labor (not this form's l11)
-      (schedC.l12?.() ?? 0) +
+      (schedC.l8() ?? 0) +
+      (schedC.l9() ?? 0) +
+      (schedC.l10() ?? 0) +
+      (schedC['l11']() ?? 0) + // Contract labor (not this form's l11)
+      (schedC.l12() ?? 0) +
       // Skip l13 (depreciation) to avoid F4562 circular call
-      (schedC.l14?.() ?? 0) +
-      (schedC.l15?.() ?? 0) +
-      (schedC.l16a?.() ?? 0) +
-      (schedC.l16b?.() ?? 0) +
-      (schedC.l17?.() ?? 0) +
-      (schedC.l18?.() ?? 0) +
-      (schedC.l19?.() ?? 0) +
-      (schedC.l20a?.() ?? 0) +
-      (schedC.l20b?.() ?? 0) +
-      (schedC.l21?.() ?? 0) +
-      (schedC.l22?.() ?? 0) +
-      (schedC.l23?.() ?? 0) +
-      (schedC.l24a?.() ?? 0) +
-      (schedC.l24b?.() ?? 0) +
-      (schedC.l25?.() ?? 0) +
-      (schedC.l26?.() ?? 0) +
-      (schedC.l27a?.() ?? 0)
+      (schedC.l14() ?? 0) +
+      (schedC.l15() ?? 0) +
+      (schedC.l16a() ?? 0) +
+      (schedC.l16b() ?? 0) +
+      (schedC.l17() ?? 0) +
+      (schedC.l18() ?? 0) +
+      (schedC.l19() ?? 0) +
+      (schedC.l20a() ?? 0) +
+      (schedC.l20b() ?? 0) +
+      (schedC.l21() ?? 0) +
+      (schedC.l22() ?? 0) +
+      (schedC.l23() ?? 0) +
+      (schedC.l24a() ?? 0) +
+      (schedC.l24b() ?? 0) +
+      (schedC.l25() ?? 0) +
+      (schedC.l26() ?? 0) +
+      (schedC.l27a() ?? 0)
     // Skip l30 (home office) to avoid F8829 circular call
 
     const schedCIncome = grossIncome - expensesExcludingDepreciationAndHomeOffice

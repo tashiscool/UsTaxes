@@ -58,7 +58,7 @@ export default class ScheduleJ1120 extends F1040Attachment {
   }
 
   scheduleJ1120Data = (): ScheduleJ1120Data | undefined => {
-    return undefined  // Would be populated from entity data
+    return undefined // Would be populated from entity data
   }
 
   // Part I: Tax Computation
@@ -88,7 +88,8 @@ export default class ScheduleJ1120 extends F1040Attachment {
   l5d = (): number => this.scheduleJ1120Data()?.bondCredits ?? 0
 
   // Line 5e: Total credits
-  l5e = (): number => sumFields([this.l5a(), this.l5b(), this.l5c(), this.l5d()])
+  l5e = (): number =>
+    sumFields([this.l5a(), this.l5b(), this.l5c(), this.l5d()])
 
   // Line 6: Subtract credits from tax
   l6 = (): number => Math.max(0, this.l3() - this.l5e())
@@ -97,15 +98,19 @@ export default class ScheduleJ1120 extends F1040Attachment {
   l7 = (): number => this.scheduleJ1120Data()?.personalHoldingCompanyTax ?? 0
 
   // Line 8: Recapture taxes
-  recaptureInvestmentCredit = (): number => this.scheduleJ1120Data()?.investmentCreditRecapture ?? 0
-  recaptureLowIncomeHousing = (): number => this.scheduleJ1120Data()?.lowIncomeHousingRecapture ?? 0
-  recaptureSection1260 = (): number => this.scheduleJ1120Data()?.section1260Recapture ?? 0
+  recaptureInvestmentCredit = (): number =>
+    this.scheduleJ1120Data()?.investmentCreditRecapture ?? 0
+  recaptureLowIncomeHousing = (): number =>
+    this.scheduleJ1120Data()?.lowIncomeHousingRecapture ?? 0
+  recaptureSection1260 = (): number =>
+    this.scheduleJ1120Data()?.section1260Recapture ?? 0
 
-  l8 = (): number => sumFields([
-    this.recaptureInvestmentCredit(),
-    this.recaptureLowIncomeHousing(),
-    this.recaptureSection1260()
-  ])
+  l8 = (): number =>
+    sumFields([
+      this.recaptureInvestmentCredit(),
+      this.recaptureLowIncomeHousing(),
+      this.recaptureSection1260()
+    ])
 
   // Line 9: Reserved
   l9 = (): number => 0
@@ -114,7 +119,8 @@ export default class ScheduleJ1120 extends F1040Attachment {
   l10 = (): number => 0
 
   // Line 11: Total tax
-  l11 = (): number => sumFields([this.l6(), this.l7(), this.l8(), this.l9(), this.l10()])
+  l11 = (): number =>
+    sumFields([this.l6(), this.l7(), this.l8(), this.l9(), this.l10()])
 
   // Part II: Payments and Refundable Credits
 
@@ -125,19 +131,24 @@ export default class ScheduleJ1120 extends F1040Attachment {
   l13 = (): number => 0
 
   // Line 14: Payments
-  estimatedTaxPayments = (): number => this.scheduleJ1120Data()?.estimatedTaxPayments ?? 0
-  extensionPayment = (): number => this.scheduleJ1120Data()?.extensionPayment ?? 0
-  creditFromForm4136 = (): number => this.scheduleJ1120Data()?.creditFromForm4136 ?? 0
-  creditFromForm8827 = (): number => this.scheduleJ1120Data()?.creditFromForm8827 ?? 0
+  estimatedTaxPayments = (): number =>
+    this.scheduleJ1120Data()?.estimatedTaxPayments ?? 0
+  extensionPayment = (): number =>
+    this.scheduleJ1120Data()?.extensionPayment ?? 0
+  creditFromForm4136 = (): number =>
+    this.scheduleJ1120Data()?.creditFromForm4136 ?? 0
+  creditFromForm8827 = (): number =>
+    this.scheduleJ1120Data()?.creditFromForm8827 ?? 0
   otherPayments = (): number => this.scheduleJ1120Data()?.otherPayments ?? 0
 
-  l14 = (): number => sumFields([
-    this.estimatedTaxPayments(),
-    this.extensionPayment(),
-    this.creditFromForm4136(),
-    this.creditFromForm8827(),
-    this.otherPayments()
-  ])
+  l14 = (): number =>
+    sumFields([
+      this.estimatedTaxPayments(),
+      this.extensionPayment(),
+      this.creditFromForm4136(),
+      this.creditFromForm8827(),
+      this.otherPayments()
+    ])
 
   // Line 15: Refundable credits
   l15 = (): number => this.scheduleJ1120Data()?.refundableFuelCredits ?? 0
@@ -146,7 +157,7 @@ export default class ScheduleJ1120 extends F1040Attachment {
   l16 = (): number => this.l14() + this.l15()
 
   // Line 17: Estimated tax penalty
-  l17 = (): number => 0  // Would be calculated based on underpayment
+  l17 = (): number => 0 // Would be calculated based on underpayment
 
   // Line 18: Amount owed
   l18 = (): number => {

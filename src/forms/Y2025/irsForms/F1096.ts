@@ -34,7 +34,9 @@ export default class F1096 extends Form {
   filerTIN = (): string => this.data.filerTIN
   filerAddress = (): string => {
     const addr = this.data.filerAddress
-    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${addr.zip ?? ''}`
+    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${
+      addr.zip ?? ''
+    }`
   }
 
   // Contact information
@@ -46,7 +48,7 @@ export default class F1096 extends Form {
   ein = (): string => this.data.filerTIN
 
   // Box 2: Social security number (if individual filer)
-  ssn = (): string => ''  // EIN takes precedence for businesses
+  ssn = (): string => '' // EIN takes precedence for businesses
 
   // Box 3: Total number of forms
   numberOfForms = (): number => this.data.numberOfForms
@@ -78,15 +80,24 @@ export default class F1096 extends Form {
   // Form type name for display
   formTypeName = (): string => {
     switch (this.data.formType) {
-      case '1099-NEC': return 'Form 1099-NEC, Nonemployee Compensation'
-      case '1099-MISC': return 'Form 1099-MISC, Miscellaneous Information'
-      case '1099-INT': return 'Form 1099-INT, Interest Income'
-      case '1099-DIV': return 'Form 1099-DIV, Dividends and Distributions'
-      case '1099-B': return 'Form 1099-B, Proceeds From Broker Transactions'
-      case '1099-R': return 'Form 1099-R, Distributions From Pensions'
-      case '1099-S': return 'Form 1099-S, Proceeds From Real Estate'
-      case '1099-K': return 'Form 1099-K, Payment Card Transactions'
-      default: return this.data.formType
+      case '1099-NEC':
+        return 'Form 1099-NEC, Nonemployee Compensation'
+      case '1099-MISC':
+        return 'Form 1099-MISC, Miscellaneous Information'
+      case '1099-INT':
+        return 'Form 1099-INT, Interest Income'
+      case '1099-DIV':
+        return 'Form 1099-DIV, Dividends and Distributions'
+      case '1099-B':
+        return 'Form 1099-B, Proceeds From Broker Transactions'
+      case '1099-R':
+        return 'Form 1099-R, Distributions From Pensions'
+      case '1099-S':
+        return 'Form 1099-S, Proceeds From Real Estate'
+      case '1099-K':
+        return 'Form 1099-K, Payment Card Transactions'
+      default:
+        return this.data.formType
     }
   }
 

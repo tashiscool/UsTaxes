@@ -4,9 +4,19 @@
  * Defines known field positions and labels for extracting data from 1099-MISC forms.
  */
 
-import { FieldDefinition, ExtractedField, extractAllFields, extractByBoxNumber } from '../fieldExtractor'
+import {
+  FieldDefinition,
+  ExtractedField,
+  extractAllFields,
+  extractByBoxNumber
+} from '../fieldExtractor'
 import { OCRResult } from '../ocrEngine'
-import { Income1099MISC, Income1099Type, PersonRole, State } from 'ustaxes/core/data'
+import {
+  Income1099MISC,
+  Income1099Type,
+  PersonRole,
+  State
+} from 'ustaxes/core/data'
 
 /**
  * 1099-MISC field definitions based on IRS form layout
@@ -52,11 +62,7 @@ export const F1099_MISC_FIELDS: FieldDefinition[] = [
   {
     id: 'recipientName',
     name: "Recipient's Name",
-    labels: [
-      "RECIPIENT'S name",
-      "Recipient's name",
-      'Recipient name'
-    ],
+    labels: ["RECIPIENT'S name", "Recipient's name", 'Recipient name'],
     type: 'text'
   },
 
@@ -64,36 +70,21 @@ export const F1099_MISC_FIELDS: FieldDefinition[] = [
   {
     id: 'rents',
     name: 'Rents',
-    labels: [
-      'Rents',
-      'Box 1',
-      '1 Rents',
-      '1. Rents'
-    ],
+    labels: ['Rents', 'Box 1', '1 Rents', '1. Rents'],
     type: 'currency',
     boxNumber: '1'
   },
   {
     id: 'royalties',
     name: 'Royalties',
-    labels: [
-      'Royalties',
-      'Box 2',
-      '2 Royalties',
-      '2. Royalties'
-    ],
+    labels: ['Royalties', 'Box 2', '2 Royalties', '2. Royalties'],
     type: 'currency',
     boxNumber: '2'
   },
   {
     id: 'otherIncome',
     name: 'Other income',
-    labels: [
-      'Other income',
-      'Box 3',
-      '3 Other income',
-      '3. Other income'
-    ],
+    labels: ['Other income', 'Box 3', '3 Other income', '3. Other income'],
     type: 'currency',
     boxNumber: '3'
   },
@@ -112,11 +103,7 @@ export const F1099_MISC_FIELDS: FieldDefinition[] = [
   {
     id: 'fishingBoatProceeds',
     name: 'Fishing boat proceeds',
-    labels: [
-      'Fishing boat proceeds',
-      'Box 5',
-      '5 Fishing boat'
-    ],
+    labels: ['Fishing boat proceeds', 'Box 5', '5 Fishing boat'],
     type: 'currency',
     boxNumber: '5'
   },
@@ -160,12 +147,7 @@ export const F1099_MISC_FIELDS: FieldDefinition[] = [
   {
     id: 'cropInsuranceProceeds',
     name: 'Crop insurance proceeds',
-    labels: [
-      'Crop insurance proceeds',
-      'Crop insurance',
-      'Box 9',
-      '9 Crop'
-    ],
+    labels: ['Crop insurance proceeds', 'Crop insurance', 'Box 9', '9 Crop'],
     type: 'currency',
     boxNumber: '9'
   },
@@ -234,22 +216,14 @@ export const F1099_MISC_FIELDS: FieldDefinition[] = [
   {
     id: 'state',
     name: 'State',
-    labels: [
-      'State',
-      '15 State',
-      'Box 15'
-    ],
+    labels: ['State', '15 State', 'Box 15'],
     type: 'text',
     boxNumber: '15'
   },
   {
     id: 'stateId',
     name: "Payer's state no.",
-    labels: [
-      "Payer's state no.",
-      'State identification',
-      'State ID'
-    ],
+    labels: ["Payer's state no.", 'State identification', 'State ID'],
     type: 'text'
   },
   {
@@ -267,11 +241,7 @@ export const F1099_MISC_FIELDS: FieldDefinition[] = [
   {
     id: 'stateIncome',
     name: 'State income',
-    labels: [
-      'State income',
-      'Box 17',
-      '17 State income'
-    ],
+    labels: ['State income', 'Box 17', '17 State income'],
     type: 'currency',
     boxNumber: '17'
   }
@@ -290,7 +260,9 @@ export interface F1099MiscExtractionResult {
 /**
  * Extract 1099-MISC data from OCR result
  */
-export const extract1099MiscData = (ocrResult: OCRResult): F1099MiscExtractionResult => {
+export const extract1099MiscData = (
+  ocrResult: OCRResult
+): F1099MiscExtractionResult => {
   const fields = extractAllFields(ocrResult, F1099_MISC_FIELDS)
 
   // Also try extracting by box numbers directly

@@ -48,7 +48,7 @@ export interface GiftInfo {
   dateOfGift: Date
   fairMarketValue: number
   donorsBasis: number
-  isDirectSkip: boolean  // For GST purposes
+  isDirectSkip: boolean // For GST purposes
   giftSplitWithSpouse: boolean
   annualExclusionApplied: number
 }
@@ -111,7 +111,8 @@ export default class F709 extends F1040Attachment {
   // Spouse Information
   spouseName = (): string => this.f709Info()?.spouseName ?? ''
   spouseSSN = (): string => this.f709Info()?.spouseSSN ?? ''
-  consentToSplitGifts = (): boolean => this.f709Info()?.consentToSplitGifts ?? false
+  consentToSplitGifts = (): boolean =>
+    this.f709Info()?.consentToSplitGifts ?? false
 
   // Current Year Gifts
   gifts = (): GiftInfo[] => this.f709Info()?.gifts ?? []
@@ -120,7 +121,7 @@ export default class F709 extends F1040Attachment {
 
   // Part 1: Gifts subject to annual exclusion
   giftsSubjectToExclusion = (): GiftInfo[] => {
-    return this.gifts().filter(g => g.annualExclusionApplied > 0)
+    return this.gifts().filter((g) => g.annualExclusionApplied > 0)
   }
 
   // Total gifts before exclusions
@@ -139,7 +140,8 @@ export default class F709 extends F1040Attachment {
   }
 
   // Schedule B: Gifts from Prior Periods
-  priorPeriodGifts = (): PriorPeriodGift[] => this.f709Info()?.priorPeriodGifts ?? []
+  priorPeriodGifts = (): PriorPeriodGift[] =>
+    this.f709Info()?.priorPeriodGifts ?? []
 
   totalPriorTaxableGifts = (): number => {
     return this.priorPeriodGifts().reduce((sum, g) => sum + g.taxableGifts, 0)
@@ -172,7 +174,10 @@ export default class F709 extends F1040Attachment {
 
   // Gift tax before credits
   giftTaxBeforeCredits = (): number => {
-    return Math.max(0, this.tentativeTaxOnAllGifts() - this.tentativeTaxOnPriorGifts())
+    return Math.max(
+      0,
+      this.tentativeTaxOnAllGifts() - this.tentativeTaxOnPriorGifts()
+    )
   }
 
   // Unified Credit
@@ -180,7 +185,10 @@ export default class F709 extends F1040Attachment {
 
   unifiedCreditUsed = (): number => {
     // Credit = tax that would be due on the exclusion amount used
-    const exclusionUsed = Math.min(this.totalTaxableGifts(), this.lifetimeExclusion())
+    const exclusionUsed = Math.min(
+      this.totalTaxableGifts(),
+      this.lifetimeExclusion()
+    )
     return getApplicableCredit(exclusionUsed, 2025)
   }
 
@@ -209,7 +217,7 @@ export default class F709 extends F1040Attachment {
 
   // Direct skips (gifts to grandchildren or lower generations)
   directSkipGifts = (): GiftInfo[] => {
-    return this.gifts().filter(g => g.isDirectSkip)
+    return this.gifts().filter((g) => g.isDirectSkip)
   }
 
   totalDirectSkips = (): number => {
@@ -218,8 +226,10 @@ export default class F709 extends F1040Attachment {
 
   hasDirectSkips = (): boolean => this.f709Info()?.hasDirectSkips ?? false
 
-  gstExemptionAllocated = (): number => this.f709Info()?.gstExemptionAllocated ?? 0
-  priorGSTExemptionUsed = (): number => this.f709Info()?.priorGSTExemptionUsed ?? 0
+  gstExemptionAllocated = (): number =>
+    this.f709Info()?.gstExemptionAllocated ?? 0
+  priorGSTExemptionUsed = (): number =>
+    this.f709Info()?.priorGSTExemptionUsed ?? 0
 
   availableGSTExemption = (): number => {
     return Math.max(0, LIFETIME_EXCLUSION_2025 - this.priorGSTExemptionUsed())
@@ -227,7 +237,10 @@ export default class F709 extends F1040Attachment {
 
   // GST tax (max rate on non-exempt direct skips)
   gstTax = (): number => {
-    const taxableSkips = Math.max(0, this.totalDirectSkips() - this.gstExemptionAllocated())
+    const taxableSkips = Math.max(
+      0,
+      this.totalDirectSkips() - this.gstExemptionAllocated()
+    )
     return Math.round(taxableSkips * PARAMS_2025.maxTaxRate)
   }
 
@@ -248,7 +261,7 @@ export default class F709 extends F1040Attachment {
   // Check if filing is required
   filingRequired = (): boolean => {
     // Filing required if any gift exceeds annual exclusion
-    return this.gifts().some(g => g.fairMarketValue > ANNUAL_EXCLUSION_2025)
+    return this.gifts().some((g) => g.fairMarketValue > ANNUAL_EXCLUSION_2025)
   }
 
   fields = (): Field[] => {

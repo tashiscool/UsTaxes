@@ -60,11 +60,14 @@ export default class F8832 extends Form {
 
   // Line 3: Type of entity
   // a. Domestic eligible entity electing to be classified as association
-  electCorporation = (): boolean => this.data.newClassification === 'corporation'
+  electCorporation = (): boolean =>
+    this.data.newClassification === 'corporation'
   // b. Domestic eligible entity electing to be classified as partnership
-  electPartnership = (): boolean => this.data.newClassification === 'partnership'
+  electPartnership = (): boolean =>
+    this.data.newClassification === 'partnership'
   // c. Domestic eligible entity electing to be classified as disregarded
-  electDisregarded = (): boolean => this.data.newClassification === 'disregarded'
+  electDisregarded = (): boolean =>
+    this.data.newClassification === 'disregarded'
 
   // Line 4: Effective date of election
   effectiveDate = (): string => {
@@ -79,9 +82,12 @@ export default class F8832 extends Form {
     return this.data.previousClassification
   }
 
-  previousWasCorporation = (): boolean => this.previousClassification() === 'corporation'
-  previousWasPartnership = (): boolean => this.previousClassification() === 'partnership'
-  previousWasDisregarded = (): boolean => this.previousClassification() === 'disregarded'
+  previousWasCorporation = (): boolean =>
+    this.previousClassification() === 'corporation'
+  previousWasPartnership = (): boolean =>
+    this.previousClassification() === 'partnership'
+  previousWasDisregarded = (): boolean =>
+    this.previousClassification() === 'disregarded'
 
   // Line 6: Number of owners
   numberOfOwners = (): number => this.data.numberOfOwners

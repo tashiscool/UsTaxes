@@ -66,7 +66,7 @@ export default class Schedule990J extends F1040Attachment {
   }
 
   schedule990JData = (): Schedule990JData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Part I: Questions
@@ -90,23 +90,38 @@ export default class Schedule990J extends F1040Attachment {
 
   // Total compensation from organization
   totalBaseCompensation = (): number => {
-    return this.compensatedPersons().reduce((sum, p) => sum + p.baseCompensation, 0)
+    return this.compensatedPersons().reduce(
+      (sum, p) => sum + p.baseCompensation,
+      0
+    )
   }
 
   totalBonusCompensation = (): number => {
-    return this.compensatedPersons().reduce((sum, p) => sum + p.bonusAndIncentive, 0)
+    return this.compensatedPersons().reduce(
+      (sum, p) => sum + p.bonusAndIncentive,
+      0
+    )
   }
 
   totalOtherCompensation = (): number => {
-    return this.compensatedPersons().reduce((sum, p) => sum + p.otherReportable, 0)
+    return this.compensatedPersons().reduce(
+      (sum, p) => sum + p.otherReportable,
+      0
+    )
   }
 
   totalRetirementBenefits = (): number => {
-    return this.compensatedPersons().reduce((sum, p) => sum + p.retirementPlan, 0)
+    return this.compensatedPersons().reduce(
+      (sum, p) => sum + p.retirementPlan,
+      0
+    )
   }
 
   totalNontaxableBenefits = (): number => {
-    return this.compensatedPersons().reduce((sum, p) => sum + p.nontaxableBenefits, 0)
+    return this.compensatedPersons().reduce(
+      (sum, p) => sum + p.nontaxableBenefits,
+      0
+    )
   }
 
   grandTotalCompensation = (): number => {
@@ -117,7 +132,9 @@ export default class Schedule990J extends F1040Attachment {
   highestPaidPerson = (): CompensatedPerson | undefined => {
     const persons = this.compensatedPersons()
     if (persons.length === 0) return undefined
-    return persons.reduce((max, p) => p.totalFromOrg > max.totalFromOrg ? p : max)
+    return persons.reduce((max, p) =>
+      p.totalFromOrg > max.totalFromOrg ? p : max
+    )
   }
 
   fields = (): Field[] => {

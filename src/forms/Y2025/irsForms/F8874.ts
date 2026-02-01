@@ -28,8 +28,8 @@ import { Form8874Data } from 'ustaxes/core/data'
 
 // Credit percentages by year
 const newMarketsCredits = {
-  years1to3: 0.05,  // 5%
-  years4to7: 0.06   // 6%
+  years1to3: 0.05, // 5%
+  years4to7: 0.06 // 6%
 }
 
 export default class F8874 extends F1040Attachment {
@@ -42,8 +42,11 @@ export default class F8874 extends F1040Attachment {
 
   hasNewMarketsCredit = (): boolean => {
     const data = this.creditData()
-    return data !== undefined &&
-      (data.qualifiedEquityInvestments.length > 0 || (data.passthrough8874Credit ?? 0) > 0)
+    return (
+      data !== undefined &&
+      (data.qualifiedEquityInvestments.length > 0 ||
+        (data.passthrough8874Credit ?? 0) > 0)
+    )
   }
 
   creditData = (): Form8874Data | undefined => {
@@ -58,7 +61,7 @@ export default class F8874 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.qualifiedEquityInvestments
-      .filter(i => i.creditPercentage === newMarketsCredits.years1to3)
+      .filter((i) => i.creditPercentage === newMarketsCredits.years1to3)
       .reduce((sum, i) => sum + i.creditAmount, 0)
   }
 
@@ -67,7 +70,7 @@ export default class F8874 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.qualifiedEquityInvestments
-      .filter(i => i.creditPercentage === newMarketsCredits.years4to7)
+      .filter((i) => i.creditPercentage === newMarketsCredits.years4to7)
       .reduce((sum, i) => sum + i.creditAmount, 0)
   }
 
@@ -84,18 +87,22 @@ export default class F8874 extends F1040Attachment {
   credit = (): number => this.creditData()?.totalCredit ?? this.l4()
 
   // Number of qualified investments
-  numberOfInvestments = (): number => this.creditData()?.qualifiedEquityInvestments.length ?? 0
+  numberOfInvestments = (): number =>
+    this.creditData()?.qualifiedEquityInvestments.length ?? 0
 
   // Total original investment amount
   totalInvestmentAmount = (): number => {
     const data = this.creditData()
     if (!data) return 0
-    return data.qualifiedEquityInvestments.reduce((sum, i) => sum + i.originalInvestmentAmount, 0)
+    return data.qualifiedEquityInvestments.reduce(
+      (sum, i) => sum + i.originalInvestmentAmount,
+      0
+    )
   }
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1a(),
     this.l1b(),
     this.l2(),

@@ -19,11 +19,21 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 export interface Representative {
   name: string
   address: string
-  cafNumber: string  // Centralized Authorization File number
-  ptin?: string      // Preparer Tax Identification Number
+  cafNumber: string // Centralized Authorization File number
+  ptin?: string // Preparer Tax Identification Number
   phone: string
   fax?: string
-  designation: 'attorney' | 'cpa' | 'enrolled_agent' | 'officer' | 'employee' | 'family_member' | 'enrolled_actuary' | 'unenrolled_preparer' | 'student' | 'other'
+  designation:
+    | 'attorney'
+    | 'cpa'
+    | 'enrolled_agent'
+    | 'officer'
+    | 'employee'
+    | 'family_member'
+    | 'enrolled_actuary'
+    | 'unenrolled_preparer'
+    | 'student'
+    | 'other'
   jurisdictionLicense?: string
   jurisdictionState?: string
 }
@@ -116,9 +126,11 @@ export default class F2848 extends F1040Attachment {
   isValid = (): boolean => {
     const data = this.f2848Data()
     if (!data) return false
-    return data.taxpayerSignature &&
-           data.representatives.length > 0 &&
-           data.taxMatters.length > 0
+    return (
+      data.taxpayerSignature &&
+      data.representatives.length > 0 &&
+      data.taxMatters.length > 0
+    )
   }
 
   fields = (): Field[] => {
@@ -171,7 +183,7 @@ export default class F2848 extends F1040Attachment {
       data?.retainPriorPOAs ?? false,
       data?.revokeDate?.toLocaleDateString() ?? '',
       // Part VI: Declaration
-      data?.declarationDate?.toLocaleDateString() ?? '',
+      data?.declarationDate.toLocaleDateString() ?? '',
       data?.taxpayerSignature ?? false,
       data?.spouseSignature ?? false,
       // Validity

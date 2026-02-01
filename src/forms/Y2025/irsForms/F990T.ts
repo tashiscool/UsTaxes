@@ -51,7 +51,7 @@ export interface Form990TInfo {
   // Organization Info
   orgName: string
   ein: string
-  exemptUnder: string  // 501(c)(3), 501(c)(4), etc.
+  exemptUnder: string // 501(c)(3), 501(c)(4), etc.
   groupExemptionNumber?: string
   // Fiscal Year
   fiscalYearStart: Date
@@ -68,7 +68,7 @@ export interface Form990TInfo {
   withholdingCredit: number
   priorYearOverpayment: number
   // Elections
-  section512bElection: boolean  // Controlled entity income
+  section512bElection: boolean // Controlled entity income
 }
 
 // 2025 Corporate Tax Rate for UBTI
@@ -97,7 +97,8 @@ export default class F990T extends F1040Attachment {
   exemptUnder = (): string => this.f990TInfo()?.exemptUnder ?? '501(c)(3)'
 
   // Activities
-  activities = (): UnrelatedBusinessActivity[] => this.f990TInfo()?.activities ?? []
+  activities = (): UnrelatedBusinessActivity[] =>
+    this.f990TInfo()?.activities ?? []
   numberOfActivities = (): number => this.activities().length
 
   // Part I: Unrelated Trade or Business Income (aggregated)
@@ -142,7 +143,14 @@ export default class F990T extends F1040Attachment {
 
   // Line 13: Total unrelated business income
   l13 = (): number => {
-    return sumFields([this.l3(), this.l4a(), this.l5(), this.l6(), this.l7(), this.l12()])
+    return sumFields([
+      this.l3(),
+      this.l4a(),
+      this.l5(),
+      this.l6(),
+      this.l7(),
+      this.l12()
+    ])
   }
 
   // Part II: Deductions
@@ -195,8 +203,15 @@ export default class F990T extends F1040Attachment {
   // Line 25: Total deductions
   l25 = (): number => {
     return sumFields([
-      this.l14(), this.l15(), this.l16(), this.l17(), this.l18(),
-      this.l20(), this.l21(), this.l22(), this.l24()
+      this.l14(),
+      this.l15(),
+      this.l16(),
+      this.l17(),
+      this.l18(),
+      this.l20(),
+      this.l21(),
+      this.l22(),
+      this.l24()
     ])
   }
 
@@ -215,7 +230,7 @@ export default class F990T extends F1040Attachment {
   l30 = (): number => Math.round(this.l29() * CORPORATE_TAX_RATE)
 
   // Line 31: Trusts taxable at trust rates
-  l31 = (): number => 0  // Trust UBTI would use trust rates
+  l31 = (): number => 0 // Trust UBTI would use trust rates
 
   // Line 32: Proxy tax (for 501(c)(4), (5), (6))
   l32 = (): number => 0
@@ -227,7 +242,10 @@ export default class F990T extends F1040Attachment {
 
   // Line 34: Credits
   l34 = (): number => {
-    return (this.f990TInfo()?.foreignTaxCredit ?? 0) + (this.f990TInfo()?.otherCredits ?? 0)
+    return (
+      (this.f990TInfo()?.foreignTaxCredit ?? 0) +
+      (this.f990TInfo()?.otherCredits ?? 0)
+    )
   }
 
   // Line 35: Tax after credits
@@ -237,7 +255,11 @@ export default class F990T extends F1040Attachment {
   l36 = (): number => {
     const info = this.f990TInfo()
     if (!info) return 0
-    return info.estimatedTaxPayments + info.withholdingCredit + info.priorYearOverpayment
+    return (
+      info.estimatedTaxPayments +
+      info.withholdingCredit +
+      info.priorYearOverpayment
+    )
   }
 
   // Line 37: Tax due
@@ -258,8 +280,8 @@ export default class F990T extends F1040Attachment {
       this.orgName(),
       this.ein(),
       this.exemptUnder(),
-      info?.fiscalYearStart?.toLocaleDateString() ?? '',
-      info?.fiscalYearEnd?.toLocaleDateString() ?? '',
+      info?.fiscalYearStart.toLocaleDateString() ?? '',
+      info?.fiscalYearEnd.toLocaleDateString() ?? '',
       info?.isFinalReturn ?? false,
       info?.isAmendedReturn ?? false,
       this.numberOfActivities(),

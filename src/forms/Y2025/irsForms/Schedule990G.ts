@@ -80,7 +80,7 @@ export default class Schedule990G extends F1040Attachment {
   }
 
   schedule990GData = (): Schedule990GData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Part I: Professional Fundraisers
@@ -93,11 +93,17 @@ export default class Schedule990G extends F1040Attachment {
   }
 
   totalProfessionalFundraiserFees = (): number => {
-    return this.professionalFundraisers().reduce((sum, f) => sum + f.compensation, 0)
+    return this.professionalFundraisers().reduce(
+      (sum, f) => sum + f.compensation,
+      0
+    )
   }
 
   totalAmountRaised = (): number => {
-    return this.professionalFundraisers().reduce((sum, f) => sum + f.amountRaised, 0)
+    return this.professionalFundraisers().reduce(
+      (sum, f) => sum + f.amountRaised,
+      0
+    )
   }
 
   // Part II: Fundraising Events
@@ -115,14 +121,17 @@ export default class Schedule990G extends F1040Attachment {
 
   totalEventExpenses = (): number => {
     return this.fundraisingEvents().reduce((sum, e) => {
-      return sum + sumFields([
-        e.cashPrizes,
-        e.noncashPrizes,
-        e.rentAndFacility,
-        e.food,
-        e.entertainment,
-        e.otherExpenses
-      ])
+      return (
+        sum +
+        sumFields([
+          e.cashPrizes,
+          e.noncashPrizes,
+          e.rentAndFacility,
+          e.food,
+          e.entertainment,
+          e.otherExpenses
+        ])
+      )
     }, 0)
   }
 
@@ -145,12 +154,15 @@ export default class Schedule990G extends F1040Attachment {
 
   totalGamingExpenses = (): number => {
     return this.gamingActivities().reduce((sum, g) => {
-      return sum + sumFields([
-        g.cashPrizes,
-        g.noncashPrizes,
-        g.rentExpenses,
-        g.otherExpenses
-      ])
+      return (
+        sum +
+        sumFields([
+          g.cashPrizes,
+          g.noncashPrizes,
+          g.rentExpenses,
+          g.otherExpenses
+        ])
+      )
     }, 0)
   }
 
@@ -200,12 +212,12 @@ export default class Schedule990G extends F1040Attachment {
       data?.hasGamingLicense ?? false,
       data?.gamingLicenseState ?? '',
       // Bingo
-      gaming.find(g => g.gameType === 'bingo')?.grossRevenue ?? 0,
-      gaming.find(g => g.gameType === 'bingo')?.cashPrizes ?? 0,
+      gaming.find((g) => g.gameType === 'bingo')?.grossRevenue ?? 0,
+      gaming.find((g) => g.gameType === 'bingo')?.cashPrizes ?? 0,
       // Pull tabs
-      gaming.find(g => g.gameType === 'pullTabs')?.grossRevenue ?? 0,
+      gaming.find((g) => g.gameType === 'pullTabs')?.grossRevenue ?? 0,
       // Other gaming
-      gaming.find(g => g.gameType === 'other')?.grossRevenue ?? 0,
+      gaming.find((g) => g.gameType === 'other')?.grossRevenue ?? 0,
       // Gaming totals
       this.totalGamingRevenue(),
       this.totalGamingExpenses(),

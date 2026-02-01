@@ -26,8 +26,8 @@ export interface FuelCellVehicle {
   vin: string
   datePlacedInService: Date
   vehicleCost: number
-  businessUsePercentage: number  // 0-100
-  fuelCellCredit: number  // From manufacturer's certification
+  businessUsePercentage: number // 0-100
+  fuelCellCredit: number // From manufacturer's certification
 }
 
 export default class F8910 extends F1040Attachment {
@@ -39,7 +39,9 @@ export default class F8910 extends F1040Attachment {
   }
 
   fuelCellVehicles = (): FuelCellVehicle[] => {
-    return (this.f1040.info.fuelCellVehicles as FuelCellVehicle[] | undefined) ?? []
+    return (
+      (this.f1040.info.fuelCellVehicles as FuelCellVehicle[] | undefined) ?? []
+    )
   }
 
   // Part I - Tentative Credit
@@ -77,7 +79,10 @@ export default class F8910 extends F1040Attachment {
     const vehicles = this.fuelCellVehicles()
     if (vehicles.length === 0) return 0
     // Average business use percentage
-    const totalPct = vehicles.reduce((sum, v) => sum + v.businessUsePercentage, 0)
+    const totalPct = vehicles.reduce(
+      (sum, v) => sum + v.businessUsePercentage,
+      0
+    )
     return Math.round(totalPct / vehicles.length)
   }
 
@@ -120,7 +125,7 @@ export default class F8910 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Part I
     this.l1Description(),
     this.l2VIN(),

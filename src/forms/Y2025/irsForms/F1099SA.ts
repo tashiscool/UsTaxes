@@ -26,14 +26,14 @@ export interface F1099SAData {
   // Account number
   accountNumber?: string
   // Distribution details
-  grossDistribution: number                 // Box 1
-  earnings: number                          // Box 2 (Archer MSA only)
-  distributionCode: string                  // Box 3
-  fairMarketValue: number                   // Box 4
+  grossDistribution: number // Box 1
+  earnings: number // Box 2 (Archer MSA only)
+  distributionCode: string // Box 3
+  fairMarketValue: number // Box 4
   // Account type
-  isHSA: boolean                            // Box 5a
-  isArcherMSA: boolean                      // Box 5b
-  isMedicareAdvantageMSA: boolean           // Box 5c
+  isHSA: boolean // Box 5a
+  isArcherMSA: boolean // Box 5b
+  isMedicareAdvantageMSA: boolean // Box 5c
 }
 
 // Distribution codes
@@ -112,8 +112,8 @@ export default class F1099SA extends F1040Attachment {
 
   // Potential 20% penalty (HSA) or 50% penalty (MSA) if not for qualified expenses
   potentialPenaltyRate = (): number => {
-    if (this.isHSA()) return 0.20
-    if (this.isArcherMSA() || this.isMedicareAdvantageMSA()) return 0.50
+    if (this.isHSA()) return 0.2
+    if (this.isArcherMSA() || this.isMedicareAdvantageMSA()) return 0.5
     return 0
   }
 
@@ -122,8 +122,11 @@ export default class F1099SA extends F1040Attachment {
   }
 
   // To Form 8889 (HSA) or Form 8853 (MSA)
-  toForm8889 = (): number => this.isHSA() ? this.grossDistribution() : 0
-  toForm8853 = (): number => (this.isArcherMSA() || this.isMedicareAdvantageMSA()) ? this.grossDistribution() : 0
+  toForm8889 = (): number => (this.isHSA() ? this.grossDistribution() : 0)
+  toForm8853 = (): number =>
+    this.isArcherMSA() || this.isMedicareAdvantageMSA()
+      ? this.grossDistribution()
+      : 0
 
   fields = (): Field[] => {
     const data = this.f1099SAData()
@@ -139,10 +142,10 @@ export default class F1099SA extends F1040Attachment {
       data?.recipientTIN ?? '',
       data?.accountNumber ?? '',
       // Distribution details
-      data?.grossDistribution ?? 0,               // Box 1
-      data?.earnings ?? 0,                        // Box 2
-      data?.distributionCode ?? '',               // Box 3
-      data?.fairMarketValue ?? 0,                 // Box 4
+      data?.grossDistribution ?? 0, // Box 1
+      data?.earnings ?? 0, // Box 2
+      data?.distributionCode ?? '', // Box 3
+      data?.fairMarketValue ?? 0, // Box 4
       // Account type
       this.isHSA(),
       this.isArcherMSA(),

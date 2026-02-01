@@ -74,7 +74,7 @@ export default class Schedule990L extends F1040Attachment {
   }
 
   schedule990LData = (): Schedule990LData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Part I: Excess benefit transactions
@@ -92,19 +92,25 @@ export default class Schedule990L extends F1040Attachment {
   }
 
   loansToInterestedPersons = (): LoanToInterested[] => {
-    return this.loans().filter(l => l.loanToOrFrom === 'to')
+    return this.loans().filter((l) => l.loanToOrFrom === 'to')
   }
 
   loansFromInterestedPersons = (): LoanToInterested[] => {
-    return this.loans().filter(l => l.loanToOrFrom === 'from')
+    return this.loans().filter((l) => l.loanToOrFrom === 'from')
   }
 
   totalLoansToInterested = (): number => {
-    return this.loansToInterestedPersons().reduce((sum, l) => sum + l.balanceDue, 0)
+    return this.loansToInterestedPersons().reduce(
+      (sum, l) => sum + l.balanceDue,
+      0
+    )
   }
 
   totalLoansFromInterested = (): number => {
-    return this.loansFromInterestedPersons().reduce((sum, l) => sum + l.balanceDue, 0)
+    return this.loansFromInterestedPersons().reduce(
+      (sum, l) => sum + l.balanceDue,
+      0
+    )
   }
 
   // Part III: Grants

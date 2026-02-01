@@ -97,7 +97,10 @@ export interface BusinessRule {
   /** Condition check function - returns true if rule passes */
   check: (data: TaxReturnData, taxYear: number) => boolean
   /** Function to get error details when rule fails */
-  getErrorDetails?: (data: TaxReturnData, taxYear: number) => Partial<BusinessRuleError>
+  getErrorDetails?: (
+    data: TaxReturnData,
+    taxYear: number
+  ) => Partial<BusinessRuleError>
 }
 
 /**
@@ -109,108 +112,108 @@ export interface TaxReturnData {
   taxYear?: number
 
   // Form 1040 lines
-  line1a?: number  // Wages, salaries, tips
-  line1b?: number  // Household employee wages
-  line1c?: number  // Tip income
-  line1d?: number  // Medicaid waiver payments
-  line1e?: number  // Dependent care benefits
-  line1f?: number  // Employer-provided adoption benefits
-  line1g?: number  // Wages from Form 8919
-  line1h?: number  // Other earned income
-  line1i?: number  // Nontaxable combat pay
-  line1z?: number  // Total line 1 (sum of 1a-1h)
-  line2a?: number  // Tax-exempt interest
-  line2b?: number  // Taxable interest
-  line3a?: number  // Qualified dividends
-  line3b?: number  // Ordinary dividends
-  line4a?: number  // IRA distributions
-  line4b?: number  // Taxable IRA amount
-  line5a?: number  // Pensions and annuities
-  line5b?: number  // Taxable pension amount
-  line6a?: number  // Social Security benefits
-  line6b?: number  // Taxable Social Security
-  line7?: number   // Capital gain or loss
-  line8?: number   // Other income from Schedule 1
-  line9?: number   // Total income
-  line10?: number  // Adjustments from Schedule 1
-  line11?: number  // Adjusted Gross Income (AGI)
-  line12?: number  // Standard or itemized deductions
-  line13?: number  // QBI deduction
-  line14?: number  // Total deductions (12 + 13)
-  line15?: number  // Taxable income
-  line16?: number  // Tax
-  line17?: number  // Amount from Schedule 2, line 3
-  line18?: number  // Total tax before credits
-  line19?: number  // Child tax credit
-  line20?: number  // Amount from Schedule 3, line 8
-  line21?: number  // Total credits
-  line22?: number  // Tax after credits
-  line23?: number  // Other taxes from Schedule 2
-  line24?: number  // Total tax
+  line1a?: number // Wages, salaries, tips
+  line1b?: number // Household employee wages
+  line1c?: number // Tip income
+  line1d?: number // Medicaid waiver payments
+  line1e?: number // Dependent care benefits
+  line1f?: number // Employer-provided adoption benefits
+  line1g?: number // Wages from Form 8919
+  line1h?: number // Other earned income
+  line1i?: number // Nontaxable combat pay
+  line1z?: number // Total line 1 (sum of 1a-1h)
+  line2a?: number // Tax-exempt interest
+  line2b?: number // Taxable interest
+  line3a?: number // Qualified dividends
+  line3b?: number // Ordinary dividends
+  line4a?: number // IRA distributions
+  line4b?: number // Taxable IRA amount
+  line5a?: number // Pensions and annuities
+  line5b?: number // Taxable pension amount
+  line6a?: number // Social Security benefits
+  line6b?: number // Taxable Social Security
+  line7?: number // Capital gain or loss
+  line8?: number // Other income from Schedule 1
+  line9?: number // Total income
+  line10?: number // Adjustments from Schedule 1
+  line11?: number // Adjusted Gross Income (AGI)
+  line12?: number // Standard or itemized deductions
+  line13?: number // QBI deduction
+  line14?: number // Total deductions (12 + 13)
+  line15?: number // Taxable income
+  line16?: number // Tax
+  line17?: number // Amount from Schedule 2, line 3
+  line18?: number // Total tax before credits
+  line19?: number // Child tax credit
+  line20?: number // Amount from Schedule 3, line 8
+  line21?: number // Total credits
+  line22?: number // Tax after credits
+  line23?: number // Other taxes from Schedule 2
+  line24?: number // Total tax
   line25a?: number // Federal withholding from W-2
   line25b?: number // Federal withholding from 1099
   line25c?: number // Other withholding
   line25d?: number // Total withholding
-  line26?: number  // Estimated tax payments
-  line27?: number  // Earned income credit
-  line28?: number  // Additional child tax credit
-  line29?: number  // American opportunity credit
-  line30?: number  // Recovery rebate credit
-  line31?: number  // Amount from Schedule 3, line 15
-  line32?: number  // Total other payments/credits
-  line33?: number  // Total payments
-  line34?: number  // Overpaid amount
+  line26?: number // Estimated tax payments
+  line27?: number // Earned income credit
+  line28?: number // Additional child tax credit
+  line29?: number // American opportunity credit
+  line30?: number // Recovery rebate credit
+  line31?: number // Amount from Schedule 3, line 15
+  line32?: number // Total other payments/credits
+  line33?: number // Total payments
+  line34?: number // Overpaid amount
   line35a?: number // Amount to be refunded
-  line36?: number  // Amount applied to estimated tax
-  line37?: number  // Amount owed
+  line36?: number // Amount applied to estimated tax
+  line37?: number // Amount owed
 
   // Schedule 1 lines
-  schedule1Line1?: number   // Taxable refunds
-  schedule1Line2a?: number  // Alimony received
-  schedule1Line3?: number   // Business income (Schedule C)
-  schedule1Line4?: number   // Other gains (Form 4797)
-  schedule1Line5?: number   // Rental income (Schedule E)
-  schedule1Line6?: number   // Farm income (Schedule F)
-  schedule1Line7?: number   // Unemployment compensation
-  schedule1Line8?: number   // Other income
-  schedule1Line10?: number  // Total additional income
-  schedule1Line11?: number  // Educator expenses
-  schedule1Line12?: number  // HSA deduction
-  schedule1Line13?: number  // Moving expenses
-  schedule1Line14?: number  // Deductible SE tax
-  schedule1Line15?: number  // SE SEP/SIMPLE/qualified plans
-  schedule1Line16?: number  // SE health insurance
-  schedule1Line17?: number  // Penalty on early withdrawal
+  schedule1Line1?: number // Taxable refunds
+  schedule1Line2a?: number // Alimony received
+  schedule1Line3?: number // Business income (Schedule C)
+  schedule1Line4?: number // Other gains (Form 4797)
+  schedule1Line5?: number // Rental income (Schedule E)
+  schedule1Line6?: number // Farm income (Schedule F)
+  schedule1Line7?: number // Unemployment compensation
+  schedule1Line8?: number // Other income
+  schedule1Line10?: number // Total additional income
+  schedule1Line11?: number // Educator expenses
+  schedule1Line12?: number // HSA deduction
+  schedule1Line13?: number // Moving expenses
+  schedule1Line14?: number // Deductible SE tax
+  schedule1Line15?: number // SE SEP/SIMPLE/qualified plans
+  schedule1Line16?: number // SE health insurance
+  schedule1Line17?: number // Penalty on early withdrawal
   schedule1Line18a?: number // Alimony paid
-  schedule1Line19?: number  // IRA deduction
-  schedule1Line20?: number  // Student loan interest
-  schedule1Line21?: number  // Reserved
-  schedule1Line22?: number  // Other adjustments
-  schedule1Line26?: number  // Total adjustments
+  schedule1Line19?: number // IRA deduction
+  schedule1Line20?: number // Student loan interest
+  schedule1Line21?: number // Reserved
+  schedule1Line22?: number // Other adjustments
+  schedule1Line26?: number // Total adjustments
 
   // Schedule 2 lines
-  schedule2Line1?: number  // AMT
-  schedule2Line2?: number  // Excess advance PTC repayment
-  schedule2Line3?: number  // Total Part I
-  schedule2Line4?: number  // Self-employment tax
-  schedule2Line5?: number  // Unreported SS/Medicare tax
-  schedule2Line6?: number  // Additional tax on IRAs
-  schedule2Line7?: number  // Household employment taxes
-  schedule2Line8?: number  // Repayment of first-time homebuyer credit
-  schedule2Line9?: number  // Additional Medicare tax
+  schedule2Line1?: number // AMT
+  schedule2Line2?: number // Excess advance PTC repayment
+  schedule2Line3?: number // Total Part I
+  schedule2Line4?: number // Self-employment tax
+  schedule2Line5?: number // Unreported SS/Medicare tax
+  schedule2Line6?: number // Additional tax on IRAs
+  schedule2Line7?: number // Household employment taxes
+  schedule2Line8?: number // Repayment of first-time homebuyer credit
+  schedule2Line9?: number // Additional Medicare tax
   schedule2Line10?: number // Net investment income tax
   schedule2Line17?: number // Other taxes
   schedule2Line21?: number // Total Part II
 
   // Schedule 3 lines
-  schedule3Line1?: number  // Foreign tax credit
-  schedule3Line2?: number  // Child/dependent care credit
-  schedule3Line3?: number  // Education credits
-  schedule3Line4?: number  // Retirement savings credit
-  schedule3Line5?: number  // Residential energy credit
-  schedule3Line6?: number  // Other nonrefundable credits
-  schedule3Line8?: number  // Total nonrefundable credits
-  schedule3Line9?: number  // Net premium tax credit
+  schedule3Line1?: number // Foreign tax credit
+  schedule3Line2?: number // Child/dependent care credit
+  schedule3Line3?: number // Education credits
+  schedule3Line4?: number // Retirement savings credit
+  schedule3Line5?: number // Residential energy credit
+  schedule3Line6?: number // Other nonrefundable credits
+  schedule3Line8?: number // Total nonrefundable credits
+  schedule3Line9?: number // Net premium tax credit
   schedule3Line10?: number // Amount paid with extension
   schedule3Line11?: number // Excess SS tax withheld
   schedule3Line12?: number // Credit for federal tax on fuels
@@ -218,23 +221,23 @@ export interface TaxReturnData {
   schedule3Line15?: number // Total other payments/credits
 
   // Schedule A (Itemized Deductions)
-  scheduleALine1?: number  // Medical expenses
-  scheduleALine2?: number  // AGI (for calculation)
-  scheduleALine3?: number  // AGI * 7.5%
-  scheduleALine4?: number  // Deductible medical
+  scheduleALine1?: number // Medical expenses
+  scheduleALine2?: number // AGI (for calculation)
+  scheduleALine3?: number // AGI * 7.5%
+  scheduleALine4?: number // Deductible medical
   scheduleALine5a?: number // State/local income tax
   scheduleALine5b?: number // State/local sales tax
   scheduleALine5c?: number // Real estate taxes
   scheduleALine5d?: number // Personal property taxes
   scheduleALine5e?: number // Other taxes
-  scheduleALine6?: number  // Total taxes (max $10,000)
-  scheduleALine7?: number  // SALT limitation
+  scheduleALine6?: number // Total taxes (max $10,000)
+  scheduleALine7?: number // SALT limitation
   scheduleALine8a?: number // Home mortgage interest
   scheduleALine8b?: number // Points
   scheduleALine8c?: number // Mortgage interest not reported
   scheduleALine8d?: number // Reserved
   scheduleALine8e?: number // Investment interest
-  scheduleALine9?: number  // Total interest
+  scheduleALine9?: number // Total interest
   scheduleALine10?: number // Cash contributions (30%)
   scheduleALine11?: number // Cash contributions (60%)
   scheduleALine12?: number // Carryover contributions
@@ -315,17 +318,39 @@ export const RULES_1040: BusinessRule[] = [
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040'],
     check: (data) => {
-      const sum = (data.line1a || 0) + (data.line1b || 0) + (data.line1c || 0) +
-                  (data.line1d || 0) + (data.line1e || 0) + (data.line1f || 0) +
-                  (data.line1g || 0) + (data.line1h || 0)
+      const sum =
+        (data.line1a || 0) +
+        (data.line1b || 0) +
+        (data.line1c || 0) +
+        (data.line1d || 0) +
+        (data.line1e || 0) +
+        (data.line1f || 0) +
+        (data.line1g || 0) +
+        (data.line1h || 0)
       return Math.abs((data.line1z || 0) - sum) < 0.01
     },
     getErrorDetails: (data) => {
-      const sum = (data.line1a || 0) + (data.line1b || 0) + (data.line1c || 0) +
-                  (data.line1d || 0) + (data.line1e || 0) + (data.line1f || 0) +
-                  (data.line1g || 0) + (data.line1h || 0)
+      const sum =
+        (data.line1a || 0) +
+        (data.line1b || 0) +
+        (data.line1c || 0) +
+        (data.line1d || 0) +
+        (data.line1e || 0) +
+        (data.line1f || 0) +
+        (data.line1g || 0) +
+        (data.line1h || 0)
       return {
-        fields: ['Line 1a', 'Line 1b', 'Line 1c', 'Line 1d', 'Line 1e', 'Line 1f', 'Line 1g', 'Line 1h', 'Line 1z'],
+        fields: [
+          'Line 1a',
+          'Line 1b',
+          'Line 1c',
+          'Line 1d',
+          'Line 1e',
+          'Line 1f',
+          'Line 1g',
+          'Line 1h',
+          'Line 1z'
+        ],
         expected: `$${sum.toFixed(2)}`,
         actual: `$${(data.line1z || 0).toFixed(2)}`,
         suggestion: 'Verify all wage and income entries on lines 1a through 1h'
@@ -343,12 +368,14 @@ export const RULES_1040: BusinessRule[] = [
       fields: ['Line 15'],
       expected: 'Amount >= $0',
       actual: `$${(data.line15 || 0).toFixed(2)}`,
-      suggestion: 'Taxable income should be zero or positive. If deductions exceed income, taxable income is zero.'
+      suggestion:
+        'Taxable income should be zero or positive. If deductions exceed income, taxable income is zero.'
     })
   },
   {
     id: 'R0003',
-    description: 'AGI (Line 11) must equal Total Income (Line 9) minus Adjustments (Line 10)',
+    description:
+      'AGI (Line 11) must equal Total Income (Line 9) minus Adjustments (Line 10)',
     category: RuleCategory.MATHEMATICAL,
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040'],
@@ -373,17 +400,39 @@ export const RULES_1040: BusinessRule[] = [
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040'],
     check: (data) => {
-      const sum = (data.line1z || 0) + (data.line2b || 0) + (data.line3b || 0) +
-                  (data.line4b || 0) + (data.line5b || 0) + (data.line6b || 0) +
-                  (data.line7 || 0) + (data.line8 || 0)
+      const sum =
+        (data.line1z || 0) +
+        (data.line2b || 0) +
+        (data.line3b || 0) +
+        (data.line4b || 0) +
+        (data.line5b || 0) +
+        (data.line6b || 0) +
+        (data.line7 || 0) +
+        (data.line8 || 0)
       return Math.abs((data.line9 || 0) - sum) < 0.01
     },
     getErrorDetails: (data) => {
-      const sum = (data.line1z || 0) + (data.line2b || 0) + (data.line3b || 0) +
-                  (data.line4b || 0) + (data.line5b || 0) + (data.line6b || 0) +
-                  (data.line7 || 0) + (data.line8 || 0)
+      const sum =
+        (data.line1z || 0) +
+        (data.line2b || 0) +
+        (data.line3b || 0) +
+        (data.line4b || 0) +
+        (data.line5b || 0) +
+        (data.line6b || 0) +
+        (data.line7 || 0) +
+        (data.line8 || 0)
       return {
-        fields: ['Line 1z', 'Line 2b', 'Line 3b', 'Line 4b', 'Line 5b', 'Line 6b', 'Line 7', 'Line 8', 'Line 9'],
+        fields: [
+          'Line 1z',
+          'Line 2b',
+          'Line 3b',
+          'Line 4b',
+          'Line 5b',
+          'Line 6b',
+          'Line 7',
+          'Line 8',
+          'Line 9'
+        ],
         expected: `$${sum.toFixed(2)}`,
         actual: `$${(data.line9 || 0).toFixed(2)}`,
         suggestion: 'Total income should be the sum of all income sources'
@@ -392,7 +441,8 @@ export const RULES_1040: BusinessRule[] = [
   },
   {
     id: 'R0005',
-    description: 'Taxable income (Line 15) must equal AGI (Line 11) minus Total Deductions (Line 14)',
+    description:
+      'Taxable income (Line 15) must equal AGI (Line 11) minus Total Deductions (Line 14)',
     category: RuleCategory.MATHEMATICAL,
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040'],
@@ -406,13 +456,15 @@ export const RULES_1040: BusinessRule[] = [
         fields: ['Line 11', 'Line 14', 'Line 15'],
         expected: `$${expected.toFixed(2)}`,
         actual: `$${(data.line15 || 0).toFixed(2)}`,
-        suggestion: 'Taxable Income = AGI - Total Deductions (cannot be less than zero)'
+        suggestion:
+          'Taxable Income = AGI - Total Deductions (cannot be less than zero)'
       }
     }
   },
   {
     id: 'R0006',
-    description: 'Total Deductions (Line 14) must equal Deductions (Line 12) plus QBI Deduction (Line 13)',
+    description:
+      'Total Deductions (Line 14) must equal Deductions (Line 12) plus QBI Deduction (Line 13)',
     category: RuleCategory.MATHEMATICAL,
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040'],
@@ -426,13 +478,15 @@ export const RULES_1040: BusinessRule[] = [
         fields: ['Line 12', 'Line 13', 'Line 14'],
         expected: `$${expected.toFixed(2)}`,
         actual: `$${(data.line14 || 0).toFixed(2)}`,
-        suggestion: 'Total Deductions = Standard/Itemized Deduction + QBI Deduction'
+        suggestion:
+          'Total Deductions = Standard/Itemized Deduction + QBI Deduction'
       }
     }
   },
   {
     id: 'R0007',
-    description: 'Total Tax (Line 24) must equal Tax after Credits (Line 22) plus Other Taxes (Line 23)',
+    description:
+      'Total Tax (Line 24) must equal Tax after Credits (Line 22) plus Other Taxes (Line 23)',
     category: RuleCategory.MATHEMATICAL,
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040'],
@@ -446,47 +500,56 @@ export const RULES_1040: BusinessRule[] = [
         fields: ['Line 22', 'Line 23', 'Line 24'],
         expected: `$${expected.toFixed(2)}`,
         actual: `$${(data.line24 || 0).toFixed(2)}`,
-        suggestion: 'Total Tax = Tax after Credits + Other Taxes (from Schedule 2)'
+        suggestion:
+          'Total Tax = Tax after Credits + Other Taxes (from Schedule 2)'
       }
     }
   },
   {
     id: 'R0008',
-    description: 'Total Withholding (Line 25d) must equal sum of Lines 25a, 25b, 25c',
+    description:
+      'Total Withholding (Line 25d) must equal sum of Lines 25a, 25b, 25c',
     category: RuleCategory.MATHEMATICAL,
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040'],
     check: (data) => {
-      const expected = (data.line25a || 0) + (data.line25b || 0) + (data.line25c || 0)
+      const expected =
+        (data.line25a || 0) + (data.line25b || 0) + (data.line25c || 0)
       return Math.abs((data.line25d || 0) - expected) < 0.01
     },
     getErrorDetails: (data) => {
-      const expected = (data.line25a || 0) + (data.line25b || 0) + (data.line25c || 0)
+      const expected =
+        (data.line25a || 0) + (data.line25b || 0) + (data.line25c || 0)
       return {
         fields: ['Line 25a', 'Line 25b', 'Line 25c', 'Line 25d'],
         expected: `$${expected.toFixed(2)}`,
         actual: `$${(data.line25d || 0).toFixed(2)}`,
-        suggestion: 'Total withholding should include all federal income tax withheld from W-2s and 1099s'
+        suggestion:
+          'Total withholding should include all federal income tax withheld from W-2s and 1099s'
       }
     }
   },
   {
     id: 'R0009',
-    description: 'Total Payments (Line 33) must equal Withholding plus Estimated Payments plus Credits',
+    description:
+      'Total Payments (Line 33) must equal Withholding plus Estimated Payments plus Credits',
     category: RuleCategory.MATHEMATICAL,
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040'],
     check: (data) => {
-      const expected = (data.line25d || 0) + (data.line26 || 0) + (data.line32 || 0)
+      const expected =
+        (data.line25d || 0) + (data.line26 || 0) + (data.line32 || 0)
       return Math.abs((data.line33 || 0) - expected) < 0.01
     },
     getErrorDetails: (data) => {
-      const expected = (data.line25d || 0) + (data.line26 || 0) + (data.line32 || 0)
+      const expected =
+        (data.line25d || 0) + (data.line26 || 0) + (data.line32 || 0)
       return {
         fields: ['Line 25d', 'Line 26', 'Line 32', 'Line 33'],
         expected: `$${expected.toFixed(2)}`,
         actual: `$${(data.line33 || 0).toFixed(2)}`,
-        suggestion: 'Total Payments = Total Withholding + Estimated Tax Payments + Refundable Credits'
+        suggestion:
+          'Total Payments = Total Withholding + Estimated Tax Payments + Refundable Credits'
       }
     }
   },
@@ -510,13 +573,16 @@ export const RULES_1040: BusinessRule[] = [
       const difference = (data.line33 || 0) - (data.line24 || 0)
       return {
         fields: ['Line 24', 'Line 33', 'Line 34', 'Line 37'],
-        expected: difference >= 0 ?
-          `Overpaid: $${difference.toFixed(2)}` :
-          `Owed: $${Math.abs(difference).toFixed(2)}`,
-        actual: difference >= 0 ?
-          `Overpaid: $${(data.line34 || 0).toFixed(2)}` :
-          `Owed: $${(data.line37 || 0).toFixed(2)}`,
-        suggestion: 'If Total Payments > Total Tax, you have an overpayment. Otherwise, you owe tax.'
+        expected:
+          difference >= 0
+            ? `Overpaid: $${difference.toFixed(2)}`
+            : `Owed: $${Math.abs(difference).toFixed(2)}`,
+        actual:
+          difference >= 0
+            ? `Overpaid: $${(data.line34 || 0).toFixed(2)}`
+            : `Owed: $${(data.line37 || 0).toFixed(2)}`,
+        suggestion:
+          'If Total Payments > Total Tax, you have an overpayment. Otherwise, you owe tax.'
       }
     }
   },
@@ -572,8 +638,11 @@ export const RULES_1040: BusinessRule[] = [
     getErrorDetails: (data) => ({
       fields: ['Line 3a', 'Line 3b'],
       expected: `Line 3a <= Line 3b`,
-      actual: `Qualified: $${(data.line3a || 0).toFixed(2)}, Ordinary: $${(data.line3b || 0).toFixed(2)}`,
-      suggestion: 'Qualified dividends are a subset of ordinary dividends and cannot be greater'
+      actual: `Qualified: $${(data.line3a || 0).toFixed(2)}, Ordinary: $${(
+        data.line3b || 0
+      ).toFixed(2)}`,
+      suggestion:
+        'Qualified dividends are a subset of ordinary dividends and cannot be greater'
     })
   },
   {
@@ -586,13 +655,16 @@ export const RULES_1040: BusinessRule[] = [
     getErrorDetails: (data) => ({
       fields: ['Line 4a', 'Line 4b'],
       expected: `Line 4b <= Line 4a`,
-      actual: `Taxable: $${(data.line4b || 0).toFixed(2)}, Total: $${(data.line4a || 0).toFixed(2)}`,
+      actual: `Taxable: $${(data.line4b || 0).toFixed(2)}, Total: $${(
+        data.line4a || 0
+      ).toFixed(2)}`,
       suggestion: 'Taxable IRA amount cannot exceed total IRA distributions'
     })
   },
   {
     id: 'R0054',
-    description: 'Taxable pension amount cannot exceed total pension distributions',
+    description:
+      'Taxable pension amount cannot exceed total pension distributions',
     category: RuleCategory.CONSISTENCY,
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040'],
@@ -600,8 +672,11 @@ export const RULES_1040: BusinessRule[] = [
     getErrorDetails: (data) => ({
       fields: ['Line 5a', 'Line 5b'],
       expected: `Line 5b <= Line 5a`,
-      actual: `Taxable: $${(data.line5b || 0).toFixed(2)}, Total: $${(data.line5a || 0).toFixed(2)}`,
-      suggestion: 'Taxable pension amount cannot exceed total pension distributions'
+      actual: `Taxable: $${(data.line5b || 0).toFixed(2)}, Total: $${(
+        data.line5a || 0
+      ).toFixed(2)}`,
+      suggestion:
+        'Taxable pension amount cannot exceed total pension distributions'
     })
   },
   {
@@ -613,9 +688,12 @@ export const RULES_1040: BusinessRule[] = [
     check: (data) => (data.line6b || 0) <= (data.line6a || 0) * 0.85,
     getErrorDetails: (data) => ({
       fields: ['Line 6a', 'Line 6b'],
-      expected: `Line 6b <= ${((data.line6a || 0) * 0.85).toFixed(2)} (85% of Line 6a)`,
+      expected: `Line 6b <= ${((data.line6a || 0) * 0.85).toFixed(
+        2
+      )} (85% of Line 6a)`,
       actual: `Taxable: $${(data.line6b || 0).toFixed(2)}`,
-      suggestion: 'Maximum taxable Social Security is 85% of total benefits received'
+      suggestion:
+        'Maximum taxable Social Security is 85% of total benefits received'
     })
   },
 
@@ -630,7 +708,9 @@ export const RULES_1040: BusinessRule[] = [
     applicableForms: ['ScheduleC', 'Schedule1'],
     check: (data) => {
       if (data.hasScheduleC && data.scheduleCNetProfit !== undefined) {
-        return Math.abs((data.schedule1Line3 || 0) - data.scheduleCNetProfit) < 0.01
+        return (
+          Math.abs((data.schedule1Line3 || 0) - data.scheduleCNetProfit) < 0.01
+        )
       }
       return true
     },
@@ -638,12 +718,14 @@ export const RULES_1040: BusinessRule[] = [
       fields: ['Schedule C Line 31', 'Schedule 1 Line 3'],
       expected: `$${(data.scheduleCNetProfit || 0).toFixed(2)}`,
       actual: `$${(data.schedule1Line3 || 0).toFixed(2)}`,
-      suggestion: 'Schedule C net profit or loss must flow to Schedule 1, Line 3'
+      suggestion:
+        'Schedule C net profit or loss must flow to Schedule 1, Line 3'
     })
   },
   {
     id: 'R0101',
-    description: 'If Schedule C shows profit, Schedule SE is generally required',
+    description:
+      'If Schedule C shows profit, Schedule SE is generally required',
     category: RuleCategory.CROSS_FORM,
     severity: RuleSeverity.WARNING,
     applicableForms: ['ScheduleC', 'ScheduleSE'],
@@ -656,8 +738,11 @@ export const RULES_1040: BusinessRule[] = [
     getErrorDetails: (data) => ({
       fields: ['Schedule C Line 31'],
       expected: 'Schedule SE attached',
-      actual: `Net profit: $${(data.scheduleCNetProfit || 0).toFixed(2)}, No Schedule SE`,
-      suggestion: 'Self-employment tax is required when net self-employment earnings are $400 or more'
+      actual: `Net profit: $${(data.scheduleCNetProfit || 0).toFixed(
+        2
+      )}, No Schedule SE`,
+      suggestion:
+        'Self-employment tax is required when net self-employment earnings are $400 or more'
     })
   },
   {
@@ -668,7 +753,10 @@ export const RULES_1040: BusinessRule[] = [
     applicableForms: ['ScheduleSE', 'Schedule1'],
     check: (data) => {
       if (data.hasScheduleSE && data.scheduleSEDeduction !== undefined) {
-        return Math.abs((data.schedule1Line14 || 0) - data.scheduleSEDeduction) < 0.01
+        return (
+          Math.abs((data.schedule1Line14 || 0) - data.scheduleSEDeduction) <
+          0.01
+        )
       }
       return true
     },
@@ -676,12 +764,14 @@ export const RULES_1040: BusinessRule[] = [
       fields: ['Schedule SE Deduction', 'Schedule 1 Line 14'],
       expected: `$${(data.scheduleSEDeduction || 0).toFixed(2)}`,
       actual: `$${(data.schedule1Line14 || 0).toFixed(2)}`,
-      suggestion: 'Deductible self-employment tax (50% of SE tax) must be reported on Schedule 1, Line 14'
+      suggestion:
+        'Deductible self-employment tax (50% of SE tax) must be reported on Schedule 1, Line 14'
     })
   },
   {
     id: 'R0103',
-    description: 'Schedule D net gain/loss must be reported on Form 1040 Line 7',
+    description:
+      'Schedule D net gain/loss must be reported on Form 1040 Line 7',
     category: RuleCategory.CROSS_FORM,
     severity: RuleSeverity.ERROR,
     applicableForms: ['ScheduleD', 'Form1040'],
@@ -695,7 +785,8 @@ export const RULES_1040: BusinessRule[] = [
       fields: ['Schedule D Line 16', 'Form 1040 Line 7'],
       expected: `$${(data.scheduleDNetGain || 0).toFixed(2)}`,
       actual: `$${(data.line7 || 0).toFixed(2)}`,
-      suggestion: 'Net capital gain or loss from Schedule D must be reported on Form 1040, Line 7'
+      suggestion:
+        'Net capital gain or loss from Schedule D must be reported on Form 1040, Line 7'
     })
   },
   {
@@ -706,7 +797,10 @@ export const RULES_1040: BusinessRule[] = [
     applicableForms: ['ScheduleE', 'Schedule1'],
     check: (data) => {
       if (data.hasScheduleE && data.scheduleENetRentalIncome !== undefined) {
-        return Math.abs((data.schedule1Line5 || 0) - data.scheduleENetRentalIncome) < 0.01
+        return (
+          Math.abs((data.schedule1Line5 || 0) - data.scheduleENetRentalIncome) <
+          0.01
+        )
       }
       return true
     },
@@ -714,7 +808,8 @@ export const RULES_1040: BusinessRule[] = [
       fields: ['Schedule E Part I', 'Schedule 1 Line 5'],
       expected: `$${(data.scheduleENetRentalIncome || 0).toFixed(2)}`,
       actual: `$${(data.schedule1Line5 || 0).toFixed(2)}`,
-      suggestion: 'Net rental income from Schedule E must flow to Schedule 1, Line 5'
+      suggestion:
+        'Net rental income from Schedule E must flow to Schedule 1, Line 5'
     })
   },
   {
@@ -733,7 +828,8 @@ export const RULES_1040: BusinessRule[] = [
       fields: ['Schedule A Line 17', 'Form 1040 Line 12'],
       expected: `$${(data.scheduleALine17 || 0).toFixed(2)}`,
       actual: `$${(data.line12 || 0).toFixed(2)}`,
-      suggestion: 'Total itemized deductions from Schedule A must match Form 1040, Line 12'
+      suggestion:
+        'Total itemized deductions from Schedule A must match Form 1040, Line 12'
     })
   },
 
@@ -742,7 +838,8 @@ export const RULES_1040: BusinessRule[] = [
   // -------------------------------------------------------------------------
   {
     id: 'R0150',
-    description: 'State and local tax deduction limited to $10,000 ($5,000 if MFS)',
+    description:
+      'State and local tax deduction limited to $10,000 ($5,000 if MFS)',
     category: RuleCategory.RANGE,
     severity: RuleSeverity.ERROR,
     applicableForms: ['ScheduleA'],
@@ -757,7 +854,11 @@ export const RULES_1040: BusinessRule[] = [
         fields: ['Schedule A Line 7'],
         expected: `<= $${limit.toFixed(2)}`,
         actual: `$${(data.scheduleALine7 || 0).toFixed(2)}`,
-        suggestion: `SALT deduction is limited to $${limit.toLocaleString()} for ${data.filingStatus === FilingStatus.MFS ? 'Married Filing Separately' : 'your filing status'}`,
+        suggestion: `SALT deduction is limited to $${limit.toLocaleString()} for ${
+          data.filingStatus === FilingStatus.MFS
+            ? 'Married Filing Separately'
+            : 'your filing status'
+        }`,
         irsReference: 'IRC Section 164(b)(6)'
       }
     }
@@ -774,7 +875,8 @@ export const RULES_1040: BusinessRule[] = [
       fields: ['Schedule 1 Line 11'],
       expected: '<= $300 per educator ($600 for MFJ)',
       actual: `$${(data.schedule1Line11 || 0).toFixed(2)}`,
-      suggestion: 'Educator expenses are limited to $300 per educator. For MFJ with both spouses as educators, maximum is $600.'
+      suggestion:
+        'Educator expenses are limited to $300 per educator. For MFJ with both spouses as educators, maximum is $600.'
     })
   },
   {
@@ -788,7 +890,8 @@ export const RULES_1040: BusinessRule[] = [
       fields: ['Schedule 1 Line 20'],
       expected: '<= $2,500',
       actual: `$${(data.schedule1Line20 || 0).toFixed(2)}`,
-      suggestion: 'Student loan interest deduction is limited to $2,500 per year',
+      suggestion:
+        'Student loan interest deduction is limited to $2,500 per year',
       irsReference: 'IRC Section 221'
     })
   },
@@ -808,7 +911,8 @@ export const RULES_1040: BusinessRule[] = [
       fields: ['Schedule 1 Line 12'],
       expected: '<= $8,300 (family) or $4,150 (self-only) + $1,000 if age 55+',
       actual: `$${(data.schedule1Line12 || 0).toFixed(2)}`,
-      suggestion: 'Verify HSA contribution does not exceed IRS limits. Excess contributions may be subject to 6% excise tax.'
+      suggestion:
+        'Verify HSA contribution does not exceed IRS limits. Excess contributions may be subject to 6% excise tax.'
     })
   },
 
@@ -830,7 +934,8 @@ export const RULES_1040: BusinessRule[] = [
     getErrorDetails: () => ({
       fields: ['Line 27'],
       expected: '$0 for MFS filers',
-      suggestion: 'Earned Income Credit is not available when filing Married Filing Separately',
+      suggestion:
+        'Earned Income Credit is not available when filing Married Filing Separately',
       irsReference: 'IRC Section 32(d)'
     })
   },
@@ -842,14 +947,17 @@ export const RULES_1040: BusinessRule[] = [
     applicableForms: ['Form1040'],
     check: (data) => {
       if (data.filingStatus === FilingStatus.HOH) {
-        return (data.dependentCount || 0) > 0 || (data.qualifyingChildCount || 0) > 0
+        return (
+          (data.dependentCount || 0) > 0 || (data.qualifyingChildCount || 0) > 0
+        )
       }
       return true
     },
     getErrorDetails: () => ({
       fields: ['Filing Status'],
       expected: 'At least one qualifying person',
-      suggestion: 'Head of Household status requires a qualifying child or dependent who lived with you for more than half the year'
+      suggestion:
+        'Head of Household status requires a qualifying child or dependent who lived with you for more than half the year'
     })
   },
   {
@@ -876,7 +984,8 @@ export const RULES_1040: BusinessRule[] = [
   // -------------------------------------------------------------------------
   {
     id: 'R0250',
-    description: 'Child Tax Credit limited based on number of qualifying children',
+    description:
+      'Child Tax Credit limited based on number of qualifying children',
     category: RuleCategory.CREDIT,
     severity: RuleSeverity.WARNING,
     applicableForms: ['Form1040', 'Schedule8812'],
@@ -889,7 +998,9 @@ export const RULES_1040: BusinessRule[] = [
       const maxCredit = (data.qualifyingChildCount || 0) * 2000
       return {
         fields: ['Line 19'],
-        expected: `<= $${maxCredit.toFixed(2)} (${data.qualifyingChildCount || 0} children x $2,000)`,
+        expected: `<= $${maxCredit.toFixed(2)} (${
+          data.qualifyingChildCount || 0
+        } children x $2,000)`,
         actual: `$${(data.line19 || 0).toFixed(2)}`,
         suggestion: 'Child Tax Credit is $2,000 per qualifying child under 17'
       }
@@ -907,9 +1018,14 @@ export const RULES_1040: BusinessRule[] = [
     },
     getErrorDetails: (data) => ({
       fields: ['Line 18', 'Line 19', 'Line 20', 'Line 21'],
-      expected: `Credits <= $${(data.line18 || 0).toFixed(2)} (tax before credits)`,
-      actual: `Credits: $${((data.line19 || 0) + (data.line20 || 0)).toFixed(2)}`,
-      suggestion: 'Nonrefundable credits cannot exceed your tax liability. Excess credits may be lost or carried forward.'
+      expected: `Credits <= $${(data.line18 || 0).toFixed(
+        2
+      )} (tax before credits)`,
+      actual: `Credits: $${((data.line19 || 0) + (data.line20 || 0)).toFixed(
+        2
+      )}`,
+      suggestion:
+        'Nonrefundable credits cannot exceed your tax liability. Excess credits may be lost or carried forward.'
     })
   },
   {
@@ -923,7 +1039,8 @@ export const RULES_1040: BusinessRule[] = [
       fields: ['Line 29'],
       expected: '<= $2,500 per eligible student',
       actual: `$${(data.line29 || 0).toFixed(2)}`,
-      suggestion: 'American Opportunity Credit is limited to $2,500 per eligible student',
+      suggestion:
+        'American Opportunity Credit is limited to $2,500 per eligible student',
       irsReference: 'IRC Section 25A'
     })
   },
@@ -948,8 +1065,11 @@ export const RULES_1040: BusinessRule[] = [
     getErrorDetails: (data) => ({
       fields: ['Line 12', 'Schedule A Line 17'],
       expected: 'Either standard deduction OR itemized deductions',
-      actual: `Line 12: $${(data.line12 || 0).toFixed(2)}, Schedule A: $${(data.scheduleALine17 || 0).toFixed(2)}`,
-      suggestion: 'Choose either the standard deduction or itemized deductions, not both'
+      actual: `Line 12: $${(data.line12 || 0).toFixed(2)}, Schedule A: $${(
+        data.scheduleALine17 || 0
+      ).toFixed(2)}`,
+      suggestion:
+        'Choose either the standard deduction or itemized deductions, not both'
     })
   },
   {
@@ -970,7 +1090,9 @@ export const RULES_1040: BusinessRule[] = [
       const threshold = (data.scheduleALine2 || 0) * 0.075
       return {
         fields: ['Schedule A Lines 1-4'],
-        expected: `Deductible: Expenses - ${threshold.toFixed(2)} (7.5% of AGI)`,
+        expected: `Deductible: Expenses - ${threshold.toFixed(
+          2
+        )} (7.5% of AGI)`,
         actual: `$${(data.scheduleALine4 || 0).toFixed(2)}`,
         suggestion: 'Only medical expenses exceeding 7.5% of AGI are deductible'
       }
@@ -994,9 +1116,12 @@ export const RULES_1040: BusinessRule[] = [
       const taxableBeforeQBI = (data.line15 || 0) + (data.line13 || 0)
       return {
         fields: ['Line 13', 'Line 15'],
-        expected: `<= $${(taxableBeforeQBI * 0.2).toFixed(2)} (20% of taxable income)`,
+        expected: `<= $${(taxableBeforeQBI * 0.2).toFixed(
+          2
+        )} (20% of taxable income)`,
         actual: `$${(data.line13 || 0).toFixed(2)}`,
-        suggestion: 'QBI deduction is limited to 20% of taxable income (before QBI deduction)',
+        suggestion:
+          'QBI deduction is limited to 20% of taxable income (before QBI deduction)',
         irsReference: 'IRC Section 199A'
       }
     }
@@ -1015,7 +1140,8 @@ export const RULES_1040: BusinessRule[] = [
     getErrorDetails: () => ({
       fields: ['Primary SSN'],
       expected: '9-digit SSN',
-      suggestion: 'A valid 9-digit Social Security Number is required for the primary taxpayer'
+      suggestion:
+        'A valid 9-digit Social Security Number is required for the primary taxpayer'
     })
   },
   {
@@ -1025,7 +1151,10 @@ export const RULES_1040: BusinessRule[] = [
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040'],
     check: (data) => {
-      if (data.filingStatus === FilingStatus.MFJ || data.filingStatus === FilingStatus.MFS) {
+      if (
+        data.filingStatus === FilingStatus.MFJ ||
+        data.filingStatus === FilingStatus.MFS
+      ) {
         return !!data.spouseSSN && data.spouseSSN.length === 9
       }
       return true
@@ -1033,7 +1162,8 @@ export const RULES_1040: BusinessRule[] = [
     getErrorDetails: () => ({
       fields: ['Spouse SSN'],
       expected: '9-digit SSN for spouse',
-      suggestion: 'A valid 9-digit Social Security Number is required for spouse when filing MFJ or MFS'
+      suggestion:
+        'A valid 9-digit Social Security Number is required for spouse when filing MFJ or MFS'
     })
   },
   {
@@ -1051,7 +1181,8 @@ export const RULES_1040: BusinessRule[] = [
     getErrorDetails: () => ({
       fields: ['Primary SSN', 'Spouse SSN'],
       expected: 'Different SSNs',
-      suggestion: 'Primary taxpayer and spouse must have different Social Security Numbers'
+      suggestion:
+        'Primary taxpayer and spouse must have different Social Security Numbers'
     })
   }
 ]
@@ -1066,25 +1197,35 @@ export const RULES_1040: BusinessRule[] = [
 export const RULES_SCHEDULE_A: BusinessRule[] = [
   {
     id: 'SA001',
-    description: 'Total itemized deductions must equal sum of all deduction categories',
+    description:
+      'Total itemized deductions must equal sum of all deduction categories',
     category: RuleCategory.MATHEMATICAL,
     severity: RuleSeverity.ERROR,
     applicableForms: ['ScheduleA'],
     check: (data) => {
-      const sum = (data.scheduleALine4 || 0) + (data.scheduleALine7 || 0) +
-                  (data.scheduleALine9 || 0) + (data.scheduleALine14 || 0) +
-                  (data.scheduleALine15 || 0) + (data.scheduleALine16 || 0)
+      const sum =
+        (data.scheduleALine4 || 0) +
+        (data.scheduleALine7 || 0) +
+        (data.scheduleALine9 || 0) +
+        (data.scheduleALine14 || 0) +
+        (data.scheduleALine15 || 0) +
+        (data.scheduleALine16 || 0)
       return Math.abs((data.scheduleALine17 || 0) - sum) < 0.01
     },
     getErrorDetails: (data) => {
-      const sum = (data.scheduleALine4 || 0) + (data.scheduleALine7 || 0) +
-                  (data.scheduleALine9 || 0) + (data.scheduleALine14 || 0) +
-                  (data.scheduleALine15 || 0) + (data.scheduleALine16 || 0)
+      const sum =
+        (data.scheduleALine4 || 0) +
+        (data.scheduleALine7 || 0) +
+        (data.scheduleALine9 || 0) +
+        (data.scheduleALine14 || 0) +
+        (data.scheduleALine15 || 0) +
+        (data.scheduleALine16 || 0)
       return {
         fields: ['Schedule A Lines 4, 7, 9, 14, 15, 16, 17'],
         expected: `$${sum.toFixed(2)}`,
         actual: `$${(data.scheduleALine17 || 0).toFixed(2)}`,
-        suggestion: 'Total itemized deductions should equal sum of medical, taxes, interest, charity, casualty, and other deductions'
+        suggestion:
+          'Total itemized deductions should equal sum of medical, taxes, interest, charity, casualty, and other deductions'
       }
     }
   }
@@ -1101,11 +1242,13 @@ export const RULES_SCHEDULE_C: BusinessRule[] = [
     severity: RuleSeverity.ERROR,
     applicableForms: ['ScheduleC'],
     check: (data) => {
-      const expected = (data.scheduleCGrossReceipts || 0) - (data.scheduleCCOGS || 0)
+      const expected =
+        (data.scheduleCGrossReceipts || 0) - (data.scheduleCCOGS || 0)
       return Math.abs((data.scheduleCGrossProfit || 0) - expected) < 0.01
     },
     getErrorDetails: (data) => {
-      const expected = (data.scheduleCGrossReceipts || 0) - (data.scheduleCCOGS || 0)
+      const expected =
+        (data.scheduleCGrossReceipts || 0) - (data.scheduleCCOGS || 0)
       return {
         fields: ['Schedule C Lines 1, 4, 5'],
         expected: `$${expected.toFixed(2)}`,
@@ -1121,11 +1264,13 @@ export const RULES_SCHEDULE_C: BusinessRule[] = [
     severity: RuleSeverity.ERROR,
     applicableForms: ['ScheduleC'],
     check: (data) => {
-      const expected = (data.scheduleCGrossIncome || 0) - (data.scheduleCTotalExpenses || 0)
+      const expected =
+        (data.scheduleCGrossIncome || 0) - (data.scheduleCTotalExpenses || 0)
       return Math.abs((data.scheduleCNetProfit || 0) - expected) < 0.01
     },
     getErrorDetails: (data) => {
-      const expected = (data.scheduleCGrossIncome || 0) - (data.scheduleCTotalExpenses || 0)
+      const expected =
+        (data.scheduleCGrossIncome || 0) - (data.scheduleCTotalExpenses || 0)
       return {
         fields: ['Schedule C Lines 7, 28, 31'],
         expected: `$${expected.toFixed(2)}`,
@@ -1147,12 +1292,17 @@ export const RULES_SCHEDULE_SE: BusinessRule[] = [
     severity: RuleSeverity.ERROR,
     applicableForms: ['ScheduleSE'],
     check: (data) => {
-      if (data.scheduleSENetEarnings !== undefined && data.scheduleSENetEarnings >= 400) {
+      if (
+        data.scheduleSENetEarnings !== undefined &&
+        data.scheduleSENetEarnings >= 400
+      ) {
         // SE tax rate is 15.3% on 92.35% of net earnings (up to SS wage base)
         const seBase = data.scheduleSENetEarnings * 0.9235
         const expectedTax = seBase * 0.153
         // Allow some variance for wage base cap calculations
-        return Math.abs((data.scheduleSESelfEmploymentTax || 0) - expectedTax) < 100
+        return (
+          Math.abs((data.scheduleSESelfEmploymentTax || 0) - expectedTax) < 100
+        )
       }
       return true
     },
@@ -1186,7 +1336,8 @@ export const RULES_SCHEDULE_SE: BusinessRule[] = [
         fields: ['Schedule SE Lines 12, 13'],
         expected: `$${expected.toFixed(2)} (50% of SE tax)`,
         actual: `$${(data.scheduleSEDeduction || 0).toFixed(2)}`,
-        suggestion: 'Deductible self-employment tax is exactly 50% of total SE tax'
+        suggestion:
+          'Deductible self-employment tax is exactly 50% of total SE tax'
       }
     }
   }
@@ -1274,7 +1425,9 @@ export class BusinessRulesEngine {
         errors.push({
           ruleId: rule.id,
           description: rule.description,
-          message: `Rule check failed: ${e instanceof Error ? e.message : 'Unknown error'}`,
+          message: `Rule check failed: ${
+            e instanceof Error ? e.message : 'Unknown error'
+          }`,
           severity: RuleSeverity.WARNING,
           category: rule.category,
           forms: rule.applicableForms,
@@ -1300,7 +1453,7 @@ export class BusinessRulesEngine {
     category: RuleCategory
   ): BusinessRuleError[] {
     const originalRules = this.rules
-    this.rules = this.rules.filter(r => r.category === category)
+    this.rules = this.rules.filter((r) => r.category === category)
     const errors = this.check(returnData, taxYear)
     this.rules = originalRules
     return errors
@@ -1320,7 +1473,7 @@ export class BusinessRulesEngine {
     formType: string
   ): BusinessRuleError[] {
     const originalRules = this.rules
-    this.rules = this.rules.filter(r => r.applicableForms.includes(formType))
+    this.rules = this.rules.filter((r) => r.applicableForms.includes(formType))
     const errors = this.check(returnData, taxYear)
     this.rules = originalRules
     return errors
@@ -1335,7 +1488,7 @@ export class BusinessRulesEngine {
    */
   getErrors(returnData: TaxReturnData, taxYear: number): BusinessRuleError[] {
     return this.check(returnData, taxYear).filter(
-      e => e.severity === RuleSeverity.ERROR
+      (e) => e.severity === RuleSeverity.ERROR
     )
   }
 
@@ -1348,7 +1501,7 @@ export class BusinessRulesEngine {
    */
   getWarnings(returnData: TaxReturnData, taxYear: number): BusinessRuleError[] {
     return this.check(returnData, taxYear).filter(
-      e => e.severity === RuleSeverity.WARNING
+      (e) => e.severity === RuleSeverity.WARNING
     )
   }
 
@@ -1377,7 +1530,7 @@ export class BusinessRulesEngine {
    * @returns true if rule was found and removed
    */
   removeRule(ruleId: string): boolean {
-    const index = this.customRules.findIndex(r => r.id === ruleId)
+    const index = this.customRules.findIndex((r) => r.id === ruleId)
     if (index >= 0) {
       this.customRules.splice(index, 1)
       return true
@@ -1403,14 +1556,14 @@ export class BusinessRulesEngine {
    * Gets all rule IDs
    */
   getRuleIds(): string[] {
-    return [...this.rules, ...this.customRules].map(r => r.id)
+    return [...this.rules, ...this.customRules].map((r) => r.id)
   }
 
   /**
    * Gets a specific rule by ID
    */
   getRule(ruleId: string): BusinessRule | undefined {
-    return [...this.rules, ...this.customRules].find(r => r.id === ruleId)
+    return [...this.rules, ...this.customRules].find((r) => r.id === ruleId)
   }
 
   /**
@@ -1429,7 +1582,10 @@ export class BusinessRulesEngine {
   /**
    * Gets a summary of all violations grouped by severity
    */
-  getSummary(returnData: TaxReturnData, taxYear: number): {
+  getSummary(
+    returnData: TaxReturnData,
+    taxYear: number
+  ): {
     errors: number
     warnings: number
     info: number
@@ -1450,14 +1606,15 @@ export class BusinessRulesEngine {
       [RuleCategory.DATE]: 0
     }
 
-    allErrors.forEach(e => {
+    allErrors.forEach((e) => {
       byCategory[e.category]++
     })
 
     return {
-      errors: allErrors.filter(e => e.severity === RuleSeverity.ERROR).length,
-      warnings: allErrors.filter(e => e.severity === RuleSeverity.WARNING).length,
-      info: allErrors.filter(e => e.severity === RuleSeverity.INFO).length,
+      errors: allErrors.filter((e) => e.severity === RuleSeverity.ERROR).length,
+      warnings: allErrors.filter((e) => e.severity === RuleSeverity.WARNING)
+        .length,
+      info: allErrors.filter((e) => e.severity === RuleSeverity.INFO).length,
       total: allErrors.length,
       byCategory
     }

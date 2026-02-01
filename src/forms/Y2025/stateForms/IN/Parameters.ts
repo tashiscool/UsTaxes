@@ -11,7 +11,7 @@ const parameters = {
 
   // County tax rates vary - using average
   // Actual county rates range from 0.5% to 2.96%
-  countyRate: 0.0175,  // Average county rate
+  countyRate: 0.0175, // Average county rate
   countyNote: 'County rates vary from 0.5% to 2.96% - using average',
 
   // Personal exemption (applies to all)
@@ -27,7 +27,7 @@ const parameters = {
   },
 
   // Indiana Earned Income Credit (10% of federal EIC)
-  earnedIncomeCreditFactor: 0.10,
+  earnedIncomeCreditFactor: 0.1,
 
   // Unified Tax Credit for the Elderly (65+)
   unifiedTaxCredit: {
@@ -36,7 +36,7 @@ const parameters = {
   },
 
   // College credit (20% of qualified expenses)
-  collegeCreditRate: 0.20,
+  collegeCreditRate: 0.2,
   collegeCreditMax: 1500,
 
   // Adoption credit
@@ -44,8 +44,8 @@ const parameters = {
 
   // Retirement income deductions
   retirementDeduction: {
-    militaryRetirement: 6250,  // Military retirement deduction
-    civilServiceRetirement: 2000  // Federal civil service deduction
+    militaryRetirement: 6250, // Military retirement deduction
+    civilServiceRetirement: 2000 // Federal civil service deduction
   }
 }
 

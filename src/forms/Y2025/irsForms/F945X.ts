@@ -64,7 +64,10 @@ export default class F945X extends F1040Attachment {
 
   backupWithholdingDifference = (): number => {
     const data = this.f945XData()
-    return (data?.correctedBackupWithholding ?? 0) - (data?.originalBackupWithholding ?? 0)
+    return (
+      (data?.correctedBackupWithholding ?? 0) -
+      (data?.originalBackupWithholding ?? 0)
+    )
   }
 
   totalDifference = (): number => {
@@ -79,7 +82,7 @@ export default class F945X extends F1040Attachment {
 
     return [
       data?.yearBeingCorrected ?? 0,
-      data?.dateOriginalReturnFiled?.toLocaleDateString() ?? '',
+      data?.dateOriginalReturnFiled.toLocaleDateString() ?? '',
       data?.isAdjustedReturn ?? true,
       data?.isClaimForRefund ?? false,
       data?.originalFedWithheld ?? 0,

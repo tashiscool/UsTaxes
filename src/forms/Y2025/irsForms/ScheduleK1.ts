@@ -47,7 +47,9 @@ export class ScheduleK1_1065 extends Form {
   partnershipEIN = (): string => this.data.partnershipEIN
   partnershipAddress = (): string => {
     const addr = this.data.partnershipAddress
-    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${addr.zip ?? ''}`
+    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${
+      addr.zip ?? ''
+    }`
   }
   irsCenter = (): string => this.data.irsCenter
 
@@ -202,7 +204,9 @@ export class ScheduleK1_1120S extends Form {
   corporationEIN = (): string => this.data.corporationEIN
   corporationAddress = (): string => {
     const addr = this.data.corporationAddress
-    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${addr.zip ?? ''}`
+    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${
+      addr.zip ?? ''
+    }`
   }
   irsCenter = (): string => this.data.irsCenter
 

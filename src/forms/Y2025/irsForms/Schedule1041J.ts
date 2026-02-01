@@ -53,13 +53,14 @@ export default class Schedule1041J extends F1040Attachment {
   }
 
   schedule1041JData = (): Schedule1041JData | undefined => {
-    return undefined  // Would be populated from trust data
+    return undefined // Would be populated from trust data
   }
 
   // Part I: Accumulation Distribution
 
   // Line 1: Accumulation distribution
-  l1 = (): number => this.schedule1041JData()?.totalAccumulationDistribution ?? 0
+  l1 = (): number =>
+    this.schedule1041JData()?.totalAccumulationDistribution ?? 0
 
   // Line 2: Undistributed net income (UNI) for earliest year
   l2 = (): number => {
@@ -75,7 +76,10 @@ export default class Schedule1041J extends F1040Attachment {
 
   // Total UNI for all prior years
   totalUNI = (): number => {
-    return this.priorYears().reduce((sum, y) => sum + y.undistributedNetIncome, 0)
+    return this.priorYears().reduce(
+      (sum, y) => sum + y.undistributedNetIncome,
+      0
+    )
   }
 
   // Part II: Taxes Deemed Distributed
@@ -105,7 +109,7 @@ export default class Schedule1041J extends F1040Attachment {
   l7 = (): number => {
     const avgDist = this.l6()
     // Simplified - would use actual tax rates for the years
-    return Math.round(avgDist * 0.25)  // Approximate average rate
+    return Math.round(avgDist * 0.25) // Approximate average rate
   }
 
   // Line 8: Multiply line 7 by line 5
@@ -116,9 +120,11 @@ export default class Schedule1041J extends F1040Attachment {
 
   // Part IV: Beneficiary's Tax on Accumulation Distribution
 
-  beneficiaryName = (): string => this.schedule1041JData()?.beneficiaryName ?? ''
+  beneficiaryName = (): string =>
+    this.schedule1041JData()?.beneficiaryName ?? ''
   beneficiarySSN = (): string => this.schedule1041JData()?.beneficiarySSN ?? ''
-  beneficiarySharePercent = (): number => this.schedule1041JData()?.beneficiarySharePercent ?? 100
+  beneficiarySharePercent = (): number =>
+    this.schedule1041JData()?.beneficiarySharePercent ?? 100
 
   // Beneficiary's share of accumulation distribution
   beneficiaryShare = (): number => {

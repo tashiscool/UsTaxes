@@ -31,8 +31,7 @@ export class VTIN111 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Line 1: Federal Adjusted Gross Income
   l1 = (): number => this.f1040.l11()
@@ -109,7 +108,8 @@ export class VTIN111 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -121,20 +121,25 @@ export class VTIN111 extends Form {
   // Line 14: VT Earned Income Credit (38% of federal)
   l14 = (): number | undefined => {
     const federalEIC = this.f1040.scheduleEIC.credit()
-    return federalEIC ? Math.round(federalEIC * parameters.eicPercentage) : undefined
+    return federalEIC
+      ? Math.round(federalEIC * parameters.eicPercentage)
+      : undefined
   }
 
   // Line 15: Child and Dependent Care Credit (50% of federal)
   l15 = (): number | undefined => {
     const federalCredit = this.f1040.schedule3.l2()
-    return federalCredit ? Math.round(federalCredit * parameters.childCarePercentage) : undefined
+    return federalCredit
+      ? Math.round(federalCredit * parameters.childCarePercentage)
+      : undefined
   }
 
   // Line 16: Other credits
   l16 = (): number | undefined => undefined
 
   // Line 17: Total credits (limited to tax)
-  l17 = (): number => Math.min(sumFields([this.l14(), this.l15(), this.l16()]), this.l13())
+  l17 = (): number =>
+    Math.min(sumFields([this.l14(), this.l15(), this.l16()]), this.l13())
 
   // Line 18: Net tax
   l18 = (): number => Math.max(0, this.l13() - this.l17())
@@ -166,15 +171,32 @@ export class VTIN111 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l1(), this.l2(), this.l3(), this.l4(),
-    this.l5(), this.l6(), this.l7(), this.l8(), this.l9(),
-    this.l10(), this.l11(), this.l12(), this.l13(),
-    this.l14(), this.l15(), this.l16(), this.l17(), this.l18(),
-    this.l19(), this.l20(), this.l21(),
-    this.l22(), this.l23()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l1(),
+    this.l2(),
+    this.l3(),
+    this.l4(),
+    this.l5(),
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23()
   ]
 }
 

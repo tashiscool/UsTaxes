@@ -144,9 +144,19 @@ interface SimpleTypeDefinition {
  * Type restriction (pattern, length, enumeration, etc.)
  */
 interface TypeRestriction {
-  type: 'pattern' | 'minLength' | 'maxLength' | 'length' | 'minInclusive' |
-        'maxInclusive' | 'minExclusive' | 'maxExclusive' | 'enumeration' |
-        'totalDigits' | 'fractionDigits' | 'whiteSpace'
+  type:
+    | 'pattern'
+    | 'minLength'
+    | 'maxLength'
+    | 'length'
+    | 'minInclusive'
+    | 'maxInclusive'
+    | 'minExclusive'
+    | 'maxExclusive'
+    | 'enumeration'
+    | 'totalDigits'
+    | 'fractionDigits'
+    | 'whiteSpace'
   value: string | number | string[]
 }
 
@@ -157,57 +167,62 @@ interface TypeRestriction {
 /**
  * Maps technical schema error codes to user-friendly messages
  */
-const ERROR_MESSAGE_MAP: Record<string, (details: Record<string, string>) => string> = {
-  'INVALID_ELEMENT': (d) =>
-    `The element "${d.element}" is not valid at this location. ${d.suggestion || ''}`,
+const ERROR_MESSAGE_MAP: Record<
+  string,
+  (details: Record<string, string>) => string
+> = {
+  INVALID_ELEMENT: (d) =>
+    `The element "${d.element}" is not valid at this location. ${
+      d.suggestion || ''
+    }`,
 
-  'MISSING_REQUIRED': (d) =>
+  MISSING_REQUIRED: (d) =>
     `Required field "${d.element}" is missing. This field must be provided.`,
 
-  'INVALID_TYPE': (d) =>
+  INVALID_TYPE: (d) =>
     `The value "${d.value}" for "${d.element}" is not valid. Expected: ${d.expected}.`,
 
-  'PATTERN_MISMATCH': (d) =>
+  PATTERN_MISMATCH: (d) =>
     `The value "${d.value}" does not match the required format for "${d.element}".`,
 
-  'LENGTH_ERROR': (d) =>
+  LENGTH_ERROR: (d) =>
     `The value for "${d.element}" has incorrect length. ${d.expected}`,
 
-  'RANGE_ERROR': (d) =>
+  RANGE_ERROR: (d) =>
     `The value "${d.value}" for "${d.element}" is outside the allowed range. ${d.expected}`,
 
-  'ENUMERATION_ERROR': (d) =>
+  ENUMERATION_ERROR: (d) =>
     `The value "${d.value}" is not one of the allowed values for "${d.element}". Allowed: ${d.expected}`,
 
-  'DUPLICATE_ELEMENT': (d) =>
+  DUPLICATE_ELEMENT: (d) =>
     `Duplicate element "${d.element}" found. Only one instance is allowed.`,
 
-  'UNEXPECTED_CONTENT': (d) =>
+  UNEXPECTED_CONTENT: (d) =>
     `Unexpected content found in "${d.element}". The element should be empty or have specific children.`,
 
-  'NAMESPACE_ERROR': (d) =>
+  NAMESPACE_ERROR: (d) =>
     `Namespace error for element "${d.element}". Expected namespace: ${d.expected}`,
 
-  'SSN_FORMAT': (d) =>
+  SSN_FORMAT: (d) =>
     `Social Security Number "${d.value}" is not in the correct format (XXX-XX-XXXX or XXXXXXXXX).`,
 
-  'EIN_FORMAT': (d) =>
+  EIN_FORMAT: (d) =>
     `Employer Identification Number "${d.value}" is not in the correct format (XX-XXXXXXX).`,
 
-  'ZIP_CODE': (d) =>
+  ZIP_CODE: (d) =>
     `ZIP code "${d.value}" is not valid. Must be 5 digits or 5+4 format.`,
 
-  'PHONE_FORMAT': (d) =>
+  PHONE_FORMAT: (d) =>
     `Phone number "${d.value}" is not in the correct format.`,
 
-  'DATE_FORMAT': (d) =>
+  DATE_FORMAT: (d) =>
     `Date "${d.value}" is not in the correct format (YYYY-MM-DD).`,
 
-  'AMOUNT_FORMAT': (d) =>
+  AMOUNT_FORMAT: (d) =>
     `Amount "${d.value}" is not valid. Must be a valid number with up to 2 decimal places.`,
 
-  'STATE_CODE': (d) =>
-    `State code "${d.value}" is not a valid US state or territory code.`,
+  STATE_CODE: (d) =>
+    `State code "${d.value}" is not a valid US state or territory code.`
 }
 
 /**
@@ -215,60 +230,60 @@ const ERROR_MESSAGE_MAP: Record<string, (details: Record<string, string>) => str
  */
 const FIELD_REFERENCE_MAP: Record<string, string> = {
   // Form 1040 fields
-  'PrimarySSN': 'Form 1040, Page 1, Your Social Security Number',
-  'SpouseSSN': 'Form 1040, Page 1, Spouse\'s Social Security Number',
-  'WagesSalariesTipsAmt': 'Form 1040, Line 1a',
-  'TaxExemptInterestAmt': 'Form 1040, Line 2a',
-  'TaxableInterestAmt': 'Form 1040, Line 2b',
-  'QualifiedDividendsAmt': 'Form 1040, Line 3a',
-  'OrdinaryDividendsAmt': 'Form 1040, Line 3b',
-  'IRADistributionsAmt': 'Form 1040, Line 4a',
-  'TaxableIRAAmt': 'Form 1040, Line 4b',
-  'PensionsAnnuitiesAmt': 'Form 1040, Line 5a',
-  'TaxablePensionsAmt': 'Form 1040, Line 5b',
-  'SocialSecurityBnftAmt': 'Form 1040, Line 6a',
-  'TaxableSocSecAmt': 'Form 1040, Line 6b',
-  'CapitalGainLossAmt': 'Form 1040, Line 7',
-  'OtherIncomeAmt': 'Form 1040, Line 8 (from Schedule 1)',
-  'TotalIncomeAmt': 'Form 1040, Line 9',
-  'AdjustmentsToIncomeAmt': 'Form 1040, Line 10 (from Schedule 1)',
-  'AdjustedGrossIncomeAmt': 'Form 1040, Line 11',
-  'TotalDeductionsAmt': 'Form 1040, Line 12',
-  'QualifiedBusinessIncDedAmt': 'Form 1040, Line 13',
-  'TotalDeductionAmt': 'Form 1040, Line 14',
-  'TaxableIncomeAmt': 'Form 1040, Line 15',
-  'TaxAmt': 'Form 1040, Line 16',
-  'TotalCreditsAmt': 'Form 1040, Line 21',
-  'TotalTaxBeforeCrAndOthTaxesAmt': 'Form 1040, Line 22',
-  'OtherTaxesAmt': 'Form 1040, Line 23 (from Schedule 2)',
-  'TotalTaxAmt': 'Form 1040, Line 24',
-  'TotalPaymentsAmt': 'Form 1040, Line 33',
-  'OverpaidAmt': 'Form 1040, Line 34',
-  'RefundAmt': 'Form 1040, Line 35a',
-  'OwedAmt': 'Form 1040, Line 37',
+  PrimarySSN: 'Form 1040, Page 1, Your Social Security Number',
+  SpouseSSN: "Form 1040, Page 1, Spouse's Social Security Number",
+  WagesSalariesTipsAmt: 'Form 1040, Line 1a',
+  TaxExemptInterestAmt: 'Form 1040, Line 2a',
+  TaxableInterestAmt: 'Form 1040, Line 2b',
+  QualifiedDividendsAmt: 'Form 1040, Line 3a',
+  OrdinaryDividendsAmt: 'Form 1040, Line 3b',
+  IRADistributionsAmt: 'Form 1040, Line 4a',
+  TaxableIRAAmt: 'Form 1040, Line 4b',
+  PensionsAnnuitiesAmt: 'Form 1040, Line 5a',
+  TaxablePensionsAmt: 'Form 1040, Line 5b',
+  SocialSecurityBnftAmt: 'Form 1040, Line 6a',
+  TaxableSocSecAmt: 'Form 1040, Line 6b',
+  CapitalGainLossAmt: 'Form 1040, Line 7',
+  OtherIncomeAmt: 'Form 1040, Line 8 (from Schedule 1)',
+  TotalIncomeAmt: 'Form 1040, Line 9',
+  AdjustmentsToIncomeAmt: 'Form 1040, Line 10 (from Schedule 1)',
+  AdjustedGrossIncomeAmt: 'Form 1040, Line 11',
+  TotalDeductionsAmt: 'Form 1040, Line 12',
+  QualifiedBusinessIncDedAmt: 'Form 1040, Line 13',
+  TotalDeductionAmt: 'Form 1040, Line 14',
+  TaxableIncomeAmt: 'Form 1040, Line 15',
+  TaxAmt: 'Form 1040, Line 16',
+  TotalCreditsAmt: 'Form 1040, Line 21',
+  TotalTaxBeforeCrAndOthTaxesAmt: 'Form 1040, Line 22',
+  OtherTaxesAmt: 'Form 1040, Line 23 (from Schedule 2)',
+  TotalTaxAmt: 'Form 1040, Line 24',
+  TotalPaymentsAmt: 'Form 1040, Line 33',
+  OverpaidAmt: 'Form 1040, Line 34',
+  RefundAmt: 'Form 1040, Line 35a',
+  OwedAmt: 'Form 1040, Line 37',
   // Schedule A fields
-  'MedicalAndDentalExpensesAmt': 'Schedule A, Line 1',
-  'StateAndLocalTaxesAmt': 'Schedule A, Line 5',
-  'RealEstateTaxesAmt': 'Schedule A, Line 5b',
-  'HomeInterestAmt': 'Schedule A, Line 8',
-  'CharitableContributionsAmt': 'Schedule A, Line 11',
-  'TotalItemizedDeductionsAmt': 'Schedule A, Line 17',
+  MedicalAndDentalExpensesAmt: 'Schedule A, Line 1',
+  StateAndLocalTaxesAmt: 'Schedule A, Line 5',
+  RealEstateTaxesAmt: 'Schedule A, Line 5b',
+  HomeInterestAmt: 'Schedule A, Line 8',
+  CharitableContributionsAmt: 'Schedule A, Line 11',
+  TotalItemizedDeductionsAmt: 'Schedule A, Line 17',
   // Schedule B fields
-  'InterestIncomeAmt': 'Schedule B, Part I',
-  'DividendIncomeAmt': 'Schedule B, Part II',
+  InterestIncomeAmt: 'Schedule B, Part I',
+  DividendIncomeAmt: 'Schedule B, Part II',
   // Schedule C fields
-  'GrossReceiptsAmt': 'Schedule C, Line 1',
-  'TotalExpensesAmt': 'Schedule C, Line 28',
-  'NetProfitOrLossAmt': 'Schedule C, Line 31',
+  GrossReceiptsAmt: 'Schedule C, Line 1',
+  TotalExpensesAmt: 'Schedule C, Line 28',
+  NetProfitOrLossAmt: 'Schedule C, Line 31',
   // Schedule D fields
-  'ShortTermGainLossAmt': 'Schedule D, Line 7',
-  'LongTermGainLossAmt': 'Schedule D, Line 15',
-  'NetCapitalGainLossAmt': 'Schedule D, Line 16',
+  ShortTermGainLossAmt: 'Schedule D, Line 7',
+  LongTermGainLossAmt: 'Schedule D, Line 15',
+  NetCapitalGainLossAmt: 'Schedule D, Line 16',
   // Schedule E fields
-  'RentalIncomeAmt': 'Schedule E, Part I',
-  'PartnershipIncomeAmt': 'Schedule E, Part II',
+  RentalIncomeAmt: 'Schedule E, Part I',
+  PartnershipIncomeAmt: 'Schedule E, Part II',
   // Schedule SE fields
-  'SelfEmploymentTaxAmt': 'Schedule SE, Line 12',
+  SelfEmploymentTaxAmt: 'Schedule SE, Line 12'
 }
 
 // ============================================================================
@@ -341,31 +356,61 @@ export class SchemaValidator {
       }
 
       // Validate structure
-      const structureErrors = this.validateStructure(parseResult.document, schema.schema)
-      result.errors.push(...structureErrors.filter(e => e.severity === ValidationSeverity.ERROR))
-      result.warnings.push(...structureErrors.filter(e => e.severity === ValidationSeverity.WARNING))
+      const structureErrors = this.validateStructure(
+        parseResult.document,
+        schema.schema
+      )
+      result.errors.push(
+        ...structureErrors.filter(
+          (e) => e.severity === ValidationSeverity.ERROR
+        )
+      )
+      result.warnings.push(
+        ...structureErrors.filter(
+          (e) => e.severity === ValidationSeverity.WARNING
+        )
+      )
 
       // Validate data types
-      const typeErrors = this.validateDataTypes(parseResult.document, schema.schema)
-      result.errors.push(...typeErrors.filter(e => e.severity === ValidationSeverity.ERROR))
-      result.warnings.push(...typeErrors.filter(e => e.severity === ValidationSeverity.WARNING))
+      const typeErrors = this.validateDataTypes(
+        parseResult.document,
+        schema.schema
+      )
+      result.errors.push(
+        ...typeErrors.filter((e) => e.severity === ValidationSeverity.ERROR)
+      )
+      result.warnings.push(
+        ...typeErrors.filter((e) => e.severity === ValidationSeverity.WARNING)
+      )
 
       // Validate constraints
-      const constraintErrors = this.validateConstraints(parseResult.document, schema.schema)
-      result.errors.push(...constraintErrors.filter(e => e.severity === ValidationSeverity.ERROR))
-      result.warnings.push(...constraintErrors.filter(e => e.severity === ValidationSeverity.WARNING))
+      const constraintErrors = this.validateConstraints(
+        parseResult.document,
+        schema.schema
+      )
+      result.errors.push(
+        ...constraintErrors.filter(
+          (e) => e.severity === ValidationSeverity.ERROR
+        )
+      )
+      result.warnings.push(
+        ...constraintErrors.filter(
+          (e) => e.severity === ValidationSeverity.WARNING
+        )
+      )
 
       // Map errors to user-friendly messages
-      result.errors = result.errors.map(e => this.enhanceError(e))
-      result.warnings = result.warnings.map(e => this.enhanceError(e))
+      result.errors = result.errors.map((e) => this.enhanceError(e))
+      result.warnings = result.warnings.map((e) => this.enhanceError(e))
 
       result.valid = result.errors.length === 0
-
     } catch (error) {
       result.valid = false
       result.errors.push({
         code: 'VALIDATION_ERROR',
-        message: `Schema validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Schema validation failed: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
         xpath: '/',
         severity: ValidationSeverity.ERROR
       })
@@ -380,8 +425,10 @@ export class SchemaValidator {
    * @param forms - Array of {xml, formType} objects to validate
    * @returns Promise resolving to array of ValidationResults
    */
-  async validateMultiple(forms: Array<{xml: string, formType: string}>): Promise<ValidationResult[]> {
-    return Promise.all(forms.map(f => this.validate(f.xml, f.formType)))
+  async validateMultiple(
+    forms: Array<{ xml: string; formType: string }>
+  ): Promise<ValidationResult[]> {
+    return Promise.all(forms.map((f) => this.validate(f.xml, f.formType)))
   }
 
   /**
@@ -392,7 +439,10 @@ export class SchemaValidator {
 
     // Check cache
     const cached = this.schemaCache.get(cacheKey)
-    if (cached && (Date.now() - cached.loadedAt.getTime()) < this.schemaCacheTTL) {
+    if (
+      cached &&
+      Date.now() - cached.loadedAt.getTime() < this.schemaCacheTTL
+    ) {
       return cached
     }
 
@@ -413,10 +463,10 @@ export class SchemaValidator {
   /**
    * Loads schema definition from XSD files
    */
-  private async loadSchemaDefinition(formType: string): Promise<SchemaDefinition> {
+  private loadSchemaDefinition(formType: string): Promise<SchemaDefinition> {
     // In production, this would load actual XSD files
     // For now, return a schema definition based on form type
-    return this.getBuiltInSchemaDefinition(formType)
+    return Promise.resolve(this.getBuiltInSchemaDefinition(formType))
   }
 
   /**
@@ -469,18 +519,14 @@ export class SchemaValidator {
     schema.simpleTypes.set('SSNType', {
       name: 'SSNType',
       baseType: 'string',
-      restrictions: [
-        { type: 'pattern', value: '[0-9]{9}' }
-      ]
+      restrictions: [{ type: 'pattern', value: '[0-9]{9}' }]
     })
 
     // EIN type
     schema.simpleTypes.set('EINType', {
       name: 'EINType',
       baseType: 'string',
-      restrictions: [
-        { type: 'pattern', value: '[0-9]{9}' }
-      ]
+      restrictions: [{ type: 'pattern', value: '[0-9]{9}' }]
     })
 
     // Amount type (US currency)
@@ -511,9 +557,7 @@ export class SchemaValidator {
     schema.simpleTypes.set('ZIPCodeType', {
       name: 'ZIPCodeType',
       baseType: 'string',
-      restrictions: [
-        { type: 'pattern', value: '[0-9]{5}|[0-9]{5}-[0-9]{4}' }
-      ]
+      restrictions: [{ type: 'pattern', value: '[0-9]{5}|[0-9]{5}-[0-9]{4}' }]
     })
 
     // State code
@@ -521,14 +565,70 @@ export class SchemaValidator {
       name: 'StateType',
       baseType: 'string',
       restrictions: [
-        { type: 'enumeration', value: [
-          'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL',
-          'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME',
-          'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH',
-          'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI',
-          'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI',
-          'WY', 'AS', 'GU', 'MP', 'PR', 'VI', 'AA', 'AE', 'AP'
-        ]}
+        {
+          type: 'enumeration',
+          value: [
+            'AL',
+            'AK',
+            'AZ',
+            'AR',
+            'CA',
+            'CO',
+            'CT',
+            'DE',
+            'DC',
+            'FL',
+            'GA',
+            'HI',
+            'ID',
+            'IL',
+            'IN',
+            'IA',
+            'KS',
+            'KY',
+            'LA',
+            'ME',
+            'MD',
+            'MA',
+            'MI',
+            'MN',
+            'MS',
+            'MO',
+            'MT',
+            'NE',
+            'NV',
+            'NH',
+            'NJ',
+            'NM',
+            'NY',
+            'NC',
+            'ND',
+            'OH',
+            'OK',
+            'OR',
+            'PA',
+            'RI',
+            'SC',
+            'SD',
+            'TN',
+            'TX',
+            'UT',
+            'VT',
+            'VA',
+            'WA',
+            'WV',
+            'WI',
+            'WY',
+            'AS',
+            'GU',
+            'MP',
+            'PR',
+            'VI',
+            'AA',
+            'AE',
+            'AP'
+          ]
+        }
       ]
     })
 
@@ -543,18 +643,14 @@ export class SchemaValidator {
     schema.simpleTypes.set('PhoneNumberType', {
       name: 'PhoneNumberType',
       baseType: 'string',
-      restrictions: [
-        { type: 'pattern', value: '[0-9]{10}' }
-      ]
+      restrictions: [{ type: 'pattern', value: '[0-9]{10}' }]
     })
 
     // Filing status
     schema.simpleTypes.set('FilingStatusType', {
       name: 'FilingStatusType',
       baseType: 'string',
-      restrictions: [
-        { type: 'enumeration', value: ['1', '2', '3', '4', '5'] }
-      ]
+      restrictions: [{ type: 'enumeration', value: ['1', '2', '3', '4', '5'] }]
     })
 
     // Person name
@@ -592,9 +688,7 @@ export class SchemaValidator {
     schema.simpleTypes.set('RoutingTransitNumberType', {
       name: 'RoutingTransitNumberType',
       baseType: 'string',
-      restrictions: [
-        { type: 'pattern', value: '[0-9]{9}' }
-      ]
+      restrictions: [{ type: 'pattern', value: '[0-9]{9}' }]
     })
 
     // Bank account number
@@ -627,36 +721,154 @@ export class SchemaValidator {
     schema.complexTypes.set('ReturnType', {
       name: 'ReturnType',
       elements: [
-        { name: 'ReturnHeader', type: 'ReturnHeaderType', minOccurs: 1, maxOccurs: 1, nillable: false },
-        { name: 'ReturnData', type: 'ReturnDataType', minOccurs: 1, maxOccurs: 1, nillable: false }
+        {
+          name: 'ReturnHeader',
+          type: 'ReturnHeaderType',
+          minOccurs: 1,
+          maxOccurs: 1,
+          nillable: false
+        },
+        {
+          name: 'ReturnData',
+          type: 'ReturnDataType',
+          minOccurs: 1,
+          maxOccurs: 1,
+          nillable: false
+        }
       ],
-      attributes: [
-        { name: 'returnVersion', type: 'string', required: true }
-      ],
+      attributes: [{ name: 'returnVersion', type: 'string', required: true }],
       mixed: false,
       sequence: true
     })
 
     // Income elements
     const incomeElements: ElementDefinition[] = [
-      { name: 'WagesSalariesTipsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TaxExemptInterestAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TaxableInterestAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'QualifiedDividendsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'OrdinaryDividendsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'IRADistributionsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TaxableIRAAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'PensionsAnnuitiesAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TaxablePensionsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'SocialSecurityBnftAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TaxableSocSecAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'CapitalGainLossAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'OtherIncomeAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalIncomeAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'AdjustmentsToIncomeAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'AdjustedGrossIncomeAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'TotalDeductionsAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'TaxableIncomeAmt', type: 'USAmountNNType', minOccurs: 1, maxOccurs: 1, nillable: false }
+      {
+        name: 'WagesSalariesTipsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TaxExemptInterestAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TaxableInterestAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'QualifiedDividendsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'OrdinaryDividendsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'IRADistributionsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TaxableIRAAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'PensionsAnnuitiesAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TaxablePensionsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'SocialSecurityBnftAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TaxableSocSecAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'CapitalGainLossAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'OtherIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'AdjustmentsToIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'AdjustedGrossIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalDeductionsAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TaxableIncomeAmt',
+        type: 'USAmountNNType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      }
     ]
 
     schema.complexTypes.set('IRS1040Type', {
@@ -675,17 +887,83 @@ export class SchemaValidator {
    */
   private addScheduleADefinitions(schema: SchemaDefinition): SchemaDefinition {
     const elements: ElementDefinition[] = [
-      { name: 'MedicalAndDentalExpensesAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'AGIAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'CalculatedMedicalAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'StateAndLocalTaxesAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'RealEstateTaxesAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalTaxesPaidAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'HomeInterestAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'GiftsToCharityAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'CasualtyLossAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'OtherMiscDeductionsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalItemizedDeductionsAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false }
+      {
+        name: 'MedicalAndDentalExpensesAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'AGIAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'CalculatedMedicalAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'StateAndLocalTaxesAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'RealEstateTaxesAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalTaxesPaidAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'HomeInterestAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'GiftsToCharityAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'CasualtyLossAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'OtherMiscDeductionsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalItemizedDeductionsAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      }
     ]
 
     schema.complexTypes.set('IRS1040ScheduleAType', {
@@ -705,12 +983,48 @@ export class SchemaValidator {
   private addScheduleBDefinitions(schema: SchemaDefinition): SchemaDefinition {
     // Schedule B - Interest and Dividends
     const elements: ElementDefinition[] = [
-      { name: 'InterestIncomeGrp', type: 'InterestIncomeGroupType', minOccurs: 0, maxOccurs: 'unbounded', nillable: false },
-      { name: 'TotalInterestAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'DividendIncomeGrp', type: 'DividendIncomeGroupType', minOccurs: 0, maxOccurs: 'unbounded', nillable: false },
-      { name: 'TotalOrdinaryDividendsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'ForeignAccountsQuestionInd', type: 'boolean', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'ForeignTrustQuestionInd', type: 'boolean', minOccurs: 1, maxOccurs: 1, nillable: false }
+      {
+        name: 'InterestIncomeGrp',
+        type: 'InterestIncomeGroupType',
+        minOccurs: 0,
+        maxOccurs: 'unbounded',
+        nillable: false
+      },
+      {
+        name: 'TotalInterestAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'DividendIncomeGrp',
+        type: 'DividendIncomeGroupType',
+        minOccurs: 0,
+        maxOccurs: 'unbounded',
+        nillable: false
+      },
+      {
+        name: 'TotalOrdinaryDividendsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'ForeignAccountsQuestionInd',
+        type: 'boolean',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'ForeignTrustQuestionInd',
+        type: 'boolean',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      }
     ]
 
     schema.complexTypes.set('IRS1040ScheduleBType', {
@@ -729,22 +1043,118 @@ export class SchemaValidator {
    */
   private addScheduleCDefinitions(schema: SchemaDefinition): SchemaDefinition {
     const elements: ElementDefinition[] = [
-      { name: 'ProprietorNm', type: 'PersonNameType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'SSN', type: 'SSNType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'PrincipalBusinessActivityCd', type: 'string', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'BusinessNameLine1Txt', type: 'string', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'EIN', type: 'EINType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'GrossReceiptsAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'ReturnsAndAllowancesAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'NetGrossReceiptsAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'CostOfGoodsSoldAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'GrossProfitAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'OtherBusinessIncomeAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'GrossIncomeAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'TotalExpensesAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TentativeProfitAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'HomeBusinessExpenseAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'NetProfitOrLossAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false }
+      {
+        name: 'ProprietorNm',
+        type: 'PersonNameType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'SSN',
+        type: 'SSNType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'PrincipalBusinessActivityCd',
+        type: 'string',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'BusinessNameLine1Txt',
+        type: 'string',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'EIN',
+        type: 'EINType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'GrossReceiptsAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'ReturnsAndAllowancesAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'NetGrossReceiptsAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'CostOfGoodsSoldAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'GrossProfitAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'OtherBusinessIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'GrossIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalExpensesAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TentativeProfitAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'HomeBusinessExpenseAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'NetProfitOrLossAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      }
     ]
 
     schema.complexTypes.set('IRS1040ScheduleCType', {
@@ -763,13 +1173,55 @@ export class SchemaValidator {
    */
   private addScheduleDDefinitions(schema: SchemaDefinition): SchemaDefinition {
     const elements: ElementDefinition[] = [
-      { name: 'ShortTermCapitalGainGrp', type: 'CapitalGainGroupType', minOccurs: 0, maxOccurs: 'unbounded', nillable: false },
-      { name: 'TotalSTCGAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'LongTermCapitalGainGrp', type: 'CapitalGainGroupType', minOccurs: 0, maxOccurs: 'unbounded', nillable: false },
-      { name: 'TotalLTCGAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'NetSTCGAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'NetLTCGAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'NetCapitalGainLossAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false }
+      {
+        name: 'ShortTermCapitalGainGrp',
+        type: 'CapitalGainGroupType',
+        minOccurs: 0,
+        maxOccurs: 'unbounded',
+        nillable: false
+      },
+      {
+        name: 'TotalSTCGAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'LongTermCapitalGainGrp',
+        type: 'CapitalGainGroupType',
+        minOccurs: 0,
+        maxOccurs: 'unbounded',
+        nillable: false
+      },
+      {
+        name: 'TotalLTCGAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'NetSTCGAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'NetLTCGAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'NetCapitalGainLossAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      }
     ]
 
     schema.complexTypes.set('IRS1040ScheduleDType', {
@@ -788,13 +1240,55 @@ export class SchemaValidator {
    */
   private addScheduleEDefinitions(schema: SchemaDefinition): SchemaDefinition {
     const elements: ElementDefinition[] = [
-      { name: 'RentalPropertyGrp', type: 'RentalPropertyGroupType', minOccurs: 0, maxOccurs: 3, nillable: false },
-      { name: 'TotalRentalIncomeAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalRentalExpensesAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'NetRentalIncomeAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'PartnershipSCorpGrp', type: 'PartnershipGroupType', minOccurs: 0, maxOccurs: 'unbounded', nillable: false },
-      { name: 'TotalPartnershipIncomeAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalScheduleEIncomeAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false }
+      {
+        name: 'RentalPropertyGrp',
+        type: 'RentalPropertyGroupType',
+        minOccurs: 0,
+        maxOccurs: 3,
+        nillable: false
+      },
+      {
+        name: 'TotalRentalIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalRentalExpensesAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'NetRentalIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'PartnershipSCorpGrp',
+        type: 'PartnershipGroupType',
+        minOccurs: 0,
+        maxOccurs: 'unbounded',
+        nillable: false
+      },
+      {
+        name: 'TotalPartnershipIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalScheduleEIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      }
     ]
 
     schema.complexTypes.set('IRS1040ScheduleEType', {
@@ -813,10 +1307,34 @@ export class SchemaValidator {
    */
   private addScheduleSEDefinitions(schema: SchemaDefinition): SchemaDefinition {
     const elements: ElementDefinition[] = [
-      { name: 'SSN', type: 'SSNType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'NetEarningsFromSelfEmplAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'SelfEmploymentTaxAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
-      { name: 'DeductibleSelfEmplTaxAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false }
+      {
+        name: 'SSN',
+        type: 'SSNType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'NetEarningsFromSelfEmplAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'SelfEmploymentTaxAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'DeductibleSelfEmplTaxAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      }
     ]
 
     schema.complexTypes.set('IRS1040ScheduleSEType', {
@@ -836,25 +1354,133 @@ export class SchemaValidator {
   private addSchedule1Definitions(schema: SchemaDefinition): SchemaDefinition {
     const elements: ElementDefinition[] = [
       // Part I - Additional Income
-      { name: 'TaxableRefundsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'AlimonyReceivedAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'BusinessIncomeAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'OtherGainLossAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'RentalIncomeAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'FarmIncomeAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'UnemploymentCompAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'OtherIncomeAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalAdditionalIncomeAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false },
+      {
+        name: 'TaxableRefundsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'AlimonyReceivedAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'BusinessIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'OtherGainLossAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'RentalIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'FarmIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'UnemploymentCompAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'OtherIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalAdditionalIncomeAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      },
       // Part II - Adjustments to Income
-      { name: 'EducatorExpensesAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'HSADeductionAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'SelfEmployedSEPAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'SelfEmplHealthInsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'PenaltyOnEarlyWdrlAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'AlimonyPaidAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'IRADeductionAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'StudentLoanIntDedAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalAdjustmentsAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false }
+      {
+        name: 'EducatorExpensesAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'HSADeductionAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'SelfEmployedSEPAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'SelfEmplHealthInsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'PenaltyOnEarlyWdrlAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'AlimonyPaidAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'IRADeductionAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'StudentLoanIntDedAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalAdjustmentsAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      }
     ]
 
     schema.complexTypes.set('IRS1040Schedule1Type', {
@@ -874,18 +1500,84 @@ export class SchemaValidator {
   private addSchedule2Definitions(schema: SchemaDefinition): SchemaDefinition {
     const elements: ElementDefinition[] = [
       // Part I - Tax
-      { name: 'AlternativeMinimumTaxAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'ExcessAdvncPremiumTaxCrAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalAdditionalTaxAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
+      {
+        name: 'AlternativeMinimumTaxAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'ExcessAdvncPremiumTaxCrAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalAdditionalTaxAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
       // Part II - Other Taxes
-      { name: 'SelfEmploymentTaxAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'UnreportedSocSecMedTxAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'AddlTaxOnIRADistribAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'HsijoldEmploymentTaxAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'RepaymentFirstTimeBuyerCrAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'AdditionalMedicareTaxAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'NetInvstIncmTaxAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalOtherTaxesAmt', type: 'USAmountType', minOccurs: 1, maxOccurs: 1, nillable: false }
+      {
+        name: 'SelfEmploymentTaxAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'UnreportedSocSecMedTxAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'AddlTaxOnIRADistribAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'HsijoldEmploymentTaxAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'RepaymentFirstTimeBuyerCrAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'AdditionalMedicareTaxAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'NetInvstIncmTaxAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalOtherTaxesAmt',
+        type: 'USAmountType',
+        minOccurs: 1,
+        maxOccurs: 1,
+        nillable: false
+      }
     ]
 
     schema.complexTypes.set('IRS1040Schedule2Type', {
@@ -905,19 +1597,91 @@ export class SchemaValidator {
   private addSchedule3Definitions(schema: SchemaDefinition): SchemaDefinition {
     const elements: ElementDefinition[] = [
       // Part I - Nonrefundable Credits
-      { name: 'ForeignTaxCreditAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'ChildAndDependentCareAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'EducationCreditAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'RetirementSavingsContribAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'ResidentialEnergyCreditsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'OtherNonrefundableCreditsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalNonrefundableCreditsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
+      {
+        name: 'ForeignTaxCreditAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'ChildAndDependentCareAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'EducationCreditAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'RetirementSavingsContribAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'ResidentialEnergyCreditsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'OtherNonrefundableCreditsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalNonrefundableCreditsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
       // Part II - Other Payments and Refundable Credits
-      { name: 'NetPremiumTaxCreditAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'AmtPaidWithExtensionAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'ExcessSocSecWithheldAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'OtherPaymentsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false },
-      { name: 'TotalOtherPaymentsAmt', type: 'USAmountType', minOccurs: 0, maxOccurs: 1, nillable: false }
+      {
+        name: 'NetPremiumTaxCreditAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'AmtPaidWithExtensionAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'ExcessSocSecWithheldAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'OtherPaymentsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      },
+      {
+        name: 'TotalOtherPaymentsAmt',
+        type: 'USAmountType',
+        minOccurs: 0,
+        maxOccurs: 1,
+        nillable: false
+      }
     ]
 
     schema.complexTypes.set('IRS1040Schedule3Type', {
@@ -934,7 +1698,10 @@ export class SchemaValidator {
   /**
    * Parses XML and returns parse result with any errors
    */
-  private parseXML(xml: string): { document: ParsedDocument, errors: ValidationError[] } {
+  private parseXML(xml: string): {
+    document: ParsedDocument
+    errors: ValidationError[]
+  } {
     const errors: ValidationError[] = []
     const document: ParsedDocument = {
       root: null,
@@ -982,7 +1749,10 @@ export class SchemaValidator {
 
       if (fullTag.startsWith('</')) {
         // Closing tag
-        if (tagStack.length === 0 || tagStack[tagStack.length - 1] !== tagName) {
+        if (
+          tagStack.length === 0 ||
+          tagStack[tagStack.length - 1] !== tagName
+        ) {
           errors.push({
             code: 'UNBALANCED_TAG',
             message: `Unbalanced closing tag </${tagName}>`,
@@ -1020,12 +1790,15 @@ export class SchemaValidator {
   /**
    * Validates document structure against schema
    */
-  private validateStructure(document: ParsedDocument, schema: SchemaDefinition): ValidationError[] {
+  private validateStructure(
+    document: ParsedDocument,
+    schema: SchemaDefinition
+  ): ValidationError[] {
     const errors: ValidationError[] = []
 
     // Check for required elements
     schema.complexTypes.forEach((complexType, typeName) => {
-      complexType.elements.forEach(element => {
+      complexType.elements.forEach((element) => {
         if (element.minOccurs > 0) {
           const found = document.elements.get(element.name)
           if (!found) {
@@ -1047,15 +1820,18 @@ export class SchemaValidator {
   /**
    * Validates data types in document
    */
-  private validateDataTypes(document: ParsedDocument, schema: SchemaDefinition): ValidationError[] {
+  private validateDataTypes(
+    document: ParsedDocument,
+    schema: SchemaDefinition
+  ): ValidationError[] {
     const errors: ValidationError[] = []
 
     // Validate simple type restrictions
     document.elements.forEach((elementInfo, elementName) => {
       // Find element definition in schema
       let elementDef: ElementDefinition | undefined
-      schema.complexTypes.forEach(complexType => {
-        const found = complexType.elements.find(e => e.name === elementName)
+      schema.complexTypes.forEach((complexType) => {
+        const found = complexType.elements.find((e) => e.name === elementName)
         if (found) elementDef = found
       })
 
@@ -1074,7 +1850,10 @@ export class SchemaValidator {
   /**
    * Validates constraints in document
    */
-  private validateConstraints(document: ParsedDocument, _schema: SchemaDefinition): ValidationError[] {
+  private validateConstraints(
+    document: ParsedDocument,
+    _schema: SchemaDefinition
+  ): ValidationError[] {
     const errors: ValidationError[] = []
     // Additional constraint validation would go here
     return errors
@@ -1120,7 +1899,11 @@ export class SchemaValidator {
   /**
    * Validates a specific field value against its schema type
    */
-  validateFieldValue(value: string, typeName: string, formType: string): ValidationError | null {
+  validateFieldValue(
+    value: string,
+    typeName: string,
+    formType: string
+  ): ValidationError | null {
     const schema = this.getBuiltInSchemaDefinition(formType)
     const simpleType = schema.simpleTypes.get(typeName)
 
@@ -1131,13 +1914,13 @@ export class SchemaValidator {
     for (const restriction of simpleType.restrictions) {
       switch (restriction.type) {
         case 'pattern':
-          if (!new RegExp(`^${restriction.value}$`).test(value)) {
+          if (!new RegExp(`^${String(restriction.value)}$`).test(value)) {
             return {
               code: 'PATTERN_MISMATCH',
               message: `Value does not match required pattern`,
               xpath: '',
               value,
-              expected: `Pattern: ${restriction.value}`,
+              expected: `Pattern: ${String(restriction.value)}`,
               severity: ValidationSeverity.ERROR
             }
           }
@@ -1150,7 +1933,7 @@ export class SchemaValidator {
               message: `Value is too short`,
               xpath: '',
               value,
-              expected: `Minimum length: ${restriction.value}`,
+              expected: `Minimum length: ${String(restriction.value)}`,
               severity: ValidationSeverity.ERROR
             }
           }
@@ -1163,7 +1946,7 @@ export class SchemaValidator {
               message: `Value is too long`,
               xpath: '',
               value,
-              expected: `Maximum length: ${restriction.value}`,
+              expected: `Maximum length: ${String(restriction.value)}`,
               severity: ValidationSeverity.ERROR
             }
           }
@@ -1183,26 +1966,26 @@ export class SchemaValidator {
           break
 
         case 'minInclusive':
-          if (parseFloat(value) < parseFloat(restriction.value as string)) {
+          if (parseFloat(value) < parseFloat(String(restriction.value))) {
             return {
               code: 'RANGE_ERROR',
               message: `Value is below minimum`,
               xpath: '',
               value,
-              expected: `Minimum: ${restriction.value}`,
+              expected: `Minimum: ${String(restriction.value)}`,
               severity: ValidationSeverity.ERROR
             }
           }
           break
 
         case 'maxInclusive':
-          if (parseFloat(value) > parseFloat(restriction.value as string)) {
+          if (parseFloat(value) > parseFloat(String(restriction.value))) {
             return {
               code: 'RANGE_ERROR',
               message: `Value is above maximum`,
               xpath: '',
               value,
-              expected: `Maximum: ${restriction.value}`,
+              expected: `Maximum: ${String(restriction.value)}`,
               severity: ValidationSeverity.ERROR
             }
           }

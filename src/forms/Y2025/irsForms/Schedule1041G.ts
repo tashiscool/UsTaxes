@@ -43,7 +43,7 @@ export interface Schedule1041GData {
 
 // 2025 Trust Tax Brackets
 const TRUST_TAX_BRACKETS = [
-  { min: 0, max: 3050, rate: 0.10, base: 0 },
+  { min: 0, max: 3050, rate: 0.1, base: 0 },
   { min: 3050, max: 11450, rate: 0.24, base: 305 },
   { min: 11450, max: 15650, rate: 0.35, base: 2321 },
   { min: 15650, max: Infinity, rate: 0.37, base: 3791 }
@@ -63,7 +63,7 @@ export default class Schedule1041G extends F1040Attachment {
   }
 
   schedule1041GData = (): Schedule1041GData | undefined => {
-    return undefined  // Would be populated from estate/trust data
+    return undefined // Would be populated from estate/trust data
   }
 
   // Compute trust tax using 2025 brackets
@@ -72,13 +72,17 @@ export default class Schedule1041G extends F1040Attachment {
 
     for (const bracket of TRUST_TAX_BRACKETS) {
       if (taxableIncome <= bracket.max) {
-        return Math.round(bracket.base + (taxableIncome - bracket.min) * bracket.rate)
+        return Math.round(
+          bracket.base + (taxableIncome - bracket.min) * bracket.rate
+        )
       }
     }
 
     // Above highest bracket
     const lastBracket = TRUST_TAX_BRACKETS[TRUST_TAX_BRACKETS.length - 1]
-    return Math.round(lastBracket.base + (taxableIncome - lastBracket.min) * lastBracket.rate)
+    return Math.round(
+      lastBracket.base + (taxableIncome - lastBracket.min) * lastBracket.rate
+    )
   }
 
   // Line 1a: Taxable income

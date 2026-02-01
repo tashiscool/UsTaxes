@@ -32,25 +32,25 @@ export interface F1099MISCData {
   // Account number
   accountNumber?: string
   // Amounts
-  rents: number                    // Box 1
-  royalties: number                // Box 2
-  otherIncome: number              // Box 3
-  federalTaxWithheld: number       // Box 4
-  fishingBoatProceeds: number      // Box 5
-  medicalHealthPayments: number    // Box 6
+  rents: number // Box 1
+  royalties: number // Box 2
+  otherIncome: number // Box 3
+  federalTaxWithheld: number // Box 4
+  fishingBoatProceeds: number // Box 5
+  medicalHealthPayments: number // Box 6
   // Box 7 is now on 1099-NEC
-  substitutePayments: number       // Box 8
-  cropInsurance: number            // Box 9
-  grossProceedsAttorney: number    // Box 10
-  fishPurchased: number            // Box 11
-  section409ADeferrals: number     // Box 12
+  substitutePayments: number // Box 8
+  cropInsurance: number // Box 9
+  grossProceedsAttorney: number // Box 10
+  fishPurchased: number // Box 11
+  section409ADeferrals: number // Box 12
   // Box 13 is reserved
-  excessGoldenParachute: number    // Box 14
+  excessGoldenParachute: number // Box 14
   nonqualifiedDeferredComp: number // Box 15
   // State information
-  stateTaxWithheld: number         // Box 16
-  statePayerNumber: string         // Box 17
-  stateIncome: number              // Box 18
+  stateTaxWithheld: number // Box 16
+  statePayerNumber: string // Box 17
+  stateIncome: number // Box 18
 }
 
 export default class F1099MISC extends F1040Attachment {
@@ -62,7 +62,7 @@ export default class F1099MISC extends F1040Attachment {
   }
 
   hasF1099MISCData = (): boolean => {
-    return false  // Would check for 1099-MISC data
+    return false // Would check for 1099-MISC data
   }
 
   f1099MISCData = (): F1099MISCData | undefined => {
@@ -73,9 +73,15 @@ export default class F1099MISC extends F1040Attachment {
   totalIncome = (): number => {
     const data = this.f1099MISCData()
     if (!data) return 0
-    return data.rents + data.royalties + data.otherIncome +
-           data.fishingBoatProceeds + data.medicalHealthPayments +
-           data.cropInsurance + data.grossProceedsAttorney
+    return (
+      data.rents +
+      data.royalties +
+      data.otherIncome +
+      data.fishingBoatProceeds +
+      data.medicalHealthPayments +
+      data.cropInsurance +
+      data.grossProceedsAttorney
+    )
   }
 
   // Rents go to Schedule E
@@ -102,18 +108,18 @@ export default class F1099MISC extends F1040Attachment {
       data?.recipientTIN ?? '',
       data?.accountNumber ?? '',
       // Amounts
-      data?.rents ?? 0,                    // Box 1
-      data?.royalties ?? 0,                // Box 2
-      data?.otherIncome ?? 0,              // Box 3
-      data?.federalTaxWithheld ?? 0,       // Box 4
-      data?.fishingBoatProceeds ?? 0,      // Box 5
-      data?.medicalHealthPayments ?? 0,    // Box 6
-      data?.substitutePayments ?? 0,       // Box 8
-      data?.cropInsurance ?? 0,            // Box 9
-      data?.grossProceedsAttorney ?? 0,    // Box 10
-      data?.fishPurchased ?? 0,            // Box 11
-      data?.section409ADeferrals ?? 0,     // Box 12
-      data?.excessGoldenParachute ?? 0,    // Box 14
+      data?.rents ?? 0, // Box 1
+      data?.royalties ?? 0, // Box 2
+      data?.otherIncome ?? 0, // Box 3
+      data?.federalTaxWithheld ?? 0, // Box 4
+      data?.fishingBoatProceeds ?? 0, // Box 5
+      data?.medicalHealthPayments ?? 0, // Box 6
+      data?.substitutePayments ?? 0, // Box 8
+      data?.cropInsurance ?? 0, // Box 9
+      data?.grossProceedsAttorney ?? 0, // Box 10
+      data?.fishPurchased ?? 0, // Box 11
+      data?.section409ADeferrals ?? 0, // Box 12
+      data?.excessGoldenParachute ?? 0, // Box 14
       data?.nonqualifiedDeferredComp ?? 0, // Box 15
       // State
       data?.stateTaxWithheld ?? 0,

@@ -68,7 +68,7 @@ export default class F8867 extends F1040Attachment {
   }
 
   hasF8867Data = (): boolean => {
-    return false  // Only needed by paid preparers
+    return false // Only needed by paid preparers
   }
 
   f8867Data = (): F8867Data | undefined => {
@@ -101,9 +101,11 @@ export default class F8867 extends F1040Attachment {
     const data = this.f8867Data()
     if (!data) return false
 
-    return data.knowledgeBasedOnReasonableInquiries &&
-           data.documentsKept &&
-           data.noKnowledgeOfFraud
+    return (
+      data.knowledgeBasedOnReasonableInquiries &&
+      data.documentsKept &&
+      data.noKnowledgeOfFraud
+    )
   }
 
   // EIC children count
@@ -166,7 +168,7 @@ export default class F8867 extends F1040Attachment {
       this.creditsRequiringDueDiligence(),
       this.potentialPenalty(),
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? ''
+      data?.signatureDate.toLocaleDateString() ?? ''
     ]
   }
 }

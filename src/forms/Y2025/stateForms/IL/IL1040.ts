@@ -33,37 +33,32 @@ export class IL1040 extends Form {
 
   // Taxpayer information
   primaryFirstName = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.firstName
+    this.info.taxPayer.primaryPerson.firstName
 
   primaryLastName = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.lastName
+    this.info.taxPayer.primaryPerson.lastName
 
-  primarySSN = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.ssid
+  primarySSN = (): string | undefined => this.info.taxPayer.primaryPerson.ssid
 
   spouseFirstName = (): string | undefined =>
     this.info.taxPayer.spouse?.firstName
 
-  spouseLastName = (): string | undefined =>
-    this.info.taxPayer.spouse?.lastName
+  spouseLastName = (): string | undefined => this.info.taxPayer.spouse?.lastName
 
-  spouseSSN = (): string | undefined =>
-    this.info.taxPayer.spouse?.ssid
+  spouseSSN = (): string | undefined => this.info.taxPayer.spouse?.ssid
 
   address = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.address
+    this.info.taxPayer.primaryPerson.address.address
 
   city = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.city
+    this.info.taxPayer.primaryPerson.address.city
 
   stateField = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.state
+    this.info.taxPayer.primaryPerson.address.state
 
-  zip = (): string | undefined =>
-    this.info.taxPayer.primaryPerson?.address.zip
+  zip = (): string | undefined => this.info.taxPayer.primaryPerson.address.zip
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Line 1 - Federal adjusted gross income
   l1 = (): number => this.f1040.l11()
@@ -114,7 +109,7 @@ export class IL1040 extends Form {
     totalExemption += numDependents * parameters.dependentExemption
 
     // Add senior exemption (65+) for primary
-    const primaryAge = this.info.taxPayer.primaryPerson?.dateOfBirth
+    const primaryAge = this.info.taxPayer.primaryPerson.dateOfBirth
       ? new Date().getFullYear() -
         new Date(this.info.taxPayer.primaryPerson.dateOfBirth).getFullYear()
       : 0
@@ -176,7 +171,8 @@ export class IL1040 extends Form {
   l19 = (): number | undefined => undefined
 
   // Line 20 - Total credits (add Lines 15 through 19)
-  l20 = (): number => sumFields([this.l15(), this.l16(), this.l17(), this.l18(), this.l19()])
+  l20 = (): number =>
+    sumFields([this.l15(), this.l16(), this.l17(), this.l18(), this.l19()])
 
   // Line 21 - Net tax (Line 14 minus Line 20, but not less than zero)
   l21 = (): number => Math.max(0, this.l14() - this.l20())
@@ -191,7 +187,8 @@ export class IL1040 extends Form {
   l24 = (): number | undefined => undefined
 
   // Line 25 - Total tax and other amounts (add Lines 21 through 24)
-  l25 = (): number => sumFields([this.l21(), this.l22(), this.l23(), this.l24()])
+  l25 = (): number =>
+    sumFields([this.l21(), this.l22(), this.l23(), this.l24()])
 
   // Payments
   // Line 26 - Illinois income tax withheld
@@ -207,7 +204,8 @@ export class IL1040 extends Form {
   l29 = (): number | undefined => undefined
 
   // Line 30 - Total payments (add Lines 26 through 29)
-  l30 = (): number => sumFields([this.l26(), this.l27(), this.l28(), this.l29()])
+  l30 = (): number =>
+    sumFields([this.l26(), this.l27(), this.l28(), this.l29()])
 
   // Results
   // Line 31 - Overpayment (if Line 30 > Line 25)

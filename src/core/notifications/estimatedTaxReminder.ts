@@ -133,7 +133,7 @@ export const calculateSafeHarbor = (
  */
 export const calculateQuarterlySafeHarbor = (
   safeHarborAmount: number,
-  quartersPassed: number = 0
+  quartersPassed = 0
 ): number => {
   const remainingQuarters = 4 - quartersPassed
   if (remainingQuarters <= 0) return 0
@@ -149,7 +149,7 @@ export const calculateQuarterlySafeHarbor = (
  */
 export const getQuarterDueDate = (
   quarter: 1 | 2 | 3 | 4,
-  year: number = 2025
+  year = 2025
 ): Date => {
   if (year === 2025) {
     switch (quarter) {
@@ -203,7 +203,7 @@ export const calculateQuarterlyPayment = (
   const suggestedAmount = totalEstimatedTax / 4
 
   // Find payment for this quarter
-  const payment = payments.find(p => p.quarter === quarter && p.year === year)
+  const payment = payments.find((p) => p.quarter === quarter && p.year === year)
   const paidAmount = payment?.amount ?? 0
 
   const daysUntilDue = daysBetween(referenceDate, dueDate)
@@ -230,7 +230,7 @@ export const getEstimatedTaxSummary = (
   priorYearTax?: number,
   priorYearAGI?: number,
   filingStatus?: FilingStatus,
-  year: number = 2025,
+  year = 2025,
   referenceDate: Date = new Date()
 ): EstimatedTaxSummary => {
   const quarters: QuarterlyPaymentInfo[] = [1, 2, 3, 4].map((q) =>
@@ -248,12 +248,17 @@ export const getEstimatedTaxSummary = (
 
   // Find next due quarter
   const nextDueQuarter =
-    quarters.find((q) => !q.isPastDue && q.status !== 'paid' && q.status !== 'overpaid') ??
-    null
+    quarters.find(
+      (q) => !q.isPastDue && q.status !== 'paid' && q.status !== 'overpaid'
+    ) ?? null
 
   // Calculate safe harbor if prior year info available
   let safeHarbor: SafeHarborResult | null = null
-  if (priorYearTax !== undefined && priorYearAGI !== undefined && filingStatus) {
+  if (
+    priorYearTax !== undefined &&
+    priorYearAGI !== undefined &&
+    filingStatus
+  ) {
     safeHarbor = calculateSafeHarbor(
       priorYearTax,
       totalEstimatedTax,
@@ -295,8 +300,15 @@ export const getUrgencyLevel = (
 export const generateQuarterlyReminder = (
   quarterInfo: QuarterlyPaymentInfo
 ): ReminderMessage => {
-  const { quarter, dueDate, suggestedAmount, remaining, daysUntilDue, isPastDue, status } =
-    quarterInfo
+  const {
+    quarter,
+    dueDate,
+    suggestedAmount,
+    remaining,
+    daysUntilDue,
+    isPastDue,
+    status
+  } = quarterInfo
 
   const quarterNames = ['Q1', 'Q2', 'Q3', 'Q4']
   const quarterName = quarterNames[quarter - 1]
@@ -337,7 +349,9 @@ export const generateQuarterlyReminder = (
   // Due soon (within a week)
   if (daysUntilDue <= 7) {
     return {
-      title: `${quarterName} Estimated Tax Due ${daysUntilDue === 1 ? 'Tomorrow' : `in ${daysUntilDue} Days`}`,
+      title: `${quarterName} Estimated Tax Due ${
+        daysUntilDue === 1 ? 'Tomorrow' : `in ${daysUntilDue} Days`
+      }`,
       body: `Your ${quarterName} estimated tax payment of $${remaining.toLocaleString()} is due on ${formattedDate}. Plan your payment to avoid penalties.`,
       urgency: daysUntilDue <= 3 ? 'high' : 'medium',
       actionText: 'Review Payment',
@@ -383,10 +397,15 @@ export const generateSummaryReminder = (
   )
 
   if (pastDueQuarters.length > 0) {
-    const totalPastDue = pastDueQuarters.reduce((sum, q) => sum + q.remaining, 0)
+    const totalPastDue = pastDueQuarters.reduce(
+      (sum, q) => sum + q.remaining,
+      0
+    )
     return {
       title: 'Estimated Tax Payments Past Due',
-      body: `You have ${pastDueQuarters.length} past due estimated tax payment(s) totaling $${totalPastDue.toLocaleString()}. Pay as soon as possible to minimize penalties.`,
+      body: `You have ${
+        pastDueQuarters.length
+      } past due estimated tax payment(s) totaling $${totalPastDue.toLocaleString()}. Pay as soon as possible to minimize penalties.`,
       urgency: 'critical',
       actionText: 'Make Payment',
       actionUrl: '/payments/estimated-taxes'
@@ -406,7 +425,7 @@ export const generateSummaryReminder = (
  */
 export const convertExistingPayments = (
   payments: EstimatedTaxPayments[],
-  year: number = 2025
+  year = 2025
 ): EstimatedTaxPaymentRecord[] => {
   const quarterPatterns = {
     1: /q1|quarter\s*1|first|jan|feb|mar|apr/i,

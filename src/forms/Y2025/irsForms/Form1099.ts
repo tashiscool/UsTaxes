@@ -45,7 +45,9 @@ export abstract class Form1099Base extends Form {
   payerTIN = (): string => this.formData.payerTIN
   payerAddress = (): string => {
     const addr = this.formData.payerAddress
-    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${addr.zip ?? ''}`
+    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${
+      addr.zip ?? ''
+    }`
   }
 
   // Common recipient fields
@@ -54,7 +56,9 @@ export abstract class Form1099Base extends Form {
   recipientAddress = (): string => {
     const addr = this.formData.recipientAddress
     if (!addr) return ''
-    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${addr.zip ?? ''}`
+    return `${addr.address}, ${addr.city}, ${addr.state ?? ''} ${
+      addr.zip ?? ''
+    }`
   }
 
   accountNumber = (): string => this.formData.accountNumber ?? ''
@@ -292,7 +296,8 @@ export class Form1099R extends Form1099Base {
 
   box1 = (): number => this.formData.box1GrossDistribution
   box2a = (): number => this.formData.box2aTaxableAmount
-  box2bNotDetermined = (): boolean => this.formData.box2bTaxableNotDetermined ?? false
+  box2bNotDetermined = (): boolean =>
+    this.formData.box2bTaxableNotDetermined ?? false
   box2bTotal = (): boolean => this.formData.box2bTotalDistribution ?? false
   box3 = (): number => this.formData.box3CapitalGain ?? 0
   box4 = (): number => this.formData.box4FederalWithholding ?? 0

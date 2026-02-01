@@ -58,7 +58,7 @@ const parameters = {
   eicPercentage: 0.38,
 
   // VT Child and Dependent Care Credit (percentage of federal)
-  childCarePercentage: 0.50,
+  childCarePercentage: 0.5,
 
   // VT Renter Rebate max
   renterRebateMax: 3000

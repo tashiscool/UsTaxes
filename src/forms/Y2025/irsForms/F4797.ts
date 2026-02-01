@@ -20,7 +20,12 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  */
 
 export type PropertyType = 'real' | 'personal' | 'intangible'
-export type RecaptureType = 'section1245' | 'section1250' | 'section1252' | 'section1254' | 'section1255'
+export type RecaptureType =
+  | 'section1245'
+  | 'section1250'
+  | 'section1252'
+  | 'section1254'
+  | 'section1255'
 
 export interface BusinessPropertySale {
   description: string
@@ -28,7 +33,7 @@ export interface BusinessPropertySale {
   dateSold: Date
   grossSalesPrice: number
   costOrBasis: number
-  depreciation: number  // Total depreciation allowed or allowable
+  depreciation: number // Total depreciation allowed or allowable
   expenseOfSale: number
   propertyType: PropertyType
   recaptureType?: RecaptureType
@@ -51,16 +56,20 @@ export default class F4797 extends F1040Attachment {
   }
 
   businessPropertySales = (): BusinessPropertySale[] => {
-    return (this.f1040.info.businessPropertySales as BusinessPropertySale[] | undefined) ?? []
+    return (
+      (this.f1040.info.businessPropertySales as
+        | BusinessPropertySale[]
+        | undefined) ?? []
+    )
   }
 
   // Separate sales by type
   section1231Sales = (): BusinessPropertySale[] => {
-    return this.businessPropertySales().filter(s => s.isSection1231Property)
+    return this.businessPropertySales().filter((s) => s.isSection1231Property)
   }
 
   ordinarySales = (): BusinessPropertySale[] => {
-    return this.businessPropertySales().filter(s => !s.isSection1231Property)
+    return this.businessPropertySales().filter((s) => !s.isSection1231Property)
   }
 
   // Part I - Sales or Exchanges of Property Used in a Trade or Business
@@ -69,7 +78,10 @@ export default class F4797 extends F1040Attachment {
 
   // Line 2: Gross proceeds from sales
   l2 = (): number => {
-    return this.section1231Sales().reduce((sum, s) => sum + s.grossSalesPrice, 0)
+    return this.section1231Sales().reduce(
+      (sum, s) => sum + s.grossSalesPrice,
+      0
+    )
   }
 
   // Line 3: Cost or adjusted basis plus expense of sale
@@ -97,10 +109,11 @@ export default class F4797 extends F1040Attachment {
   l7 = (): number => this.l31()
 
   // Line 8: Total gains (lines 4 + 5 + 6 + 7)
-  l8 = (): number => sumFields([this.l4() > 0 ? this.l4() : 0, this.l5(), this.l6(), this.l7()])
+  l8 = (): number =>
+    sumFields([this.l4() > 0 ? this.l4() : 0, this.l5(), this.l6(), this.l7()])
 
   // Line 9: Total losses
-  l9 = (): number => this.l4() < 0 ? Math.abs(this.l4()) : 0
+  l9 = (): number => (this.l4() < 0 ? Math.abs(this.l4()) : 0)
 
   // Line 10: Recapture of prior section 1231 losses (5-year lookback)
   l10 = (): number => {
@@ -130,7 +143,7 @@ export default class F4797 extends F1040Attachment {
   }
 
   // Line 16: Gain from Form 6781 (Section 1256 contracts)
-  l16 = (): number => 0  // Not implemented
+  l16 = (): number => 0 // Not implemented
 
   // Line 17: Ordinary gain from installment sales (Form 6252 line 25 or 36)
   l17 = (): number => {
@@ -168,12 +181,14 @@ export default class F4797 extends F1040Attachment {
 
   // Process sales with depreciation recapture
   recaptureSales = (): BusinessPropertySale[] => {
-    return this.businessPropertySales().filter(s => s.depreciation > 0)
+    return this.businessPropertySales().filter((s) => s.depreciation > 0)
   }
 
   // Line 22: Description of property (aggregate)
   l22Description = (): string => {
-    return this.recaptureSales().map(s => s.description).join('; ')
+    return this.recaptureSales()
+      .map((s) => s.description)
+      .join('; ')
   }
 
   // Line 22a: Date acquired
@@ -189,7 +204,10 @@ export default class F4797 extends F1040Attachment {
 
   // Line 24: Cost or other basis plus expense of sale
   l24 = (): number => {
-    return this.recaptureSales().reduce((sum, s) => sum + s.costOrBasis + s.expenseOfSale, 0)
+    return this.recaptureSales().reduce(
+      (sum, s) => sum + s.costOrBasis + s.expenseOfSale,
+      0
+    )
   }
 
   // Line 25: Depreciation allowed or allowable
@@ -206,13 +224,18 @@ export default class F4797 extends F1040Attachment {
   // Line 28: Section 1245 recapture (smaller of line 25 or line 27)
   // For personal property, all depreciation is recaptured as ordinary income
   l28 = (): number => {
-    const section1245Sales = this.recaptureSales().filter(s =>
-      s.recaptureType === 'section1245' || s.propertyType === 'personal'
+    const section1245Sales = this.recaptureSales().filter(
+      (s) => s.recaptureType === 'section1245' || s.propertyType === 'personal'
     )
-    const depreciation = section1245Sales.reduce((sum, s) => sum + s.depreciation, 0)
+    const depreciation = section1245Sales.reduce(
+      (sum, s) => sum + s.depreciation,
+      0
+    )
     const gain = section1245Sales.reduce((sum, s) => {
       const adjustedBasis = s.costOrBasis - s.depreciation
-      return sum + Math.max(0, s.grossSalesPrice - adjustedBasis - s.expenseOfSale)
+      return (
+        sum + Math.max(0, s.grossSalesPrice - adjustedBasis - s.expenseOfSale)
+      )
     }, 0)
     return Math.min(depreciation, gain)
   }
@@ -243,10 +266,10 @@ export default class F4797 extends F1040Attachment {
   // Summary amounts for other forms
 
   // Ordinary income to Schedule 1 or other schedules
-  ordinaryIncome = (): number => this.l21() > 0 ? this.l21() : 0
+  ordinaryIncome = (): number => (this.l21() > 0 ? this.l21() : 0)
 
   // Ordinary loss to Schedule 1 or other schedules
-  ordinaryLoss = (): number => this.l21() < 0 ? Math.abs(this.l21()) : 0
+  ordinaryLoss = (): number => (this.l21() < 0 ? Math.abs(this.l21()) : 0)
 
   // Section 1231 gain to Schedule D
   section1231Gain = (): number => this.l12()

@@ -30,12 +30,12 @@ import { Form8932Data } from 'ustaxes/core/data'
 
 // 2025 parameters
 const differentialWageParams = {
-  creditRate: 0.20,              // 20% of wages
-  maxWagesPerEmployee: 20000,    // Maximum qualifying wages
-  maxCreditPerEmployee: 4000,    // Maximum credit per employee
-  maxEmployees: 50,              // Must have <50 employees
-  minEmploymentDays: 91,         // Minimum days employed before call
-  minActiveDutyDays: 30          // Minimum consecutive days on active duty
+  creditRate: 0.2, // 20% of wages
+  maxWagesPerEmployee: 20000, // Maximum qualifying wages
+  maxCreditPerEmployee: 4000, // Maximum credit per employee
+  maxEmployees: 50, // Must have <50 employees
+  minEmploymentDays: 91, // Minimum days employed before call
+  minActiveDutyDays: 30 // Minimum consecutive days on active duty
 }
 
 export default class F8932 extends F1040Attachment {
@@ -62,8 +62,15 @@ export default class F8932 extends F1040Attachment {
   l1 = (): number => {
     const data = this.creditData()
     if (!data) return 0
-    return data.qualifiedEmployees.reduce((sum, e) =>
-      sum + Math.min(e.differentialWagesPaid, differentialWageParams.maxWagesPerEmployee), 0)
+    return data.qualifiedEmployees.reduce(
+      (sum, e) =>
+        sum +
+        Math.min(
+          e.differentialWagesPaid,
+          differentialWageParams.maxWagesPerEmployee
+        ),
+      0
+    )
   }
 
   // Line 2: Multiply line 1 by 20%
@@ -79,18 +86,22 @@ export default class F8932 extends F1040Attachment {
   credit = (): number => this.creditData()?.totalCredit ?? this.l4()
 
   // Number of qualified employees
-  qualifiedEmployeeCount = (): number => this.creditData()?.qualifiedEmployees.length ?? 0
+  qualifiedEmployeeCount = (): number =>
+    this.creditData()?.qualifiedEmployees.length ?? 0
 
   // Total duty days for all employees
   totalDutyDays = (): number => {
     const data = this.creditData()
     if (!data) return 0
-    return data.qualifiedEmployees.reduce((sum, e) => sum + e.militaryDutyDays, 0)
+    return data.qualifiedEmployees.reduce(
+      (sum, e) => sum + e.militaryDutyDays,
+      0
+    )
   }
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1(),
     this.l2(),
     this.l3(),

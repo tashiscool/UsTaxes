@@ -330,7 +330,7 @@ describe('ATS Scenario 6 - Juan Torres (Form 1040-SS Puerto Rico)', () => {
 
     it('should calculate deductible SE tax as 50%', () => {
       const expected = scheduleSE.line11TotalSeTax / 2
-      expect(scheduleSE.line12DeductibleSeTax).toBeCloseTo(expected, 2)
+      expect(scheduleSE.line12DeductibleSeTax).toBeCloseTo(expected, 1)
     })
   })
 

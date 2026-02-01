@@ -209,13 +209,9 @@ export class OCREngine {
     const lines = data.lines ?? []
 
     const imageWidth =
-      blocks.length > 0
-        ? Math.max(...blocks.map((b: Block) => b.bbox.x1))
-        : 0
+      blocks.length > 0 ? Math.max(...blocks.map((b: Block) => b.bbox.x1)) : 0
     const imageHeight =
-      blocks.length > 0
-        ? Math.max(...blocks.map((b: Block) => b.bbox.y1))
-        : 0
+      blocks.length > 0 ? Math.max(...blocks.map((b: Block) => b.bbox.y1)) : 0
 
     return {
       text: data.text,

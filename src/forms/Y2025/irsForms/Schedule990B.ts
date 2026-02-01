@@ -53,7 +53,7 @@ export default class Schedule990B extends F1040Attachment {
   }
 
   schedule990BData = (): Schedule990BData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   contributors = (): Contributor[] => {
@@ -62,21 +62,27 @@ export default class Schedule990B extends F1040Attachment {
 
   // Contributors over $5,000
   majorContributors = (): Contributor[] => {
-    return this.contributors().filter(c => c.totalContributions >= 5000)
+    return this.contributors().filter((c) => c.totalContributions >= 5000)
   }
 
   // Total contributions from major contributors
   totalMajorContributions = (): number => {
-    return this.majorContributors().reduce((sum, c) => sum + c.totalContributions, 0)
+    return this.majorContributors().reduce(
+      (sum, c) => sum + c.totalContributions,
+      0
+    )
   }
 
   // Noncash contributions
   noncashContributions = (): Contributor[] => {
-    return this.contributors().filter(c => c.typeOfContribution === 'noncash')
+    return this.contributors().filter((c) => c.typeOfContribution === 'noncash')
   }
 
   totalNoncashContributions = (): number => {
-    return this.noncashContributions().reduce((sum, c) => sum + (c.noncashFMV ?? 0), 0)
+    return this.noncashContributions().reduce(
+      (sum, c) => sum + (c.noncashFMV ?? 0),
+      0
+    )
   }
 
   // Gaming activities

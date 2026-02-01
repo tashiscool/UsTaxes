@@ -12,7 +12,10 @@ export {
   IdentityVerification,
   default as IdentityVerificationComponent
 } from './IdentityVerification'
-export type { IdentityVerificationData, IdentityVerificationProps } from './IdentityVerification'
+export type {
+  IdentityVerificationData,
+  IdentityVerificationProps
+} from './IdentityVerification'
 
 // Electronic signature
 export { ESignature } from './ESignature'

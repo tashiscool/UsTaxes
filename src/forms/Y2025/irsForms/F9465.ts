@@ -23,7 +23,7 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 export interface InstallmentAgreementInfo {
   amountOwed: number
   proposedMonthlyPayment: number
-  paymentDueDay: number  // Day of month (1-28)
+  paymentDueDay: number // Day of month (1-28)
   useDirectDebit: boolean
   bankRoutingNumber?: string
   bankAccountNumber?: string
@@ -47,7 +47,9 @@ export default class F9465 extends F1040Attachment {
   }
 
   installmentInfo = (): InstallmentAgreementInfo | undefined => {
-    return this.f1040.info.installmentAgreement as InstallmentAgreementInfo | undefined
+    return this.f1040.info.installmentAgreement as
+      | InstallmentAgreementInfo
+      | undefined
   }
 
   // Line 1-6: Personal information from F1040
@@ -68,7 +70,7 @@ export default class F9465 extends F1040Attachment {
   l11a = (): number => this.l9() + this.l10()
 
   // Line 11b: Amount you can pay now
-  l11b = (): number => 0  // User-specified
+  l11b = (): number => 0 // User-specified
 
   // Line 12: Balance to be paid in installments (11a - 11b)
   l12 = (): number => Math.max(0, this.l11a() - this.l11b())
@@ -101,7 +103,8 @@ export default class F9465 extends F1040Attachment {
   }
 
   // Direct Debit information
-  useDirectDebit = (): boolean => this.installmentInfo()?.useDirectDebit ?? false
+  useDirectDebit = (): boolean =>
+    this.installmentInfo()?.useDirectDebit ?? false
 
   // Line 15a: Bank routing number
   l15a = (): string => this.installmentInfo()?.bankRoutingNumber ?? ''
@@ -110,7 +113,8 @@ export default class F9465 extends F1040Attachment {
   l15b = (): string => this.installmentInfo()?.bankAccountNumber ?? ''
 
   // Line 15c: Account type
-  l15cChecking = (): boolean => this.installmentInfo()?.accountType === 'checking'
+  l15cChecking = (): boolean =>
+    this.installmentInfo()?.accountType === 'checking'
   l15cSavings = (): boolean => this.installmentInfo()?.accountType === 'savings'
 
   // Employment information (for non-streamlined)

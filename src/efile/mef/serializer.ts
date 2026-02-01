@@ -42,7 +42,11 @@ export interface SerializerConfig {
   /** Originator EFIN (Electronic Filing Identification Number) */
   originatorEFIN: string
   /** Originator type: OnlineFiler, ERO, etc. */
-  originatorType: 'OnlineFiler' | 'ERO' | 'ReportingAgent' | 'OriginatorSelfSelect'
+  originatorType:
+    | 'OnlineFiler'
+    | 'ERO'
+    | 'ReportingAgent'
+    | 'OriginatorSelfSelect'
   /** PIN type: Self-Select PIN or Practitioner PIN */
   pinType: 'SelfSelectPIN' | 'PractitionerPIN'
   /** Primary taxpayer's PIN (5 digits) */
@@ -176,7 +180,8 @@ function xmlElement(
   }
 
   const attrStr = attributes
-    ? ' ' + Object.entries(attributes)
+    ? ' ' +
+      Object.entries(attributes)
         .map(([k, v]) => `${k}="${escapeXml(v)}"`)
         .join(' ')
     : ''
@@ -192,13 +197,14 @@ function xmlContainer(
   children: string[],
   attributes?: Record<string, string>
 ): string {
-  const filteredChildren = children.filter(c => c.length > 0)
+  const filteredChildren = children.filter((c) => c.length > 0)
   if (filteredChildren.length === 0) {
     return ''
   }
 
   const attrStr = attributes
-    ? ' ' + Object.entries(attributes)
+    ? ' ' +
+      Object.entries(attributes)
         .map(([k, v]) => `${k}="${escapeXml(v)}"`)
         .join(' ')
     : ''
@@ -253,8 +259,10 @@ ${returnData}
         : '',
       xmlElement('NameLine1Txt', `${primary.firstName} ${primary.lastName}`),
       info.taxPayer.spouse
-        ? xmlElement('SpouseNameLine1Txt',
-            `${info.taxPayer.spouse.firstName} ${info.taxPayer.spouse.lastName}`)
+        ? xmlElement(
+            'SpouseNameLine1Txt',
+            `${info.taxPayer.spouse.firstName} ${info.taxPayer.spouse.lastName}`
+          )
         : '',
       this.buildAddress(primary.address)
     ]
@@ -266,23 +274,34 @@ ${returnData}
       xmlElement('TaxPeriodEndDt', `${this.config.taxYear}-12-31`),
       xmlElement('SoftwareId', this.config.softwareId),
       xmlElement('SoftwareVersionNum', this.config.softwareVersion),
-      xmlElement('OriginatorGrp', xmlContainer('OriginatorGrp', [
-        xmlElement('EFIN', this.config.originatorEFIN),
-        xmlElement('OriginatorTypeCd', this.config.originatorType)
-      ])),
-      xmlElement('SelfSelectPINGrp', xmlContainer('SelfSelectPINGrp', [
-        xmlElement('PrimaryBirthDt', formatDate(primary.dateOfBirth)),
-        this.config.primaryPIN ? xmlElement('PrimaryPINEnteredByCd', this.config.primaryPIN) : '',
-        info.taxPayer.spouse && this.config.spousePIN
-          ? xmlElement('SpousePINEnteredByCd', this.config.spousePIN)
-          : ''
-      ])),
+      xmlElement(
+        'OriginatorGrp',
+        xmlContainer('OriginatorGrp', [
+          xmlElement('EFIN', this.config.originatorEFIN),
+          xmlElement('OriginatorTypeCd', this.config.originatorType)
+        ])
+      ),
+      xmlElement(
+        'SelfSelectPINGrp',
+        xmlContainer('SelfSelectPINGrp', [
+          xmlElement('PrimaryBirthDt', formatDate(primary.dateOfBirth)),
+          this.config.primaryPIN
+            ? xmlElement('PrimaryPINEnteredByCd', this.config.primaryPIN)
+            : '',
+          info.taxPayer.spouse && this.config.spousePIN
+            ? xmlElement('SpousePINEnteredByCd', this.config.spousePIN)
+            : ''
+        ])
+      ),
       xmlElement('ReturnTypeCd', '1040'),
       xmlContainer('Filer', filerElements),
       this.config.deviceIPAddress
-        ? xmlElement('IPAddress', xmlContainer('IPAddress', [
-            xmlElement('IPv4AddressTxt', this.config.deviceIPAddress)
-          ]))
+        ? xmlElement(
+            'IPAddress',
+            xmlContainer('IPAddress', [
+              xmlElement('IPv4AddressTxt', this.config.deviceIPAddress)
+            ])
+          )
         : '',
       this.config.isTestSubmission ? xmlElement('TestSubmissionInd', 'X') : ''
     ]
@@ -308,7 +327,9 @@ ${returnData}
     if (address.foreignCountry) {
       return xmlContainer('ForeignAddress', [
         xmlElement('AddressLine1Txt', address.address),
-        address.aptNo ? xmlElement('AddressLine2Txt', `Apt ${address.aptNo}`) : '',
+        address.aptNo
+          ? xmlElement('AddressLine2Txt', `Apt ${address.aptNo}`)
+          : '',
         xmlElement('CityNm', address.city),
         xmlElement('ProvinceOrStateNm', address.province || ''),
         xmlElement('CountryCd', address.foreignCountry),
@@ -318,7 +339,9 @@ ${returnData}
 
     return xmlContainer('USAddress', [
       xmlElement('AddressLine1Txt', address.address),
-      address.aptNo ? xmlElement('AddressLine2Txt', `Apt ${address.aptNo}`) : '',
+      address.aptNo
+        ? xmlElement('AddressLine2Txt', `Apt ${address.aptNo}`)
+        : '',
       xmlElement('CityNm', address.city),
       xmlElement('StateAbbreviationCd', address.state || ''),
       xmlElement('ZIPCd', address.zip || '')
@@ -343,9 +366,13 @@ ${returnData}
       ...this.serializeForm8949s()
     ]
 
-    return xmlContainer('ReturnData', elements.filter(e => e.length > 0), {
-      documentCnt: String(elements.filter(e => e.length > 0).length)
-    })
+    return xmlContainer(
+      'ReturnData',
+      elements.filter((e) => e.length > 0),
+      {
+        documentCnt: String(elements.filter((e) => e.length > 0).length)
+      }
+    )
   }
 
   /**
@@ -383,14 +410,18 @@ ${returnData}
 
     const elements = [
       xmlElement('PrimarySSN', formatSSN(primary.ssid)),
-      xmlElement('PrimaryNameControlTxt',
-        primary.lastName.substring(0, 4).toUpperCase()),
+      xmlElement(
+        'PrimaryNameControlTxt',
+        primary.lastName.substring(0, 4).toUpperCase()
+      ),
       info.taxPayer.spouse
         ? xmlElement('SpouseSSN', formatSSN(info.taxPayer.spouse.ssid))
         : '',
       info.taxPayer.spouse
-        ? xmlElement('SpouseNameControlTxt',
-            info.taxPayer.spouse.lastName.substring(0, 4).toUpperCase())
+        ? xmlElement(
+            'SpouseNameControlTxt',
+            info.taxPayer.spouse.lastName.substring(0, 4).toUpperCase()
+          )
         : '',
       xmlContainer('PrimaryNm', [
         xmlElement('PersonFirstNm', primary.firstName),
@@ -404,7 +435,10 @@ ${returnData}
         : '',
       this.buildAddress(primary.address),
       info.taxPayer.contactPhoneNumber
-        ? xmlElement('PhoneNum', info.taxPayer.contactPhoneNumber.replace(/[-\s()]/g, ''))
+        ? xmlElement(
+            'PhoneNum',
+            info.taxPayer.contactPhoneNumber.replace(/[-\s()]/g, '')
+          )
         : '',
       info.taxPayer.contactEmail
         ? xmlElement('EmailAddressTxt', info.taxPayer.contactEmail)
@@ -437,17 +471,31 @@ ${returnData}
     }
 
     const depElements = dependents.map((dep, idx) =>
-      xmlContainer('DependentDetail', [
-        xmlElement('DependentFirstNm', dep.firstName),
-        xmlElement('DependentLastNm', dep.lastName),
-        xmlElement('DependentNameControlTxt', dep.lastName.substring(0, 4).toUpperCase()),
-        xmlElement('DependentSSN', formatSSN(dep.ssid)),
-        xmlElement('DependentRelationshipCd', this.mapRelationship(dep.relationship)),
-        xmlElement('EligibleForChildTaxCreditInd',
-          this.f1040.qualifyingDependents.qualifiesChild(dep) ? 'X' : ''),
-        xmlElement('EligibleForODCInd',
-          this.f1040.qualifyingDependents.qualifiesOther(dep) ? 'X' : '')
-      ], { dependentId: `DEP${String(idx + 1).padStart(4, '0')}` })
+      xmlContainer(
+        'DependentDetail',
+        [
+          xmlElement('DependentFirstNm', dep.firstName),
+          xmlElement('DependentLastNm', dep.lastName),
+          xmlElement(
+            'DependentNameControlTxt',
+            dep.lastName.substring(0, 4).toUpperCase()
+          ),
+          xmlElement('DependentSSN', formatSSN(dep.ssid)),
+          xmlElement(
+            'DependentRelationshipCd',
+            this.mapRelationship(dep.relationship)
+          ),
+          xmlElement(
+            'EligibleForChildTaxCreditInd',
+            this.f1040.qualifyingDependents.qualifiesChild(dep) ? 'X' : ''
+          ),
+          xmlElement(
+            'EligibleForODCInd',
+            this.f1040.qualifyingDependents.qualifiesOther(dep) ? 'X' : ''
+          )
+        ],
+        { dependentId: `DEP${String(idx + 1).padStart(4, '0')}` }
+      )
     )
 
     return xmlContainer('DependentInformationGrp', depElements)
@@ -458,18 +506,18 @@ ${returnData}
    */
   private mapRelationship(relationship: string): string {
     const relationshipMap: Record<string, string> = {
-      'son': 'SON',
-      'daughter': 'DAUGHTER',
-      'stepson': 'STEPSON',
-      'stepdaughter': 'STEPDAUGHTER',
+      son: 'SON',
+      daughter: 'DAUGHTER',
+      stepson: 'STEPSON',
+      stepdaughter: 'STEPDAUGHTER',
       'foster child': 'FOSTER CHILD',
-      'grandchild': 'GRANDCHILD',
-      'sibling': 'SIBLING',
-      'parent': 'PARENT',
-      'grandparent': 'GRANDPARENT',
-      'niece': 'NIECE',
-      'nephew': 'NEPHEW',
-      'other': 'OTHER'
+      grandchild: 'GRANDCHILD',
+      sibling: 'SIBLING',
+      parent: 'PARENT',
+      grandparent: 'GRANDPARENT',
+      niece: 'NIECE',
+      nephew: 'NEPHEW',
+      other: 'OTHER'
     }
     return relationshipMap[relationship.toLowerCase()] || 'OTHER'
   }
@@ -484,9 +532,15 @@ ${returnData}
       xmlElement('WagesAmt', formatAmount(this.f1040.l1a())),
       xmlElement('HouseholdEmployeeWagesAmt', formatAmount(this.f1040.l1b())),
       xmlElement('TipIncomeAmt', formatAmount(this.f1040.l1c())),
-      xmlElement('MedicaidWaiverPymtNotRptW2Amt', formatAmount(this.f1040.l1d())),
+      xmlElement(
+        'MedicaidWaiverPymtNotRptW2Amt',
+        formatAmount(this.f1040.l1d())
+      ),
       xmlElement('TaxableDependentCareBnftAmt', formatAmount(this.f1040.l1e())),
-      xmlElement('EmployerProvidedAdoptionBnftAmt', formatAmount(this.f1040.l1f())),
+      xmlElement(
+        'EmployerProvidedAdoptionBnftAmt',
+        formatAmount(this.f1040.l1f())
+      ),
       xmlElement('Form8919WagesNotW2Amt', formatAmount(this.f1040.l1g())),
       xmlElement('OtherEarnedIncomeAmt', formatAmount(this.f1040.l1h())),
 
@@ -549,13 +603,19 @@ ${returnData}
 
     const elements = [
       // Line 12 - Standard or itemized deduction
-      xmlElement('TotalItemizedOrStandardDedAmt', formatAmount(this.f1040.l12())),
+      xmlElement(
+        'TotalItemizedOrStandardDedAmt',
+        formatAmount(this.f1040.l12())
+      ),
       isItemized
         ? xmlElement('ItemizedDeductionsInd', 'X')
         : xmlElement('StandardDeductionInd', 'X'),
 
       // Line 13 - Qualified business income deduction
-      xmlElement('QualifiedBusinessIncomeDedAmt', formatAmount(this.f1040.l13())),
+      xmlElement(
+        'QualifiedBusinessIncomeDedAmt',
+        formatAmount(this.f1040.l13())
+      ),
 
       // Line 14 - Total deductions
       xmlElement('TotalDeductionsAmt', formatAmount(this.f1040.l14())),
@@ -585,7 +645,10 @@ ${returnData}
       xmlElement('AdditionalTaxAmt', formatAmount(this.f1040.l17())),
 
       // Line 18 - Total tax before credits
-      xmlElement('TotalTaxBeforeCrAndOthTaxesAmt', formatAmount(this.f1040.l18())),
+      xmlElement(
+        'TotalTaxBeforeCrAndOthTaxesAmt',
+        formatAmount(this.f1040.l18())
+      ),
 
       // Line 19 - Child tax credit / other dependent credit
       xmlElement('ChildTaxCreditAmt', formatAmount(this.f1040.l19())),
@@ -630,7 +693,10 @@ ${returnData}
       xmlElement('AdditionalChildTaxCreditAmt', formatAmount(this.f1040.l28())),
 
       // Line 29 - American Opportunity Credit
-      xmlElement('AmericanOpportunityCreditAmt', formatAmount(this.f1040.l29())),
+      xmlElement(
+        'AmericanOpportunityCreditAmt',
+        formatAmount(this.f1040.l29())
+      ),
 
       // Line 30 - Recovery Rebate Credit (if applicable)
       xmlElement('RecoveryRebateCreditAmt', formatAmount(this.f1040.l30())),
@@ -639,7 +705,10 @@ ${returnData}
       xmlElement('RefundableCreditsAmt', formatAmount(this.f1040.l31())),
 
       // Line 32 - Total other payments and refundable credits
-      xmlElement('TotalOtherPaymentsRfdblCrAmt', formatAmount(this.f1040.l32())),
+      xmlElement(
+        'TotalOtherPaymentsRfdblCrAmt',
+        formatAmount(this.f1040.l32())
+      ),
 
       // Line 33 - Total payments
       xmlElement('TotalPaymentsAmt', formatAmount(this.f1040.l33()))
@@ -666,8 +735,12 @@ ${returnData}
       refundInfo
         ? xmlContainer('RoutingAndAccountGrp', [
             xmlElement('RoutingTransitNum', refundInfo.routingNumber),
-            xmlElement('BankAccountTypeCd',
-              refundInfo.accountType === AccountType.checking ? 'Checking' : 'Savings'),
+            xmlElement(
+              'BankAccountTypeCd',
+              refundInfo.accountType === AccountType.checking
+                ? 'Checking'
+                : 'Savings'
+            ),
             xmlElement('DepositorAccountNum', refundInfo.accountNumber)
           ])
         : '',
@@ -707,10 +780,13 @@ ${returnData}
       this.config.primaryPIN
         ? xmlElement('PrimaryPINEnteredByCd', this.config.primaryPIN)
         : '',
-      xmlElement('IdentityProtectionPIN', ''), // If applicable
+      xmlElement('IdentityProtectionPIN', '') // If applicable
     ]
 
-    if (this.f1040.info.taxPayer.spouse && this.f1040.info.taxPayer.filingStatus === FilingStatus.MFJ) {
+    if (
+      this.f1040.info.taxPayer.spouse &&
+      this.f1040.info.taxPayer.filingStatus === FilingStatus.MFJ
+    ) {
       const spouseOccupation = this.f1040.occupation(PersonRole.SPOUSE)
       elements.push(
         xmlElement('SpouseSignatureDt', formatDate(now)),
@@ -750,13 +826,22 @@ ${returnData}
 
       // Part II - Adjustments
       xmlElement('EducatorExpensesAmt', formatAmount(schedule1.l11())),
-      xmlElement('BusnExpnsReservistsAndOthersAmt', formatAmount(schedule1.l12())),
+      xmlElement(
+        'BusnExpnsReservistsAndOthersAmt',
+        formatAmount(schedule1.l12())
+      ),
       xmlElement('HealthSavingsAccountDedAmt', formatAmount(schedule1.l13())),
       xmlElement('MovingExpensesAmt', formatAmount(schedule1.l14())),
       xmlElement('DeductibleSelfEmplmnttaxAmt', formatAmount(schedule1.l15())),
-      xmlElement('SelfEmployedSepSimpleQlfyPlnAmt', formatAmount(schedule1.l16())),
+      xmlElement(
+        'SelfEmployedSepSimpleQlfyPlnAmt',
+        formatAmount(schedule1.l16())
+      ),
       xmlElement('SelfEmpldHealthInsDedAmt', formatAmount(schedule1.l17())),
-      xmlElement('PnltyOnErlyWthdrwOfSavingsAmt', formatAmount(schedule1.l18())),
+      xmlElement(
+        'PnltyOnErlyWthdrwOfSavingsAmt',
+        formatAmount(schedule1.l18())
+      ),
       xmlElement('AlimonyPaidAmt', formatAmount(schedule1.l19a())),
       xmlElement('IRADeductionAmt', formatAmount(schedule1.l20())),
       xmlElement('StudentLoanIntDedAmt', formatAmount(schedule1.l21())),
@@ -786,7 +871,9 @@ ${returnData}
       xmlElement('MedicalAndDentalDedAmt', formatAmount(scheduleA.l4())),
 
       // Taxes
-      scheduleA.l5aSalesTax() ? xmlElement('StateAndLocalSalesTaxInd', 'X') : '',
+      scheduleA.l5aSalesTax()
+        ? xmlElement('StateAndLocalSalesTaxInd', 'X')
+        : '',
       xmlElement('StateAndLocalTaxAmt', formatAmount(scheduleA.l5a())),
       xmlElement('RealEstateTaxesAmt', formatAmount(scheduleA.l5b())),
       xmlElement('PersonalPropertyTaxesAmt', formatAmount(scheduleA.l5c())),
@@ -796,10 +883,18 @@ ${returnData}
       xmlElement('TotalTaxesPaidAmt', formatAmount(scheduleA.l7())),
 
       // Interest
-      scheduleA.l8AllMortgageLoan() ? xmlElement('HomeAcqAndHomeEqLoanIntInd', 'X') : '',
+      scheduleA.l8AllMortgageLoan()
+        ? xmlElement('HomeAcqAndHomeEqLoanIntInd', 'X')
+        : '',
       xmlElement('HomeMortgageInterestAmt', formatAmount(scheduleA.l8a())),
-      xmlElement('HomeMtgIntNotRptOnForm1098Amt', formatAmount(scheduleA.l8b())),
-      xmlElement('PointsNotReportedOnForm1098Amt', formatAmount(scheduleA.l8c())),
+      xmlElement(
+        'HomeMtgIntNotRptOnForm1098Amt',
+        formatAmount(scheduleA.l8b())
+      ),
+      xmlElement(
+        'PointsNotReportedOnForm1098Amt',
+        formatAmount(scheduleA.l8c())
+      ),
       xmlElement('TotalHomeMortgageInterestAmt', formatAmount(scheduleA.l8e())),
       xmlElement('InvestmentInterestAmt', formatAmount(scheduleA.l9())),
       xmlElement('TotalInterestPaidAmt', formatAmount(scheduleA.l10())),
@@ -835,20 +930,32 @@ ${returnData}
     }
 
     // Build interest payer list
-    const interestPayers = scheduleB.l1Fields().map((payer, idx) =>
-      xmlContainer('InterestIncomeDetail', [
-        xmlElement('InterestPayerNm', payer.payer),
-        xmlElement('InterestAmt', formatAmount(payer.amount))
-      ], { payerNum: String(idx + 1) })
-    )
+    const interestPayers = scheduleB
+      .l1Fields()
+      .map((payer, idx) =>
+        xmlContainer(
+          'InterestIncomeDetail',
+          [
+            xmlElement('InterestPayerNm', payer.payer),
+            xmlElement('InterestAmt', formatAmount(payer.amount))
+          ],
+          { payerNum: String(idx + 1) }
+        )
+      )
 
     // Build dividend payer list
-    const dividendPayers = scheduleB.l5Fields().map((payer, idx) =>
-      xmlContainer('DividendIncomeDetail', [
-        xmlElement('DividendPayerNm', payer.payer),
-        xmlElement('DividendAmt', formatAmount(payer.amount))
-      ], { payerNum: String(idx + 1) })
-    )
+    const dividendPayers = scheduleB
+      .l5Fields()
+      .map((payer, idx) =>
+        xmlContainer(
+          'DividendIncomeDetail',
+          [
+            xmlElement('DividendPayerNm', payer.payer),
+            xmlElement('DividendAmt', formatAmount(payer.amount))
+          ],
+          { payerNum: String(idx + 1) }
+        )
+      )
 
     const elements = [
       // Part I - Interest
@@ -862,12 +969,18 @@ ${returnData}
       xmlElement('TotalDividendsAmt', formatAmount(scheduleB.l6())),
 
       // Part III - Foreign Accounts
-      xmlElement('ForeignAccountsQuestionInd', scheduleB.foreignAccount() ? 'Yes' : 'No'),
+      xmlElement(
+        'ForeignAccountsQuestionInd',
+        scheduleB.foreignAccount() ? 'Yes' : 'No'
+      ),
       scheduleB.fincenForm() ? xmlElement('FinCENForm114Ind', 'X') : '',
       scheduleB.fincenCountry()
         ? xmlElement('ForeignCountryNm', scheduleB.fincenCountry())
         : '',
-      xmlElement('ForeignTrustQuestionInd', scheduleB.foreignTrust() ? 'Yes' : 'No')
+      xmlElement(
+        'ForeignTrustQuestionInd',
+        scheduleB.foreignTrust() ? 'Yes' : 'No'
+      )
     ]
 
     return xmlContainer('IRS1040ScheduleB', elements, {
@@ -906,22 +1019,52 @@ ${returnData}
 
     const elements = [
       // Part I - Short-term
-      xmlElement('ShortTermGainOrLossFromF8949Amt', formatAmount(scheduleD.l1ah())),
-      xmlElement('ShortTermGainOrLossFromF8949BAmt', formatAmount(scheduleD.l1bh())),
-      xmlElement('ShortTermGainOrLoss8949Line2Amt', formatAmount(scheduleD.l2h())),
-      xmlElement('ShortTermGainOrLoss8949Line3Amt', formatAmount(scheduleD.l3h())),
-      xmlElement('ShortTermCapGainPassThruEntAmt', formatAmount(scheduleD.l4())),
+      xmlElement(
+        'ShortTermGainOrLossFromF8949Amt',
+        formatAmount(scheduleD.l1ah())
+      ),
+      xmlElement(
+        'ShortTermGainOrLossFromF8949BAmt',
+        formatAmount(scheduleD.l1bh())
+      ),
+      xmlElement(
+        'ShortTermGainOrLoss8949Line2Amt',
+        formatAmount(scheduleD.l2h())
+      ),
+      xmlElement(
+        'ShortTermGainOrLoss8949Line3Amt',
+        formatAmount(scheduleD.l3h())
+      ),
+      xmlElement(
+        'ShortTermCapGainPassThruEntAmt',
+        formatAmount(scheduleD.l4())
+      ),
       xmlElement('NetShortTermCapGainOrLossAmt', formatAmount(scheduleD.l5())),
       xmlElement('ShortTermCapGainCarryoverAmt', formatAmount(scheduleD.l6())),
       xmlElement('NetShortTermGainOrLossAmt', formatAmount(scheduleD.l7())),
 
       // Part II - Long-term
-      xmlElement('LongTermGainOrLossFromF8949Amt', formatAmount(scheduleD.l8ah())),
-      xmlElement('LongTermGainOrLossFromF8949DAmt', formatAmount(scheduleD.l8bh())),
-      xmlElement('LongTermGainOrLoss8949Line9Amt', formatAmount(scheduleD.l9h())),
-      xmlElement('LongTermGainOrLoss8949Line10Amt', formatAmount(scheduleD.l10h())),
+      xmlElement(
+        'LongTermGainOrLossFromF8949Amt',
+        formatAmount(scheduleD.l8ah())
+      ),
+      xmlElement(
+        'LongTermGainOrLossFromF8949DAmt',
+        formatAmount(scheduleD.l8bh())
+      ),
+      xmlElement(
+        'LongTermGainOrLoss8949Line9Amt',
+        formatAmount(scheduleD.l9h())
+      ),
+      xmlElement(
+        'LongTermGainOrLoss8949Line10Amt',
+        formatAmount(scheduleD.l10h())
+      ),
       xmlElement('Form2439Box1aAmt', formatAmount(scheduleD.l11())),
-      xmlElement('LongTermCapGainPassThruEntAmt', formatAmount(scheduleD.l12())),
+      xmlElement(
+        'LongTermCapGainPassThruEntAmt',
+        formatAmount(scheduleD.l12())
+      ),
       xmlElement('CapGainDistributionsAmt', formatAmount(scheduleD.l13())),
       xmlElement('LongTermCapGainCarryoverAmt', formatAmount(scheduleD.l14())),
       xmlElement('NetLongTermGainOrLossAmt', formatAmount(scheduleD.l15())),
@@ -932,7 +1075,10 @@ ${returnData}
         ? xmlElement('BothGainsInd', 'X')
         : xmlElement('BothNotGainsInd', 'X'),
       xmlElement('Collectibles28PercentGainAmt', formatAmount(scheduleD.l18())),
-      xmlElement('UnrecapturedSection1250GainAmt', formatAmount(scheduleD.l19())),
+      xmlElement(
+        'UnrecapturedSection1250GainAmt',
+        formatAmount(scheduleD.l19())
+      ),
       xmlElement('CapGainOrLossAmt', formatAmount(scheduleD.l21()))
     ]
 
@@ -951,51 +1097,85 @@ ${returnData}
     }
 
     // Build property information
-    const propertyElements = this.f1040.info.realEstate.slice(0, 3).map((property, idx) => {
-      const l3 = scheduleE.l3()
-      const l20 = scheduleE.l20()
-      const l21 = scheduleE.l21()
+    const propertyElements = this.f1040.info.realEstate
+      .slice(0, 3)
+      .map((property, idx) => {
+        const l3 = scheduleE.l3()
+        const l20 = scheduleE.l20()
+        const l21 = scheduleE.l21()
 
-      return xmlContainer('PropertyRealEstAndRoyaltyGrp', [
-        xmlElement('PropertyTypeCd', String(property.propertyType)),
-        xmlElement('PropertyAddressTxt', scheduleE.addressString(property.address)),
-        xmlElement('FairRentalDaysCnt', property.rentalDays),
-        xmlElement('PersonalUseDaysCnt', property.personalUseDays),
-        xmlElement('QualifiedJointVentureInd', property.qualifiedJointVenture ? 'X' : ''),
-        xmlElement('RentsReceivedAmt', formatAmount(l3[idx])),
-        xmlElement('TotalExpensesAmt', formatAmount(l20[idx])),
-        xmlElement('RentalNetIncomeOrLossAmt', formatAmount(l21[idx]))
-      ], { propertyNum: String(idx + 1) })
-    })
+        return xmlContainer(
+          'PropertyRealEstAndRoyaltyGrp',
+          [
+            xmlElement('PropertyTypeCd', String(property.propertyType)),
+            xmlElement(
+              'PropertyAddressTxt',
+              scheduleE.addressString(property.address)
+            ),
+            xmlElement('FairRentalDaysCnt', property.rentalDays),
+            xmlElement('PersonalUseDaysCnt', property.personalUseDays),
+            xmlElement(
+              'QualifiedJointVentureInd',
+              property.qualifiedJointVenture ? 'X' : ''
+            ),
+            xmlElement('RentsReceivedAmt', formatAmount(l3[idx])),
+            xmlElement('TotalExpensesAmt', formatAmount(l20[idx])),
+            xmlElement('RentalNetIncomeOrLossAmt', formatAmount(l21[idx]))
+          ],
+          { propertyNum: String(idx + 1) }
+        )
+      })
 
     // Build K-1 partnership/S-corp information
-    const k1Elements = this.f1040.info.scheduleK1Form1065s.slice(0, 4).map((k1, idx) =>
-      xmlContainer('PartnershipOrSCorpGrp', [
-        xmlElement('PartnershipOrSCorpNm', k1.partnershipName),
-        xmlElement('PartnershipOrSCorpTypeCd', k1.partnerOrSCorp),
-        xmlElement('ForeignPartnershipInd', k1.isForeign ? 'X' : ''),
-        xmlElement('PartnershipOrSCorpEIN', formatEIN(k1.partnershipEin)),
-        xmlElement('PassiveIncomeOrLossAmt',
-          k1.isPassive ? formatAmount(k1.ordinaryBusinessIncome) : ''),
-        xmlElement('NonpassiveIncomeOrLossAmt',
-          !k1.isPassive ? formatAmount(k1.ordinaryBusinessIncome) : '')
-      ], { k1Num: String(idx + 1) })
-    )
+    const k1Elements = this.f1040.info.scheduleK1Form1065s
+      .slice(0, 4)
+      .map((k1, idx) =>
+        xmlContainer(
+          'PartnershipOrSCorpGrp',
+          [
+            xmlElement('PartnershipOrSCorpNm', k1.partnershipName),
+            xmlElement('PartnershipOrSCorpTypeCd', k1.partnerOrSCorp),
+            xmlElement('ForeignPartnershipInd', k1.isForeign ? 'X' : ''),
+            xmlElement('PartnershipOrSCorpEIN', formatEIN(k1.partnershipEin)),
+            xmlElement(
+              'PassiveIncomeOrLossAmt',
+              k1.isPassive ? formatAmount(k1.ordinaryBusinessIncome) : ''
+            ),
+            xmlElement(
+              'NonpassiveIncomeOrLossAmt',
+              !k1.isPassive ? formatAmount(k1.ordinaryBusinessIncome) : ''
+            )
+          ],
+          { k1Num: String(idx + 1) }
+        )
+      )
 
     const elements = [
       ...propertyElements,
-      xmlElement('TotalRentalRealEstateIncomeAmt', formatAmount(scheduleE.l24())),
+      xmlElement(
+        'TotalRentalRealEstateIncomeAmt',
+        formatAmount(scheduleE.l24())
+      ),
       xmlElement('TotalRentalRealEstateLossAmt', formatAmount(scheduleE.l25())),
       xmlElement('NetRentalIncomeOrLossAmt', formatAmount(scheduleE.l26())),
 
       // Part II - Partnerships and S Corporations
       ...k1Elements,
-      xmlElement('TotalPartnershipSCorpIncomeAmt', formatAmount(scheduleE.l30())),
+      xmlElement(
+        'TotalPartnershipSCorpIncomeAmt',
+        formatAmount(scheduleE.l30())
+      ),
       xmlElement('TotalPartnershipSCorpLossAmt', formatAmount(scheduleE.l31())),
-      xmlElement('NetPartnershipSCorpIncLossAmt', formatAmount(scheduleE.l32())),
+      xmlElement(
+        'NetPartnershipSCorpIncLossAmt',
+        formatAmount(scheduleE.l32())
+      ),
 
       // Total
-      xmlElement('TotalSupplmntalIncomeOrLossAmt', formatAmount(scheduleE.l41()))
+      xmlElement(
+        'TotalSupplmntalIncomeOrLossAmt',
+        formatAmount(scheduleE.l41())
+      )
     ]
 
     return xmlContainer('IRS1040ScheduleE', elements, {
@@ -1014,21 +1194,36 @@ ${returnData}
 
     const elements = [
       xmlElement('NetFarmProfitLossAmt', formatAmount(scheduleSE.l1a())),
-      xmlElement('ConservationReserveProgPymtAmt', formatAmount(scheduleSE.l1b())),
+      xmlElement(
+        'ConservationReserveProgPymtAmt',
+        formatAmount(scheduleSE.l1b())
+      ),
       xmlElement('NetProfitOrLossFromSchCAmt', formatAmount(scheduleSE.l2())),
       xmlElement('CombinedSEIncomeAmt', formatAmount(scheduleSE.l3())),
       xmlElement('MinimumProfitForSETaxAmt', formatAmount(scheduleSE.l4a())),
       xmlElement('ChurchEmployeeIncomeAmt', formatAmount(scheduleSE.l4b())),
-      xmlElement('CombinedSelfEmploymentIncAmt', formatAmount(scheduleSE.l4c())),
+      xmlElement(
+        'CombinedSelfEmploymentIncAmt',
+        formatAmount(scheduleSE.l4c())
+      ),
       xmlElement('OptionalMethodAmt', formatAmount(scheduleSE.l5a())),
       xmlElement('OptionalMethod9235Amt', formatAmount(scheduleSE.l5b())),
       xmlElement('TotalNetEarningsSEAmt', formatAmount(scheduleSE.l6())),
       xmlElement('MaxSocSecWageBaseAmt', formatAmount(scheduleSE.l7())),
       xmlElement('TotalSocSecWagesAndTipsAmt', formatAmount(scheduleSE.l8a())),
-      xmlElement('UnreportedTipsSubjToMedTaxAmt', formatAmount(scheduleSE.l8b())),
+      xmlElement(
+        'UnreportedTipsSubjToMedTaxAmt',
+        formatAmount(scheduleSE.l8b())
+      ),
       xmlElement('WageSubjectToSocSecTaxAmt', formatAmount(scheduleSE.l8c())),
-      xmlElement('TotalWagesAndUnreportedTipsAmt', formatAmount(scheduleSE.l8d())),
-      xmlElement('SubtractFromSocSecWageBaseAmt', formatAmount(scheduleSE.l9())),
+      xmlElement(
+        'TotalWagesAndUnreportedTipsAmt',
+        formatAmount(scheduleSE.l8d())
+      ),
+      xmlElement(
+        'SubtractFromSocSecWageBaseAmt',
+        formatAmount(scheduleSE.l9())
+      ),
       xmlElement('SocSecTaxAmt', formatAmount(scheduleSE.l10())),
       xmlElement('MedicareTaxAmt', formatAmount(scheduleSE.l11())),
       xmlElement('SelfEmploymentTaxAmt', formatAmount(scheduleSE.l12())),
@@ -1057,15 +1252,19 @@ ${returnData}
   serializeW2(w2: IncomeW2, index: number): string {
     const elements = [
       // Employee information
-      xmlElement('EmployeeSSN', formatSSN(
-        w2.personRole === PersonRole.PRIMARY
-          ? this.f1040.info.taxPayer.primaryPerson.ssid
-          : this.f1040.info.taxPayer.spouse?.ssid
-      )),
-      xmlElement('EmployeeNm',
+      xmlElement(
+        'EmployeeSSN',
+        formatSSN(
+          w2.personRole === PersonRole.PRIMARY
+            ? this.f1040.info.taxPayer.primaryPerson.ssid
+            : this.f1040.info.taxPayer.spouse?.ssid
+        )
+      ),
+      xmlElement(
+        'EmployeeNm',
         w2.personRole === PersonRole.PRIMARY
           ? `${this.f1040.info.taxPayer.primaryPerson.firstName} ${this.f1040.info.taxPayer.primaryPerson.lastName}`
-          : `${this.f1040.info.taxPayer.spouse?.firstName} ${this.f1040.info.taxPayer.spouse?.lastName}`
+          : `${this.f1040.info.taxPayer.spouse?.firstName ?? ''} ${this.f1040.info.taxPayer.spouse?.lastName ?? ''}`
       ),
 
       // Employer information
@@ -1075,9 +1274,7 @@ ${returnData}
       w2.employer?.employerName
         ? xmlElement('EmployerName', w2.employer.employerName)
         : '',
-      w2.employer?.address
-        ? this.buildAddress(w2.employer.address)
-        : '',
+      w2.employer?.address ? this.buildAddress(w2.employer.address) : '',
 
       // Box 1 - Wages, tips, other compensation
       xmlElement('WagesAmt', formatAmount(w2.income)),
@@ -1095,7 +1292,10 @@ ${returnData}
       xmlElement('MedicareWagesAndTipsAmt', formatAmount(w2.medicareIncome)),
 
       // Box 6 - Medicare tax withheld
-      xmlElement('MedicareTaxWithheldAmt', formatAmount(w2.medicareWithholding)),
+      xmlElement(
+        'MedicareTaxWithheldAmt',
+        formatAmount(w2.medicareWithholding)
+      ),
 
       // State information
       w2.state ? xmlElement('StateAbbreviationCd', w2.state) : '',
@@ -1143,11 +1343,14 @@ ${returnData}
   private serialize1099Int(f1099: Income1099Int, index: number): string {
     const elements = [
       xmlElement('PayerNm', f1099.payer),
-      xmlElement('RecipientSSN', formatSSN(
-        f1099.personRole === PersonRole.PRIMARY
-          ? this.f1040.info.taxPayer.primaryPerson.ssid
-          : this.f1040.info.taxPayer.spouse?.ssid
-      )),
+      xmlElement(
+        'RecipientSSN',
+        formatSSN(
+          f1099.personRole === PersonRole.PRIMARY
+            ? this.f1040.info.taxPayer.primaryPerson.ssid
+            : this.f1040.info.taxPayer.spouse?.ssid
+        )
+      ),
       xmlElement('InterestIncomeAmt', formatAmount(f1099.form.income))
     ]
 
@@ -1162,14 +1365,26 @@ ${returnData}
   private serialize1099Div(f1099: Income1099Div, index: number): string {
     const elements = [
       xmlElement('PayerNm', f1099.payer),
-      xmlElement('RecipientSSN', formatSSN(
-        f1099.personRole === PersonRole.PRIMARY
-          ? this.f1040.info.taxPayer.primaryPerson.ssid
-          : this.f1040.info.taxPayer.spouse?.ssid
-      )),
-      xmlElement('TotalOrdinaryDividendsAmt', formatAmount(f1099.form.dividends)),
-      xmlElement('QualifiedDividendsAmt', formatAmount(f1099.form.qualifiedDividends)),
-      xmlElement('TotalCapitalGainDistriAmt', formatAmount(f1099.form.totalCapitalGainsDistributions))
+      xmlElement(
+        'RecipientSSN',
+        formatSSN(
+          f1099.personRole === PersonRole.PRIMARY
+            ? this.f1040.info.taxPayer.primaryPerson.ssid
+            : this.f1040.info.taxPayer.spouse?.ssid
+        )
+      ),
+      xmlElement(
+        'TotalOrdinaryDividendsAmt',
+        formatAmount(f1099.form.dividends)
+      ),
+      xmlElement(
+        'QualifiedDividendsAmt',
+        formatAmount(f1099.form.qualifiedDividends)
+      ),
+      xmlElement(
+        'TotalCapitalGainDistriAmt',
+        formatAmount(f1099.form.totalCapitalGainsDistributions)
+      )
     ]
 
     return xmlContainer('IRS1099DIV', elements, {
@@ -1183,15 +1398,30 @@ ${returnData}
   private serialize1099B(f1099: Income1099B, index: number): string {
     const elements = [
       xmlElement('PayerNm', f1099.payer),
-      xmlElement('RecipientSSN', formatSSN(
-        f1099.personRole === PersonRole.PRIMARY
-          ? this.f1040.info.taxPayer.primaryPerson.ssid
-          : this.f1040.info.taxPayer.spouse?.ssid
-      )),
-      xmlElement('ShortTermProceedsAmt', formatAmount(f1099.form.shortTermProceeds)),
-      xmlElement('ShortTermCostBasisAmt', formatAmount(f1099.form.shortTermCostBasis)),
-      xmlElement('LongTermProceedsAmt', formatAmount(f1099.form.longTermProceeds)),
-      xmlElement('LongTermCostBasisAmt', formatAmount(f1099.form.longTermCostBasis))
+      xmlElement(
+        'RecipientSSN',
+        formatSSN(
+          f1099.personRole === PersonRole.PRIMARY
+            ? this.f1040.info.taxPayer.primaryPerson.ssid
+            : this.f1040.info.taxPayer.spouse?.ssid
+        )
+      ),
+      xmlElement(
+        'ShortTermProceedsAmt',
+        formatAmount(f1099.form.shortTermProceeds)
+      ),
+      xmlElement(
+        'ShortTermCostBasisAmt',
+        formatAmount(f1099.form.shortTermCostBasis)
+      ),
+      xmlElement(
+        'LongTermProceedsAmt',
+        formatAmount(f1099.form.longTermProceeds)
+      ),
+      xmlElement(
+        'LongTermCostBasisAmt',
+        formatAmount(f1099.form.longTermCostBasis)
+      )
     ]
 
     return xmlContainer('IRS1099B', elements, {
@@ -1205,14 +1435,23 @@ ${returnData}
   private serialize1099R(f1099: Income1099R, index: number): string {
     const elements = [
       xmlElement('PayerNm', f1099.payer),
-      xmlElement('RecipientSSN', formatSSN(
-        f1099.personRole === PersonRole.PRIMARY
-          ? this.f1040.info.taxPayer.primaryPerson.ssid
-          : this.f1040.info.taxPayer.spouse?.ssid
-      )),
-      xmlElement('GrossDistributionAmt', formatAmount(f1099.form.grossDistribution)),
+      xmlElement(
+        'RecipientSSN',
+        formatSSN(
+          f1099.personRole === PersonRole.PRIMARY
+            ? this.f1040.info.taxPayer.primaryPerson.ssid
+            : this.f1040.info.taxPayer.spouse?.ssid
+        )
+      ),
+      xmlElement(
+        'GrossDistributionAmt',
+        formatAmount(f1099.form.grossDistribution)
+      ),
       xmlElement('TaxableAmt', formatAmount(f1099.form.taxableAmount)),
-      xmlElement('FederalIncomeTaxWithheldAmt', formatAmount(f1099.form.federalIncomeTaxWithheld)),
+      xmlElement(
+        'FederalIncomeTaxWithheldAmt',
+        formatAmount(f1099.form.federalIncomeTaxWithheld)
+      ),
       xmlElement('DistributionCd', f1099.form.planType)
     ]
 
@@ -1226,7 +1465,7 @@ ${returnData}
    */
   serializeForm8949s(): string[] {
     return this.f1040.f8949s
-      .filter(f8949 => f8949.isNeeded())
+      .filter((f8949) => f8949.isNeeded())
       .map((f8949, idx) => this.serializeForm8949(f8949, idx))
   }
 
@@ -1235,30 +1474,60 @@ ${returnData}
    */
   serializeForm8949(f8949: F8949, index: number): string {
     // Build short-term transaction details
-    const shortTermElements = f8949.shortTermSales().map((sale, idx) =>
-      xmlContainer('ShortTermCapitalGainAndLossGrp', [
-        xmlElement('PropertyDescriptionTxt', sale.name),
-        xmlElement('DateAcquiredTxt', formatDate(sale.openDate)),
-        xmlElement('DateSoldTxt', formatDate(sale.closeDate)),
-        xmlElement('SalesPriceAmt', formatAmount(sale.closePrice * sale.quantity)),
-        xmlElement('CostOrOtherBasisAmt', formatAmount(sale.openPrice * sale.quantity)),
-        xmlElement('AdjustmentToGainOrLossAmt', ''),
-        xmlElement('GainOrLossAmt', formatAmount((sale.closePrice - sale.openPrice) * sale.quantity))
-      ], { transactionNum: String(idx + 1) })
-    )
+    const shortTermElements = f8949
+      .shortTermSales()
+      .map((sale, idx) =>
+        xmlContainer(
+          'ShortTermCapitalGainAndLossGrp',
+          [
+            xmlElement('PropertyDescriptionTxt', sale.name),
+            xmlElement('DateAcquiredTxt', formatDate(sale.openDate)),
+            xmlElement('DateSoldTxt', formatDate(sale.closeDate)),
+            xmlElement(
+              'SalesPriceAmt',
+              formatAmount(sale.closePrice * sale.quantity)
+            ),
+            xmlElement(
+              'CostOrOtherBasisAmt',
+              formatAmount(sale.openPrice * sale.quantity)
+            ),
+            xmlElement('AdjustmentToGainOrLossAmt', ''),
+            xmlElement(
+              'GainOrLossAmt',
+              formatAmount((sale.closePrice - sale.openPrice) * sale.quantity)
+            )
+          ],
+          { transactionNum: String(idx + 1) }
+        )
+      )
 
     // Build long-term transaction details
-    const longTermElements = f8949.longTermSales().map((sale, idx) =>
-      xmlContainer('LongTermCapitalGainAndLossGrp', [
-        xmlElement('PropertyDescriptionTxt', sale.name),
-        xmlElement('DateAcquiredTxt', formatDate(sale.openDate)),
-        xmlElement('DateSoldTxt', formatDate(sale.closeDate)),
-        xmlElement('SalesPriceAmt', formatAmount(sale.closePrice * sale.quantity)),
-        xmlElement('CostOrOtherBasisAmt', formatAmount(sale.openPrice * sale.quantity)),
-        xmlElement('AdjustmentToGainOrLossAmt', ''),
-        xmlElement('GainOrLossAmt', formatAmount((sale.closePrice - sale.openPrice) * sale.quantity))
-      ], { transactionNum: String(idx + 1) })
-    )
+    const longTermElements = f8949
+      .longTermSales()
+      .map((sale, idx) =>
+        xmlContainer(
+          'LongTermCapitalGainAndLossGrp',
+          [
+            xmlElement('PropertyDescriptionTxt', sale.name),
+            xmlElement('DateAcquiredTxt', formatDate(sale.openDate)),
+            xmlElement('DateSoldTxt', formatDate(sale.closeDate)),
+            xmlElement(
+              'SalesPriceAmt',
+              formatAmount(sale.closePrice * sale.quantity)
+            ),
+            xmlElement(
+              'CostOrOtherBasisAmt',
+              formatAmount(sale.openPrice * sale.quantity)
+            ),
+            xmlElement('AdjustmentToGainOrLossAmt', ''),
+            xmlElement(
+              'GainOrLossAmt',
+              formatAmount((sale.closePrice - sale.openPrice) * sale.quantity)
+            )
+          ],
+          { transactionNum: String(idx + 1) }
+        )
+      )
 
     const elements = [
       // Part I - Short-term
@@ -1266,20 +1535,44 @@ ${returnData}
       f8949.part1BoxB() ? xmlElement('ShortTermBoxBInd', 'X') : '',
       f8949.part1BoxC() ? xmlElement('ShortTermBoxCInd', 'X') : '',
       ...shortTermElements,
-      xmlElement('ShortTermTotalProceedsAmt', formatAmount(f8949.shortTermTotalProceeds())),
-      xmlElement('ShortTermTotalCostBasisAmt', formatAmount(f8949.shortTermTotalCost())),
-      xmlElement('ShortTermTotalAdjustmentsAmt', formatAmount(f8949.shortTermTotalAdjustments())),
-      xmlElement('ShortTermTotalGainOrLossAmt', formatAmount(f8949.shortTermTotalGain())),
+      xmlElement(
+        'ShortTermTotalProceedsAmt',
+        formatAmount(f8949.shortTermTotalProceeds())
+      ),
+      xmlElement(
+        'ShortTermTotalCostBasisAmt',
+        formatAmount(f8949.shortTermTotalCost())
+      ),
+      xmlElement(
+        'ShortTermTotalAdjustmentsAmt',
+        formatAmount(f8949.shortTermTotalAdjustments())
+      ),
+      xmlElement(
+        'ShortTermTotalGainOrLossAmt',
+        formatAmount(f8949.shortTermTotalGain())
+      ),
 
       // Part II - Long-term
       f8949.part2BoxD() ? xmlElement('LongTermBoxDInd', 'X') : '',
       f8949.part2BoxE() ? xmlElement('LongTermBoxEInd', 'X') : '',
       f8949.part2BoxF() ? xmlElement('LongTermBoxFInd', 'X') : '',
       ...longTermElements,
-      xmlElement('LongTermTotalProceedsAmt', formatAmount(f8949.longTermTotalProceeds())),
-      xmlElement('LongTermTotalCostBasisAmt', formatAmount(f8949.longTermTotalCost())),
-      xmlElement('LongTermTotalAdjustmentsAmt', formatAmount(f8949.longTermTotalAdjustments())),
-      xmlElement('LongTermTotalGainOrLossAmt', formatAmount(f8949.longTermTotalGain()))
+      xmlElement(
+        'LongTermTotalProceedsAmt',
+        formatAmount(f8949.longTermTotalProceeds())
+      ),
+      xmlElement(
+        'LongTermTotalCostBasisAmt',
+        formatAmount(f8949.longTermTotalCost())
+      ),
+      xmlElement(
+        'LongTermTotalAdjustmentsAmt',
+        formatAmount(f8949.longTermTotalAdjustments())
+      ),
+      xmlElement(
+        'LongTermTotalGainOrLossAmt',
+        formatAmount(f8949.longTermTotalGain())
+      )
     ]
 
     return xmlContainer('IRS8949', elements, {
@@ -1295,7 +1588,10 @@ ${returnData}
 /**
  * Create a new Form1040Serializer instance
  */
-export function createSerializer(f1040: F1040, config: SerializerConfig): Form1040Serializer {
+export function createSerializer(
+  f1040: F1040,
+  config: SerializerConfig
+): Form1040Serializer {
   return new Form1040Serializer(f1040, config)
 }
 

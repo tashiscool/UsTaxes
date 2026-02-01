@@ -20,8 +20,8 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * - SS wage base: $176,100
  */
 
-const SS_RATE = 0.124  // Combined employer + employee
-const MEDICARE_RATE = 0.029  // Combined employer + employee
+const SS_RATE = 0.124 // Combined employer + employee
+const MEDICARE_RATE = 0.029 // Combined employer + employee
 
 export default class F944 extends BusinessForm {
   tag: FormTag = 'f944'
@@ -70,7 +70,12 @@ export default class F944 extends BusinessForm {
 
   // Line 4e: Total social security and Medicare taxes
   l4e = (): number => {
-    return sumFields([this.l4aCol2(), this.l4bCol2(), this.l4cCol2(), this.l4dCol2()])
+    return sumFields([
+      this.l4aCol2(),
+      this.l4bCol2(),
+      this.l4cCol2(),
+      this.l4dCol2()
+    ])
   }
 
   // Line 5: Total taxes before adjustments (line 2 + line 4e)

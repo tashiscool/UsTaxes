@@ -133,23 +133,28 @@ export default class F3520A extends F1040Attachment {
   }
 
   // Beneficiaries
-  beneficiaries = (): TrustBeneficiary[] => this.f3520AInfo()?.beneficiaries ?? []
+  beneficiaries = (): TrustBeneficiary[] =>
+    this.f3520AInfo()?.beneficiaries ?? []
   numberOfBeneficiaries = (): number => this.beneficiaries().length
 
   usBeneficiaries = (): TrustBeneficiary[] => {
-    return this.beneficiaries().filter(b => b.isUSPerson)
+    return this.beneficiaries().filter((b) => b.isUSPerson)
   }
 
   foreignBeneficiaries = (): TrustBeneficiary[] => {
-    return this.beneficiaries().filter(b => !b.isUSPerson)
+    return this.beneficiaries().filter((b) => !b.isUSPerson)
   }
 
   totalDistributions = (): number => {
-    return this.beneficiaries().reduce((sum, b) => sum + b.distributionAmount, 0)
+    return this.beneficiaries().reduce(
+      (sum, b) => sum + b.distributionAmount,
+      0
+    )
   }
 
   // Accounting Information
-  accounting = (): TrustAccountingInfo | undefined => this.f3520AInfo()?.accounting
+  accounting = (): TrustAccountingInfo | undefined =>
+    this.f3520AInfo()?.accounting
 
   // Income
   totalIncome = (): number => {
@@ -215,7 +220,7 @@ export default class F3520A extends F1040Attachment {
       info?.trustAddress ?? '',
       this.trustCountry(),
       info?.trustTaxYear ?? 2025,
-      info?.dateCreated?.toLocaleDateString() ?? '',
+      info?.dateCreated.toLocaleDateString() ?? '',
       // Trustee
       this.trusteeName(),
       trustee?.address ?? '',

@@ -57,16 +57,16 @@ export default class F8839 extends F1040Attachment {
     const magi = this.magi()
 
     if (magi <= adoptionCredit.phaseOutStart) {
-      return 1  // Full credit
+      return 1 // Full credit
     }
 
     if (magi >= adoptionCredit.phaseOutEnd) {
-      return 0  // No credit
+      return 0 // No credit
     }
 
     // Linear phase-out
     const excess = magi - adoptionCredit.phaseOutStart
-    return 1 - (excess / adoptionCredit.phaseOutRange)
+    return 1 - excess / adoptionCredit.phaseOutRange
   }
 
   // Part I - Information About Your Eligible Child or Children
@@ -176,12 +176,12 @@ export default class F8839 extends F1040Attachment {
     for (let i = 0; i < 3; i++) {
       const child = children[i]
       childFields.push(
-        child?.name ?? '',
-        child?.ssn ?? '',
-        child?.birthYear ?? '',
-        child?.disabledChild ?? false,
-        child?.foreignChild ?? false,
-        child?.specialNeedsChild ?? false,
+        child.name ?? '',
+        child.ssn ?? '',
+        child.birthYear ?? '',
+        child.disabledChild ?? false,
+        child.foreignChild ?? false,
+        child.specialNeedsChild ?? false,
         this.l3(i),
         this.l4(i),
         this.l5(i),

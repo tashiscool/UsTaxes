@@ -56,185 +56,185 @@ import F4137 from './F4137'
 import F8919 from './F8919'
 import F8853 from './F8853'
 import F8582 from './F8582'
-import F4547 from './F4547'  // OBBBA 2025: Trump Account Elections
+import F4547 from './F4547' // OBBBA 2025: Trump Account Elections
 // Phase 1: High-Priority Forms
-import F8880 from './F8880'  // Saver's Credit
-import F1116 from './F1116'  // Foreign Tax Credit
-import F8606 from './F8606'  // Nondeductible IRAs
-import F5329 from './F5329'  // Additional Taxes on Retirement Plans
-import F8615 from './F8615'  // Kiddie Tax
-import F8801 from './F8801'  // Prior Year AMT Credit
-import F2210 from './F2210'  // Underpayment Penalty
-import F4868 from './F4868'  // Extension Request
-import F8839 from './F8839'  // Adoption Credit
-import F1040ES from './F1040ES'  // Estimated Tax for Individuals
-import F2106 from './F2106'  // Employee Business Expenses
+import F8880 from './F8880' // Saver's Credit
+import F1116 from './F1116' // Foreign Tax Credit
+import F8606 from './F8606' // Nondeductible IRAs
+import F5329 from './F5329' // Additional Taxes on Retirement Plans
+import F8615 from './F8615' // Kiddie Tax
+import F8801 from './F8801' // Prior Year AMT Credit
+import F2210 from './F2210' // Underpayment Penalty
+import F4868 from './F4868' // Extension Request
+import F8839 from './F8839' // Adoption Credit
+import F1040ES from './F1040ES' // Estimated Tax for Individuals
+import F2106 from './F2106' // Employee Business Expenses
 // Phase 2: Medium-Priority Forms
-import ScheduleF from './ScheduleF'  // Farm Income
-import ScheduleH from './ScheduleH'  // Household Employment Taxes
-import F4562 from './F4562'  // Depreciation and Amortization
-import F6252 from './F6252'  // Installment Sales
-import F8824 from './F8824'  // Like-Kind Exchanges
-import F4684 from './F4684'  // Casualties and Thefts
+import ScheduleF from './ScheduleF' // Farm Income
+import ScheduleH from './ScheduleH' // Household Employment Taxes
+import F4562 from './F4562' // Depreciation and Amortization
+import F6252 from './F6252' // Installment Sales
+import F8824 from './F8824' // Like-Kind Exchanges
+import F4684 from './F4684' // Casualties and Thefts
 // Phase 3: Specialized Forms
-import F8829 from './F8829'  // Business Use of Home
-import F6198 from './F6198'  // At-Risk Limitations
-import F3903 from './F3903'  // Moving Expenses (Military)
-import F8938 from './F8938'  // FATCA Foreign Financial Assets
-import ScheduleJ from './ScheduleJ'  // Farm Income Averaging
+import F8829 from './F8829' // Business Use of Home
+import F6198 from './F6198' // At-Risk Limitations
+import F3903 from './F3903' // Moving Expenses (Military)
+import F8938 from './F8938' // FATCA Foreign Financial Assets
+import ScheduleJ from './ScheduleJ' // Farm Income Averaging
 // Phase 4: Collection, Credits, Foreign Forms
-import F9465 from './F9465'  // Installment Agreement Request
-import F8379 from './F8379'  // Injured Spouse Allocation
-import F8862 from './F8862'  // Credits After Disallowance
-import F8582CR from './F8582CR'  // Passive Activity Credit Limitations
-import F8833 from './F8833'  // Treaty-Based Return Position
-import F8843 from './F8843'  // Statement for Exempt Individuals
-import F8840 from './F8840'  // Closer Connection Exception
-import F8915F from './F8915F'  // Qualified Disaster Distributions
-import F4255 from './F4255'  // Recapture of Investment Credit
+import F9465 from './F9465' // Installment Agreement Request
+import F8379 from './F8379' // Injured Spouse Allocation
+import F8862 from './F8862' // Credits After Disallowance
+import F8582CR from './F8582CR' // Passive Activity Credit Limitations
+import F8833 from './F8833' // Treaty-Based Return Position
+import F8843 from './F8843' // Statement for Exempt Individuals
+import F8840 from './F8840' // Closer Connection Exception
+import F8915F from './F8915F' // Qualified Disaster Distributions
+import F4255 from './F4255' // Recapture of Investment Credit
 // Phase 5: Additional Forms
-import F8941 from './F8941'  // Small Employer Health Insurance Credit
-import F8810 from './F8810'  // Corporate Passive Activity Loss
-import F7004 from './F7004'  // Business Extension
-import F843 from './F843'  // Claim for Refund
-import F8868 from './F8868'  // Exempt Organization Extension
-import F2350 from './F2350'  // Extension for Citizens Abroad
+import F8941 from './F8941' // Small Employer Health Insurance Credit
+import F8810 from './F8810' // Corporate Passive Activity Loss
+import F7004 from './F7004' // Business Extension
+import F843 from './F843' // Claim for Refund
+import F8868 from './F8868' // Exempt Organization Extension
+import F2350 from './F2350' // Extension for Citizens Abroad
 // Phase 6: Collection & Information Returns
-import F8809 from './F8809'  // Information Return Extension
-import F433A from './F433A'  // Collection Statement for Individuals
-import F433B from './F433B'  // Collection Statement for Businesses
+import F8809 from './F8809' // Information Return Extension
+import F433A from './F433A' // Collection Statement for Individuals
+import F433B from './F433B' // Collection Statement for Businesses
 // Phase 7: Foreign Forms & Retirement Plans
-import F656 from './F656'  // Offer in Compromise
-import F5471 from './F5471'  // Foreign Corporation Information Return
-import F5472 from './F5472'  // Foreign-Owned US Corporation
-import F8865 from './F8865'  // Foreign Partnership
-import F8966 from './F8966'  // FATCA Certification
-import F5500 from './F5500'  // Employee Benefit Plan
-import F5500EZ from './F5500EZ'  // One-Participant Plan
-import F5330 from './F5330'  // Excise Taxes on Retirement Plans
+import F656 from './F656' // Offer in Compromise
+import F5471 from './F5471' // Foreign Corporation Information Return
+import F5472 from './F5472' // Foreign-Owned US Corporation
+import F8865 from './F8865' // Foreign Partnership
+import F8966 from './F8966' // FATCA Certification
+import F5500 from './F5500' // Employee Benefit Plan
+import F5500EZ from './F5500EZ' // One-Participant Plan
+import F5330 from './F5330' // Excise Taxes on Retirement Plans
 // Phase 8: 1040 Variants
-import F1040SR from './F1040SR'  // Senior Return
-import F1040NR from './F1040NR'  // Non-Resident Alien Return
-import F1040SS from './F1040SS'  // Self-Employment Tax for Territories
+import F1040SR from './F1040SR' // Senior Return
+import F1040NR from './F1040NR' // Non-Resident Alien Return
+import F1040SS from './F1040SS' // Self-Employment Tax for Territories
 // Phase 9: Estate, Gift, Fiduciary, and Exempt Organization Forms
-import F706 from './F706'  // Estate Tax Return
-import F709 from './F709'  // Gift Tax Return
-import F1041 from './F1041'  // Fiduciary Income Tax Return
-import F990 from './F990'  // Exempt Organization Return
-import F990EZ from './F990EZ'  // Short Form Exempt Organization
-import F990T from './F990T'  // Exempt Organization Business Income Tax
-import F990PF from './F990PF'  // Private Foundation Return
-import FinCEN114 from './FinCEN114'  // FBAR Report
+import F706 from './F706' // Estate Tax Return
+import F709 from './F709' // Gift Tax Return
+import F1041 from './F1041' // Fiduciary Income Tax Return
+import F990 from './F990' // Exempt Organization Return
+import F990EZ from './F990EZ' // Short Form Exempt Organization
+import F990T from './F990T' // Exempt Organization Business Income Tax
+import F990PF from './F990PF' // Private Foundation Return
+import FinCEN114 from './FinCEN114' // FBAR Report
 // Phase 10: Additional International Forms
-import F3520 from './F3520'  // Foreign Trusts and Gifts
-import F3520A from './F3520A'  // Foreign Trust Annual Return
-import F8621 from './F8621'  // PFIC Annual Information
-import F8858 from './F8858'  // Foreign Disregarded Entity
-import F926 from './F926'  // Return of Transferred Property to Foreign Corp
+import F3520 from './F3520' // Foreign Trusts and Gifts
+import F3520A from './F3520A' // Foreign Trust Annual Return
+import F8621 from './F8621' // PFIC Annual Information
+import F8858 from './F8858' // Foreign Disregarded Entity
+import F926 from './F926' // Return of Transferred Property to Foreign Corp
 // Phase 11: Business Entity Schedules
-import ScheduleK1065 from './ScheduleK1065'  // Partners' Distributive Share (1065)
-import ScheduleK1120S from './ScheduleK1120S'  // Shareholders' Pro Rata Share (1120-S)
-import ScheduleL from './ScheduleL'  // Balance Sheets
-import ScheduleM1 from './ScheduleM1'  // Book-to-Tax Reconciliation
-import Schedule990A from './Schedule990A'  // Public Charity Status (990)
-import ScheduleK1_1041 from './ScheduleK1_1041'  // Beneficiary's Share (1041)
-import F8283 from './F8283'  // Noncash Charitable Contributions
+import ScheduleK1065 from './ScheduleK1065' // Partners' Distributive Share (1065)
+import ScheduleK1120S from './ScheduleK1120S' // Shareholders' Pro Rata Share (1120-S)
+import ScheduleL from './ScheduleL' // Balance Sheets
+import ScheduleM1 from './ScheduleM1' // Book-to-Tax Reconciliation
+import Schedule990A from './Schedule990A' // Public Charity Status (990)
+import ScheduleK1_1041 from './ScheduleK1_1041' // Beneficiary's Share (1041)
+import F8283 from './F8283' // Noncash Charitable Contributions
 // Phase 12: Additional Business Entity Schedules
-import ScheduleM3 from './ScheduleM3'  // Net Income Reconciliation (Large Entities)
-import ScheduleD1120 from './ScheduleD1120'  // Corporate Capital Gains/Losses
-import ScheduleC1120 from './ScheduleC1120'  // Dividends Received Deduction
-import ScheduleE1120 from './ScheduleE1120'  // Compensation of Officers
-import ScheduleJ1120 from './ScheduleJ1120'  // Corporate Tax Computation
-import ScheduleB1065 from './ScheduleB1065'  // Partnership Other Information
+import ScheduleM3 from './ScheduleM3' // Net Income Reconciliation (Large Entities)
+import ScheduleD1120 from './ScheduleD1120' // Corporate Capital Gains/Losses
+import ScheduleC1120 from './ScheduleC1120' // Dividends Received Deduction
+import ScheduleE1120 from './ScheduleE1120' // Compensation of Officers
+import ScheduleJ1120 from './ScheduleJ1120' // Corporate Tax Computation
+import ScheduleB1065 from './ScheduleB1065' // Partnership Other Information
 // Phase 13: Form 990 Schedules (Non-Profit)
-import Schedule990B from './Schedule990B'  // Schedule of Contributors
-import Schedule990C from './Schedule990C'  // Political Campaign and Lobbying Activities
-import Schedule990D from './Schedule990D'  // Supplemental Financial Statements
-import Schedule990G from './Schedule990G'  // Fundraising and Gaming Activities
-import Schedule990J from './Schedule990J'  // Compensation Information
-import Schedule990O from './Schedule990O'  // Supplemental Information
-import Schedule990R from './Schedule990R'  // Related Organizations
+import Schedule990B from './Schedule990B' // Schedule of Contributors
+import Schedule990C from './Schedule990C' // Political Campaign and Lobbying Activities
+import Schedule990D from './Schedule990D' // Supplemental Financial Statements
+import Schedule990G from './Schedule990G' // Fundraising and Gaming Activities
+import Schedule990J from './Schedule990J' // Compensation Information
+import Schedule990O from './Schedule990O' // Supplemental Information
+import Schedule990R from './Schedule990R' // Related Organizations
 // Phase 14: Form 1041 Schedules (Estates and Trusts)
-import Schedule1041A from './Schedule1041A'  // Charitable Deduction
-import Schedule1041B from './Schedule1041B'  // Income Distribution Deduction
-import Schedule1041D from './Schedule1041D'  // Capital Gains and Losses
-import Schedule1041G from './Schedule1041G'  // Tax Computation and Payments
-import Schedule1041I from './Schedule1041I'  // Alternative Minimum Tax
-import Schedule1041J from './Schedule1041J'  // Accumulation Distribution
+import Schedule1041A from './Schedule1041A' // Charitable Deduction
+import Schedule1041B from './Schedule1041B' // Income Distribution Deduction
+import Schedule1041D from './Schedule1041D' // Capital Gains and Losses
+import Schedule1041G from './Schedule1041G' // Tax Computation and Payments
+import Schedule1041I from './Schedule1041I' // Alternative Minimum Tax
+import Schedule1041J from './Schedule1041J' // Accumulation Distribution
 // Phase 15: Additional Tax Forms
-import F990N from './F990N'  // e-Postcard for Small Exempt Organizations
-import F4720 from './F4720'  // Excise Taxes on Private Foundations
-import F941X from './F941X'  // Adjusted Employment Tax Return
-import F943X from './F943X'  // Adjusted Agricultural Employment Tax
-import F944X from './F944X'  // Adjusted Annual Employment Tax
-import F945X from './F945X'  // Adjusted Withholding Return
-import F1040X from './F1040X'  // Amended Individual Return
-import F1041A from './F1041A'  // Trust Charitable Amounts
-import F1041ES from './F1041ES'  // Estimated Tax for Estates/Trusts
+import F990N from './F990N' // e-Postcard for Small Exempt Organizations
+import F4720 from './F4720' // Excise Taxes on Private Foundations
+import F941X from './F941X' // Adjusted Employment Tax Return
+import F943X from './F943X' // Adjusted Agricultural Employment Tax
+import F944X from './F944X' // Adjusted Annual Employment Tax
+import F945X from './F945X' // Adjusted Withholding Return
+import F1040X from './F1040X' // Amended Individual Return
+import F1041A from './F1041A' // Trust Charitable Amounts
+import F1041ES from './F1041ES' // Estimated Tax for Estates/Trusts
 // Phase 16: Additional Form 990 Schedules
-import Schedule990F from './Schedule990F'  // Foreign Activities
-import Schedule990I from './Schedule990I'  // Domestic Grants
-import Schedule990K from './Schedule990K'  // Tax-Exempt Bonds
-import Schedule990L from './Schedule990L'  // Interested Persons Transactions
-import Schedule990M from './Schedule990M'  // Noncash Contributions
-import Schedule990N from './Schedule990N'  // Liquidation/Dissolution
+import Schedule990F from './Schedule990F' // Foreign Activities
+import Schedule990I from './Schedule990I' // Domestic Grants
+import Schedule990K from './Schedule990K' // Tax-Exempt Bonds
+import Schedule990L from './Schedule990L' // Interested Persons Transactions
+import Schedule990M from './Schedule990M' // Noncash Contributions
+import Schedule990N from './Schedule990N' // Liquidation/Dissolution
 // Phase 17: 1099 Series and Authorization Forms
-import F1099MISC from './F1099MISC'  // Miscellaneous Income
-import F1099NEC from './F1099NEC'  // Nonemployee Compensation
-import F1099K from './F1099K'  // Payment Card Transactions
-import F2848 from './F2848'  // Power of Attorney
-import F8821 from './F8821'  // Tax Information Authorization
-import F8879 from './F8879'  // IRS e-file Signature Authorization
-import F8332 from './F8332'  // Release of Claim to Exemption
-import F8453 from './F8453'  // E-file Transmittal
+import F1099MISC from './F1099MISC' // Miscellaneous Income
+import F1099NEC from './F1099NEC' // Nonemployee Compensation
+import F1099K from './F1099K' // Payment Card Transactions
+import F2848 from './F2848' // Power of Attorney
+import F8821 from './F8821' // Tax Information Authorization
+import F8879 from './F8879' // IRS e-file Signature Authorization
+import F8332 from './F8332' // Release of Claim to Exemption
+import F8453 from './F8453' // E-file Transmittal
 // Phase 18: Additional 1099 Series
-import F1099B from './F1099B'  // Broker Proceeds
-import F1099DIV from './F1099DIV'  // Dividends and Distributions
-import F1099INT from './F1099INT'  // Interest Income
-import F1099R from './F1099R'  // Retirement Distributions
-import F1099G from './F1099G'  // Government Payments
-import F1099S from './F1099S'  // Real Estate Transactions
-import F1099C from './F1099C'  // Cancellation of Debt
-import F1099Q from './F1099Q'  // Qualified Education Programs
-import F1099SA from './F1099SA'  // HSA/MSA Distributions
+import F1099B from './F1099B' // Broker Proceeds
+import F1099DIV from './F1099DIV' // Dividends and Distributions
+import F1099INT from './F1099INT' // Interest Income
+import F1099R from './F1099R' // Retirement Distributions
+import F1099G from './F1099G' // Government Payments
+import F1099S from './F1099S' // Real Estate Transactions
+import F1099C from './F1099C' // Cancellation of Debt
+import F1099Q from './F1099Q' // Qualified Education Programs
+import F1099SA from './F1099SA' // HSA/MSA Distributions
 // Phase 19: Withholding and Application Forms
-import W4 from './W4'  // Employee's Withholding Certificate
-import W9 from './W9'  // Request for Taxpayer ID
-import SS4 from './SS4'  // Application for EIN
+import W4 from './W4' // Employee's Withholding Certificate
+import W9 from './W9' // Request for Taxpayer ID
+import SS4 from './SS4' // Application for EIN
 // Phase 20: Remaining 1099 Series and Specialized Forms
-import W2G from './W2G'  // Gambling Winnings
-import F1099A from './F1099A'  // Acquisition or Abandonment
-import F1099LTC from './F1099LTC'  // Long-Term Care Benefits
-import F56 from './F56'  // Notice Concerning Fiduciary Relationship
-import F8822 from './F8822'  // Change of Address
-import F8958 from './F8958'  // Community Property Allocation
-import F8857 from './F8857'  // Innocent Spouse Relief
-import F4506 from './F4506'  // Request for Copy of Tax Return
-import F4506T from './F4506T'  // Request for Transcript
-import F8867 from './F8867'  // Paid Preparer's Due Diligence
-import W2c from './W2c'  // Corrected W-2
-import F8948 from './F8948'  // Preparer Explanation for Not Filing Electronically
-import F8508 from './F8508'  // Request for Waiver From Filing Info Returns
-import F8822B from './F8822B'  // Change of Address (Business)
+import W2G from './W2G' // Gambling Winnings
+import F1099A from './F1099A' // Acquisition or Abandonment
+import F1099LTC from './F1099LTC' // Long-Term Care Benefits
+import F56 from './F56' // Notice Concerning Fiduciary Relationship
+import F8822 from './F8822' // Change of Address
+import F8958 from './F8958' // Community Property Allocation
+import F8857 from './F8857' // Innocent Spouse Relief
+import F4506 from './F4506' // Request for Copy of Tax Return
+import F4506T from './F4506T' // Request for Transcript
+import F8867 from './F8867' // Paid Preparer's Due Diligence
+import W2c from './W2c' // Corrected W-2
+import F8948 from './F8948' // Preparer Explanation for Not Filing Electronically
+import F8508 from './F8508' // Request for Waiver From Filing Info Returns
+import F8822B from './F8822B' // Change of Address (Business)
 // Phase 10: Business Credits (General Business Credit components)
-import F3468 from './F3468'  // Investment Credit
-import F3800 from './F3800'  // General Business Credit
-import F5884 from './F5884'  // Work Opportunity Credit
-import F6765 from './F6765'  // Research Credit
-import F8586 from './F8586'  // Low-Income Housing Credit
-import F8820 from './F8820'  // Orphan Drug Credit
-import F8826 from './F8826'  // Disabled Access Credit
-import F8835 from './F8835'  // Renewable Electricity Credit
-import F8844 from './F8844'  // Empowerment Zone Employment Credit
-import F8845 from './F8845'  // Indian Employment Credit
-import F8846 from './F8846'  // Employer-Provided Childcare Credit
-import F8864 from './F8864'  // Biodiesel and Renewable Diesel Credit
-import F8874 from './F8874'  // New Markets Credit
-import F8881 from './F8881'  // Small Employer Pension Startup Credit
-import F8882 from './F8882'  // Credit for Employer Social Security
-import F8932 from './F8932'  // Employer Differential Wage Payment Credit
-import F8933 from './F8933'  // Carbon Oxide Sequestration Credit
-import F8994 from './F8994'  // Paid Family and Medical Leave Credit
+import F3468 from './F3468' // Investment Credit
+import F3800 from './F3800' // General Business Credit
+import F5884 from './F5884' // Work Opportunity Credit
+import F6765 from './F6765' // Research Credit
+import F8586 from './F8586' // Low-Income Housing Credit
+import F8820 from './F8820' // Orphan Drug Credit
+import F8826 from './F8826' // Disabled Access Credit
+import F8835 from './F8835' // Renewable Electricity Credit
+import F8844 from './F8844' // Empowerment Zone Employment Credit
+import F8845 from './F8845' // Indian Employment Credit
+import F8846 from './F8846' // Employer-Provided Childcare Credit
+import F8864 from './F8864' // Biodiesel and Renewable Diesel Credit
+import F8874 from './F8874' // New Markets Credit
+import F8881 from './F8881' // Small Employer Pension Startup Credit
+import F8882 from './F8882' // Credit for Employer Social Security
+import F8932 from './F8932' // Employer Differential Wage Payment Credit
+import F8933 from './F8933' // Carbon Oxide Sequestration Credit
+import F8994 from './F8994' // Paid Family and Medical Leave Credit
 import { Field } from 'ustaxes/core/pdfFiller'
 import F1040Base, { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 import F1040Attachment from './F1040Attachment'
@@ -246,7 +246,7 @@ export default class F1040 extends F1040Base {
   assets: Asset<Date>[]
 
   schedule1: Schedule1
-  schedule1A: Schedule1A  // OBBBA 2025: Additional Deductions
+  schedule1A: Schedule1A // OBBBA 2025: Additional Deductions
   schedule2: Schedule2
   schedule3: Schedule3
   scheduleA: ScheduleA
@@ -285,185 +285,185 @@ export default class F1040 extends F1040Base {
   f8960: F8960
   f8962?: F8962
   f8995?: F8995 | F8995A
-  f4547?: F4547  // OBBBA 2025: Trump Account Elections
+  f4547?: F4547 // OBBBA 2025: Trump Account Elections
   // Phase 1: High-Priority Forms
-  f8880?: F8880  // Saver's Credit
-  f1116?: F1116  // Foreign Tax Credit
-  f8606?: F8606  // Nondeductible IRAs
-  f5329?: F5329  // Additional Taxes on Retirement Plans
-  f8615?: F8615  // Kiddie Tax
-  f8801?: F8801  // Prior Year AMT Credit
-  f2210?: F2210  // Underpayment Penalty
-  f4868?: F4868  // Extension Request
-  f8839?: F8839  // Adoption Credit
-  f1040es?: F1040ES  // Estimated Tax for Individuals
-  f2106?: F2106  // Employee Business Expenses
+  f8880?: F8880 // Saver's Credit
+  f1116?: F1116 // Foreign Tax Credit
+  f8606?: F8606 // Nondeductible IRAs
+  f5329?: F5329 // Additional Taxes on Retirement Plans
+  f8615?: F8615 // Kiddie Tax
+  f8801?: F8801 // Prior Year AMT Credit
+  f2210?: F2210 // Underpayment Penalty
+  f4868?: F4868 // Extension Request
+  f8839?: F8839 // Adoption Credit
+  f1040es?: F1040ES // Estimated Tax for Individuals
+  f2106?: F2106 // Employee Business Expenses
   // Phase 2: Medium-Priority Forms
-  scheduleF?: ScheduleF  // Farm Income
-  scheduleH?: ScheduleH  // Household Employment Taxes
-  f4562?: F4562  // Depreciation and Amortization
-  f6252?: F6252  // Installment Sales
-  f8824?: F8824  // Like-Kind Exchanges
-  f4684?: F4684  // Casualties and Thefts
+  scheduleF?: ScheduleF // Farm Income
+  scheduleH?: ScheduleH // Household Employment Taxes
+  f4562?: F4562 // Depreciation and Amortization
+  f6252?: F6252 // Installment Sales
+  f8824?: F8824 // Like-Kind Exchanges
+  f4684?: F4684 // Casualties and Thefts
   // Phase 3: Specialized Forms
-  f8829?: F8829  // Business Use of Home
-  f6198?: F6198  // At-Risk Limitations
-  f3903?: F3903  // Moving Expenses (Military)
-  f8938?: F8938  // FATCA Foreign Financial Assets
-  scheduleJ?: ScheduleJ  // Farm Income Averaging
+  f8829?: F8829 // Business Use of Home
+  f6198?: F6198 // At-Risk Limitations
+  f3903?: F3903 // Moving Expenses (Military)
+  f8938?: F8938 // FATCA Foreign Financial Assets
+  scheduleJ?: ScheduleJ // Farm Income Averaging
   // Phase 4: Collection, Credits, Foreign Forms
-  f9465?: F9465  // Installment Agreement Request
-  f8379?: F8379  // Injured Spouse Allocation
-  f8862?: F8862  // Credits After Disallowance
-  f8582cr?: F8582CR  // Passive Activity Credit Limitations
-  f8833?: F8833  // Treaty-Based Return Position
-  f8843?: F8843  // Statement for Exempt Individuals
-  f8840?: F8840  // Closer Connection Exception
-  f8915f?: F8915F  // Qualified Disaster Distributions
-  f4255?: F4255  // Recapture of Investment Credit
+  f9465?: F9465 // Installment Agreement Request
+  f8379?: F8379 // Injured Spouse Allocation
+  f8862?: F8862 // Credits After Disallowance
+  f8582cr?: F8582CR // Passive Activity Credit Limitations
+  f8833?: F8833 // Treaty-Based Return Position
+  f8843?: F8843 // Statement for Exempt Individuals
+  f8840?: F8840 // Closer Connection Exception
+  f8915f?: F8915F // Qualified Disaster Distributions
+  f4255?: F4255 // Recapture of Investment Credit
   // Phase 5: Additional Forms
-  f8941?: F8941  // Small Employer Health Insurance Credit
-  f8810?: F8810  // Corporate Passive Activity Loss
-  f7004?: F7004  // Business Extension
-  f843?: F843  // Claim for Refund
-  f8868?: F8868  // Exempt Organization Extension
-  f2350?: F2350  // Extension for Citizens Abroad
+  f8941?: F8941 // Small Employer Health Insurance Credit
+  f8810?: F8810 // Corporate Passive Activity Loss
+  f7004?: F7004 // Business Extension
+  f843?: F843 // Claim for Refund
+  f8868?: F8868 // Exempt Organization Extension
+  f2350?: F2350 // Extension for Citizens Abroad
   // Phase 6: Collection & Information Returns
-  f8809?: F8809  // Information Return Extension
-  f433a?: F433A  // Collection Statement for Individuals
-  f433b?: F433B  // Collection Statement for Businesses
+  f8809?: F8809 // Information Return Extension
+  f433a?: F433A // Collection Statement for Individuals
+  f433b?: F433B // Collection Statement for Businesses
   // Phase 7: Foreign Forms & Retirement Plans
-  f656?: F656  // Offer in Compromise
-  f5471?: F5471  // Foreign Corporation Information Return
-  f5472?: F5472  // Foreign-Owned US Corporation
-  f8865?: F8865  // Foreign Partnership
-  f8966?: F8966  // FATCA Certification
-  f5500?: F5500  // Employee Benefit Plan
-  f5500ez?: F5500EZ  // One-Participant Plan
-  f5330?: F5330  // Excise Taxes on Retirement Plans
+  f656?: F656 // Offer in Compromise
+  f5471?: F5471 // Foreign Corporation Information Return
+  f5472?: F5472 // Foreign-Owned US Corporation
+  f8865?: F8865 // Foreign Partnership
+  f8966?: F8966 // FATCA Certification
+  f5500?: F5500 // Employee Benefit Plan
+  f5500ez?: F5500EZ // One-Participant Plan
+  f5330?: F5330 // Excise Taxes on Retirement Plans
   // Phase 8: 1040 Variants
-  f1040sr?: F1040SR  // Senior Return
-  f1040nr?: F1040NR  // Non-Resident Alien Return
-  f1040ss?: F1040SS  // Self-Employment Tax for Territories
+  f1040sr?: F1040SR // Senior Return
+  f1040nr?: F1040NR // Non-Resident Alien Return
+  f1040ss?: F1040SS // Self-Employment Tax for Territories
   // Phase 9: Estate, Gift, Fiduciary, and Exempt Organization Forms
-  f706?: F706  // Estate Tax Return
-  f709?: F709  // Gift Tax Return
-  f1041?: F1041  // Fiduciary Income Tax Return
-  f990?: F990  // Exempt Organization Return
-  f990ez?: F990EZ  // Short Form Exempt Organization
-  f990t?: F990T  // Exempt Organization Business Income Tax
-  f990pf?: F990PF  // Private Foundation Return
-  fincen114?: FinCEN114  // FBAR Report
+  f706?: F706 // Estate Tax Return
+  f709?: F709 // Gift Tax Return
+  f1041?: F1041 // Fiduciary Income Tax Return
+  f990?: F990 // Exempt Organization Return
+  f990ez?: F990EZ // Short Form Exempt Organization
+  f990t?: F990T // Exempt Organization Business Income Tax
+  f990pf?: F990PF // Private Foundation Return
+  fincen114?: FinCEN114 // FBAR Report
   // Phase 10: Additional International Forms
-  f3520?: F3520  // Foreign Trusts and Gifts
-  f3520a?: F3520A  // Foreign Trust Annual Return
-  f8621?: F8621  // PFIC Annual Information
-  f8858?: F8858  // Foreign Disregarded Entity
-  f926?: F926  // Return of Transferred Property to Foreign Corp
+  f3520?: F3520 // Foreign Trusts and Gifts
+  f3520a?: F3520A // Foreign Trust Annual Return
+  f8621?: F8621 // PFIC Annual Information
+  f8858?: F8858 // Foreign Disregarded Entity
+  f926?: F926 // Return of Transferred Property to Foreign Corp
   // Phase 11: Business Entity Schedules
-  scheduleK1065?: ScheduleK1065  // Partners' Distributive Share (1065)
-  scheduleK1120S?: ScheduleK1120S  // Shareholders' Pro Rata Share (1120-S)
-  scheduleL?: ScheduleL  // Balance Sheets
-  scheduleM1?: ScheduleM1  // Book-to-Tax Reconciliation
-  schedule990A?: Schedule990A  // Public Charity Status (990)
-  scheduleK1_1041?: ScheduleK1_1041  // Beneficiary's Share (1041)
-  f8283?: F8283  // Noncash Charitable Contributions
+  scheduleK1065?: ScheduleK1065 // Partners' Distributive Share (1065)
+  scheduleK1120S?: ScheduleK1120S // Shareholders' Pro Rata Share (1120-S)
+  scheduleL?: ScheduleL // Balance Sheets
+  scheduleM1?: ScheduleM1 // Book-to-Tax Reconciliation
+  schedule990A?: Schedule990A // Public Charity Status (990)
+  scheduleK1_1041?: ScheduleK1_1041 // Beneficiary's Share (1041)
+  f8283?: F8283 // Noncash Charitable Contributions
   // Phase 12: Additional Business Entity Schedules
-  scheduleM3?: ScheduleM3  // Net Income Reconciliation (Large Entities)
-  scheduleD1120?: ScheduleD1120  // Corporate Capital Gains/Losses
-  scheduleC1120?: ScheduleC1120  // Dividends Received Deduction
-  scheduleE1120?: ScheduleE1120  // Compensation of Officers
-  scheduleJ1120?: ScheduleJ1120  // Corporate Tax Computation
-  scheduleB1065?: ScheduleB1065  // Partnership Other Information
+  scheduleM3?: ScheduleM3 // Net Income Reconciliation (Large Entities)
+  scheduleD1120?: ScheduleD1120 // Corporate Capital Gains/Losses
+  scheduleC1120?: ScheduleC1120 // Dividends Received Deduction
+  scheduleE1120?: ScheduleE1120 // Compensation of Officers
+  scheduleJ1120?: ScheduleJ1120 // Corporate Tax Computation
+  scheduleB1065?: ScheduleB1065 // Partnership Other Information
   // Phase 13: Form 990 Schedules (Non-Profit)
-  schedule990B?: Schedule990B  // Schedule of Contributors
-  schedule990C?: Schedule990C  // Political Campaign and Lobbying Activities
-  schedule990D?: Schedule990D  // Supplemental Financial Statements
-  schedule990G?: Schedule990G  // Fundraising and Gaming Activities
-  schedule990J?: Schedule990J  // Compensation Information
-  schedule990O?: Schedule990O  // Supplemental Information
-  schedule990R?: Schedule990R  // Related Organizations
+  schedule990B?: Schedule990B // Schedule of Contributors
+  schedule990C?: Schedule990C // Political Campaign and Lobbying Activities
+  schedule990D?: Schedule990D // Supplemental Financial Statements
+  schedule990G?: Schedule990G // Fundraising and Gaming Activities
+  schedule990J?: Schedule990J // Compensation Information
+  schedule990O?: Schedule990O // Supplemental Information
+  schedule990R?: Schedule990R // Related Organizations
   // Phase 14: Form 1041 Schedules (Estates and Trusts)
-  schedule1041A?: Schedule1041A  // Charitable Deduction
-  schedule1041B?: Schedule1041B  // Income Distribution Deduction
-  schedule1041D?: Schedule1041D  // Capital Gains and Losses
-  schedule1041G?: Schedule1041G  // Tax Computation and Payments
-  schedule1041I?: Schedule1041I  // Alternative Minimum Tax
-  schedule1041J?: Schedule1041J  // Accumulation Distribution
+  schedule1041A?: Schedule1041A // Charitable Deduction
+  schedule1041B?: Schedule1041B // Income Distribution Deduction
+  schedule1041D?: Schedule1041D // Capital Gains and Losses
+  schedule1041G?: Schedule1041G // Tax Computation and Payments
+  schedule1041I?: Schedule1041I // Alternative Minimum Tax
+  schedule1041J?: Schedule1041J // Accumulation Distribution
   // Phase 15: Additional Tax Forms
-  f990n?: F990N  // e-Postcard for Small Exempt Organizations
-  f4720?: F4720  // Excise Taxes on Private Foundations
-  f941x?: F941X  // Adjusted Employment Tax Return
-  f943x?: F943X  // Adjusted Agricultural Employment Tax
-  f944x?: F944X  // Adjusted Annual Employment Tax
-  f945x?: F945X  // Adjusted Withholding Return
-  f1040x?: F1040X  // Amended Individual Return
-  f1041a?: F1041A  // Trust Charitable Amounts
-  f1041es?: F1041ES  // Estimated Tax for Estates/Trusts
+  f990n?: F990N // e-Postcard for Small Exempt Organizations
+  f4720?: F4720 // Excise Taxes on Private Foundations
+  f941x?: F941X // Adjusted Employment Tax Return
+  f943x?: F943X // Adjusted Agricultural Employment Tax
+  f944x?: F944X // Adjusted Annual Employment Tax
+  f945x?: F945X // Adjusted Withholding Return
+  f1040x?: F1040X // Amended Individual Return
+  f1041a?: F1041A // Trust Charitable Amounts
+  f1041es?: F1041ES // Estimated Tax for Estates/Trusts
   // Phase 16: Additional Form 990 Schedules
-  schedule990F?: Schedule990F  // Foreign Activities
-  schedule990I?: Schedule990I  // Domestic Grants
-  schedule990K?: Schedule990K  // Tax-Exempt Bonds
-  schedule990L?: Schedule990L  // Interested Persons Transactions
-  schedule990M?: Schedule990M  // Noncash Contributions
-  schedule990N?: Schedule990N  // Liquidation/Dissolution
+  schedule990F?: Schedule990F // Foreign Activities
+  schedule990I?: Schedule990I // Domestic Grants
+  schedule990K?: Schedule990K // Tax-Exempt Bonds
+  schedule990L?: Schedule990L // Interested Persons Transactions
+  schedule990M?: Schedule990M // Noncash Contributions
+  schedule990N?: Schedule990N // Liquidation/Dissolution
   // Phase 17: 1099 Series and Authorization Forms
-  f1099misc?: F1099MISC  // Miscellaneous Income
-  f1099nec?: F1099NEC  // Nonemployee Compensation
-  f1099k?: F1099K  // Payment Card Transactions
-  f2848?: F2848  // Power of Attorney
-  f8821?: F8821  // Tax Information Authorization
-  f8879?: F8879  // IRS e-file Signature Authorization
-  f8332?: F8332  // Release of Claim to Exemption
-  f8453?: F8453  // E-file Transmittal
+  f1099misc?: F1099MISC // Miscellaneous Income
+  f1099nec?: F1099NEC // Nonemployee Compensation
+  f1099k?: F1099K // Payment Card Transactions
+  f2848?: F2848 // Power of Attorney
+  f8821?: F8821 // Tax Information Authorization
+  f8879?: F8879 // IRS e-file Signature Authorization
+  f8332?: F8332 // Release of Claim to Exemption
+  f8453?: F8453 // E-file Transmittal
   // Phase 18: Additional 1099 Series
-  f1099b?: F1099B  // Broker Proceeds
-  f1099div?: F1099DIV  // Dividends and Distributions
-  f1099int?: F1099INT  // Interest Income
-  f1099r?: F1099R  // Retirement Distributions
-  f1099g?: F1099G  // Government Payments
-  f1099s?: F1099S  // Real Estate Transactions
-  f1099c?: F1099C  // Cancellation of Debt
-  f1099q?: F1099Q  // Qualified Education Programs
-  f1099sa?: F1099SA  // HSA/MSA Distributions
+  f1099b?: F1099B // Broker Proceeds
+  f1099div?: F1099DIV // Dividends and Distributions
+  f1099int?: F1099INT // Interest Income
+  f1099r?: F1099R // Retirement Distributions
+  f1099g?: F1099G // Government Payments
+  f1099s?: F1099S // Real Estate Transactions
+  f1099c?: F1099C // Cancellation of Debt
+  f1099q?: F1099Q // Qualified Education Programs
+  f1099sa?: F1099SA // HSA/MSA Distributions
   // Phase 19: Withholding and Application Forms
-  w4?: W4  // Employee's Withholding Certificate
-  w9?: W9  // Request for Taxpayer ID
-  ss4?: SS4  // Application for EIN
+  w4?: W4 // Employee's Withholding Certificate
+  w9?: W9 // Request for Taxpayer ID
+  ss4?: SS4 // Application for EIN
   // Phase 20: Remaining 1099 Series and Specialized Forms
-  w2g?: W2G  // Gambling Winnings
-  f1099a?: F1099A  // Acquisition or Abandonment
-  f1099ltc?: F1099LTC  // Long-Term Care Benefits
-  f56?: F56  // Notice Concerning Fiduciary Relationship
-  f8822?: F8822  // Change of Address
-  f8958?: F8958  // Community Property Allocation
-  f8857?: F8857  // Innocent Spouse Relief
-  f4506?: F4506  // Request for Copy of Tax Return
-  f4506t?: F4506T  // Request for Transcript
-  f8867?: F8867  // Paid Preparer's Due Diligence
-  w2c?: W2c  // Corrected W-2
-  f8948?: F8948  // Preparer Explanation for Not Filing Electronically
-  f8508?: F8508  // Request for Waiver From Filing Info Returns
-  f8822b?: F8822B  // Change of Address (Business)
+  w2g?: W2G // Gambling Winnings
+  f1099a?: F1099A // Acquisition or Abandonment
+  f1099ltc?: F1099LTC // Long-Term Care Benefits
+  f56?: F56 // Notice Concerning Fiduciary Relationship
+  f8822?: F8822 // Change of Address
+  f8958?: F8958 // Community Property Allocation
+  f8857?: F8857 // Innocent Spouse Relief
+  f4506?: F4506 // Request for Copy of Tax Return
+  f4506t?: F4506T // Request for Transcript
+  f8867?: F8867 // Paid Preparer's Due Diligence
+  w2c?: W2c // Corrected W-2
+  f8948?: F8948 // Preparer Explanation for Not Filing Electronically
+  f8508?: F8508 // Request for Waiver From Filing Info Returns
+  f8822b?: F8822B // Change of Address (Business)
   // Phase 10: Business Credits
-  f3468?: F3468  // Investment Credit
-  f3800?: F3800  // General Business Credit
-  f5884?: F5884  // Work Opportunity Credit
-  f6765?: F6765  // Research Credit
-  f8586?: F8586  // Low-Income Housing Credit
-  f8820?: F8820  // Orphan Drug Credit
-  f8826?: F8826  // Disabled Access Credit
-  f8835?: F8835  // Renewable Electricity Credit
-  f8844?: F8844  // Empowerment Zone Employment Credit
-  f8845?: F8845  // Indian Employment Credit
-  f8846?: F8846  // Employer-Provided Childcare Credit
-  f8864?: F8864  // Biodiesel and Renewable Diesel Credit
-  f8874?: F8874  // New Markets Credit
-  f8881?: F8881  // Small Employer Pension Startup Credit
-  f8882?: F8882  // Credit for Employer Social Security
-  f8932?: F8932  // Employer Differential Wage Payment Credit
-  f8933?: F8933  // Carbon Oxide Sequestration Credit
-  f8994?: F8994  // Paid Family and Medical Leave Credit
+  f3468?: F3468 // Investment Credit
+  f3800?: F3800 // General Business Credit
+  f5884?: F5884 // Work Opportunity Credit
+  f6765?: F6765 // Research Credit
+  f8586?: F8586 // Low-Income Housing Credit
+  f8820?: F8820 // Orphan Drug Credit
+  f8826?: F8826 // Disabled Access Credit
+  f8835?: F8835 // Renewable Electricity Credit
+  f8844?: F8844 // Empowerment Zone Employment Credit
+  f8845?: F8845 // Indian Employment Credit
+  f8846?: F8846 // Employer-Provided Childcare Credit
+  f8864?: F8864 // Biodiesel and Renewable Diesel Credit
+  f8874?: F8874 // New Markets Credit
+  f8881?: F8881 // Small Employer Pension Startup Credit
+  f8882?: F8882 // Credit for Employer Social Security
+  f8932?: F8932 // Employer Differential Wage Payment Credit
+  f8933?: F8933 // Carbon Oxide Sequestration Credit
+  f8994?: F8994 // Paid Family and Medical Leave Credit
   qualifiedAndCapGainsWorksheet?: SDQualifiedAndCapGains
   studentLoanInterestWorksheet?: StudentLoanInterestWorksheet
   socialSecurityBenefitsWorksheet?: SocialSecurityBenefitsWorksheet
@@ -483,21 +483,21 @@ export default class F1040 extends F1040Base {
     this.scheduleSE = new ScheduleSE(this)
 
     this.schedule1 = new Schedule1(this)
-    this.schedule1A = new Schedule1A(this)  // OBBBA 2025: Additional Deductions
+    this.schedule1A = new Schedule1A(this) // OBBBA 2025: Additional Deductions
     this.schedule2 = new Schedule2(this)
     this.schedule3 = new Schedule3(this)
     this.schedule8812 = new Schedule8812(this)
-    this.scheduleC = new ScheduleC(this)  // Self-employment income
-    this.scheduleR = new ScheduleR(this)  // Credit for Elderly/Disabled
-    this.f8863 = new F8863(this)  // Education Credits
-    this.f4797 = new F4797(this)  // Sale of Business Property
-    this.f4952 = new F4952(this)  // Investment Interest Expense
-    this.f4972 = new F4972(this)  // Tax on Lump-Sum Distributions
-    this.f5695 = new F5695(this)  // Residential Energy Credits
-    this.f8814 = new F8814(this)  // Child's Interest and Dividends
-    this.f8888 = new F8888(this)  // Direct Deposit of Refund
-    this.f8910 = new F8910(this)  // Alternative Motor Vehicle Credit
-    this.f8936 = new F8936(this)  // Clean Vehicle Credit
+    this.scheduleC = new ScheduleC(this) // Self-employment income
+    this.scheduleR = new ScheduleR(this) // Credit for Elderly/Disabled
+    this.f8863 = new F8863(this) // Education Credits
+    this.f4797 = new F4797(this) // Sale of Business Property
+    this.f4952 = new F4952(this) // Investment Interest Expense
+    this.f4972 = new F4972(this) // Tax on Lump-Sum Distributions
+    this.f5695 = new F5695(this) // Residential Energy Credits
+    this.f8814 = new F8814(this) // Child's Interest and Dividends
+    this.f8888 = new F8888(this) // Direct Deposit of Refund
+    this.f8910 = new F8910(this) // Alternative Motor Vehicle Credit
+    this.f8936 = new F8936(this) // Clean Vehicle Credit
 
     this.f6251 = new F6251(this)
     this.f8949 = new F8949(this)
@@ -535,7 +535,10 @@ export default class F1040 extends F1040Base {
     }
 
     // OBBBA 2025: Trump Account Elections
-    if (this.info.trumpSavingsAccounts && this.info.trumpSavingsAccounts.length > 0) {
+    if (
+      this.info.trumpSavingsAccounts &&
+      this.info.trumpSavingsAccounts.length > 0
+    ) {
       this.f4547 = new F4547(this)
     }
 
@@ -719,36 +722,36 @@ export default class F1040 extends F1040Base {
     this.f8822b = new F8822B(this)
 
     // Phase 9: Previously Imported but Not Instantiated Forms
-    this.f2439 = new F2439(this)  // Undistributed Capital Gains
-    this.f2441 = new F2441(this)  // Child and Dependent Care Credit
-    this.f2555 = new F2555(this)  // Foreign Earned Income Exclusion
-    this.f4136 = new F4136(this)  // Credit for Federal Tax Paid on Fuels
-    this.f4137 = new F4137(this)  // SS/Medicare Tax on Unreported Tips
-    this.f4563 = new F4563(this)  // Exclusion of Income (American Samoa)
-    this.f8582 = new F8582(this)  // Passive Activity Loss Limitations
-    this.f8853 = new F8853(this)  // Archer MSAs and Long-Term Care
-    this.f8919 = new F8919(this)  // Uncollected SS/Medicare Tax on Wages
-    this.f8962 = new F8962(this)  // Premium Tax Credit (ACA)
+    this.f2439 = new F2439(this) // Undistributed Capital Gains
+    this.f2441 = new F2441(this) // Child and Dependent Care Credit
+    this.f2555 = new F2555(this) // Foreign Earned Income Exclusion
+    this.f4136 = new F4136(this) // Credit for Federal Tax Paid on Fuels
+    this.f4137 = new F4137(this) // SS/Medicare Tax on Unreported Tips
+    this.f4563 = new F4563(this) // Exclusion of Income (American Samoa)
+    this.f8582 = new F8582(this) // Passive Activity Loss Limitations
+    this.f8853 = new F8853(this) // Archer MSAs and Long-Term Care
+    this.f8919 = new F8919(this) // Uncollected SS/Medicare Tax on Wages
+    this.f8962 = new F8962(this) // Premium Tax Credit (ACA)
 
     // Phase 10: Business Credits
-    this.f3468 = new F3468(this)  // Investment Credit
-    this.f3800 = new F3800(this)  // General Business Credit
-    this.f5884 = new F5884(this)  // Work Opportunity Credit
-    this.f6765 = new F6765(this)  // Research Credit
-    this.f8586 = new F8586(this)  // Low-Income Housing Credit
-    this.f8820 = new F8820(this)  // Orphan Drug Credit
-    this.f8826 = new F8826(this)  // Disabled Access Credit
-    this.f8835 = new F8835(this)  // Renewable Electricity Credit
-    this.f8844 = new F8844(this)  // Empowerment Zone Employment Credit
-    this.f8845 = new F8845(this)  // Indian Employment Credit
-    this.f8846 = new F8846(this)  // Employer-Provided Childcare Credit
-    this.f8864 = new F8864(this)  // Biodiesel and Renewable Diesel Credit
-    this.f8874 = new F8874(this)  // New Markets Credit
-    this.f8881 = new F8881(this)  // Small Employer Pension Startup Credit
-    this.f8882 = new F8882(this)  // Credit for Employer Social Security
-    this.f8932 = new F8932(this)  // Employer Differential Wage Payment Credit
-    this.f8933 = new F8933(this)  // Carbon Oxide Sequestration Credit
-    this.f8994 = new F8994(this)  // Paid Family and Medical Leave Credit
+    this.f3468 = new F3468(this) // Investment Credit
+    this.f3800 = new F3800(this) // General Business Credit
+    this.f5884 = new F5884(this) // Work Opportunity Credit
+    this.f6765 = new F6765(this) // Research Credit
+    this.f8586 = new F8586(this) // Low-Income Housing Credit
+    this.f8820 = new F8820(this) // Orphan Drug Credit
+    this.f8826 = new F8826(this) // Disabled Access Credit
+    this.f8835 = new F8835(this) // Renewable Electricity Credit
+    this.f8844 = new F8844(this) // Empowerment Zone Employment Credit
+    this.f8845 = new F8845(this) // Indian Employment Credit
+    this.f8846 = new F8846(this) // Employer-Provided Childcare Credit
+    this.f8864 = new F8864(this) // Biodiesel and Renewable Diesel Credit
+    this.f8874 = new F8874(this) // New Markets Credit
+    this.f8881 = new F8881(this) // Small Employer Pension Startup Credit
+    this.f8882 = new F8882(this) // Credit for Employer Social Security
+    this.f8932 = new F8932(this) // Employer Differential Wage Payment Credit
+    this.f8933 = new F8933(this) // Carbon Oxide Sequestration Credit
+    this.f8994 = new F8994(this) // Paid Family and Medical Leave Credit
   }
 
   get f8949s(): F8949[] {
@@ -798,200 +801,200 @@ export default class F1040 extends F1040Base {
       this.f8960,
       this.f8995,
       this.schedule1,
-      this.schedule1A,  // OBBBA 2025: Additional Deductions
+      this.schedule1A, // OBBBA 2025: Additional Deductions
       this.schedule2,
       this.schedule3,
-      this.f4547,  // OBBBA 2025: Trump Account Elections
+      this.f4547, // OBBBA 2025: Trump Account Elections
       // Phase 1: High-Priority Forms
-      this.f8880,  // Saver's Credit
-      this.f1116,  // Foreign Tax Credit
-      this.f8606,  // Nondeductible IRAs
-      this.f5329,  // Additional Taxes on Retirement Plans
-      this.f8615,  // Kiddie Tax
-      this.f8801,  // Prior Year AMT Credit
-      this.f2210,  // Underpayment Penalty
-      this.f4868,  // Extension Request
-      this.f8839,  // Adoption Credit
-      this.f1040es,  // Estimated Tax for Individuals
-      this.f2106,  // Employee Business Expenses
+      this.f8880, // Saver's Credit
+      this.f1116, // Foreign Tax Credit
+      this.f8606, // Nondeductible IRAs
+      this.f5329, // Additional Taxes on Retirement Plans
+      this.f8615, // Kiddie Tax
+      this.f8801, // Prior Year AMT Credit
+      this.f2210, // Underpayment Penalty
+      this.f4868, // Extension Request
+      this.f8839, // Adoption Credit
+      this.f1040es, // Estimated Tax for Individuals
+      this.f2106, // Employee Business Expenses
       // Phase 2: Medium-Priority Forms
-      this.scheduleF,  // Farm Income
-      this.scheduleH,  // Household Employment Taxes
-      this.f4562,  // Depreciation and Amortization
-      this.f6252,  // Installment Sales
-      this.f8824,  // Like-Kind Exchanges
-      this.f4684,  // Casualties and Thefts
+      this.scheduleF, // Farm Income
+      this.scheduleH, // Household Employment Taxes
+      this.f4562, // Depreciation and Amortization
+      this.f6252, // Installment Sales
+      this.f8824, // Like-Kind Exchanges
+      this.f4684, // Casualties and Thefts
       // Phase 3: Specialized Forms
-      this.f8829,  // Business Use of Home
-      this.f6198,  // At-Risk Limitations
-      this.f3903,  // Moving Expenses (Military)
-      this.f8938,  // FATCA Foreign Financial Assets
-      this.scheduleJ,  // Farm Income Averaging
+      this.f8829, // Business Use of Home
+      this.f6198, // At-Risk Limitations
+      this.f3903, // Moving Expenses (Military)
+      this.f8938, // FATCA Foreign Financial Assets
+      this.scheduleJ, // Farm Income Averaging
       // Phase 4: Collection, Credits, Foreign Forms
-      this.f9465,  // Installment Agreement Request
-      this.f8379,  // Injured Spouse Allocation
-      this.f8862,  // Credits After Disallowance
-      this.f8582cr,  // Passive Activity Credit Limitations
-      this.f8833,  // Treaty-Based Return Position
-      this.f8843,  // Statement for Exempt Individuals
-      this.f8840,  // Closer Connection Exception
-      this.f8915f,  // Qualified Disaster Distributions
-      this.f4255,  // Recapture of Investment Credit
+      this.f9465, // Installment Agreement Request
+      this.f8379, // Injured Spouse Allocation
+      this.f8862, // Credits After Disallowance
+      this.f8582cr, // Passive Activity Credit Limitations
+      this.f8833, // Treaty-Based Return Position
+      this.f8843, // Statement for Exempt Individuals
+      this.f8840, // Closer Connection Exception
+      this.f8915f, // Qualified Disaster Distributions
+      this.f4255, // Recapture of Investment Credit
       // Phase 5: Additional Forms
-      this.f8941,  // Small Employer Health Insurance Credit
-      this.f8810,  // Corporate Passive Activity Loss
-      this.f7004,  // Business Extension
-      this.f843,  // Claim for Refund
-      this.f8868,  // Exempt Organization Extension
-      this.f2350,  // Extension for Citizens Abroad
+      this.f8941, // Small Employer Health Insurance Credit
+      this.f8810, // Corporate Passive Activity Loss
+      this.f7004, // Business Extension
+      this.f843, // Claim for Refund
+      this.f8868, // Exempt Organization Extension
+      this.f2350, // Extension for Citizens Abroad
       // Phase 6: Collection & Information Returns
-      this.f8809,  // Information Return Extension
-      this.f433a,  // Collection Statement for Individuals
-      this.f433b,  // Collection Statement for Businesses
+      this.f8809, // Information Return Extension
+      this.f433a, // Collection Statement for Individuals
+      this.f433b, // Collection Statement for Businesses
       // Phase 7: Foreign Forms & Retirement Plans
-      this.f656,  // Offer in Compromise
-      this.f5471,  // Foreign Corporation Information Return
-      this.f5472,  // Foreign-Owned US Corporation
-      this.f8865,  // Foreign Partnership
-      this.f8966,  // FATCA Certification
-      this.f5500,  // Employee Benefit Plan
-      this.f5500ez,  // One-Participant Plan
-      this.f5330,  // Excise Taxes on Retirement Plans
+      this.f656, // Offer in Compromise
+      this.f5471, // Foreign Corporation Information Return
+      this.f5472, // Foreign-Owned US Corporation
+      this.f8865, // Foreign Partnership
+      this.f8966, // FATCA Certification
+      this.f5500, // Employee Benefit Plan
+      this.f5500ez, // One-Participant Plan
+      this.f5330, // Excise Taxes on Retirement Plans
       // Phase 8: 1040 Variants
-      this.f1040sr,  // Senior Return
-      this.f1040nr,  // Non-Resident Alien Return
-      this.f1040ss,  // Self-Employment Tax for Territories
+      this.f1040sr, // Senior Return
+      this.f1040nr, // Non-Resident Alien Return
+      this.f1040ss, // Self-Employment Tax for Territories
       // Phase 9: Previously Imported but Not Instantiated
-      this.f2439,  // Undistributed Capital Gains
-      this.f2441,  // Child and Dependent Care Credit
-      this.f2555,  // Foreign Earned Income Exclusion
-      this.f4136,  // Credit for Federal Tax Paid on Fuels
-      this.f4137,  // SS/Medicare Tax on Unreported Tips
-      this.f4563,  // Exclusion of Income (American Samoa)
-      this.f8582,  // Passive Activity Loss Limitations
-      this.f8853,  // Archer MSAs and Long-Term Care
-      this.f8919,  // Uncollected SS/Medicare Tax on Wages
-      this.f8962,  // Premium Tax Credit (ACA)
-      this.f8863,  // American Opportunity/Lifetime Learning Credit
+      this.f2439, // Undistributed Capital Gains
+      this.f2441, // Child and Dependent Care Credit
+      this.f2555, // Foreign Earned Income Exclusion
+      this.f4136, // Credit for Federal Tax Paid on Fuels
+      this.f4137, // SS/Medicare Tax on Unreported Tips
+      this.f4563, // Exclusion of Income (American Samoa)
+      this.f8582, // Passive Activity Loss Limitations
+      this.f8853, // Archer MSAs and Long-Term Care
+      this.f8919, // Uncollected SS/Medicare Tax on Wages
+      this.f8962, // Premium Tax Credit (ACA)
+      this.f8863, // American Opportunity/Lifetime Learning Credit
       // Phase 10: Business Credits
-      this.f3468,  // Investment Credit
-      this.f3800,  // General Business Credit
-      this.f5884,  // Work Opportunity Credit
-      this.f6765,  // Research Credit
-      this.f8586,  // Low-Income Housing Credit
-      this.f8820,  // Orphan Drug Credit
-      this.f8826,  // Disabled Access Credit
-      this.f8835,  // Renewable Electricity Credit
-      this.f8844,  // Empowerment Zone Employment Credit
-      this.f8845,  // Indian Employment Credit
-      this.f8846,  // Employer-Provided Childcare Credit
-      this.f8864,  // Biodiesel and Renewable Diesel Credit
-      this.f8874,  // New Markets Credit
-      this.f8881,  // Small Employer Pension Startup Credit
-      this.f8882,  // Credit for Employer Social Security
-      this.f8932,  // Employer Differential Wage Payment Credit
-      this.f8933,  // Carbon Oxide Sequestration Credit
-      this.f8994,  // Paid Family and Medical Leave Credit
+      this.f3468, // Investment Credit
+      this.f3800, // General Business Credit
+      this.f5884, // Work Opportunity Credit
+      this.f6765, // Research Credit
+      this.f8586, // Low-Income Housing Credit
+      this.f8820, // Orphan Drug Credit
+      this.f8826, // Disabled Access Credit
+      this.f8835, // Renewable Electricity Credit
+      this.f8844, // Empowerment Zone Employment Credit
+      this.f8845, // Indian Employment Credit
+      this.f8846, // Employer-Provided Childcare Credit
+      this.f8864, // Biodiesel and Renewable Diesel Credit
+      this.f8874, // New Markets Credit
+      this.f8881, // Small Employer Pension Startup Credit
+      this.f8882, // Credit for Employer Social Security
+      this.f8932, // Employer Differential Wage Payment Credit
+      this.f8933, // Carbon Oxide Sequestration Credit
+      this.f8994, // Paid Family and Medical Leave Credit
       // Phase 9: Estate, Gift, Fiduciary, and Exempt Organization Forms
-      this.f706,  // Estate Tax Return
-      this.f709,  // Gift Tax Return
-      this.f1041,  // Fiduciary Income Tax Return
-      this.f990,  // Exempt Organization Return
-      this.f990ez,  // Short Form Exempt Organization
-      this.f990t,  // Exempt Organization Business Income Tax
-      this.f990pf,  // Private Foundation Return
-      this.fincen114,  // FBAR Report
+      this.f706, // Estate Tax Return
+      this.f709, // Gift Tax Return
+      this.f1041, // Fiduciary Income Tax Return
+      this.f990, // Exempt Organization Return
+      this.f990ez, // Short Form Exempt Organization
+      this.f990t, // Exempt Organization Business Income Tax
+      this.f990pf, // Private Foundation Return
+      this.fincen114, // FBAR Report
       // Phase 10: Additional International Forms
-      this.f3520,  // Foreign Trusts and Gifts
-      this.f3520a,  // Foreign Trust Annual Return
-      this.f8621,  // PFIC Annual Information
-      this.f8858,  // Foreign Disregarded Entity
-      this.f926,  // Return of Transferred Property to Foreign Corp
+      this.f3520, // Foreign Trusts and Gifts
+      this.f3520a, // Foreign Trust Annual Return
+      this.f8621, // PFIC Annual Information
+      this.f8858, // Foreign Disregarded Entity
+      this.f926, // Return of Transferred Property to Foreign Corp
       // Phase 11: Business Entity Schedules
-      this.scheduleK1065,  // Partners' Distributive Share (1065)
-      this.scheduleK1120S,  // Shareholders' Pro Rata Share (1120-S)
-      this.scheduleL,  // Balance Sheets
-      this.scheduleM1,  // Book-to-Tax Reconciliation
-      this.schedule990A,  // Public Charity Status (990)
-      this.scheduleK1_1041,  // Beneficiary's Share (1041)
-      this.f8283,  // Noncash Charitable Contributions
+      this.scheduleK1065, // Partners' Distributive Share (1065)
+      this.scheduleK1120S, // Shareholders' Pro Rata Share (1120-S)
+      this.scheduleL, // Balance Sheets
+      this.scheduleM1, // Book-to-Tax Reconciliation
+      this.schedule990A, // Public Charity Status (990)
+      this.scheduleK1_1041, // Beneficiary's Share (1041)
+      this.f8283, // Noncash Charitable Contributions
       // Phase 12: Additional Business Entity Schedules
-      this.scheduleM3,  // Net Income Reconciliation (Large Entities)
-      this.scheduleD1120,  // Corporate Capital Gains/Losses
-      this.scheduleC1120,  // Dividends Received Deduction
-      this.scheduleE1120,  // Compensation of Officers
-      this.scheduleJ1120,  // Corporate Tax Computation
-      this.scheduleB1065,  // Partnership Other Information
+      this.scheduleM3, // Net Income Reconciliation (Large Entities)
+      this.scheduleD1120, // Corporate Capital Gains/Losses
+      this.scheduleC1120, // Dividends Received Deduction
+      this.scheduleE1120, // Compensation of Officers
+      this.scheduleJ1120, // Corporate Tax Computation
+      this.scheduleB1065, // Partnership Other Information
       // Phase 13: Form 990 Schedules (Non-Profit)
-      this.schedule990B,  // Schedule of Contributors
-      this.schedule990C,  // Political Campaign and Lobbying Activities
-      this.schedule990D,  // Supplemental Financial Statements
-      this.schedule990G,  // Fundraising and Gaming Activities
-      this.schedule990J,  // Compensation Information
-      this.schedule990O,  // Supplemental Information
-      this.schedule990R,  // Related Organizations
+      this.schedule990B, // Schedule of Contributors
+      this.schedule990C, // Political Campaign and Lobbying Activities
+      this.schedule990D, // Supplemental Financial Statements
+      this.schedule990G, // Fundraising and Gaming Activities
+      this.schedule990J, // Compensation Information
+      this.schedule990O, // Supplemental Information
+      this.schedule990R, // Related Organizations
       // Phase 14: Form 1041 Schedules (Estates and Trusts)
-      this.schedule1041A,  // Charitable Deduction
-      this.schedule1041B,  // Income Distribution Deduction
-      this.schedule1041D,  // Capital Gains and Losses
-      this.schedule1041G,  // Tax Computation and Payments
-      this.schedule1041I,  // Alternative Minimum Tax
-      this.schedule1041J,  // Accumulation Distribution
+      this.schedule1041A, // Charitable Deduction
+      this.schedule1041B, // Income Distribution Deduction
+      this.schedule1041D, // Capital Gains and Losses
+      this.schedule1041G, // Tax Computation and Payments
+      this.schedule1041I, // Alternative Minimum Tax
+      this.schedule1041J, // Accumulation Distribution
       // Phase 15: Additional Tax Forms
-      this.f990n,  // e-Postcard for Small Exempt Organizations
-      this.f4720,  // Excise Taxes on Private Foundations
-      this.f941x,  // Adjusted Employment Tax Return
-      this.f943x,  // Adjusted Agricultural Employment Tax
-      this.f944x,  // Adjusted Annual Employment Tax
-      this.f945x,  // Adjusted Withholding Return
-      this.f1040x,  // Amended Individual Return
-      this.f1041a,  // Trust Charitable Amounts
-      this.f1041es,  // Estimated Tax for Estates/Trusts
+      this.f990n, // e-Postcard for Small Exempt Organizations
+      this.f4720, // Excise Taxes on Private Foundations
+      this.f941x, // Adjusted Employment Tax Return
+      this.f943x, // Adjusted Agricultural Employment Tax
+      this.f944x, // Adjusted Annual Employment Tax
+      this.f945x, // Adjusted Withholding Return
+      this.f1040x, // Amended Individual Return
+      this.f1041a, // Trust Charitable Amounts
+      this.f1041es, // Estimated Tax for Estates/Trusts
       // Phase 16: Additional Form 990 Schedules
-      this.schedule990F,  // Foreign Activities
-      this.schedule990I,  // Domestic Grants
-      this.schedule990K,  // Tax-Exempt Bonds
-      this.schedule990L,  // Interested Persons Transactions
-      this.schedule990M,  // Noncash Contributions
-      this.schedule990N,  // Liquidation/Dissolution
+      this.schedule990F, // Foreign Activities
+      this.schedule990I, // Domestic Grants
+      this.schedule990K, // Tax-Exempt Bonds
+      this.schedule990L, // Interested Persons Transactions
+      this.schedule990M, // Noncash Contributions
+      this.schedule990N, // Liquidation/Dissolution
       // Phase 17: 1099 Series and Authorization Forms
-      this.f1099misc,  // Miscellaneous Income
-      this.f1099nec,  // Nonemployee Compensation
-      this.f1099k,  // Payment Card Transactions
-      this.f2848,  // Power of Attorney
-      this.f8821,  // Tax Information Authorization
-      this.f8879,  // IRS e-file Signature Authorization
-      this.f8332,  // Release of Claim to Exemption
-      this.f8453,  // E-file Transmittal
+      this.f1099misc, // Miscellaneous Income
+      this.f1099nec, // Nonemployee Compensation
+      this.f1099k, // Payment Card Transactions
+      this.f2848, // Power of Attorney
+      this.f8821, // Tax Information Authorization
+      this.f8879, // IRS e-file Signature Authorization
+      this.f8332, // Release of Claim to Exemption
+      this.f8453, // E-file Transmittal
       // Phase 18: Additional 1099 Series
-      this.f1099b,  // Broker Proceeds
-      this.f1099div,  // Dividends and Distributions
-      this.f1099int,  // Interest Income
-      this.f1099r,  // Retirement Distributions
-      this.f1099g,  // Government Payments
-      this.f1099s,  // Real Estate Transactions
-      this.f1099c,  // Cancellation of Debt
-      this.f1099q,  // Qualified Education Programs
-      this.f1099sa,  // HSA/MSA Distributions
+      this.f1099b, // Broker Proceeds
+      this.f1099div, // Dividends and Distributions
+      this.f1099int, // Interest Income
+      this.f1099r, // Retirement Distributions
+      this.f1099g, // Government Payments
+      this.f1099s, // Real Estate Transactions
+      this.f1099c, // Cancellation of Debt
+      this.f1099q, // Qualified Education Programs
+      this.f1099sa, // HSA/MSA Distributions
       // Phase 19: Withholding and Application Forms
-      this.w4,  // Employee's Withholding Certificate
-      this.w9,  // Request for Taxpayer ID
-      this.ss4,  // Application for EIN
+      this.w4, // Employee's Withholding Certificate
+      this.w9, // Request for Taxpayer ID
+      this.ss4, // Application for EIN
       // Phase 20: Remaining 1099 Series and Specialized Forms
-      this.w2g,  // Gambling Winnings
-      this.f1099a,  // Acquisition or Abandonment
-      this.f1099ltc,  // Long-Term Care Benefits
-      this.f56,  // Notice Concerning Fiduciary Relationship
-      this.f8822,  // Change of Address
-      this.f8958,  // Community Property Allocation
-      this.f8857,  // Innocent Spouse Relief
-      this.f4506,  // Request for Copy of Tax Return
-      this.f4506t,  // Request for Transcript
-      this.f8867,  // Paid Preparer's Due Diligence
-      this.w2c,  // Corrected W-2
-      this.f8948,  // Preparer Explanation for Not Filing Electronically
-      this.f8508,  // Request for Waiver From Filing Info Returns
-      this.f8822b  // Change of Address (Business)
+      this.w2g, // Gambling Winnings
+      this.f1099a, // Acquisition or Abandonment
+      this.f1099ltc, // Long-Term Care Benefits
+      this.f56, // Notice Concerning Fiduciary Relationship
+      this.f8822, // Change of Address
+      this.f8958, // Community Property Allocation
+      this.f8857, // Innocent Spouse Relief
+      this.f4506, // Request for Copy of Tax Return
+      this.f4506t, // Request for Transcript
+      this.f8867, // Paid Preparer's Due Diligence
+      this.w2c, // Corrected W-2
+      this.f8948, // Preparer Explanation for Not Filing Electronically
+      this.f8508, // Request for Waiver From Filing Info Returns
+      this.f8822b // Change of Address (Business)
     ]
     const res = _.compact(res1)
       .filter((f) => f.isNeeded())
@@ -1155,7 +1158,9 @@ export default class F1040 extends F1040Base {
   // OBBBA 2025: Line 10 now includes Schedule 1-A additional deductions
   l10 = (): number | undefined => {
     const schedule1Amount = this.schedule1.to1040Line10()
-    const schedule1AAmount = this.schedule1A.isNeeded() ? this.schedule1A.to1040() : 0
+    const schedule1AAmount = this.schedule1A.isNeeded()
+      ? this.schedule1A.to1040()
+      : 0
     return schedule1Amount + schedule1AAmount
   }
 
@@ -1168,7 +1173,7 @@ export default class F1040 extends F1040Base {
     } else {
       deduction = this.standardDeduction() ?? 0
     }
-    
+
     // OBBBA 2025: Add senior additional deduction ($6,000 per person 65+)
     // This is added to standard deduction OR itemized deductions
     // Source: docs/obbba/form-1040/STANDARD_DEDUCTION.md
@@ -1176,7 +1181,7 @@ export default class F1040 extends F1040Base {
       const seniorDeduction = this.schedule1A.seniorDeductionTo1040()
       deduction += seniorDeduction
     }
-    
+
     return deduction
   }
 

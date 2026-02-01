@@ -88,7 +88,10 @@ interface TaxLotSelectorProps {
   sharesToSell: number
   currentPrice: number
   saleDate?: Date
-  onSelectionChange: (selections: TaxLotSelection[], method: CostBasisMethod) => void
+  onSelectionChange: (
+    selections: TaxLotSelection[],
+    method: CostBasisMethod
+  ) => void
   defaultMethod?: CostBasisMethod
   isMutualFund?: boolean
 }
@@ -115,11 +118,13 @@ const TaxLotSelector = ({
     isMutualFund ? CostBasisMethod.AverageCost : defaultMethod
   )
   const [lotSelections, setLotSelections] = useState<LotSelectionState[]>(
-    lots.filter(l => l.remainingShares > 0).map(lot => ({
-      lotId: lot.id,
-      selected: false,
-      sharesToSell: 0
-    }))
+    lots
+      .filter((l) => l.remainingShares > 0)
+      .map((lot) => ({
+        lotId: lot.id,
+        selected: false,
+        sharesToSell: 0
+      }))
   )
 
   // Get previews with unrealized gains info
@@ -139,8 +144,8 @@ const TaxLotSelector = ({
         return selectLotsFIFO(lots, sharesToSell) // Use FIFO order for tracking
       case CostBasisMethod.SpecificID:
         return lotSelections
-          .filter(ls => ls.selected && ls.sharesToSell > 0)
-          .map(ls => ({
+          .filter((ls) => ls.selected && ls.sharesToSell > 0)
+          .map((ls) => ({
             lotId: ls.lotId,
             sharesFromLot: ls.sharesToSell
           }))
@@ -152,7 +157,13 @@ const TaxLotSelector = ({
   // Calculate tax impact preview
   const taxPreview = useMemo(() => {
     const proceeds = sharesToSell * currentPrice
-    return calculateSaleGainLoss(lots, autoSelections, saleDate, proceeds, method)
+    return calculateSaleGainLoss(
+      lots,
+      autoSelections,
+      saleDate,
+      proceeds,
+      method
+    )
   }, [lots, autoSelections, saleDate, sharesToSell, currentPrice, method])
 
   const handleMethodChange = (event: React.ChangeEvent<{ value: unknown }>) => {
@@ -161,9 +172,10 @@ const TaxLotSelector = ({
 
     // Reset selections when changing methods
     if (newMethod !== CostBasisMethod.SpecificID) {
-      const newSelections = method === CostBasisMethod.FIFO
-        ? selectLotsFIFO(lots, sharesToSell)
-        : method === CostBasisMethod.LIFO
+      const newSelections =
+        method === CostBasisMethod.FIFO
+          ? selectLotsFIFO(lots, sharesToSell)
+          : method === CostBasisMethod.LIFO
           ? selectLotsLIFO(lots, sharesToSell)
           : selectLotsFIFO(lots, sharesToSell)
       onSelectionChange(newSelections, newMethod)
@@ -171,21 +183,23 @@ const TaxLotSelector = ({
   }
 
   const handleLotToggle = (lotId: string) => {
-    setLotSelections(prev =>
-      prev.map(ls =>
+    setLotSelections((prev) =>
+      prev.map((ls) =>
         ls.lotId === lotId ? { ...ls, selected: !ls.selected } : ls
       )
     )
   }
 
   const handleSharesChange = (lotId: string, shares: number) => {
-    const lot = lots.find(l => l.id === lotId)
+    const lot = lots.find((l) => l.id === lotId)
     const maxShares = lot?.remainingShares ?? 0
     const validShares = Math.min(Math.max(0, shares), maxShares)
 
-    setLotSelections(prev =>
-      prev.map(ls =>
-        ls.lotId === lotId ? { ...ls, sharesToSell: validShares, selected: validShares > 0 } : ls
+    setLotSelections((prev) =>
+      prev.map((ls) =>
+        ls.lotId === lotId
+          ? { ...ls, sharesToSell: validShares, selected: validShares > 0 }
+          : ls
       )
     )
   }
@@ -203,7 +217,7 @@ const TaxLotSelector = ({
   }
 
   const getPreviewForLot = (lotId: string): TaxLotPreview | undefined => {
-    return lotPreviews.find(p => p.lot.id === lotId)
+    return lotPreviews.find((p) => p.lot.id === lotId)
   }
 
   const totalSelectedShares = autoSelections.reduce(
@@ -230,11 +244,12 @@ const TaxLotSelector = ({
               onChange={handleMethodChange}
               label="Cost Basis Method"
             >
-              {availableMethods.map(m => (
+              {availableMethods.map((m) => (
                 <MenuItem key={m} value={m}>
                   {m === CostBasisMethod.FIFO && 'FIFO (First In, First Out)'}
                   {m === CostBasisMethod.LIFO && 'LIFO (Last In, First Out)'}
-                  {m === CostBasisMethod.SpecificID && 'Specific Identification'}
+                  {m === CostBasisMethod.SpecificID &&
+                    'Specific Identification'}
                   {m === CostBasisMethod.AverageCost && 'Average Cost'}
                 </MenuItem>
               ))}
@@ -271,14 +286,17 @@ const TaxLotSelector = ({
           </TableHead>
           <TableBody>
             {lots
-              .filter(lot => lot.remainingShares > 0)
-              .map(lot => {
+              .filter((lot) => lot.remainingShares > 0)
+              .map((lot) => {
                 const preview = getPreviewForLot(lot.id)
-                const selection = autoSelections.find(s => s.lotId === lot.id)
-                const localSelection = lotSelections.find(ls => ls.lotId === lot.id)
-                const isSelected = method === CostBasisMethod.SpecificID
-                  ? localSelection?.selected ?? false
-                  : (selection?.sharesFromLot ?? 0) > 0
+                const selection = autoSelections.find((s) => s.lotId === lot.id)
+                const localSelection = lotSelections.find(
+                  (ls) => ls.lotId === lot.id
+                )
+                const isSelected =
+                  method === CostBasisMethod.SpecificID
+                    ? localSelection?.selected ?? false
+                    : (selection?.sharesFromLot ?? 0) > 0
 
                 return (
                   <TableRow
@@ -294,35 +312,50 @@ const TaxLotSelector = ({
                       </TableCell>
                     )}
                     <TableCell>{formatDate(lot.purchaseDate)}</TableCell>
-                    <TableCell align="right">{lot.remainingShares.toFixed(4)}</TableCell>
                     <TableCell align="right">
-                      <Currency value={lot.adjustedCostBasis / lot.shares} plain />
+                      {lot.remainingShares.toFixed(4)}
                     </TableCell>
                     <TableCell align="right">
                       <Currency
-                        value={(lot.adjustedCostBasis * lot.remainingShares) / lot.shares}
+                        value={lot.adjustedCostBasis / lot.shares}
                         plain
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <span className={
-                        (preview?.unrealizedGain ?? 0) >= 0
-                          ? classes.gain
-                          : classes.loss
-                      }>
+                      <Currency
+                        value={
+                          (lot.adjustedCostBasis * lot.remainingShares) /
+                          lot.shares
+                        }
+                        plain
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <span
+                        className={
+                          (preview?.unrealizedGain ?? 0) >= 0
+                            ? classes.gain
+                            : classes.loss
+                        }
+                      >
                         <Currency value={preview?.unrealizedGain ?? 0} />
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className={
-                        preview?.isLongTerm ? classes.longTerm : classes.shortTerm
-                      }>
+                      <span
+                        className={
+                          preview?.isLongTerm
+                            ? classes.longTerm
+                            : classes.shortTerm
+                        }
+                      >
                         {preview?.isLongTerm ? 'Long-term' : 'Short-term'}
-                        {!preview?.isLongTerm && preview?.daysUntilLongTerm !== undefined && (
-                          <Typography variant="caption" display="block">
-                            ({preview.daysUntilLongTerm} days to long-term)
-                          </Typography>
-                        )}
+                        {!preview?.isLongTerm &&
+                          preview?.daysUntilLongTerm !== undefined && (
+                            <Typography variant="caption" display="block">
+                              ({preview.daysUntilLongTerm} days to long-term)
+                            </Typography>
+                          )}
                       </span>
                     </TableCell>
                     {method === CostBasisMethod.SpecificID && (
@@ -333,7 +366,10 @@ const TaxLotSelector = ({
                           className={classes.sharesInput}
                           value={localSelection?.sharesToSell ?? 0}
                           onChange={(e) =>
-                            handleSharesChange(lot.id, parseFloat(e.target.value) || 0)
+                            handleSharesChange(
+                              lot.id,
+                              parseFloat(e.target.value) || 0
+                            )
                           }
                           inputProps={{
                             min: 0,
@@ -346,7 +382,9 @@ const TaxLotSelector = ({
                     )}
                     {method !== CostBasisMethod.SpecificID && (
                       <TableCell align="right">
-                        {selection?.sharesFromLot !== undefined ? selection.sharesFromLot.toFixed(4) : '-'}
+                        {selection?.sharesFromLot !== undefined
+                          ? selection.sharesFromLot.toFixed(4)
+                          : '-'}
                       </TableCell>
                     )}
                   </TableRow>
@@ -369,12 +407,15 @@ const TaxLotSelector = ({
             </Typography>
             <Typography
               variant="h6"
-              className={taxPreview.shortTermGain >= 0 ? classes.gain : classes.loss}
+              className={
+                taxPreview.shortTermGain >= 0 ? classes.gain : classes.loss
+              }
             >
               <Currency value={taxPreview.shortTermGain} />
             </Typography>
             <Typography variant="caption" color="textSecondary">
-              Cost Basis: <Currency value={taxPreview.shortTermCostBasis} plain />
+              Cost Basis:{' '}
+              <Currency value={taxPreview.shortTermCostBasis} plain />
               {' | '}
               Proceeds: <Currency value={taxPreview.shortTermProceeds} plain />
             </Typography>
@@ -386,12 +427,15 @@ const TaxLotSelector = ({
             </Typography>
             <Typography
               variant="h6"
-              className={taxPreview.longTermGain >= 0 ? classes.gain : classes.loss}
+              className={
+                taxPreview.longTermGain >= 0 ? classes.gain : classes.loss
+              }
             >
               <Currency value={taxPreview.longTermGain} />
             </Typography>
             <Typography variant="caption" color="textSecondary">
-              Cost Basis: <Currency value={taxPreview.longTermCostBasis} plain />
+              Cost Basis:{' '}
+              <Currency value={taxPreview.longTermCostBasis} plain />
               {' | '}
               Proceeds: <Currency value={taxPreview.longTermProceeds} plain />
             </Typography>
@@ -403,7 +447,9 @@ const TaxLotSelector = ({
             </Typography>
             <Typography
               variant="h5"
-              className={taxPreview.totalGain >= 0 ? classes.gain : classes.loss}
+              className={
+                taxPreview.totalGain >= 0 ? classes.gain : classes.loss
+              }
             >
               <Currency value={taxPreview.totalGain} />
             </Typography>
@@ -412,12 +458,13 @@ const TaxLotSelector = ({
       </Paper>
 
       {/* Validation */}
-      {totalSelectedShares !== sharesToSell && method === CostBasisMethod.SpecificID && (
-        <Alert severity="warning" style={{ marginTop: 16 }}>
-          Selected shares ({totalSelectedShares.toFixed(4)}) do not match shares to sell ({sharesToSell}).
-          Please adjust your selection.
-        </Alert>
-      )}
+      {totalSelectedShares !== sharesToSell &&
+        method === CostBasisMethod.SpecificID && (
+          <Alert severity="warning" style={{ marginTop: 16 }}>
+            Selected shares ({totalSelectedShares.toFixed(4)}) do not match
+            shares to sell ({sharesToSell}). Please adjust your selection.
+          </Alert>
+        )}
 
       {taxPreview.isWashSale && (
         <Alert severity="info" style={{ marginTop: 16 }}>

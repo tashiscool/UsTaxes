@@ -210,11 +210,26 @@ type AddCredit = Save<typeof ActionName.ADD_CREDIT, Credit>
 type EditCredit = Save<typeof ActionName.EDIT_CREDIT, EditCreditAction>
 type RemoveCredit = Save<typeof ActionName.REMOVE_CREDIT, number>
 // OBBBA 2025 action types
-type SetOvertimeIncome = Save<typeof ActionName.SET_OVERTIME_INCOME, OvertimeIncome | undefined>
-type SetTipIncome = Save<typeof ActionName.SET_TIP_INCOME, TipIncome | undefined>
-type SetAutoLoanInterest = Save<typeof ActionName.SET_AUTO_LOAN_INTEREST, AutoLoanInterest | undefined>
-type AddTrumpAccount = Save<typeof ActionName.ADD_TRUMP_ACCOUNT, TrumpSavingsAccountDateString>
-type EditTrumpAccount = Save<typeof ActionName.EDIT_TRUMP_ACCOUNT, EditTrumpAccountAction>
+type SetOvertimeIncome = Save<
+  typeof ActionName.SET_OVERTIME_INCOME,
+  OvertimeIncome | undefined
+>
+type SetTipIncome = Save<
+  typeof ActionName.SET_TIP_INCOME,
+  TipIncome | undefined
+>
+type SetAutoLoanInterest = Save<
+  typeof ActionName.SET_AUTO_LOAN_INTEREST,
+  AutoLoanInterest | undefined
+>
+type AddTrumpAccount = Save<
+  typeof ActionName.ADD_TRUMP_ACCOUNT,
+  TrumpSavingsAccountDateString
+>
+type EditTrumpAccount = Save<
+  typeof ActionName.EDIT_TRUMP_ACCOUNT,
+  EditTrumpAccountAction
+>
 type RemoveTrumpAccount = Save<typeof ActionName.REMOVE_TRUMP_ACCOUNT, number>
 
 // Prior Year Import action type
@@ -222,24 +237,55 @@ export interface PriorYearImportData {
   sourceYear: TaxYear
   data: Partial<InformationDateString>
 }
-type ImportPriorYearData = Save<typeof ActionName.IMPORT_PRIOR_YEAR_DATA, PriorYearImportData>
+type ImportPriorYearData = Save<
+  typeof ActionName.IMPORT_PRIOR_YEAR_DATA,
+  PriorYearImportData
+>
 
 // Brokerage Import action type
 export interface BrokerageImportData {
   brokerageType: string
   transactions: Asset<Date>[]
 }
-type ImportBrokerageTransactions = Save<typeof ActionName.IMPORT_BROKERAGE_TRANSACTIONS, BrokerageImportData>
+type ImportBrokerageTransactions = Save<
+  typeof ActionName.IMPORT_BROKERAGE_TRANSACTIONS,
+  BrokerageImportData
+>
 // Local Tax action type
-type SetLocalTaxInfo = Save<typeof ActionName.SET_LOCAL_TAX_INFO, LocalTaxInfo | undefined>
+type SetLocalTaxInfo = Save<
+  typeof ActionName.SET_LOCAL_TAX_INFO,
+  LocalTaxInfo | undefined
+>
 
 // Cost Basis Tracking action types
-type AddInvestmentTransaction = Save<typeof ActionName.ADD_INVESTMENT_TRANSACTION, StockTransactionDateString>
-type EditInvestmentTransaction = Save<typeof ActionName.EDIT_INVESTMENT_TRANSACTION, { index: number; value: StockTransactionDateString }>
-type RemoveInvestmentTransaction = Save<typeof ActionName.REMOVE_INVESTMENT_TRANSACTION, number>
-type UpdatePortfolio = Save<typeof ActionName.UPDATE_PORTFOLIO, CostBasisPortfolioDateString>
-type RecordSale = Save<typeof ActionName.RECORD_SALE, { transaction: StockTransactionDateString; lotSelections: TaxLotSelection[]; method: CostBasisMethod }>
-type ApplyStockSplit = Save<typeof ActionName.APPLY_STOCK_SPLIT, { symbol: string; splitRatio: number; date: string }>
+type AddInvestmentTransaction = Save<
+  typeof ActionName.ADD_INVESTMENT_TRANSACTION,
+  StockTransactionDateString
+>
+type EditInvestmentTransaction = Save<
+  typeof ActionName.EDIT_INVESTMENT_TRANSACTION,
+  { index: number; value: StockTransactionDateString }
+>
+type RemoveInvestmentTransaction = Save<
+  typeof ActionName.REMOVE_INVESTMENT_TRANSACTION,
+  number
+>
+type UpdatePortfolio = Save<
+  typeof ActionName.UPDATE_PORTFOLIO,
+  CostBasisPortfolioDateString
+>
+type RecordSale = Save<
+  typeof ActionName.RECORD_SALE,
+  {
+    transaction: StockTransactionDateString
+    lotSelections: TaxLotSelection[]
+    method: CostBasisMethod
+  }
+>
+type ApplyStockSplit = Save<
+  typeof ActionName.APPLY_STOCK_SPLIT,
+  { symbol: string; splitRatio: number; date: string }
+>
 
 export type Actions =
   | SaveRefundInfo

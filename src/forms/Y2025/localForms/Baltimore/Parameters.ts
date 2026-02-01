@@ -69,7 +69,7 @@ const parameters = {
     // Maryland provides earned income credit
     earnedIncomeCredit: {
       statePercentage: 0.45, // 45% of federal EITC
-      refundablePercentage: 0.50 // 50% is refundable
+      refundablePercentage: 0.5 // 50% is refundable
     },
     // Poverty level credit
     povertyLevelCredit: {

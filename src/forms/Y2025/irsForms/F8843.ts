@@ -23,10 +23,15 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
  *           Teachers/trainees exempt for first 2 years in any 6-year period
  */
 
-export type ExemptCategory = 'student' | 'teacher' | 'trainee' | 'athlete' | 'medical'
+export type ExemptCategory =
+  | 'student'
+  | 'teacher'
+  | 'trainee'
+  | 'athlete'
+  | 'medical'
 
 export interface ExemptIndividualInfo {
-  visaType: string  // F-1, J-1, M-1, Q-1, etc.
+  visaType: string // F-1, J-1, M-1, Q-1, etc.
   category: ExemptCategory
   countryOfCitizenship: string
   countryOfTaxResidence: string
@@ -68,7 +73,9 @@ export default class F8843 extends F1040Attachment {
   }
 
   exemptInfo = (): ExemptIndividualInfo | undefined => {
-    return this.f1040.info.exemptIndividualInfo as ExemptIndividualInfo | undefined
+    return this.f1040.info.exemptIndividualInfo as
+      | ExemptIndividualInfo
+      | undefined
   }
 
   // Part I - General Information
@@ -87,13 +94,14 @@ export default class F8843 extends F1040Attachment {
   l2Country = (): string => this.exemptInfo()?.passportCountry ?? ''
 
   // Line 3a: Date of US arrival
-  l3a = (): string => this.exemptInfo()?.usEntryDate?.toLocaleDateString() ?? ''
+  l3a = (): string => this.exemptInfo()?.usEntryDate.toLocaleDateString() ?? ''
 
   // Line 3b: Current immigration status
   l3b = (): string => this.exemptInfo()?.currentImmigrationStatus ?? ''
 
   // Line 3c: Status change date (if applicable)
-  l3c = (): string => this.exemptInfo()?.statusChangeDate?.toLocaleDateString() ?? ''
+  l3c = (): string =>
+    this.exemptInfo()?.statusChangeDate?.toLocaleDateString() ?? ''
 
   // Part II - Teachers and Trainees
 
@@ -120,7 +128,7 @@ export default class F8843 extends F1040Attachment {
   // Line 5: Prior years in teacher/trainee status
   l5Years = (): string => {
     const priorYears = this.exemptInfo()?.priorYearsInUS ?? []
-    return priorYears.map(y => y.year.toString()).join(', ')
+    return priorYears.map((y) => y.year.toString()).join(', ')
   }
 
   // Part III - Students
@@ -142,7 +150,8 @@ export default class F8843 extends F1040Attachment {
   l7 = (): string => this.exemptInfo()?.fieldOfStudy ?? ''
 
   // Line 8: Academic level
-  l8Undergrad = (): boolean => this.exemptInfo()?.academicLevel === 'undergraduate'
+  l8Undergrad = (): boolean =>
+    this.exemptInfo()?.academicLevel === 'undergraduate'
   l8Graduate = (): boolean => this.exemptInfo()?.academicLevel === 'graduate'
   l8PostDoc = (): boolean => this.exemptInfo()?.academicLevel === 'postdoctoral'
   l8Other = (): boolean => this.exemptInfo()?.academicLevel === 'other'
@@ -150,8 +159,8 @@ export default class F8843 extends F1040Attachment {
   // Line 9: Prior years in student status (within last 6 years)
   l9Years = (): string => {
     const priorYears = this.exemptInfo()?.priorYearsInUS ?? []
-    const recentYears = priorYears.filter(y => y.year >= 2019)  // Last 6 years
-    return recentYears.map(y => y.year.toString()).join(', ')
+    const recentYears = priorYears.filter((y) => y.year >= 2019) // Last 6 years
+    return recentYears.map((y) => y.year.toString()).join(', ')
   }
 
   // Part IV - Professional Athletes

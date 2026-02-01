@@ -55,7 +55,7 @@ export default class Schedule1041I extends F1040Attachment {
   }
 
   schedule1041IData = (): Schedule1041IData | undefined => {
-    return undefined  // Would be populated from estate/trust data
+    return undefined // Would be populated from estate/trust data
   }
 
   // Part I: Estate's or Trust's Share of AMT Items
@@ -64,7 +64,8 @@ export default class Schedule1041I extends F1040Attachment {
   l1 = (): number => this.schedule1041IData()?.taxableIncome ?? 0
 
   // Line 2: Interest on private activity bonds
-  l2 = (): number => this.schedule1041IData()?.interestOnPrivateActivityBonds ?? 0
+  l2 = (): number =>
+    this.schedule1041IData()?.interestOnPrivateActivityBonds ?? 0
 
   // Line 3: Depreciation adjustment
   l3 = (): number => this.schedule1041IData()?.depreciationAdjustment ?? 0
@@ -85,20 +86,22 @@ export default class Schedule1041I extends F1040Attachment {
   l8 = (): number => this.schedule1041IData()?.taxPreferenceItems ?? 0
 
   // Line 9: Alternative tax net operating loss deduction
-  l9 = (): number => 0  // Calculated from prior year losses
+  l9 = (): number => 0 // Calculated from prior year losses
 
   // Line 10: Alternative minimum taxable income
   l10 = (): number => {
-    return sumFields([
-      this.l1(),
-      this.l2(),
-      this.l3(),
-      this.l4(),
-      this.l5(),
-      this.l6(),
-      this.l7(),
-      this.l8()
-    ]) - this.l9()
+    return (
+      sumFields([
+        this.l1(),
+        this.l2(),
+        this.l3(),
+        this.l4(),
+        this.l5(),
+        this.l6(),
+        this.l7(),
+        this.l8()
+      ]) - this.l9()
+    )
   }
 
   // Part II: Income Distribution Deduction on a Minimum Tax Basis
@@ -136,7 +139,10 @@ export default class Schedule1041I extends F1040Attachment {
     if (amount <= AMT_28_THRESHOLD) {
       return Math.round(amount * AMT_RATE_26)
     } else {
-      return Math.round(AMT_28_THRESHOLD * AMT_RATE_26 + (amount - AMT_28_THRESHOLD) * AMT_RATE_28)
+      return Math.round(
+        AMT_28_THRESHOLD * AMT_RATE_26 +
+          (amount - AMT_28_THRESHOLD) * AMT_RATE_28
+      )
     }
   }
 
@@ -149,7 +155,7 @@ export default class Schedule1041I extends F1040Attachment {
   l27 = (): number => Math.max(0, this.l25() - this.l26())
 
   // Line 28: Regular tax (from Schedule G)
-  l28 = (): number => 0  // Would come from Schedule G
+  l28 = (): number => 0 // Would come from Schedule G
 
   // Line 29: Alternative minimum tax
   l29 = (): number => Math.max(0, this.l27() - this.l28())

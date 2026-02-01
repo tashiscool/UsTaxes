@@ -199,7 +199,8 @@ export default class ScheduleL extends F1040Attachment {
   // Balance check
   isBalanced = (): boolean => {
     return (
-      this.totalAssetsBeginning() === this.totalLiabilitiesAndCapitalBeginning() &&
+      this.totalAssetsBeginning() ===
+        this.totalLiabilitiesAndCapitalBeginning() &&
       this.totalAssetsEnding() === this.totalLiabilitiesAndCapitalEnding()
     )
   }

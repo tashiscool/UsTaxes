@@ -64,12 +64,7 @@ const parameters = {
     // Frequency of employer remittance
     remittanceFrequency: 'monthly' as const,
     // Self-employed estimated payment quarters
-    estimatedPaymentDates: [
-      'April 15',
-      'June 15',
-      'September 15',
-      'January 15'
-    ]
+    estimatedPaymentDates: ['April 15', 'June 15', 'September 15', 'January 15']
   },
 
   // Credits

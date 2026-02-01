@@ -296,8 +296,12 @@ class SoapEnvelopeBuilder {
     if (this.credentials.username && this.credentials.password) {
       securityContent += `
       <wsse:UsernameToken wsu:Id="UT-${this.messageId}">
-        <wsse:Username>${this.escapeXml(this.credentials.username)}</wsse:Username>
-        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${this.escapeXml(this.credentials.password)}</wsse:Password>
+        <wsse:Username>${this.escapeXml(
+          this.credentials.username
+        )}</wsse:Username>
+        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">${this.escapeXml(
+          this.credentials.password
+        )}</wsse:Password>
       </wsse:UsernameToken>`
     }
 
@@ -307,7 +311,10 @@ class SoapEnvelopeBuilder {
         EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary"
         ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"
         wsu:Id="X509-${this.messageId}">
-        ${this.credentials.certificate.replace(/-----BEGIN CERTIFICATE-----|-----END CERTIFICATE-----|\n/g, '')}
+        ${this.credentials.certificate.replace(
+          /-----BEGIN CERTIFICATE-----|-----END CERTIFICATE-----|\n/g,
+          ''
+        )}
       </wsse:BinarySecurityToken>`
     }
 
@@ -430,10 +437,7 @@ class SoapResponseParser {
   /**
    * Extract an attribute value from an element
    */
-  extractAttribute(
-    tagName: string,
-    attrName: string
-  ): string | undefined {
+  extractAttribute(tagName: string, attrName: string): string | undefined {
     const pattern = new RegExp(
       `<(?:[^:]+:)?${tagName}[^>]*${attrName}="([^"]*)"`,
       'i'
@@ -453,7 +457,7 @@ class SoapResponseParser {
 class AuditLogger {
   private enabled: boolean
 
-  constructor(enabled: boolean = true) {
+  constructor(enabled = true) {
     this.enabled = enabled
   }
 
@@ -462,14 +466,26 @@ class AuditLogger {
    */
   private sanitize(data: string): string {
     return data
-      .replace(/<wsse:Password[^>]*>[^<]*<\/wsse:Password>/gi, '<wsse:Password>[REDACTED]</wsse:Password>')
-      .replace(/<Password[^>]*>[^<]*<\/Password>/gi, '<Password>[REDACTED]</Password>')
+      .replace(
+        /<wsse:Password[^>]*>[^<]*<\/wsse:Password>/gi,
+        '<wsse:Password>[REDACTED]</wsse:Password>'
+      )
+      .replace(
+        /<Password[^>]*>[^<]*<\/Password>/gi,
+        '<Password>[REDACTED]</Password>'
+      )
       .replace(/<SSN>[^<]*<\/SSN>/gi, '<SSN>[REDACTED]</SSN>')
       .replace(/<TIN>[^<]*<\/TIN>/gi, '<TIN>[REDACTED]</TIN>')
-      .replace(/<TaxpayerTin>[^<]*<\/TaxpayerTin>/gi, '<TaxpayerTin>[REDACTED]</TaxpayerTin>')
+      .replace(
+        /<TaxpayerTin>[^<]*<\/TaxpayerTin>/gi,
+        '<TaxpayerTin>[REDACTED]</TaxpayerTin>'
+      )
       .replace(/\d{3}-\d{2}-\d{4}/g, 'XXX-XX-XXXX')
       .replace(/\d{2}-\d{7}/g, 'XX-XXXXXXX')
-      .replace(/<BinarySecurityToken[^>]*>[^<]*<\/BinarySecurityToken>/gi, '<BinarySecurityToken>[REDACTED]</BinarySecurityToken>')
+      .replace(
+        /<BinarySecurityToken[^>]*>[^<]*<\/BinarySecurityToken>/gi,
+        '<BinarySecurityToken>[REDACTED]</BinarySecurityToken>'
+      )
   }
 
   /**
@@ -511,11 +527,7 @@ class AuditLogger {
   /**
    * Log error
    */
-  logError(
-    action: string,
-    error: Error,
-    messageId: string
-  ): void {
+  logError(action: string, error: Error, messageId: string): void {
     if (!this.enabled) return
 
     log.error(`[MeF Error] MessageId: ${messageId}`)
@@ -576,10 +588,7 @@ export class MeFClient {
   /**
    * Execute SOAP request with retry logic
    */
-  private async executeRequest(
-    action: string,
-    body: string
-  ): Promise<string> {
+  private async executeRequest(action: string, body: string): Promise<string> {
     const messageId = this.generateMessageId()
     const endpoint = this.getEndpoint()
     const builder = new SoapEnvelopeBuilder(this.config.credentials)
@@ -610,17 +619,12 @@ export class MeFClient {
         const parser = new SoapResponseParser(response.body)
         if (parser.hasFault()) {
           const fault = parser.extractFault()
-          throw new MeFError(
-            fault.faultString,
-            'SOAPFault',
-            fault.faultCode,
-            {
-              soapFaultCode: fault.faultCode,
-              soapFaultString: fault.faultString,
-              details: fault.detail,
-              retryable: this.isFaultRetryable(fault.faultCode)
-            }
-          )
+          throw new MeFError(fault.faultString, 'SOAPFault', fault.faultCode, {
+            soapFaultCode: fault.faultCode,
+            soapFaultString: fault.faultString,
+            details: fault.detail,
+            retryable: this.isFaultRetryable(fault.faultCode)
+          })
         }
 
         return response.body
@@ -629,7 +633,9 @@ export class MeFClient {
         this.auditLogger.logError(action, lastError, messageId)
 
         const isRetryable =
-          error instanceof MeFError ? error.retryable : this.isRetryableError(error)
+          error instanceof MeFError
+            ? error.retryable
+            : this.isRetryableError(error)
 
         if (!isRetryable || attempt >= this.config.retryAttempts) {
           throw error
@@ -653,10 +659,7 @@ export class MeFClient {
     action: string
   ): Promise<{ ok: boolean; status: number; body: string }> {
     const controller = new AbortController()
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      this.config.timeout
-    )
+    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout)
 
     try {
       const response = await fetch(endpoint, {
@@ -680,12 +683,9 @@ export class MeFClient {
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new MeFError(
-          'Request timed out',
-          'Timeout',
-          'TIMEOUT',
-          { retryable: true }
-        )
+        throw new MeFError('Request timed out', 'Timeout', 'TIMEOUT', {
+          retryable: true
+        })
       }
       throw new MeFError(
         `Network error: ${error instanceof Error ? error.message : 'Unknown'}`,
@@ -715,12 +715,10 @@ export class MeFClient {
     }
 
     if (response.status >= 500) {
-      return new MeFError(
-        'Server error',
-        'System',
-        `HTTP_${response.status}`,
-        { details: response.body, retryable: true }
-      )
+      return new MeFError('Server error', 'System', `HTTP_${response.status}`, {
+        details: response.body,
+        retryable: true
+      })
     }
 
     return new MeFError(
@@ -865,13 +863,17 @@ export class MeFClient {
     }
 
     const body = `
-      <mef:SessionId>${this.sessionId}</mef:SessionId>
+      <mef:SessionId>${this.sessionId ?? ''}</mef:SessionId>
       <mef:SubmissionId>${submission.submissionId}</mef:SubmissionId>
       <mef:TaxYear>${submission.taxYear}</mef:TaxYear>
       <mef:ReturnType>${submission.returnType}</mef:ReturnType>
       <mef:ReturnData>${submission.returnData}</mef:ReturnData>
       <mef:TaxpayerTin>${submission.taxpayerTin}</mef:TaxpayerTin>
-      ${stateSubmissionsXml ? `<mef:StateSubmissions>${stateSubmissionsXml}</mef:StateSubmissions>` : ''}
+      ${
+        stateSubmissionsXml
+          ? `<mef:StateSubmissions>${stateSubmissionsXml}</mef:StateSubmissions>`
+          : ''
+      }
     `
 
     const response = await this.executeRequest('SubmitReturn', body)
@@ -915,8 +917,9 @@ export class MeFClient {
       const errorMessage =
         errorParser.extractElement('ErrorMessage') || 'Unknown error'
       const errorCategory =
-        (errorParser.extractElement('ErrorCategory') as SubmissionError['errorCategory']) ||
-        'System'
+        (errorParser.extractElement(
+          'ErrorCategory'
+        ) as SubmissionError['errorCategory']) || 'System'
       const xpath = errorParser.extractElement('XPath')
 
       errors.push({
@@ -939,7 +942,7 @@ export class MeFClient {
     }
 
     const body = `
-      <mef:SessionId>${this.sessionId}</mef:SessionId>
+      <mef:SessionId>${this.sessionId ?? ''}</mef:SessionId>
       <mef:SubmissionId>${submissionId}</mef:SubmissionId>
     `
 
@@ -956,7 +959,7 @@ export class MeFClient {
     }
 
     const body = `
-      <mef:SessionId>${this.sessionId}</mef:SessionId>
+      <mef:SessionId>${this.sessionId ?? ''}</mef:SessionId>
       <mef:SubmissionId>${submissionId}</mef:SubmissionId>
     `
 
@@ -986,7 +989,7 @@ export class MeFClient {
     }
 
     const body = `
-      <mef:SessionId>${this.sessionId}</mef:SessionId>
+      <mef:SessionId>${this.sessionId ?? ''}</mef:SessionId>
     `
 
     const response = await this.executeRequest('GetNewAcknowledgments', body)
@@ -998,7 +1001,7 @@ export class MeFClient {
       try {
         acknowledgments.push(this.parseAcknowledgment(ackXml))
       } catch (error) {
-        log.warn(`Failed to parse acknowledgment: ${error}`)
+        log.warn(`Failed to parse acknowledgment: ${String(error)}`)
       }
     }
 
@@ -1039,8 +1042,9 @@ export class MeFClient {
           errorParser.extractElement('ErrorMessage') || 'Unknown error',
         ruleNumber: errorParser.extractElement('RuleNumber'),
         severity:
-          (errorParser.extractElement('Severity') as AcknowledgmentError['severity']) ||
-          'Error'
+          (errorParser.extractElement(
+            'Severity'
+          ) as AcknowledgmentError['severity']) || 'Error'
       })
     }
 
@@ -1082,7 +1086,7 @@ export class MeFClient {
     }
 
     const body = `
-      <mef:SessionId>${this.sessionId}</mef:SessionId>
+      <mef:SessionId>${this.sessionId ?? ''}</mef:SessionId>
       <mef:SubmissionId>${submissionId}</mef:SubmissionId>
     `
 

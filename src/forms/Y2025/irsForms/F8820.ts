@@ -30,8 +30,8 @@ import { Form8820Data } from 'ustaxes/core/data'
 
 // 2025 parameters
 const orphanDrugParams = {
-  creditRate: 0.25,              // 25% of qualified expenses
-  contractResearchRate: 0.65     // Only 65% of contract research qualifies
+  creditRate: 0.25, // 25% of qualified expenses
+  contractResearchRate: 0.65 // Only 65% of contract research qualifies
 }
 
 export default class F8820 extends F1040Attachment {
@@ -44,9 +44,10 @@ export default class F8820 extends F1040Attachment {
 
   hasOrphanDrugCredit = (): boolean => {
     const data = this.creditData()
-    return data !== undefined && (
-      data.qualifiedClinicalTestingExpenses > 0 ||
-      (data.passthrough8820Credit ?? 0) > 0
+    return (
+      data !== undefined &&
+      (data.qualifiedClinicalTestingExpenses > 0 ||
+        (data.passthrough8820Credit ?? 0) > 0)
     )
   }
 
@@ -74,7 +75,7 @@ export default class F8820 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1(),
     this.l2(),
     this.l3(),

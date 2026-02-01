@@ -104,12 +104,24 @@ export default class ScheduleK1065 extends F1040Attachment {
     if (k1s.length === 0) return undefined
 
     return {
-      ordinaryBusinessIncome: k1s.reduce((sum, k1) => sum + (k1.ordinaryBusinessIncome ?? 0), 0),
+      ordinaryBusinessIncome: k1s.reduce(
+        (sum, k1) => sum + (k1.ordinaryBusinessIncome ?? 0),
+        0
+      ),
       netRentalRealEstateIncome: 0,
       otherNetRentalIncome: 0,
-      guaranteedPaymentsServices: k1s.reduce((sum, k1) => sum + (k1.guaranteedPaymentsForServices ?? 0), 0),
-      guaranteedPaymentsCapital: k1s.reduce((sum, k1) => sum + (k1.guaranteedPaymentsForCapital ?? 0), 0),
-      interestIncome: k1s.reduce((sum, k1) => sum + (k1.interestIncome ?? 0), 0),
+      guaranteedPaymentsServices: k1s.reduce(
+        (sum, k1) => sum + (k1.guaranteedPaymentsForServices ?? 0),
+        0
+      ),
+      guaranteedPaymentsCapital: k1s.reduce(
+        (sum, k1) => sum + (k1.guaranteedPaymentsForCapital ?? 0),
+        0
+      ),
+      interestIncome: k1s.reduce(
+        (sum, k1) => sum + (k1.interestIncome ?? 0),
+        0
+      ),
       ordinaryDividends: 0,
       qualifiedDividends: 0,
       royalties: 0,
@@ -124,8 +136,14 @@ export default class ScheduleK1065 extends F1040Attachment {
       investmentInterestExpense: 0,
       section59eExpenditures: 0,
       otherDeductions: 0,
-      netEarningsSelfEmployment: k1s.reduce((sum, k1) =>
-        sum + (k1.selfEmploymentEarningsA ?? 0) + (k1.selfEmploymentEarningsB ?? 0) + (k1.selfEmploymentEarningsC ?? 0), 0),
+      netEarningsSelfEmployment: k1s.reduce(
+        (sum, k1) =>
+          sum +
+          (k1.selfEmploymentEarningsA ?? 0) +
+          (k1.selfEmploymentEarningsB ?? 0) +
+          (k1.selfEmploymentEarningsC ?? 0),
+        0
+      ),
       grossFarmingIncome: 0,
       grossNonfarmIncome: 0,
       lowIncomeHousingCreditPre2008: 0,
@@ -141,7 +159,10 @@ export default class ScheduleK1065 extends F1040Attachment {
       taxExemptInterest: 0,
       otherTaxExemptIncome: 0,
       nondeductibleExpenses: 0,
-      propertyDistributions: k1s.reduce((sum, k1) => sum + (k1.distributionsCodeAAmount ?? 0), 0),
+      propertyDistributions: k1s.reduce(
+        (sum, k1) => sum + (k1.distributionsCodeAAmount ?? 0),
+        0
+      ),
       cashDistributions: 0,
       foreignCountry: '',
       foreignGrossIncome: 0,

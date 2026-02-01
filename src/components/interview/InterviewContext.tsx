@@ -76,7 +76,10 @@ function interviewReducer(
 
     case 'NEXT_QUESTION': {
       const currentStep = interviewSteps[state.currentStepIndex]
-      const visibleQuestions = getVisibleQuestionsForStep(currentStep, state.answers)
+      const visibleQuestions = getVisibleQuestionsForStep(
+        currentStep,
+        state.answers
+      )
 
       if (state.currentQuestionIndex < visibleQuestions.length - 1) {
         // Move to next question in current step
@@ -120,7 +123,10 @@ function interviewReducer(
         // Move to previous step
         const newStepIndex = state.currentStepIndex - 1
         const previousStep = interviewSteps[newStepIndex]
-        const visibleQuestions = getVisibleQuestionsForStep(previousStep, state.answers)
+        const visibleQuestions = getVisibleQuestionsForStep(
+          previousStep,
+          state.answers
+        )
 
         return {
           ...state,
@@ -192,8 +198,12 @@ function interviewReducer(
         ...state,
         ...action.state,
         visitedSteps: new Set(action.state.visitedSteps || state.visitedSteps),
-        completedSteps: new Set(action.state.completedSteps || state.completedSteps),
-        skippedQuestions: new Set(action.state.skippedQuestions || state.skippedQuestions)
+        completedSteps: new Set(
+          action.state.completedSteps || state.completedSteps
+        ),
+        skippedQuestions: new Set(
+          action.state.skippedQuestions || state.skippedQuestions
+        )
       }
     }
 
@@ -207,7 +217,9 @@ function getVisibleQuestionsForStep(
   step: InterviewStep,
   answers: Record<string, unknown>
 ): InterviewQuestion[] {
-  return getQuestionsForStep(step.id).filter((q) => shouldShowQuestion(q, answers))
+  return getQuestionsForStep(step.id).filter((q) =>
+    shouldShowQuestion(q, answers)
+  )
 }
 
 // Context value type
@@ -258,7 +270,8 @@ export function InterviewProvider({
   )
 
   const visibleQuestions = useMemo(
-    () => (currentStep ? getVisibleQuestionsForStep(currentStep, state.answers) : []),
+    () =>
+      currentStep ? getVisibleQuestionsForStep(currentStep, state.answers) : [],
     [currentStep, state.answers]
   )
 
@@ -291,9 +304,12 @@ export function InterviewProvider({
     dispatch({ type: 'GO_TO_STEP', stepIndex })
   }, [])
 
-  const goToQuestion = useCallback((stepIndex: number, questionIndex: number) => {
-    dispatch({ type: 'GO_TO_QUESTION', stepIndex, questionIndex })
-  }, [])
+  const goToQuestion = useCallback(
+    (stepIndex: number, questionIndex: number) => {
+      dispatch({ type: 'GO_TO_QUESTION', stepIndex, questionIndex })
+    },
+    []
+  )
 
   const completeStep = useCallback((stepId: string) => {
     dispatch({ type: 'COMPLETE_STEP', stepId })
@@ -333,7 +349,8 @@ export function InterviewProvider({
   )
 
   const getAnswer = useCallback(
-    <T,>(questionId: string): T | undefined => state.answers[questionId] as T | undefined,
+    <T,>(questionId: string): T | undefined =>
+      state.answers[questionId] as T | undefined,
     [state.answers]
   )
 

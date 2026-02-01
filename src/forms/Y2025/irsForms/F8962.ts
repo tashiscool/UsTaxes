@@ -25,26 +25,26 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
 
 // 2025 Federal Poverty Level (continental US)
 const federalPovertyLevel = {
-  baseAmount: 15060,  // For 1 person
-  additionalPerson: 5380  // Additional per person
+  baseAmount: 15060, // For 1 person
+  additionalPerson: 5380 // Additional per person
 }
 
 // 2025 Premium Tax Credit income thresholds as % of FPL
 const ptcThresholds = {
-  minFplPercent: 100,   // Minimum income for credit
-  maxFplPercent: 400,   // Maximum income for credit (pre-ARP)
-  arpExtended: true,    // ARP enhancements extended through 2025
+  minFplPercent: 100, // Minimum income for credit
+  maxFplPercent: 400, // Maximum income for credit (pre-ARP)
+  arpExtended: true // ARP enhancements extended through 2025
 }
 
 // 2025 Applicable percentage table (ARP enhanced)
 // Income as % of FPL -> max premium % of income
 const applicablePercentageTable = [
-  { minFpl: 100, maxFpl: 150, startPercent: 0.00, endPercent: 0.00 },
-  { minFpl: 150, maxFpl: 200, startPercent: 0.00, endPercent: 0.02 },
+  { minFpl: 100, maxFpl: 150, startPercent: 0.0, endPercent: 0.0 },
+  { minFpl: 150, maxFpl: 200, startPercent: 0.0, endPercent: 0.02 },
   { minFpl: 200, maxFpl: 250, startPercent: 0.02, endPercent: 0.04 },
   { minFpl: 250, maxFpl: 300, startPercent: 0.04, endPercent: 0.06 },
   { minFpl: 300, maxFpl: 400, startPercent: 0.06, endPercent: 0.085 },
-  { minFpl: 400, maxFpl: Infinity, startPercent: 0.085, endPercent: 0.085 }  // ARP extension
+  { minFpl: 400, maxFpl: Infinity, startPercent: 0.085, endPercent: 0.085 } // ARP extension
 ]
 
 // Repayment limitation amounts (2025)
@@ -52,15 +52,15 @@ const repaymentLimits = {
   under200: { single: 375, other: 750 },
   under300: { single: 975, other: 1950 },
   under400: { single: 1625, other: 3250 },
-  over400: { single: Infinity, other: Infinity }  // No limit
+  over400: { single: Infinity, other: Infinity } // No limit
 }
 
 export interface MarketplaceCoverage {
-  month: number  // 1-12
+  month: number // 1-12
   enrollmentPremium: number
-  slcsp: number  // Second lowest cost silver plan
-  advancePayment: number  // APTC paid
-  coverageMonths: number  // Fraction of month covered (usually 1)
+  slcsp: number // Second lowest cost silver plan
+  advancePayment: number // APTC paid
+  coverageMonths: number // Fraction of month covered (usually 1)
 }
 
 interface MarketplacePolicyData {
@@ -83,7 +83,8 @@ export default class F8962 extends F1040Attachment {
   }
 
   marketplaceCoverage = (): MarketplaceCoverage[] => {
-    const policies = (this.f1040.info.healthInsuranceMarketplace ?? []) as MarketplacePolicyData[]
+    const policies = (this.f1040.info.healthInsuranceMarketplace ??
+      []) as MarketplacePolicyData[]
     const coverage: MarketplaceCoverage[] = []
 
     for (const policy of policies) {
@@ -110,9 +111,9 @@ export default class F8962 extends F1040Attachment {
 
   // Line 1: Tax family size (number of exemptions)
   l1 = (): number => {
-    let count = 1  // Primary taxpayer
+    let count = 1 // Primary taxpayer
     if (this.f1040.info.taxPayer.spouse) count++
-    count += (this.f1040.info.taxPayer.dependents?.length ?? 0)
+    count += this.f1040.info.taxPayer.dependents.length ?? 0
     return count
   }
 
@@ -134,8 +135,10 @@ export default class F8962 extends F1040Attachment {
   // Line 4: Federal poverty line for family size
   l4 = (): number => {
     const familySize = this.l1()
-    return federalPovertyLevel.baseAmount +
-      (Math.max(0, familySize - 1) * federalPovertyLevel.additionalPerson)
+    return (
+      federalPovertyLevel.baseAmount +
+      Math.max(0, familySize - 1) * federalPovertyLevel.additionalPerson
+    )
   }
 
   // Line 5: Household income as percentage of FPL
@@ -162,13 +165,16 @@ export default class F8962 extends F1040Attachment {
     for (const bracket of applicablePercentageTable) {
       if (fplPercent >= bracket.minFpl && fplPercent < bracket.maxFpl) {
         // Linear interpolation within bracket
-        const position = (fplPercent - bracket.minFpl) / (bracket.maxFpl - bracket.minFpl)
-        const percent = bracket.startPercent + (position * (bracket.endPercent - bracket.startPercent))
-        return Math.round(percent * 10000) / 10000  // Round to 4 decimal places
+        const position =
+          (fplPercent - bracket.minFpl) / (bracket.maxFpl - bracket.minFpl)
+        const percent =
+          bracket.startPercent +
+          position * (bracket.endPercent - bracket.startPercent)
+        return Math.round(percent * 10000) / 10000 // Round to 4 decimal places
       }
     }
 
-    return 0.085  // Default max for high income
+    return 0.085 // Default max for high income
   }
 
   // Line 8a: Annual contribution amount (line 3 × line 7)
@@ -182,9 +188,11 @@ export default class F8962 extends F1040Attachment {
   // Lines 11-23: Monthly calculations (simplified to annual totals)
 
   // Get monthly premium data
-  getMonthlyData = (month: number): { premium: number; slcsp: number; advance: number } => {
+  getMonthlyData = (
+    month: number
+  ): { premium: number; slcsp: number; advance: number } => {
     const coverage = this.marketplaceCoverage()
-    const monthData = coverage.find(c => c.month === month)
+    const monthData = coverage.find((c) => c.month === month)
     return {
       premium: monthData?.enrollmentPremium ?? 0,
       slcsp: monthData?.slcsp ?? 0,
@@ -201,7 +209,7 @@ export default class F8962 extends F1040Attachment {
   // Line 13a-m: Monthly contribution (line 8b or actual if different)
   l13 = (month: number): number => {
     const slcsp = this.l12(month)
-    if (slcsp === 0) return 0  // No coverage this month
+    if (slcsp === 0) return 0 // No coverage this month
     return Math.min(this.l8b(), slcsp)
   }
 
@@ -220,28 +228,38 @@ export default class F8962 extends F1040Attachment {
 
   // Annual totals
   totalEnrollmentPremiums = (): number => {
-    return Array.from({ length: 12 }, (_, i) => this.l11(i + 1))
-      .reduce((sum, v) => sum + v, 0)
+    return Array.from({ length: 12 }, (_, i) => this.l11(i + 1)).reduce(
+      (sum, v) => sum + v,
+      0
+    )
   }
 
   totalSlcsp = (): number => {
-    return Array.from({ length: 12 }, (_, i) => this.l12(i + 1))
-      .reduce((sum, v) => sum + v, 0)
+    return Array.from({ length: 12 }, (_, i) => this.l12(i + 1)).reduce(
+      (sum, v) => sum + v,
+      0
+    )
   }
 
   totalMaxPtc = (): number => {
-    return Array.from({ length: 12 }, (_, i) => this.l14(i + 1))
-      .reduce((sum, v) => sum + v, 0)
+    return Array.from({ length: 12 }, (_, i) => this.l14(i + 1)).reduce(
+      (sum, v) => sum + v,
+      0
+    )
   }
 
   totalPtcAllowed = (): number => {
-    return Array.from({ length: 12 }, (_, i) => this.l15(i + 1))
-      .reduce((sum, v) => sum + v, 0)
+    return Array.from({ length: 12 }, (_, i) => this.l15(i + 1)).reduce(
+      (sum, v) => sum + v,
+      0
+    )
   }
 
   totalAptc = (): number => {
-    return Array.from({ length: 12 }, (_, i) => this.l16(i + 1))
-      .reduce((sum, v) => sum + v, 0)
+    return Array.from({ length: 12 }, (_, i) => this.l16(i + 1)).reduce(
+      (sum, v) => sum + v,
+      0
+    )
   }
 
   // Line 24: Total premium tax credit (sum of line 15 for all months)
@@ -251,7 +269,7 @@ export default class F8962 extends F1040Attachment {
   l25 = (): number => this.totalAptc()
 
   // Line 26: Compare line 24 and line 25
-  l26 = (): number => Math.max(0, this.l24() - this.l25())  // Net PTC
+  l26 = (): number => Math.max(0, this.l24() - this.l25()) // Net PTC
 
   // Line 27: Excess APTC (line 25 - line 24, if positive)
   l27 = (): number => Math.max(0, this.l25() - this.l24())
@@ -259,17 +277,24 @@ export default class F8962 extends F1040Attachment {
   // Line 28: Repayment limitation (based on income)
   l28 = (): number => {
     const fplPercent = this.l5()
-    const isSingle = this.f1040.info.taxPayer.filingStatus === FilingStatus.S ||
-                     this.f1040.info.taxPayer.filingStatus === FilingStatus.MFS
+    const isSingle =
+      this.f1040.info.taxPayer.filingStatus === FilingStatus.S ||
+      this.f1040.info.taxPayer.filingStatus === FilingStatus.MFS
 
     if (fplPercent < 200) {
-      return isSingle ? repaymentLimits.under200.single : repaymentLimits.under200.other
+      return isSingle
+        ? repaymentLimits.under200.single
+        : repaymentLimits.under200.other
     } else if (fplPercent < 300) {
-      return isSingle ? repaymentLimits.under300.single : repaymentLimits.under300.other
+      return isSingle
+        ? repaymentLimits.under300.single
+        : repaymentLimits.under300.other
     } else if (fplPercent < 400) {
-      return isSingle ? repaymentLimits.under400.single : repaymentLimits.under400.other
+      return isSingle
+        ? repaymentLimits.under400.single
+        : repaymentLimits.under400.other
     }
-    return Infinity  // No limit above 400% FPL
+    return Infinity // No limit above 400% FPL
   }
 
   // Line 29: Excess APTC repayment (smaller of line 27 or line 28)

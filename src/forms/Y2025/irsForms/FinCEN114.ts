@@ -44,7 +44,7 @@ export interface ForeignAccount {
   accountType: AccountType
   ownershipType: OwnershipType
   currencyCode: string
-  maximumValue: number  // Maximum value during calendar year (in USD)
+  maximumValue: number // Maximum value during calendar year (in USD)
   wasJointlyOwned: boolean
   numberOfJointOwners?: number
   jointOwnerNames?: string[]
@@ -60,7 +60,7 @@ export interface FinCEN114Info {
   firstName?: string
   middleName?: string
   entityName?: string
-  tin: string  // SSN or EIN
+  tin: string // SSN or EIN
   dateOfBirth?: Date
   address: string
   city: string
@@ -106,7 +106,9 @@ export default class FinCEN114 extends F1040Attachment {
     const info = this.fbarInfo()
     if (!info) return ''
     if (this.isEntity()) return info.entityName ?? ''
-    return `${info.lastName ?? ''}, ${info.firstName ?? ''} ${info.middleName ?? ''}`.trim()
+    return `${info.lastName ?? ''}, ${info.firstName ?? ''} ${
+      info.middleName ?? ''
+    }`.trim()
   }
 
   tin = (): string => this.fbarInfo()?.tin ?? ''
@@ -114,7 +116,8 @@ export default class FinCEN114 extends F1040Attachment {
 
   // Part II: Foreign Accounts
 
-  foreignAccounts = (): ForeignAccount[] => this.fbarInfo()?.foreignAccounts ?? []
+  foreignAccounts = (): ForeignAccount[] =>
+    this.fbarInfo()?.foreignAccounts ?? []
   numberOfAccounts = (): number => this.foreignAccounts().length
 
   // Calculate maximum aggregate value
@@ -129,38 +132,42 @@ export default class FinCEN114 extends F1040Attachment {
 
   // Accounts by type
   bankAccounts = (): ForeignAccount[] => {
-    return this.foreignAccounts().filter(a => a.accountType === 'bank')
+    return this.foreignAccounts().filter((a) => a.accountType === 'bank')
   }
 
   securitiesAccounts = (): ForeignAccount[] => {
-    return this.foreignAccounts().filter(a => a.accountType === 'securities')
+    return this.foreignAccounts().filter((a) => a.accountType === 'securities')
   }
 
   otherAccounts = (): ForeignAccount[] => {
-    return this.foreignAccounts().filter(a => a.accountType === 'other')
+    return this.foreignAccounts().filter((a) => a.accountType === 'other')
   }
 
   // Accounts by ownership type
   financialInterestAccounts = (): ForeignAccount[] => {
-    return this.foreignAccounts().filter(a =>
-      a.ownershipType === 'financialInterest' || a.ownershipType === 'both'
+    return this.foreignAccounts().filter(
+      (a) =>
+        a.ownershipType === 'financialInterest' || a.ownershipType === 'both'
     )
   }
 
   signatureAuthorityAccounts = (): ForeignAccount[] => {
-    return this.foreignAccounts().filter(a =>
-      a.ownershipType === 'signatureAuthority' || a.ownershipType === 'both'
+    return this.foreignAccounts().filter(
+      (a) =>
+        a.ownershipType === 'signatureAuthority' || a.ownershipType === 'both'
     )
   }
 
   // Joint accounts
   jointAccounts = (): ForeignAccount[] => {
-    return this.foreignAccounts().filter(a => a.wasJointlyOwned)
+    return this.foreignAccounts().filter((a) => a.wasJointlyOwned)
   }
 
   // Countries with accounts
   countriesWithAccounts = (): string[] => {
-    const countries = new Set(this.foreignAccounts().map(a => a.institutionCountry))
+    const countries = new Set(
+      this.foreignAccounts().map((a) => a.institutionCountry)
+    )
     return Array.from(countries)
   }
 

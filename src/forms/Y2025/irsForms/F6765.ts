@@ -85,7 +85,7 @@ export default class F6765 extends F1040Attachment {
   l13 = (): number => Math.max(0, this.l9() - this.l12())
 
   // Line 14: Multiply line 13 by 20%
-  l14 = (): number => Math.round(this.l13() * 0.20)
+  l14 = (): number => Math.round(this.l13() * 0.2)
 
   // Line 15: Add lines 1, 4, and 14 (regular credit)
   l15 = (): number => this.l1() + this.l4() + this.l14()
@@ -107,7 +107,7 @@ export default class F6765 extends F1040Attachment {
   l29 = (): number => Math.round(this.l28() / 3)
 
   // Line 30: Multiply line 29 by 50%
-  l30 = (): number => Math.round(this.l29() * 0.50)
+  l30 = (): number => Math.round(this.l29() * 0.5)
 
   // Line 31: Subtract line 30 from line 24
   l31 = (): number => Math.max(0, this.l24() - this.l30())
@@ -116,7 +116,8 @@ export default class F6765 extends F1040Attachment {
   l32 = (): number => Math.round(this.l31() * 0.14)
 
   // Use simplified method?
-  useSimplifiedMethod = (): boolean => this.creditData()?.useSimplifiedMethod ?? false
+  useSimplifiedMethod = (): boolean =>
+    this.creditData()?.useSimplifiedMethod ?? false
 
   // Total credit
   totalCredit = (): number => {
@@ -127,15 +128,17 @@ export default class F6765 extends F1040Attachment {
   }
 
   // Payroll tax election (qualified small business)
-  electPayrollTax = (): boolean => this.creditData()?.electPayrollTaxCredit ?? false
-  payrollTaxCredit = (): number => this.creditData()?.payrollTaxCreditAmount ?? 0
+  electPayrollTax = (): boolean =>
+    this.creditData()?.electPayrollTaxCredit ?? false
+  payrollTaxCredit = (): number =>
+    this.creditData()?.payrollTaxCreditAmount ?? 0
 
   // Credit for Form 3800
   credit = (): number => this.totalCredit()
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Section A
     this.l1(),
     this.l2(),

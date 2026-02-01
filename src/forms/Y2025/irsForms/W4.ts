@@ -38,9 +38,9 @@ export interface W4Data {
   otherDependents: number
   totalDependentCredit: number
   // Step 4: Other Adjustments
-  otherIncome: number                       // 4(a) - not from jobs
-  deductions: number                        // 4(b) - above standard deduction
-  extraWithholding: number                  // 4(c) - additional per paycheck
+  otherIncome: number // 4(a) - not from jobs
+  deductions: number // 4(b) - above standard deduction
+  extraWithholding: number // 4(c) - additional per paycheck
   // Signature
   signatureDate: Date
   // Employer information (filled by employer)
@@ -69,7 +69,7 @@ export default class W4 extends F1040Attachment {
   }
 
   hasW4Data = (): boolean => {
-    return false  // Used for withholding, not tax filing
+    return false // Used for withholding, not tax filing
   }
 
   w4Data = (): W4Data | undefined => {
@@ -87,10 +87,12 @@ export default class W4 extends F1040Attachment {
   filingStatus = (): string => this.w4Data()?.filingStatus ?? 'single'
 
   // Step 2: Multiple jobs
-  hasMultipleJobs = (): boolean => this.w4Data()?.multipleJobsOrSpouseWorks ?? false
+  hasMultipleJobs = (): boolean =>
+    this.w4Data()?.multipleJobsOrSpouseWorks ?? false
 
   // Step 3: Dependents
-  qualifyingChildren = (): number => this.w4Data()?.qualifyingChildrenUnder17 ?? 0
+  qualifyingChildren = (): number =>
+    this.w4Data()?.qualifyingChildrenUnder17 ?? 0
   otherDependents = (): number => this.w4Data()?.otherDependents ?? 0
 
   // Calculate dependent credit
@@ -141,12 +143,12 @@ export default class W4 extends F1040Attachment {
       this.otherDependents() * OTHER_DEPENDENT_CREDIT,
       this.dependentCredit(),
       // Step 4: Adjustments
-      this.otherIncome(),                // 4(a)
-      this.deductions(),                 // 4(b) input
-      this.deductionsAboveStandard(),    // 4(b) calculated
-      this.extraWithholding(),           // 4(c)
+      this.otherIncome(), // 4(a)
+      this.deductions(), // 4(b) input
+      this.deductionsAboveStandard(), // 4(b) calculated
+      this.extraWithholding(), // 4(c)
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? '',
+      data?.signatureDate.toLocaleDateString() ?? '',
       // Employer
       data?.employerName ?? '',
       data?.employerEIN ?? '',

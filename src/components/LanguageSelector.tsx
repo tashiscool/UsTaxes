@@ -135,7 +135,9 @@ export const LanguageSelector = ({
           {Object.entries(languages).map(([code, lang]) => (
             <MenuItem
               key={code}
-              onClick={() => handleLanguageSelect(code as LanguageCode)}
+              onClick={() => {
+                void handleLanguageSelect(code as LanguageCode)
+              }}
               className={`${classes.menuItem} ${
                 code === currentLang ? classes.menuItemSelected : ''
               }`}
@@ -144,7 +146,9 @@ export const LanguageSelector = ({
               <span className={classes.flag}>{getFlagEmoji(lang.flag)}</span>
               <ListItemText
                 primary={lang.name}
-                secondary={lang.nativeName !== lang.name ? lang.nativeName : undefined}
+                secondary={
+                  lang.nativeName !== lang.name ? lang.nativeName : undefined
+                }
               />
             </MenuItem>
           ))}
@@ -191,7 +195,9 @@ export const LanguageSelector = ({
         {Object.entries(languages).map(([code, lang]) => (
           <MenuItem
             key={code}
-            onClick={() => handleLanguageSelect(code as LanguageCode)}
+            onClick={() => {
+              void handleLanguageSelect(code as LanguageCode)
+            }}
             className={`${classes.menuItem} ${
               code === currentLang ? classes.menuItemSelected : ''
             }`}
@@ -248,7 +254,9 @@ export const LanguageDropdown = ({
       {Object.entries(languages).map(([code, lang]) => (
         <Button
           key={code}
-          onClick={() => handleChange(code as LanguageCode)}
+          onClick={() => {
+            void handleChange(code as LanguageCode)
+          }}
           variant={code === currentLang ? 'contained' : 'outlined'}
           color={code === currentLang ? 'primary' : 'default'}
           style={{ marginRight: 8, marginBottom: 8 }}

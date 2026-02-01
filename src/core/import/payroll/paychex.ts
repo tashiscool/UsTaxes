@@ -12,7 +12,15 @@
  */
 
 import { IncomeW2, State } from 'ustaxes/core/data'
-import { PayrollParseResult, PayrollParser, W2ImportData, parseSSN, parseEIN, parseMoney, isValidState } from './types'
+import {
+  PayrollParseResult,
+  PayrollParser,
+  W2ImportData,
+  parseSSN,
+  parseEIN,
+  parseMoney,
+  isValidState
+} from './types'
 
 /**
  * Paychex column mappings
@@ -38,7 +46,13 @@ const PAYCHEX_COLUMN_MAPPINGS = {
 
   // W-2 Boxes
   box1: ['box 1', 'wages', 'federal wages', 'gross pay', 'taxable wages'],
-  box2: ['box 2', 'federal tax withheld', 'federal withholding', 'fit', 'fed tax'],
+  box2: [
+    'box 2',
+    'federal tax withheld',
+    'federal withholding',
+    'fit',
+    'fed tax'
+  ],
   box3: ['box 3', 'ss wages', 'social security wages', 'fica wages'],
   box4: ['box 4', 'ss tax', 'social security tax', 'fica tax', 'ss withheld'],
   box5: ['box 5', 'medicare wages', 'med wages'],
@@ -79,9 +93,9 @@ const PAYCHEX_COLUMN_MAPPINGS = {
  * Find column index by checking multiple possible header names
  */
 function findColumn(headers: string[], possibleNames: string[]): number {
-  const lowerHeaders = headers.map(h => h.toLowerCase().trim())
+  const lowerHeaders = headers.map((h) => h.toLowerCase().trim())
   for (const name of possibleNames) {
-    const index = lowerHeaders.findIndex(h => h.includes(name.toLowerCase()))
+    const index = lowerHeaders.findIndex((h) => h.includes(name.toLowerCase()))
     if (index >= 0) return index
   }
   return -1
@@ -100,7 +114,8 @@ export class PaychexParser implements PayrollParser {
     const hasPaychexMarkers =
       contentLower.includes('paychex') ||
       contentLower.includes('flex') ||
-      (headerLine.includes('ee ssn') || headerLine.includes('er ein'))
+      headerLine.includes('ee ssn') ||
+      headerLine.includes('er ein')
 
     // Check for typical Paychex column patterns
     const hasPaychexPatterns =
@@ -125,10 +140,10 @@ export class PaychexParser implements PayrollParser {
     // Find header row
     let headerRowIndex = 0
     for (let i = 0; i < Math.min(rows.length, 10); i++) {
-      const rowLower = rows[i].map(c => c.toLowerCase())
+      const rowLower = rows[i].map((c) => c.toLowerCase())
       if (
-        rowLower.some(c => c.includes('ssn') || c.includes('employee')) &&
-        rowLower.some(c => c.includes('wages') || c.includes('ein'))
+        rowLower.some((c) => c.includes('ssn') || c.includes('employee')) &&
+        rowLower.some((c) => c.includes('wages') || c.includes('ein'))
       ) {
         headerRowIndex = i
         break
@@ -140,16 +155,28 @@ export class PaychexParser implements PayrollParser {
     // Map columns
     const columnMap = {
       employeeSSN: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employeeSSN),
-      employeeFirstName: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employeeFirstName),
-      employeeLastName: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employeeLastName),
+      employeeFirstName: findColumn(
+        headers,
+        PAYCHEX_COLUMN_MAPPINGS.employeeFirstName
+      ),
+      employeeLastName: findColumn(
+        headers,
+        PAYCHEX_COLUMN_MAPPINGS.employeeLastName
+      ),
       employeeName: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employeeName),
-      employeeAddress: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employeeAddress),
+      employeeAddress: findColumn(
+        headers,
+        PAYCHEX_COLUMN_MAPPINGS.employeeAddress
+      ),
       employeeCity: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employeeCity),
       employeeState: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employeeState),
       employeeZip: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employeeZip),
       employerEIN: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employerEIN),
       employerName: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employerName),
-      employerAddress: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employerAddress),
+      employerAddress: findColumn(
+        headers,
+        PAYCHEX_COLUMN_MAPPINGS.employerAddress
+      ),
       employerCity: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employerCity),
       employerState: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employerState),
       employerZip: findColumn(headers, PAYCHEX_COLUMN_MAPPINGS.employerZip),
@@ -183,22 +210,27 @@ export class PaychexParser implements PayrollParser {
 
     // Validate required columns
     if (columnMap.box1 < 0) {
-      errors.push({ row: headerRowIndex, message: 'Could not find Wages column' })
+      errors.push({
+        row: headerRowIndex,
+        message: 'Could not find Wages column'
+      })
     }
 
     // Parse data rows
     for (let i = headerRowIndex + 1; i < rows.length; i++) {
       const row = rows[i]
 
-      if (row.length === 0 || row.every(c => c === '')) continue
+      if (row.length === 0 || row.every((c) => c === '')) continue
 
       try {
         // Parse employee info
-        const ssnRaw = columnMap.employeeSSN >= 0 ? row[columnMap.employeeSSN] : ''
+        const ssnRaw =
+          columnMap.employeeSSN >= 0 ? row[columnMap.employeeSSN] : ''
         const ssn = parseSSN(ssnRaw)
 
         // Parse employer EIN
-        const einRaw = columnMap.employerEIN >= 0 ? row[columnMap.employerEIN] : ''
+        const einRaw =
+          columnMap.employerEIN >= 0 ? row[columnMap.employerEIN] : ''
         const ein = parseEIN(einRaw)
 
         // Parse wages
@@ -210,26 +242,44 @@ export class PaychexParser implements PayrollParser {
         if (columnMap.employeeName >= 0) {
           employeeName = row[columnMap.employeeName].trim()
         } else {
-          const firstName = columnMap.employeeFirstName >= 0 ? row[columnMap.employeeFirstName].trim() : ''
-          const lastName = columnMap.employeeLastName >= 0 ? row[columnMap.employeeLastName].trim() : ''
+          const firstName =
+            columnMap.employeeFirstName >= 0
+              ? row[columnMap.employeeFirstName].trim()
+              : ''
+          const lastName =
+            columnMap.employeeLastName >= 0
+              ? row[columnMap.employeeLastName].trim()
+              : ''
           employeeName = [firstName, lastName].filter(Boolean).join(' ')
         }
 
         // Build employee address
         const employeeAddress = [
-          columnMap.employeeAddress >= 0 ? row[columnMap.employeeAddress].trim() : '',
+          columnMap.employeeAddress >= 0
+            ? row[columnMap.employeeAddress].trim()
+            : '',
           columnMap.employeeCity >= 0 ? row[columnMap.employeeCity].trim() : '',
-          columnMap.employeeState >= 0 ? row[columnMap.employeeState].trim() : '',
+          columnMap.employeeState >= 0
+            ? row[columnMap.employeeState].trim()
+            : '',
           columnMap.employeeZip >= 0 ? row[columnMap.employeeZip].trim() : ''
-        ].filter(Boolean).join(', ')
+        ]
+          .filter(Boolean)
+          .join(', ')
 
         // Build employer address
         const employerAddress = [
-          columnMap.employerAddress >= 0 ? row[columnMap.employerAddress].trim() : '',
+          columnMap.employerAddress >= 0
+            ? row[columnMap.employerAddress].trim()
+            : '',
           columnMap.employerCity >= 0 ? row[columnMap.employerCity].trim() : '',
-          columnMap.employerState >= 0 ? row[columnMap.employerState].trim() : '',
+          columnMap.employerState >= 0
+            ? row[columnMap.employerState].trim()
+            : '',
           columnMap.employerZip >= 0 ? row[columnMap.employerZip].trim() : ''
-        ].filter(Boolean).join(', ')
+        ]
+          .filter(Boolean)
+          .join(', ')
 
         // Parse state code
         let stateCode: State | undefined
@@ -261,7 +311,7 @@ export class PaychexParser implements PayrollParser {
         if (columnMap.box12Code >= 0 && columnMap.box12Amount >= 0) {
           const code = row[columnMap.box12Code].trim().toUpperCase()
           const amount = parseMoney(row[columnMap.box12Amount])
-          if (code && amount > 0 && !box12.some(b => b.code === code)) {
+          if (code && amount > 0 && !box12.some((b) => b.code === code)) {
             box12.push({ code, amount })
           }
         }
@@ -271,39 +321,87 @@ export class PaychexParser implements PayrollParser {
           employeeName,
           employeeAddress,
           employerEIN: ein || '',
-          employerName: columnMap.employerName >= 0 ? row[columnMap.employerName].trim() : '',
+          employerName:
+            columnMap.employerName >= 0
+              ? row[columnMap.employerName].trim()
+              : '',
           employerAddress,
           wages,
-          federalWithholding: columnMap.box2 >= 0 ? parseMoney(row[columnMap.box2]) : 0,
-          ssWages: columnMap.box3 >= 0 ? parseMoney(row[columnMap.box3]) : undefined,
-          ssTax: columnMap.box4 >= 0 ? parseMoney(row[columnMap.box4]) : undefined,
-          medicareWages: columnMap.box5 >= 0 ? parseMoney(row[columnMap.box5]) : undefined,
-          medicareTax: columnMap.box6 >= 0 ? parseMoney(row[columnMap.box6]) : undefined,
-          ssTips: columnMap.box7 >= 0 ? parseMoney(row[columnMap.box7]) : undefined,
-          allocatedTips: columnMap.box8 >= 0 ? parseMoney(row[columnMap.box8]) : undefined,
-          dependentCareBenefits: columnMap.box10 >= 0 ? parseMoney(row[columnMap.box10]) : undefined,
-          nonQualifiedPlans: columnMap.box11 >= 0 ? parseMoney(row[columnMap.box11]) : undefined,
+          federalWithholding:
+            columnMap.box2 >= 0 ? parseMoney(row[columnMap.box2]) : 0,
+          ssWages:
+            columnMap.box3 >= 0 ? parseMoney(row[columnMap.box3]) : undefined,
+          ssTax:
+            columnMap.box4 >= 0 ? parseMoney(row[columnMap.box4]) : undefined,
+          medicareWages:
+            columnMap.box5 >= 0 ? parseMoney(row[columnMap.box5]) : undefined,
+          medicareTax:
+            columnMap.box6 >= 0 ? parseMoney(row[columnMap.box6]) : undefined,
+          ssTips:
+            columnMap.box7 >= 0 ? parseMoney(row[columnMap.box7]) : undefined,
+          allocatedTips:
+            columnMap.box8 >= 0 ? parseMoney(row[columnMap.box8]) : undefined,
+          dependentCareBenefits:
+            columnMap.box10 >= 0 ? parseMoney(row[columnMap.box10]) : undefined,
+          nonQualifiedPlans:
+            columnMap.box11 >= 0 ? parseMoney(row[columnMap.box11]) : undefined,
           box12,
-          statutoryEmployee: columnMap.statutory >= 0 ?
-            ['yes', 'true', 'x', '1', 'y'].includes(row[columnMap.statutory].toLowerCase().trim()) : false,
-          retirementPlan: columnMap.retirement >= 0 ?
-            ['yes', 'true', 'x', '1', 'y'].includes(row[columnMap.retirement].toLowerCase().trim()) : false,
-          thirdPartySickPay: columnMap.thirdParty >= 0 ?
-            ['yes', 'true', 'x', '1', 'y'].includes(row[columnMap.thirdParty].toLowerCase().trim()) : false,
-          box14Description: columnMap.box14 >= 0 ? row[columnMap.box14].trim() : undefined,
+          statutoryEmployee:
+            columnMap.statutory >= 0
+              ? ['yes', 'true', 'x', '1', 'y'].includes(
+                  row[columnMap.statutory].toLowerCase().trim()
+                )
+              : false,
+          retirementPlan:
+            columnMap.retirement >= 0
+              ? ['yes', 'true', 'x', '1', 'y'].includes(
+                  row[columnMap.retirement].toLowerCase().trim()
+                )
+              : false,
+          thirdPartySickPay:
+            columnMap.thirdParty >= 0
+              ? ['yes', 'true', 'x', '1', 'y'].includes(
+                  row[columnMap.thirdParty].toLowerCase().trim()
+                )
+              : false,
+          box14Description:
+            columnMap.box14 >= 0 ? row[columnMap.box14].trim() : undefined,
           stateCode,
-          stateEmployerID: columnMap.stateEIN >= 0 ? row[columnMap.stateEIN].trim() : undefined,
-          stateWages: columnMap.stateWages >= 0 ? parseMoney(row[columnMap.stateWages]) : undefined,
-          stateTax: columnMap.stateTax >= 0 ? parseMoney(row[columnMap.stateTax]) : undefined,
-          localWages: columnMap.localWages >= 0 ? parseMoney(row[columnMap.localWages]) : undefined,
-          localTax: columnMap.localTax >= 0 ? parseMoney(row[columnMap.localTax]) : undefined,
-          localityName: columnMap.localityName >= 0 ? row[columnMap.localityName].trim() : undefined,
+          stateEmployerID:
+            columnMap.stateEIN >= 0
+              ? row[columnMap.stateEIN].trim()
+              : undefined,
+          stateWages:
+            columnMap.stateWages >= 0
+              ? parseMoney(row[columnMap.stateWages])
+              : undefined,
+          stateTax:
+            columnMap.stateTax >= 0
+              ? parseMoney(row[columnMap.stateTax])
+              : undefined,
+          localWages:
+            columnMap.localWages >= 0
+              ? parseMoney(row[columnMap.localWages])
+              : undefined,
+          localTax:
+            columnMap.localTax >= 0
+              ? parseMoney(row[columnMap.localTax])
+              : undefined,
+          localityName:
+            columnMap.localityName >= 0
+              ? row[columnMap.localityName].trim()
+              : undefined,
           source: 'Paychex'
         }
 
         w2s.push(w2Data)
       } catch (e) {
-        errors.push({ row: i + 1, message: `Error parsing row: ${e instanceof Error ? e.message : String(e)}` })
+        errors.push({
+          row: i + 1,
+          message: `Error parsing row: ${
+            e instanceof Error ? e.message : String(e)
+          }`
+        })
       }
     }
 
@@ -363,7 +461,7 @@ export class PaychexParser implements PayrollParser {
           currentCell = ''
         } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
           currentRow.push(currentCell.trim())
-          if (currentRow.some(cell => cell !== '')) {
+          if (currentRow.some((cell) => cell !== '')) {
             rows.push(currentRow)
           }
           currentRow = []
@@ -377,7 +475,7 @@ export class PaychexParser implements PayrollParser {
 
     if (currentCell || currentRow.length > 0) {
       currentRow.push(currentCell.trim())
-      if (currentRow.some(cell => cell !== '')) {
+      if (currentRow.some((cell) => cell !== '')) {
         rows.push(currentRow)
       }
     }

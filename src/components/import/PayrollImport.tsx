@@ -58,7 +58,10 @@ import {
   validateW2Data,
   formatEIN,
   maskSSN,
-  getBox12Description
+  getBox12Description,
+  adpParser,
+  paychexParser,
+  gustoParser
 } from 'ustaxes/core/import/payroll'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -148,23 +151,27 @@ interface W2DisplayProps {
 /**
  * Component to display a single W-2
  */
-const W2Display = ({ w2, index, selected, onToggle, showSSN }: W2DisplayProps): ReactElement => {
+const W2Display = ({
+  w2,
+  index,
+  selected,
+  onToggle,
+  showSSN
+}: W2DisplayProps): ReactElement => {
   const classes = useStyles()
   const issues = validateW2Data(w2)
   const hasIssues = issues.length > 0
 
   return (
     <Paper
-      className={`${classes.w2Card} ${hasIssues ? classes.hasIssues : classes.validated}`}
+      className={`${classes.w2Card} ${
+        hasIssues ? classes.hasIssues : classes.validated
+      }`}
       elevation={selected ? 3 : 1}
     >
       <div className={classes.w2Header}>
         <Box display="flex" alignItems="center">
-          <Checkbox
-            checked={selected}
-            onChange={onToggle}
-            color="primary"
-          />
+          <Checkbox checked={selected} onChange={onToggle} color="primary" />
           <Typography variant="h6">
             W-2 #{index + 1}: {w2.employerName || 'Unknown Employer'}
           </Typography>
@@ -192,7 +199,9 @@ const W2Display = ({ w2, index, selected, onToggle, showSSN }: W2DisplayProps): 
         {/* Employer Info */}
         <div className={classes.w2Field}>
           <div className="label">Employer EIN</div>
-          <div className="value">{w2.employerEIN ? formatEIN(w2.employerEIN) : '-'}</div>
+          <div className="value">
+            {w2.employerEIN ? formatEIN(w2.employerEIN) : '-'}
+          </div>
         </div>
 
         {/* Employee Info */}
@@ -205,43 +214,57 @@ const W2Display = ({ w2, index, selected, onToggle, showSSN }: W2DisplayProps): 
         {w2.employeeSSN && (
           <div className={classes.w2Field}>
             <div className="label">Employee SSN</div>
-            <div className="value">{showSSN ? w2.employeeSSN : maskSSN(w2.employeeSSN)}</div>
+            <div className="value">
+              {showSSN ? w2.employeeSSN : maskSSN(w2.employeeSSN)}
+            </div>
           </div>
         )}
 
         {/* Box 1-2 */}
         <div className={classes.w2Field}>
           <div className="label">Box 1: Wages</div>
-          <div className={`value ${classes.moneyValue}`}>{formatCurrency(w2.wages)}</div>
+          <div className={`value ${classes.moneyValue}`}>
+            {formatCurrency(w2.wages)}
+          </div>
         </div>
         <div className={classes.w2Field}>
           <div className="label">Box 2: Federal Tax Withheld</div>
-          <div className={`value ${classes.moneyValue}`}>{formatCurrency(w2.federalWithholding)}</div>
+          <div className={`value ${classes.moneyValue}`}>
+            {formatCurrency(w2.federalWithholding)}
+          </div>
         </div>
 
         {/* Box 3-6 */}
         {w2.ssWages !== undefined && (
           <div className={classes.w2Field}>
             <div className="label">Box 3: SS Wages</div>
-            <div className={`value ${classes.moneyValue}`}>{formatCurrency(w2.ssWages)}</div>
+            <div className={`value ${classes.moneyValue}`}>
+              {formatCurrency(w2.ssWages)}
+            </div>
           </div>
         )}
         {w2.ssTax !== undefined && (
           <div className={classes.w2Field}>
             <div className="label">Box 4: SS Tax</div>
-            <div className={`value ${classes.moneyValue}`}>{formatCurrency(w2.ssTax)}</div>
+            <div className={`value ${classes.moneyValue}`}>
+              {formatCurrency(w2.ssTax)}
+            </div>
           </div>
         )}
         {w2.medicareWages !== undefined && (
           <div className={classes.w2Field}>
             <div className="label">Box 5: Medicare Wages</div>
-            <div className={`value ${classes.moneyValue}`}>{formatCurrency(w2.medicareWages)}</div>
+            <div className={`value ${classes.moneyValue}`}>
+              {formatCurrency(w2.medicareWages)}
+            </div>
           </div>
         )}
         {w2.medicareTax !== undefined && (
           <div className={classes.w2Field}>
             <div className="label">Box 6: Medicare Tax</div>
-            <div className={`value ${classes.moneyValue}`}>{formatCurrency(w2.medicareTax)}</div>
+            <div className={`value ${classes.moneyValue}`}>
+              {formatCurrency(w2.medicareTax)}
+            </div>
           </div>
         )}
 
@@ -264,13 +287,29 @@ const W2Display = ({ w2, index, selected, onToggle, showSSN }: W2DisplayProps): 
         )}
 
         {/* Box 13 */}
-        {(w2.statutoryEmployee || w2.retirementPlan || w2.thirdPartySickPay) && (
+        {(w2.statutoryEmployee ||
+          w2.retirementPlan ||
+          w2.thirdPartySickPay) && (
           <div className={classes.w2Field}>
             <div className="label">Box 13</div>
             <div className="value">
-              {w2.statutoryEmployee && <Chip size="small" label="Statutory" className={classes.chip} />}
-              {w2.retirementPlan && <Chip size="small" label="Retirement" className={classes.chip} />}
-              {w2.thirdPartySickPay && <Chip size="small" label="3rd Party Sick" className={classes.chip} />}
+              {w2.statutoryEmployee && (
+                <Chip size="small" label="Statutory" className={classes.chip} />
+              )}
+              {w2.retirementPlan && (
+                <Chip
+                  size="small"
+                  label="Retirement"
+                  className={classes.chip}
+                />
+              )}
+              {w2.thirdPartySickPay && (
+                <Chip
+                  size="small"
+                  label="3rd Party Sick"
+                  className={classes.chip}
+                />
+              )}
             </div>
           </div>
         )}
@@ -285,13 +324,17 @@ const W2Display = ({ w2, index, selected, onToggle, showSSN }: W2DisplayProps): 
             {w2.stateWages !== undefined && (
               <div className={classes.w2Field}>
                 <div className="label">State Wages</div>
-                <div className={`value ${classes.moneyValue}`}>{formatCurrency(w2.stateWages)}</div>
+                <div className={`value ${classes.moneyValue}`}>
+                  {formatCurrency(w2.stateWages)}
+                </div>
               </div>
             )}
             {w2.stateTax !== undefined && (
               <div className={classes.w2Field}>
                 <div className="label">State Tax Withheld</div>
-                <div className={`value ${classes.moneyValue}`}>{formatCurrency(w2.stateTax)}</div>
+                <div className={`value ${classes.moneyValue}`}>
+                  {formatCurrency(w2.stateTax)}
+                </div>
               </div>
             )}
           </>
@@ -307,13 +350,17 @@ const W2Display = ({ w2, index, selected, onToggle, showSSN }: W2DisplayProps): 
             {w2.localWages !== undefined && (
               <div className={classes.w2Field}>
                 <div className="label">Local Wages</div>
-                <div className={`value ${classes.moneyValue}`}>{formatCurrency(w2.localWages)}</div>
+                <div className={`value ${classes.moneyValue}`}>
+                  {formatCurrency(w2.localWages)}
+                </div>
               </div>
             )}
             {w2.localTax !== undefined && (
               <div className={classes.w2Field}>
                 <div className="label">Local Tax Withheld</div>
-                <div className={`value ${classes.moneyValue}`}>{formatCurrency(w2.localTax)}</div>
+                <div className={`value ${classes.moneyValue}`}>
+                  {formatCurrency(w2.localTax)}
+                </div>
               </div>
             )}
           </>
@@ -331,10 +378,15 @@ export const PayrollImport = (): ReactElement => {
   const dispatch = useDispatch()
 
   // State
-  const [selectedProvider, setSelectedProvider] = useState<PayrollProvider | ''>('')
+  const [selectedProvider, setSelectedProvider] = useState<
+    PayrollProvider | ''
+  >('')
   const [csvContent, setCsvContent] = useState<string>('')
-  const [parseResult, setParseResult] = useState<PayrollParseResult | null>(null)
-  const [detectedProvider, setDetectedProvider] = useState<PayrollProvider | null>(null)
+  const [parseResult, setParseResult] = useState<PayrollParseResult | null>(
+    null
+  )
+  const [detectedProvider, setDetectedProvider] =
+    useState<PayrollProvider | null>(null)
   const [selectedW2s, setSelectedW2s] = useState<Set<number>>(new Set())
   const [importSuccess, setImportSuccess] = useState<boolean>(false)
   const [showSSN, setShowSSN] = useState<boolean>(false)
@@ -349,15 +401,36 @@ export const PayrollImport = (): ReactElement => {
     const w2sToSummarize = selected.length > 0 ? selected : parseResult.w2s
 
     const totalWages = w2sToSummarize.reduce((sum, w2) => sum + w2.wages, 0)
-    const totalFederalTax = w2sToSummarize.reduce((sum, w2) => sum + w2.federalWithholding, 0)
-    const totalSSWages = w2sToSummarize.reduce((sum, w2) => sum + (w2.ssWages || 0), 0)
-    const totalSSTax = w2sToSummarize.reduce((sum, w2) => sum + (w2.ssTax || 0), 0)
-    const totalMedicareWages = w2sToSummarize.reduce((sum, w2) => sum + (w2.medicareWages || 0), 0)
-    const totalMedicareTax = w2sToSummarize.reduce((sum, w2) => sum + (w2.medicareTax || 0), 0)
-    const totalStateTax = w2sToSummarize.reduce((sum, w2) => sum + (w2.stateTax || 0), 0)
-    const totalLocalTax = w2sToSummarize.reduce((sum, w2) => sum + (w2.localTax || 0), 0)
+    const totalFederalTax = w2sToSummarize.reduce(
+      (sum, w2) => sum + w2.federalWithholding,
+      0
+    )
+    const totalSSWages = w2sToSummarize.reduce(
+      (sum, w2) => sum + (w2.ssWages || 0),
+      0
+    )
+    const totalSSTax = w2sToSummarize.reduce(
+      (sum, w2) => sum + (w2.ssTax || 0),
+      0
+    )
+    const totalMedicareWages = w2sToSummarize.reduce(
+      (sum, w2) => sum + (w2.medicareWages || 0),
+      0
+    )
+    const totalMedicareTax = w2sToSummarize.reduce(
+      (sum, w2) => sum + (w2.medicareTax || 0),
+      0
+    )
+    const totalStateTax = w2sToSummarize.reduce(
+      (sum, w2) => sum + (w2.stateTax || 0),
+      0
+    )
+    const totalLocalTax = w2sToSummarize.reduce(
+      (sum, w2) => sum + (w2.localTax || 0),
+      0
+    )
 
-    const hasIssues = w2sToSummarize.some(w2 => validateW2Data(w2).length > 0)
+    const hasIssues = w2sToSummarize.some((w2) => validateW2Data(w2).length > 0)
 
     return {
       count: w2sToSummarize.length,
@@ -398,7 +471,8 @@ export const PayrollImport = (): ReactElement => {
    * Parse with selected provider
    */
   const handleParse = () => {
-    if (!csvContent || !selectedProvider || selectedProvider === 'generic') return
+    if (!csvContent || !selectedProvider || selectedProvider === 'generic')
+      return
 
     const result = parseWithProvider(csvContent, selectedProvider)
     setParseResult(result)
@@ -444,11 +518,11 @@ export const PayrollImport = (): ReactElement => {
     if (toImport.length === 0) return
 
     // Get the parser to convert to IncomeW2 format
-    const providers: Record<Exclude<PayrollProvider, 'generic'>, typeof import('ustaxes/core/import/payroll').adpParser> = {
-      adp: require('ustaxes/core/import/payroll').adpParser,
-      paychex: require('ustaxes/core/import/payroll').paychexParser,
-      gusto: require('ustaxes/core/import/payroll').gustoParser
-    }
+    const providers = {
+      adp: adpParser,
+      paychex: paychexParser,
+      gusto: gustoParser
+    } as const
 
     if (selectedProvider !== 'generic') {
       const parser = providers[selectedProvider]
@@ -485,12 +559,16 @@ export const PayrollImport = (): ReactElement => {
         Import W-2 from Payroll Provider
       </Typography>
       <Typography variant="body2" color="textSecondary" paragraph>
-        Import W-2 wage and tax data from your payroll provider's export.
+        Import W-2 wage and tax data from your payroll provider&apos;s export.
         Supported providers: ADP, Paychex, Gusto.
       </Typography>
 
       {importSuccess && (
-        <Alert severity="success" onClose={() => setImportSuccess(false)} className={classes.section}>
+        <Alert
+          severity="success"
+          onClose={() => setImportSuccess(false)}
+          className={classes.section}
+        >
           W-2 data imported successfully! View it in the Wages (W2) section.
         </Alert>
       )}
@@ -506,15 +584,19 @@ export const PayrollImport = (): ReactElement => {
               <InputLabel>Payroll Provider</InputLabel>
               <Select
                 value={selectedProvider}
-                onChange={(e) => setSelectedProvider(e.target.value as PayrollProvider)}
+                onChange={(e) =>
+                  setSelectedProvider(e.target.value as PayrollProvider)
+                }
               >
                 <MenuItem value="">-- Select Provider --</MenuItem>
-                {getSupportedProviders().filter(p => p !== 'generic').map((provider) => (
-                  <MenuItem key={provider} value={provider}>
-                    {getProviderName(provider)}
-                    {detectedProvider === provider && ' (Detected)'}
-                  </MenuItem>
-                ))}
+                {getSupportedProviders()
+                  .filter((p) => p !== 'generic')
+                  .map((provider) => (
+                    <MenuItem key={provider} value={provider}>
+                      {getProviderName(provider)}
+                      {detectedProvider === provider && ' (Detected)'}
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
           </Grid>
@@ -532,27 +614,34 @@ export const PayrollImport = (): ReactElement => {
 
         {detectedProvider && (
           <Alert severity="info" style={{ marginTop: 16 }}>
-            Auto-detected format: <strong>{getProviderName(detectedProvider)}</strong>
+            Auto-detected format:{' '}
+            <strong>{getProviderName(detectedProvider)}</strong>
           </Alert>
         )}
       </Paper>
 
       {/* Parse button (if auto-parse didn't work) */}
-      {selectedProvider && selectedProvider !== 'generic' && csvContent && !parseResult && (
-        <Paper className={`${classes.root} ${classes.section}`}>
-          <Button variant="contained" color="primary" onClick={handleParse}>
-            Parse W-2 Data
-          </Button>
-        </Paper>
-      )}
+      {selectedProvider &&
+        selectedProvider !== 'generic' &&
+        csvContent &&
+        !parseResult && (
+          <Paper className={`${classes.root} ${classes.section}`}>
+            <Button variant="contained" color="primary" onClick={handleParse}>
+              Parse W-2 Data
+            </Button>
+          </Paper>
+        )}
 
       {/* Step 2: Review W-2s */}
       {parseResult && (
         <Paper className={`${classes.root} ${classes.section}`}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              Step 2: Review W-2 Data
-            </Typography>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={2}
+          >
+            <Typography variant="h6">Step 2: Review W-2 Data</Typography>
             <Box>
               <Tooltip title={showSSN ? 'Hide SSN' : 'Show SSN'}>
                 <IconButton onClick={() => setShowSSN(!showSSN)} size="small">
@@ -564,7 +653,9 @@ export const PayrollImport = (): ReactElement => {
                 onClick={toggleAllW2s}
                 style={{ marginLeft: 8 }}
               >
-                {selectedW2s.size === parseResult.w2s.length ? 'Deselect All' : 'Select All'}
+                {selectedW2s.size === parseResult.w2s.length
+                  ? 'Deselect All'
+                  : 'Select All'}
               </Button>
             </Box>
           </Box>
@@ -574,13 +665,18 @@ export const PayrollImport = (): ReactElement => {
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography color="error">
-                  {parseResult.errors.length} Error{parseResult.errors.length !== 1 ? 's' : ''}
+                  {parseResult.errors.length} Error
+                  {parseResult.errors.length !== 1 ? 's' : ''}
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Box>
                   {parseResult.errors.map((error, index) => (
-                    <Alert severity="error" key={index} style={{ marginBottom: 8 }}>
+                    <Alert
+                      severity="error"
+                      key={index}
+                      style={{ marginBottom: 8 }}
+                    >
                       Row {error.row}: {error.message}
                     </Alert>
                   ))}
@@ -594,13 +690,18 @@ export const PayrollImport = (): ReactElement => {
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography color="textSecondary">
-                  {parseResult.warnings.length} Warning{parseResult.warnings.length !== 1 ? 's' : ''}
+                  {parseResult.warnings.length} Warning
+                  {parseResult.warnings.length !== 1 ? 's' : ''}
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Box>
                   {parseResult.warnings.map((warning, index) => (
-                    <Alert severity="warning" key={index} style={{ marginBottom: 8 }}>
+                    <Alert
+                      severity="warning"
+                      key={index}
+                      style={{ marginBottom: 8 }}
+                    >
                       {warning}
                     </Alert>
                   ))}
@@ -625,7 +726,8 @@ export const PayrollImport = (): ReactElement => {
             </Box>
           ) : (
             <Alert severity="warning">
-              No W-2 data found in the CSV file. Please check the format and try again.
+              No W-2 data found in the CSV file. Please check the format and try
+              again.
             </Alert>
           )}
 
@@ -633,7 +735,10 @@ export const PayrollImport = (): ReactElement => {
           {summary && (
             <Paper className={classes.summaryBox} variant="outlined">
               <Typography variant="h6" gutterBottom>
-                Summary {selectedW2s.size > 0 && selectedW2s.size < parseResult.w2s.length && `(${selectedW2s.size} selected)`}
+                Summary{' '}
+                {selectedW2s.size > 0 &&
+                  selectedW2s.size < parseResult.w2s.length &&
+                  `(${selectedW2s.size} selected)`}
               </Typography>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6} md={3}>
@@ -647,7 +752,9 @@ export const PayrollImport = (): ReactElement => {
                   </Typography>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Typography variant="subtitle2">Federal Tax Withheld</Typography>
+                  <Typography variant="subtitle2">
+                    Federal Tax Withheld
+                  </Typography>
                   <Typography variant="h5" className={classes.moneyValue}>
                     {formatCurrency(summary.totalFederalTax)}
                   </Typography>
@@ -662,7 +769,8 @@ export const PayrollImport = (): ReactElement => {
 
               {summary.hasIssues && (
                 <Alert severity="warning" style={{ marginTop: 16 }}>
-                  Some W-2s have validation issues. Please review before importing.
+                  Some W-2s have validation issues. Please review before
+                  importing.
                 </Alert>
               )}
             </Paper>

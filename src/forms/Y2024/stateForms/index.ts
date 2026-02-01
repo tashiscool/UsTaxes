@@ -19,15 +19,15 @@ import makePA40 from './PA/PA40'
  * These states are part of the Direct File pilot program
  */
 export const noFilingRequirementStates: State[] = [
-  'AK',  // Alaska - no income tax
-  'FL',  // Florida - no income tax (Direct File pilot)
-  'NV',  // Nevada - no income tax (Direct File pilot)
-  'NH',  // New Hampshire - no income tax on wages (Direct File pilot)
-  'SD',  // South Dakota - no income tax (Direct File pilot)
-  'TN',  // Tennessee - no income tax (Direct File pilot)
-  'TX',  // Texas - no income tax (Direct File pilot)
-  'WA',  // Washington - no income tax (Direct File pilot)
-  'WY'   // Wyoming - no income tax (Direct File pilot)
+  'AK', // Alaska - no income tax
+  'FL', // Florida - no income tax (Direct File pilot)
+  'NV', // Nevada - no income tax (Direct File pilot)
+  'NH', // New Hampshire - no income tax on wages (Direct File pilot)
+  'SD', // South Dakota - no income tax (Direct File pilot)
+  'TN', // Tennessee - no income tax (Direct File pilot)
+  'TX', // Texas - no income tax (Direct File pilot)
+  'WA', // Washington - no income tax (Direct File pilot)
+  'WY' // Wyoming - no income tax (Direct File pilot)
 ]
 
 /**

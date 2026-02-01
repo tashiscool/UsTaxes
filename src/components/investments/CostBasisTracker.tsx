@@ -139,14 +139,18 @@ const CostBasisTracker = (): ReactElement => {
   const [portfolio, setPortfolio] = useState<CostBasisPortfolio<Date>>(
     createEmptyPortfolio()
   )
-  const [expandedPositions, setExpandedPositions] = useState<Set<string>>(new Set())
+  const [expandedPositions, setExpandedPositions] = useState<Set<string>>(
+    new Set()
+  )
   const [editorOpen, setEditorOpen] = useState(false)
-  const [selectedInvestment, setSelectedInvestment] = useState<Investment<Date> | undefined>()
+  const [selectedInvestment, setSelectedInvestment] = useState<
+    Investment<Date> | undefined
+  >()
   const [isNewPosition, setIsNewPosition] = useState(false)
 
   // Calculate tax year summary
   const taxSummary = useMemo(() => {
-    const allTransactions = portfolio.investments.flatMap(i => i.transactions)
+    const allTransactions = portfolio.investments.flatMap((i) => i.transactions)
     return calculateGainLossSummary(allTransactions, taxYear)
   }, [portfolio, taxYear])
 
@@ -173,7 +177,7 @@ const CostBasisTracker = (): ReactElement => {
   }, [portfolio])
 
   const togglePosition = (symbol: string) => {
-    setExpandedPositions(prev => {
+    setExpandedPositions((prev) => {
       const next = new Set(prev)
       if (next.has(symbol)) {
         next.delete(symbol)
@@ -197,7 +201,7 @@ const CostBasisTracker = (): ReactElement => {
   }
 
   const handleSaveBuy = (transaction: StockTransaction<Date>) => {
-    setPortfolio(prev => processBuyTransaction(prev, transaction))
+    setPortfolio((prev) => processBuyTransaction(prev, transaction))
   }
 
   const handleSaveSell = (
@@ -205,19 +209,23 @@ const CostBasisTracker = (): ReactElement => {
     lotSelections: TaxLotSelection[],
     method: CostBasisMethod
   ) => {
-    setPortfolio(prev =>
+    setPortfolio((prev) =>
       processSellTransaction(prev, transaction, lotSelections, method)
     )
   }
 
-  const handleSaveDividendReinvestment = (transaction: StockTransaction<Date>) => {
-    setPortfolio(prev => processBuyTransaction(prev, transaction))
+  const handleSaveDividendReinvestment = (
+    transaction: StockTransaction<Date>
+  ) => {
+    setPortfolio((prev) => processBuyTransaction(prev, transaction))
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleSaveSplit = (symbol: string, splitRatio: number, _date: Date) => {
-    setPortfolio(prev => {
-      const investmentIndex = prev.investments.findIndex(i => i.symbol === symbol)
+    setPortfolio((prev) => {
+      const investmentIndex = prev.investments.findIndex(
+        (i) => i.symbol === symbol
+      )
       if (investmentIndex < 0) return prev
 
       const investment = prev.investments[investmentIndex]
@@ -228,7 +236,9 @@ const CostBasisTracker = (): ReactElement => {
         investment.transactions,
         investment.isMutualFund,
         investment.name,
-        investment.currentPrice ? investment.currentPrice / splitRatio : undefined
+        investment.currentPrice
+          ? investment.currentPrice / splitRatio
+          : undefined
       )
 
       const updatedInvestments = [...prev.investments]
@@ -243,10 +253,14 @@ const CostBasisTracker = (): ReactElement => {
   }
 
   const handleDeletePosition = (symbol: string) => {
-    if (window.confirm(`Are you sure you want to delete all holdings for ${symbol}?`)) {
-      setPortfolio(prev => ({
+    if (
+      window.confirm(
+        `Are you sure you want to delete all holdings for ${symbol}?`
+      )
+    ) {
+      setPortfolio((prev) => ({
         ...prev,
-        investments: prev.investments.filter(i => i.symbol !== symbol),
+        investments: prev.investments.filter((i) => i.symbol !== symbol),
         lastUpdated: new Date()
       }))
     }
@@ -261,7 +275,7 @@ const CostBasisTracker = (): ReactElement => {
   }
 
   const getAllRecentTransactions = (): StockTransaction<Date>[] => {
-    return portfolio.investments.flatMap(i => i.transactions)
+    return portfolio.investments.flatMap((i) => i.transactions)
   }
 
   return (
@@ -272,8 +286,8 @@ const CostBasisTracker = (): ReactElement => {
 
       <h2>Cost Basis Tracker</h2>
       <Typography variant="body1" paragraph>
-        Track your investment positions and tax lots for accurate capital gains reporting
-        on Form 8949 and Schedule D.
+        Track your investment positions and tax lots for accurate capital gains
+        reporting on Form 8949 and Schedule D.
       </Typography>
 
       {/* Portfolio Summary Cards */}
@@ -317,9 +331,13 @@ const CostBasisTracker = (): ReactElement => {
                 }
               >
                 {portfolioSummary.totalUnrealizedGain >= 0 ? (
-                  <TrendingUp style={{ verticalAlign: 'middle', marginRight: 8 }} />
+                  <TrendingUp
+                    style={{ verticalAlign: 'middle', marginRight: 8 }}
+                  />
                 ) : (
-                  <TrendingDown style={{ verticalAlign: 'middle', marginRight: 8 }} />
+                  <TrendingDown
+                    style={{ verticalAlign: 'middle', marginRight: 8 }}
+                  />
                 )}
                 <Currency value={portfolioSummary.totalUnrealizedGain} />
               </Typography>
@@ -351,7 +369,7 @@ const CostBasisTracker = (): ReactElement => {
           </Typography>
         </Paper>
       ) : (
-        portfolio.investments.map(investment => {
+        portfolio.investments.map((investment) => {
           const isExpanded = expandedPositions.has(investment.symbol)
 
           return (
@@ -460,17 +478,20 @@ const CostBasisTracker = (): ReactElement => {
                       </TableHead>
                       <TableBody>
                         {investment.lots
-                          .filter(lot => lot.remainingShares > 0)
-                          .map(lot => {
+                          .filter((lot) => lot.remainingShares > 0)
+                          .map((lot) => {
                             const daysHeld = Math.floor(
-                              (new Date().getTime() - lot.purchaseDate.getTime()) /
+                              (new Date().getTime() -
+                                lot.purchaseDate.getTime()) /
                                 (1000 * 60 * 60 * 24)
                             )
                             const isLongTerm = daysHeld > 365
 
                             return (
                               <TableRow key={lot.id}>
-                                <TableCell>{formatDate(lot.purchaseDate)}</TableCell>
+                                <TableCell>
+                                  {formatDate(lot.purchaseDate)}
+                                </TableCell>
                                 <TableCell align="right">
                                   {lot.shares.toFixed(4)}
                                 </TableCell>
@@ -486,7 +507,8 @@ const CostBasisTracker = (): ReactElement => {
                                 <TableCell align="right">
                                   <Currency
                                     value={
-                                      (lot.adjustedCostBasis * lot.remainingShares) /
+                                      (lot.adjustedCostBasis *
+                                        lot.remainingShares) /
                                       lot.shares
                                     }
                                     plain
@@ -494,7 +516,10 @@ const CostBasisTracker = (): ReactElement => {
                                 </TableCell>
                                 <TableCell align="right">
                                   {lot.washSaleAdjustment > 0 ? (
-                                    <Currency value={lot.washSaleAdjustment} plain />
+                                    <Currency
+                                      value={lot.washSaleAdjustment}
+                                      plain
+                                    />
                                   ) : (
                                     '-'
                                   )}
@@ -519,7 +544,7 @@ const CostBasisTracker = (): ReactElement => {
                   </TableContainer>
 
                   {/* Closed Lots (Sold) */}
-                  {investment.lots.some(l => l.remainingShares === 0) && (
+                  {investment.lots.some((l) => l.remainingShares === 0) && (
                     <>
                       <Typography
                         variant="subtitle2"
@@ -535,13 +560,15 @@ const CostBasisTracker = (): ReactElement => {
                               <TableCell>Purchase Date</TableCell>
                               <TableCell align="right">Shares</TableCell>
                               <TableCell align="right">Cost Basis</TableCell>
-                              <TableCell align="right">Wash Sale Adj.</TableCell>
+                              <TableCell align="right">
+                                Wash Sale Adj.
+                              </TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
                             {investment.lots
-                              .filter(lot => lot.remainingShares === 0)
-                              .map(lot => (
+                              .filter((lot) => lot.remainingShares === 0)
+                              .map((lot) => (
                                 <TableRow key={lot.id}>
                                   <TableCell>
                                     {formatDate(lot.purchaseDate)}
@@ -577,7 +604,8 @@ const CostBasisTracker = (): ReactElement => {
       )}
 
       {/* Tax Year Summary */}
-      {(taxSummary.shortTermGainLoss !== 0 || taxSummary.longTermGainLoss !== 0) && (
+      {(taxSummary.shortTermGainLoss !== 0 ||
+        taxSummary.longTermGainLoss !== 0) && (
         <Paper className={classes.taxSummary}>
           <Typography variant="h6" gutterBottom>
             {taxYear} Tax Year Summary (Form 8949 / Schedule D)

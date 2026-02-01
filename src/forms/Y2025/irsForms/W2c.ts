@@ -30,7 +30,7 @@ export interface W2cData {
   employerEmail?: string
   // Employee Information
   employeeSSN: string
-  employeeSSNCorrected?: string            // If SSN was incorrect
+  employeeSSNCorrected?: string // If SSN was incorrect
   employeeFirstName: string
   employeeFirstNameCorrected?: string
   employeeMiddleName?: string
@@ -50,27 +50,27 @@ export interface W2cData {
   // Tax Year Being Corrected
   taxYearCorrected: number
   // Originally Reported Amounts
-  wagesOriginal: number                    // Box 1
-  federalWithheldOriginal: number          // Box 2
-  ssWagesOriginal: number                  // Box 3
-  ssWithheldOriginal: number               // Box 4
-  medicareWagesOriginal: number            // Box 5
-  medicareWithheldOriginal: number         // Box 6
-  ssTipsOriginal?: number                  // Box 7
-  allocatedTipsOriginal?: number           // Box 8
-  dependentCareBenefitsOriginal?: number   // Box 10
-  nonqualifiedPlansOriginal?: number       // Box 11
+  wagesOriginal: number // Box 1
+  federalWithheldOriginal: number // Box 2
+  ssWagesOriginal: number // Box 3
+  ssWithheldOriginal: number // Box 4
+  medicareWagesOriginal: number // Box 5
+  medicareWithheldOriginal: number // Box 6
+  ssTipsOriginal?: number // Box 7
+  allocatedTipsOriginal?: number // Box 8
+  dependentCareBenefitsOriginal?: number // Box 10
+  nonqualifiedPlansOriginal?: number // Box 11
   // Corrected Amounts
-  wagesCorrected: number                   // Box 1
-  federalWithheldCorrected: number         // Box 2
-  ssWagesCorrected: number                 // Box 3
-  ssWithheldCorrected: number              // Box 4
-  medicareWagesCorrected: number           // Box 5
-  medicareWithheldCorrected: number        // Box 6
-  ssTipsCorrected?: number                 // Box 7
-  allocatedTipsCorrected?: number          // Box 8
-  dependentCareBenefitsCorrected?: number  // Box 10
-  nonqualifiedPlansCorrected?: number      // Box 11
+  wagesCorrected: number // Box 1
+  federalWithheldCorrected: number // Box 2
+  ssWagesCorrected: number // Box 3
+  ssWithheldCorrected: number // Box 4
+  medicareWagesCorrected: number // Box 5
+  medicareWithheldCorrected: number // Box 6
+  ssTipsCorrected?: number // Box 7
+  allocatedTipsCorrected?: number // Box 8
+  dependentCareBenefitsCorrected?: number // Box 10
+  nonqualifiedPlansCorrected?: number // Box 11
   // State/Local (if applicable)
   stateOriginal?: string
   stateWagesOriginal?: number
@@ -135,8 +135,10 @@ export default class W2c extends F1040Attachment {
   // Is name being corrected?
   isNameCorrected = (): boolean => {
     const data = this.w2cData()
-    return (data?.employeeFirstNameCorrected ?? '').length > 0 ||
-           (data?.employeeLastNameCorrected ?? '').length > 0
+    return (
+      (data?.employeeFirstNameCorrected ?? '').length > 0 ||
+      (data?.employeeLastNameCorrected ?? '').length > 0
+    )
   }
 
   // Is address being corrected?

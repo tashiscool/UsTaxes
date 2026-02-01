@@ -54,7 +54,9 @@ export default class F8862 extends F1040Attachment {
   }
 
   disallowanceInfo = (): CreditDisallowanceInfo | undefined => {
-    return this.f1040.info.creditDisallowance as CreditDisallowanceInfo | undefined
+    return this.f1040.info.creditDisallowance as
+      | CreditDisallowanceInfo
+      | undefined
   }
 
   // Check if enough time has passed since disallowance
@@ -107,7 +109,7 @@ export default class F8862 extends F1040Attachment {
   // Line 3: Do you have a qualifying child for EIC?
   l3 = (): boolean => {
     const deps = this.f1040.info.taxPayer.dependents ?? []
-    return deps.some(d => {
+    return deps.some((d) => {
       const age = 2025 - new Date(d.dateOfBirth).getFullYear()
       return age < 19 || (age < 24 && d.qualifyingInfo?.isStudent)
     })
@@ -120,13 +122,13 @@ export default class F8862 extends F1040Attachment {
 
   // Line 8a: Did child live with you for more than half the year?
   l8a = (): boolean => {
-    return this.qualifyingChildren().every(c => c.monthsLivedWithYou >= 7)
+    return this.qualifyingChildren().every((c) => c.monthsLivedWithYou >= 7)
   }
 
   // Line 8b: Is child under age 19 (or 24 if student)?
   l8b = (): boolean => {
     const deps = this.f1040.info.taxPayer.dependents ?? []
-    return deps.some(d => {
+    return deps.some((d) => {
       const age = 2025 - new Date(d.dateOfBirth).getFullYear()
       return age < 19 || (age < 24 && d.qualifyingInfo?.isStudent)
     })
@@ -149,7 +151,7 @@ export default class F8862 extends F1040Attachment {
   // Line 11: Do you have a qualifying child for CTC?
   l11 = (): boolean => {
     const deps = this.f1040.info.taxPayer.dependents ?? []
-    return deps.some(d => {
+    return deps.some((d) => {
       const age = 2025 - new Date(d.dateOfBirth).getFullYear()
       return age < 17
     })

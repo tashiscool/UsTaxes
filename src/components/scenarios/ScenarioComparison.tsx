@@ -36,7 +36,10 @@ import {
   CheckCircle,
   Warning
 } from '@material-ui/icons'
-import { TaxCalculationResult, ScenarioDifference } from 'ustaxes/core/scenarios/scenarioEngine'
+import {
+  TaxCalculationResult,
+  ScenarioDifference
+} from 'ustaxes/core/scenarios/scenarioEngine'
 import { Currency } from 'ustaxes/components/input'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -155,8 +158,8 @@ const TrendIcon = ({
       ? classes.negativeChange
       : classes.positiveChange
     : isPositive
-      ? classes.positiveChange
-      : classes.negativeChange
+    ? classes.positiveChange
+    : classes.negativeChange
 
   return isPositive ? (
     <TrendingUp className={colorClass} />
@@ -189,8 +192,8 @@ const DiffChip = ({
       ? classes.chipNegative
       : classes.chipPositive
     : isPositive
-      ? classes.chipPositive
-      : classes.chipNegative
+    ? classes.chipPositive
+    : classes.chipNegative
 
   const label = isCurrency
     ? `${isPositive ? '+' : ''}${formatCurrency(value)}`
@@ -256,7 +259,9 @@ const ScenarioSummaryCard = ({
 
   return (
     <Card
-      className={`${classes.comparisonCard} ${isBaseline ? classes.baselineCard : classes.scenarioCard}`}
+      className={`${classes.comparisonCard} ${
+        isBaseline ? classes.baselineCard : classes.scenarioCard
+      }`}
     >
       <CardContent>
         <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -318,8 +323,8 @@ const ScenarioSummaryCard = ({
                   result.refundAmount > 0
                     ? '#4caf50'
                     : result.amountOwed > 0
-                      ? '#f44336'
-                      : undefined
+                    ? '#f44336'
+                    : undefined
               }}
             >
               {result.refundAmount > 0
@@ -375,7 +380,9 @@ const ScenarioComparison = ({
       agi: Math.max(...allVals.map((r) => r.agi)),
       taxableIncome: Math.max(...allVals.map((r) => r.taxableIncome)),
       totalTax: Math.max(...allVals.map((r) => r.totalTax)),
-      refund: Math.max(...allVals.map((r) => Math.abs(r.refundAmount - r.amountOwed)))
+      refund: Math.max(
+        ...allVals.map((r) => Math.abs(r.refundAmount - r.amountOwed))
+      )
     }
   }, [allResults])
 
@@ -454,7 +461,9 @@ const ScenarioComparison = ({
                     <TableCell key={s.scenarioId} align="right">
                       {formatCurrency(s.wagesIncome)}
                       <Box className={classes.diffCell}>
-                        <TrendIcon value={s.wagesIncome - baseline.wagesIncome} />
+                        <TrendIcon
+                          value={s.wagesIncome - baseline.wagesIncome}
+                        />
                       </Box>
                     </TableCell>
                   ))}
@@ -603,8 +612,7 @@ const ScenarioComparison = ({
                   <TableCell align="right" className={classes.baselineColumn}>
                     <strong
                       style={{
-                        color:
-                          baseline.refundAmount > 0 ? '#4caf50' : '#f44336'
+                        color: baseline.refundAmount > 0 ? '#4caf50' : '#f44336'
                       }}
                     >
                       {formatCurrency(

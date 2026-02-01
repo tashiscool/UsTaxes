@@ -54,7 +54,10 @@ export default class F8994 extends F1040Attachment {
   averageCreditRate = (): number => {
     const data = this.creditData()
     if (!data || data.qualifiedEmployees.length === 0) return 0.125
-    const totalRate = data.qualifiedEmployees.reduce((sum, e) => sum + e.creditRate, 0)
+    const totalRate = data.qualifiedEmployees.reduce(
+      (sum, e) => sum + e.creditRate,
+      0
+    )
     return totalRate / data.qualifiedEmployees.length
   }
 
@@ -86,7 +89,7 @@ export default class F8994 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1(),
     this.averageCreditRate(),
     this.l3(),

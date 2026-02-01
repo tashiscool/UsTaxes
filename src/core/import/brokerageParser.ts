@@ -32,11 +32,7 @@ export interface BrokerageTransaction {
 /**
  * Supported brokerage formats
  */
-export type BrokerageType =
-  | 'tdAmeritrade'
-  | 'schwab'
-  | 'fidelity'
-  | 'generic'
+export type BrokerageType = 'tdAmeritrade' | 'schwab' | 'fidelity' | 'generic'
 
 /**
  * Column mapping configuration for generic CSV parsing
@@ -142,8 +138,7 @@ export function parseCurrency(value: string): number {
   }
 
   // Remove currency symbols, commas, spaces, and parentheses (for negative)
-  let cleaned = value.trim()
-    .replace(/[$,\s]/g, '')
+  let cleaned = value.trim().replace(/[$,\s]/g, '')
 
   // Handle parentheses for negative numbers
   const isNegative = cleaned.startsWith('(') && cleaned.endsWith(')')
@@ -163,9 +158,12 @@ export function parseCurrency(value: string): number {
  * Determines if a transaction is short-term based on dates
  * Short-term: held for 1 year or less (365 days)
  */
-export function isShortTermTransaction(dateAcquired: Date, dateSold: Date): boolean {
+export function isShortTermTransaction(
+  dateAcquired: Date,
+  dateSold: Date
+): boolean {
   const oneYearMs = 365 * 24 * 60 * 60 * 1000
-  return (dateSold.getTime() - dateAcquired.getTime()) <= oneYearMs
+  return dateSold.getTime() - dateAcquired.getTime() <= oneYearMs
 }
 
 /**
@@ -179,7 +177,9 @@ export function transactionToAsset(
   const closePrice = transaction.proceeds / quantity
 
   return {
-    name: transaction.symbol + (transaction.description ? ` - ${transaction.description}` : ''),
+    name:
+      transaction.symbol +
+      (transaction.description ? ` - ${transaction.description}` : ''),
     positionType: 'Security' as AssetType,
     openDate: transaction.dateAcquired,
     closeDate: transaction.dateSold,
@@ -236,7 +236,7 @@ export abstract class BaseBrokerageParser implements BrokerageParser {
         } else if (char === '\n' || (char === '\r' && nextChar === '\n')) {
           // End of row
           currentRow.push(currentCell.trim())
-          if (currentRow.some(cell => cell !== '')) {
+          if (currentRow.some((cell) => cell !== '')) {
             rows.push(currentRow)
           }
           currentRow = []
@@ -251,7 +251,7 @@ export abstract class BaseBrokerageParser implements BrokerageParser {
     // Don't forget the last cell/row
     if (currentCell || currentRow.length > 0) {
       currentRow.push(currentCell.trim())
-      if (currentRow.some(cell => cell !== '')) {
+      if (currentRow.some((cell) => cell !== '')) {
         rows.push(currentRow)
       }
     }
@@ -260,7 +260,7 @@ export abstract class BaseBrokerageParser implements BrokerageParser {
   }
 
   protected getHeaders(rows: string[][]): string[] {
-    return rows.length > 0 ? rows[0].map(h => h.toLowerCase().trim()) : []
+    return rows.length > 0 ? rows[0].map((h) => h.toLowerCase().trim()) : []
   }
 
   abstract parse(content: string): ParseResult
@@ -288,7 +288,8 @@ export function detectBrokerageType(content: string): BrokerageType | null {
   if (
     headerLine.includes('date acquired') &&
     headerLine.includes('date sold') &&
-    (headerLine.includes('schwab') || headerLine.includes('wash sale loss disallowed'))
+    (headerLine.includes('schwab') ||
+      headerLine.includes('wash sale loss disallowed'))
   ) {
     return 'schwab'
   }
@@ -305,7 +306,8 @@ export function detectBrokerageType(content: string): BrokerageType | null {
   // Check content for brokerage mentions
   const fullContent = lines.join('\n').toLowerCase()
   if (fullContent.includes('td ameritrade')) return 'tdAmeritrade'
-  if (fullContent.includes('charles schwab') || fullContent.includes('schwab')) return 'schwab'
+  if (fullContent.includes('charles schwab') || fullContent.includes('schwab'))
+    return 'schwab'
   if (fullContent.includes('fidelity')) return 'fidelity'
 
   return null

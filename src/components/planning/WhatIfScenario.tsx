@@ -234,12 +234,13 @@ export default function WhatIfScenario({
     )
   }
 
-  const maxBarValue = Math.max(
-    baseBreakdown.totalTax,
-    scenarioBreakdown.totalTax,
-    baseBreakdown.totalPayments,
-    scenarioBreakdown.totalPayments
-  ) * 1.1
+  const maxBarValue =
+    Math.max(
+      baseBreakdown.totalTax,
+      scenarioBreakdown.totalTax,
+      baseBreakdown.totalPayments,
+      scenarioBreakdown.totalPayments
+    ) * 1.1
 
   return (
     <Box>
@@ -604,10 +605,12 @@ export default function WhatIfScenario({
             label="Taxable Income"
             current={baseBreakdown.taxableIncome}
             projected={scenarioBreakdown.taxableIncome}
-            maxValue={Math.max(
-              baseBreakdown.taxableIncome,
-              scenarioBreakdown.taxableIncome
-            ) * 1.1}
+            maxValue={
+              Math.max(
+                baseBreakdown.taxableIncome,
+                scenarioBreakdown.taxableIncome
+              ) * 1.1
+            }
           />
         </Box>
       </Paper>

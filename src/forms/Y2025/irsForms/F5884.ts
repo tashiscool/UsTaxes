@@ -50,7 +50,7 @@ export default class F5884 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.qualifiedWages
-      .filter(w => w.creditRate === 0.25)
+      .filter((w) => w.creditRate === 0.25)
       .reduce((sum, w) => sum + w.wages, 0)
   }
 
@@ -62,12 +62,12 @@ export default class F5884 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.qualifiedWages
-      .filter(w => w.creditRate === 0.40)
+      .filter((w) => w.creditRate === 0.4)
       .reduce((sum, w) => sum + w.wages, 0)
   }
 
   // Line 2b: Multiply line 2a by 40%
-  l2b = (): number => Math.round(this.l2a() * 0.40)
+  l2b = (): number => Math.round(this.l2a() * 0.4)
 
   // Line 3: Add lines 1b and 2b
   l3 = (): number => this.l1b() + this.l2b()
@@ -83,7 +83,7 @@ export default class F5884 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     this.l1a(),
     this.l1b(),
     this.l2a(),

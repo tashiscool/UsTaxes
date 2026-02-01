@@ -83,7 +83,15 @@ export interface F8958Data {
 
 // Community property states
 const COMMUNITY_PROPERTY_STATES = [
-  'AZ', 'CA', 'ID', 'LA', 'NV', 'NM', 'TX', 'WA', 'WI'
+  'AZ',
+  'CA',
+  'ID',
+  'LA',
+  'NV',
+  'NM',
+  'TX',
+  'WA',
+  'WI'
 ]
 
 export default class F8958 extends F1040Attachment {

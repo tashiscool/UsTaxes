@@ -54,11 +54,7 @@ export class KansasCityEarningsTax extends Form {
    */
   isKansasCityResident = (): boolean => {
     const city = this.localTaxInfo?.residenceCity?.toLowerCase()
-    return (
-      city === 'kansas city' ||
-      city === 'kc' ||
-      city === 'kcmo'
-    )
+    return city === 'kansas city' || city === 'kc' || city === 'kcmo'
   }
 
   /**
@@ -66,11 +62,7 @@ export class KansasCityEarningsTax extends Form {
    */
   worksInKansasCity = (): boolean => {
     const city = this.localTaxInfo?.workCity?.toLowerCase()
-    return (
-      city === 'kansas city' ||
-      city === 'kc' ||
-      city === 'kcmo'
-    )
+    return city === 'kansas city' || city === 'kc' || city === 'kcmo'
   }
 
   /**
@@ -110,12 +102,8 @@ export class KansasCityEarningsTax extends Form {
       // Non-residents only pay on wages earned in Kansas City
       return w2s
         .filter((w2) => {
-          const city = w2.employer?.address?.city?.toLowerCase()
-          return (
-            city === 'kansas city' ||
-            city === 'kc' ||
-            city === 'kcmo'
-          )
+          const city = w2.employer?.address?.city.toLowerCase()
+          return city === 'kansas city' || city === 'kc' || city === 'kcmo'
         })
         .reduce((sum, w2) => sum + w2.income, 0)
     }

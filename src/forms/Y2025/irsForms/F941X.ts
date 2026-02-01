@@ -60,9 +60,9 @@ export interface F941XData {
 }
 
 // Tax rates for 2025
-const SOCIAL_SECURITY_RATE = 0.124  // 6.2% employee + 6.2% employer
-const MEDICARE_RATE = 0.029         // 1.45% employee + 1.45% employer
-const ADDL_MEDICARE_RATE = 0.009    // 0.9% on wages over $200,000
+const SOCIAL_SECURITY_RATE = 0.124 // 6.2% employee + 6.2% employer
+const MEDICARE_RATE = 0.029 // 1.45% employee + 1.45% employer
+const ADDL_MEDICARE_RATE = 0.009 // 0.9% on wages over $200,000
 
 export default class F941X extends F1040Attachment {
   tag: FormTag = 'f941x'
@@ -78,7 +78,7 @@ export default class F941X extends F1040Attachment {
   }
 
   f941XData = (): F941XData | undefined => {
-    return undefined  // Would be populated from employer data
+    return undefined // Would be populated from employer data
   }
 
   // Period being corrected
@@ -121,7 +121,9 @@ export default class F941X extends F1040Attachment {
   // Medicare corrections
   medicareWagesDifference = (): number => {
     const data = this.f941XData()
-    return (data?.correctedMedicareWages ?? 0) - (data?.originalMedicareWages ?? 0)
+    return (
+      (data?.correctedMedicareWages ?? 0) - (data?.originalMedicareWages ?? 0)
+    )
   }
 
   medicareTaxDifference = (): number => {
@@ -131,7 +133,9 @@ export default class F941X extends F1040Attachment {
   // Additional Medicare Tax corrections
   addlMedicareDifference = (): number => {
     const data = this.f941XData()
-    return (data?.correctedAddlMedicare ?? 0) - (data?.originalAddlMedicare ?? 0)
+    return (
+      (data?.correctedAddlMedicare ?? 0) - (data?.originalAddlMedicare ?? 0)
+    )
   }
 
   // Total tax difference
@@ -156,7 +160,7 @@ export default class F941X extends F1040Attachment {
       data?.yearBeingCorrected ?? 0,
       data?.quarterBeingCorrected ?? 1,
       this.quarterEndDate(),
-      data?.dateOriginalReturnFiled?.toLocaleDateString() ?? '',
+      data?.dateOriginalReturnFiled.toLocaleDateString() ?? '',
       // Type
       this.isAdjustedReturn(),
       this.isClaimForRefund(),

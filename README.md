@@ -23,12 +23,14 @@ UsTaxes is a free, open-source tax filing application that can be used to file t
 ## Supported Income Data
 
 ### Income Forms
+
 - W-2 (Wages)
 - All 1099 variants (INT, DIV, B, R, MISC, NEC, G, SSA, K)
 - 1098-E (Student Loan Interest)
 - Schedule K-1 (Partnership/S-Corp income)
 
 ### Schedules (2025)
+
 - Schedule 1 (Additional Income and Adjustments)
 - Schedule 1-A (OBBBA 2025 Additional Deductions)
 - Schedule 2 (Additional Taxes)
@@ -50,12 +52,14 @@ UsTaxes is a free, open-source tax filing application that can be used to file t
 ## Supported Credits
 
 ### Refundable Credits
+
 - Child Tax Credit / Additional Child Tax Credit
 - Earned Income Credit
 - American Opportunity Credit (F8863)
 - Premium Tax Credit / ACA Subsidy (F8962)
 
 ### Nonrefundable Credits
+
 - Child and Dependent Care Credit (F2441)
 - Residential Energy Credits (F5695)
 - Clean Vehicle Credit (F8936)

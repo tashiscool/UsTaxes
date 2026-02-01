@@ -73,7 +73,7 @@ const parameters = {
     },
     // Earned income credit
     earnedIncomeCredit: {
-      statePercentage: 0.10, // 10% of federal EITC
+      statePercentage: 0.1, // 10% of federal EITC
       refundable: true
     },
     // Credit for taxes paid to other IN counties

@@ -26,7 +26,12 @@ export interface F1041AData {
   // Trust information
   trustName: string
   trustEIN: string
-  trustType: 'crt_annuity' | 'crt_unitrust' | 'pooled_income' | 'charitable_lead' | 'other'
+  trustType:
+    | 'crt_annuity'
+    | 'crt_unitrust'
+    | 'pooled_income'
+    | 'charitable_lead'
+    | 'other'
   // Charitable beneficiaries
   charitableDistributions: CharitableDistribution[]
   // Non-charitable beneficiaries
@@ -83,16 +88,23 @@ export default class F1041A extends F1040Attachment {
   }
 
   // Accumulation
-  beginningAccumulation = (): number => this.f1041AData()?.beginningAccumulation ?? 0
+  beginningAccumulation = (): number =>
+    this.f1041AData()?.beginningAccumulation ?? 0
   currentYearIncome = (): number => this.f1041AData()?.currentYearIncome ?? 0
-  currentYearDistributions = (): number => this.f1041AData()?.currentYearDistributions ?? 0
+  currentYearDistributions = (): number =>
+    this.f1041AData()?.currentYearDistributions ?? 0
 
   endingAccumulation = (): number => {
-    return this.beginningAccumulation() + this.currentYearIncome() - this.currentYearDistributions()
+    return (
+      this.beginningAccumulation() +
+      this.currentYearIncome() -
+      this.currentYearDistributions()
+    )
   }
 
   // FMV and income
-  fairMarketValueAssets = (): number => this.f1041AData()?.fairMarketValueAssets ?? 0
+  fairMarketValueAssets = (): number =>
+    this.f1041AData()?.fairMarketValueAssets ?? 0
   grossIncome = (): number => this.f1041AData()?.grossIncome ?? 0
   deductions = (): number => this.f1041AData()?.deductions ?? 0
   netIncome = (): number => this.grossIncome() - this.deductions()

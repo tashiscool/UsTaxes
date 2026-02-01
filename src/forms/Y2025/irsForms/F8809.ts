@@ -18,36 +18,36 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
  */
 
 export type InformationReturnType =
-  | 'W-2'       // Wage and Tax Statement
-  | '1098'      // Mortgage Interest
-  | '1098-C'    // Vehicle Contributions
-  | '1098-E'    // Student Loan Interest
-  | '1098-T'    // Tuition Statement
-  | '1099-A'    // Acquisition or Abandonment
-  | '1099-B'    // Proceeds from Broker
-  | '1099-C'    // Cancellation of Debt
-  | '1099-CAP'  // Corporate Control Changes
-  | '1099-DIV'  // Dividends
-  | '1099-G'    // Government Payments
-  | '1099-INT'  // Interest
-  | '1099-K'    // Payment Card Transactions
-  | '1099-LS'   // Life Insurance Sale
-  | '1099-LTC'  // Long-Term Care
+  | 'W-2' // Wage and Tax Statement
+  | '1098' // Mortgage Interest
+  | '1098-C' // Vehicle Contributions
+  | '1098-E' // Student Loan Interest
+  | '1098-T' // Tuition Statement
+  | '1099-A' // Acquisition or Abandonment
+  | '1099-B' // Proceeds from Broker
+  | '1099-C' // Cancellation of Debt
+  | '1099-CAP' // Corporate Control Changes
+  | '1099-DIV' // Dividends
+  | '1099-G' // Government Payments
+  | '1099-INT' // Interest
+  | '1099-K' // Payment Card Transactions
+  | '1099-LS' // Life Insurance Sale
+  | '1099-LTC' // Long-Term Care
   | '1099-MISC' // Miscellaneous Income
-  | '1099-NEC'  // Nonemployee Compensation
-  | '1099-OID'  // Original Issue Discount
+  | '1099-NEC' // Nonemployee Compensation
+  | '1099-OID' // Original Issue Discount
   | '1099-PATR' // Patronage Dividends
-  | '1099-Q'    // Education Program Payments
-  | '1099-R'    // Retirement Distributions
-  | '1099-S'    // Real Estate Transactions
-  | '1099-SA'   // HSA/MSA Distributions
-  | '1099-SB'   // Seller's Investment
-  | '3921'      // ISO Stock Options
-  | '3922'      // ESPP Stock Transfers
-  | '5498'      // IRA Contributions
-  | '5498-ESA'  // Coverdell ESA
-  | '5498-SA'   // HSA/MSA Contributions
-  | 'W-2G'      // Gambling Winnings
+  | '1099-Q' // Education Program Payments
+  | '1099-R' // Retirement Distributions
+  | '1099-S' // Real Estate Transactions
+  | '1099-SA' // HSA/MSA Distributions
+  | '1099-SB' // Seller's Investment
+  | '3921' // ISO Stock Options
+  | '3922' // ESPP Stock Transfers
+  | '5498' // IRA Contributions
+  | '5498-ESA' // Coverdell ESA
+  | '5498-SA' // HSA/MSA Contributions
+  | 'W-2G' // Gambling Winnings
 
 export interface InfoReturnExtensionInfo {
   returnTypes: InformationReturnType[]
@@ -59,7 +59,7 @@ export interface InfoReturnExtensionInfo {
   filerState: string
   filerZip: string
   numberOfForms: number
-  isInitialRequest: boolean  // false = additional 30-day request
+  isInitialRequest: boolean // false = additional 30-day request
   reasonForAdditionalExtension?: string
 }
 
@@ -76,7 +76,9 @@ export default class F8809 extends F1040Attachment {
   }
 
   extensionInfo = (): InfoReturnExtensionInfo | undefined => {
-    return this.f1040.info.infoReturnExtension as InfoReturnExtensionInfo | undefined
+    return this.f1040.info.infoReturnExtension as
+      | InfoReturnExtensionInfo
+      | undefined
   }
 
   // Part I - Filer Information

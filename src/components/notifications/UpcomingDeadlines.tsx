@@ -189,7 +189,9 @@ const UpcomingDeadlines = (props: UpcomingDeadlinesProps): ReactElement => {
   const visibleDeadlines = deadlines.slice(0, maxVisible)
   const hasMoreDeadlines = deadlines.length > maxVisible
 
-  const getQuarterFromDeadlineType = (type: DeadlineType): 1 | 2 | 3 | 4 | null => {
+  const getQuarterFromDeadlineType = (
+    type: DeadlineType
+  ): 1 | 2 | 3 | 4 | null => {
     switch (type) {
       case DeadlineType.ESTIMATED_TAX_Q1:
         return 1

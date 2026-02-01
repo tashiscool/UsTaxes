@@ -31,8 +31,7 @@ export class WI1 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Line 1: Federal Adjusted Gross Income
   l1 = (): number => this.f1040.l11()
@@ -61,7 +60,10 @@ export class WI1 extends Form {
   l8 = (): number | undefined => {
     const retirementIncome = this.f1040.l5b() ?? 0
     if (retirementIncome > 0) {
-      return Math.min(retirementIncome, parameters.retirementSubtraction.maxAmount)
+      return Math.min(
+        retirementIncome,
+        parameters.retirementSubtraction.maxAmount
+      )
     }
     return undefined
   }
@@ -73,9 +75,8 @@ export class WI1 extends Form {
   l10 = (): number | undefined => undefined
 
   // Line 11: Total subtractions
-  l11 = (): number => sumFields([
-    this.l6(), this.l7(), this.l8(), this.l9(), this.l10()
-  ])
+  l11 = (): number =>
+    sumFields([this.l6(), this.l7(), this.l8(), this.l9(), this.l10()])
 
   // Line 12: Wisconsin adjusted gross income
   l12 = (): number => Math.max(0, this.l1() + this.l5() - this.l11())
@@ -96,7 +97,9 @@ export class WI1 extends Form {
     // Phase out standard deduction at higher incomes
     if (agi > phaseOutStart) {
       const excess = agi - phaseOutStart
-      const reduction = Math.round(excess * parameters.standardDeductionPhaseOut.reductionRate)
+      const reduction = Math.round(
+        excess * parameters.standardDeductionPhaseOut.reductionRate
+      )
       return Math.max(0, baseDeduction - reduction)
     }
 
@@ -124,7 +127,8 @@ export class WI1 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -148,7 +152,7 @@ export class WI1 extends Form {
     } else if (numDependents === 1) {
       percentage = parameters.earnedIncomeCredit.oneChild
     } else {
-      return undefined  // WI EIC requires at least one qualifying child
+      return undefined // WI EIC requires at least one qualifying child
     }
 
     return Math.round(federalEIC * percentage)
@@ -173,10 +177,8 @@ export class WI1 extends Form {
   l20 = (): number | undefined => undefined
 
   // Line 21: Total nonrefundable credits (limited to tax)
-  l21 = (): number => Math.min(
-    sumFields([this.l17(), this.l19(), this.l20()]),
-    this.l15()
-  )
+  l21 = (): number =>
+    Math.min(sumFields([this.l17(), this.l19(), this.l20()]), this.l15())
 
   // Line 22: Tax after nonrefundable credits
   l22 = (): number => Math.max(0, this.l15() - this.l21())
@@ -195,7 +197,8 @@ export class WI1 extends Form {
   l26 = (): number | undefined => this.l18()
 
   // Line 27: Total payments and refundable credits
-  l27 = (): number => sumFields([this.l23(), this.l24(), this.l25(), this.l26()])
+  l27 = (): number =>
+    sumFields([this.l23(), this.l24(), this.l25(), this.l26()])
 
   // RESULTS
   // Line 28: Amount due
@@ -214,15 +217,38 @@ export class WI1 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l1(), this.l2(), this.l3(), this.l4(), this.l5(),
-    this.l6(), this.l7(), this.l8(), this.l9(), this.l10(), this.l11(),
-    this.l12(), this.l13(), this.l14(), this.l15(),
-    this.l16(), this.l17(), this.l18(), this.l19(), this.l20(), this.l21(),
-    this.l22(), this.l23(), this.l24(), this.l25(), this.l26(), this.l27(),
-    this.l28(), this.l29()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l1(),
+    this.l2(),
+    this.l3(),
+    this.l4(),
+    this.l5(),
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23(),
+    this.l24(),
+    this.l25(),
+    this.l26(),
+    this.l27(),
+    this.l28(),
+    this.l29()
   ]
 }
 

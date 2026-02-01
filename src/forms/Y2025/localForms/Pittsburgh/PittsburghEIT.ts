@@ -55,11 +55,7 @@ export class PittsburghEIT extends Form {
    */
   isPittsburghResident = (): boolean => {
     const city = this.localTaxInfo?.residenceCity?.toLowerCase()
-    return (
-      city === 'pittsburgh' ||
-      city === 'pgh' ||
-      city === 'pitt'
-    )
+    return city === 'pittsburgh' || city === 'pgh' || city === 'pitt'
   }
 
   /**
@@ -67,11 +63,7 @@ export class PittsburghEIT extends Form {
    */
   worksInPittsburgh = (): boolean => {
     const city = this.localTaxInfo?.workCity?.toLowerCase()
-    return (
-      city === 'pittsburgh' ||
-      city === 'pgh' ||
-      city === 'pitt'
-    )
+    return city === 'pittsburgh' || city === 'pgh' || city === 'pitt'
   }
 
   /**
@@ -134,12 +126,8 @@ export class PittsburghEIT extends Form {
       // Non-residents only pay on wages earned in Pittsburgh
       return w2s
         .filter((w2) => {
-          const city = w2.employer?.address?.city?.toLowerCase()
-          return (
-            city === 'pittsburgh' ||
-            city === 'pgh' ||
-            city === 'pitt'
-          )
+          const city = w2.employer?.address?.city.toLowerCase()
+          return city === 'pittsburgh' || city === 'pgh' || city === 'pitt'
         })
         .reduce((sum, w2) => sum + w2.income, 0)
     }

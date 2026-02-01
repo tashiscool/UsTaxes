@@ -66,11 +66,11 @@ export interface BusinessInfo {
   name: string
   ein?: string
   address?: string
-  principalBusinessCode: string  // 6-digit NAICS code
+  principalBusinessCode: string // 6-digit NAICS code
   businessDescription: string
   accountingMethod: BusinessAccountingMethod
   materialParticipation: boolean
-  startedOrAcquired: boolean  // Started or acquired this year
+  startedOrAcquired: boolean // Started or acquired this year
   madePaymentsRequiring1099: boolean
   filed1099s: boolean
   income: BusinessIncome
@@ -102,8 +102,9 @@ export default class ScheduleC extends F1040Attachment {
   }
 
   businesses = (): BusinessInfo[] => {
-    const allBusinesses = (this.f1040.info.businesses as BusinessInfo[] | undefined) ?? []
-    return allBusinesses.filter(b => b.personRole === this.personRole)
+    const allBusinesses =
+      (this.f1040.info.businesses as BusinessInfo[] | undefined) ?? []
+    return allBusinesses.filter((b) => b.personRole === this.personRole)
   }
 
   // Get first business (Schedule C handles one business per form)
@@ -115,12 +116,12 @@ export default class ScheduleC extends F1040Attachment {
 
   // Line 1: Gross receipts or sales
   l1 = (): number => {
-    return this.business()?.income?.grossReceipts ?? 0
+    return this.business()?.income.grossReceipts ?? 0
   }
 
   // Line 2: Returns and allowances
   l2 = (): number => {
-    return this.business()?.income?.returns ?? 0
+    return this.business()?.income.returns ?? 0
   }
 
   // Line 3: Subtract line 2 from line 1
@@ -134,7 +135,7 @@ export default class ScheduleC extends F1040Attachment {
 
   // Line 6: Other income
   l6 = (): number => {
-    return this.business()?.income?.otherIncome ?? 0
+    return this.business()?.income.otherIncome ?? 0
   }
 
   // Line 7: Gross income (line 5 + line 6)
@@ -143,78 +144,78 @@ export default class ScheduleC extends F1040Attachment {
   // Part II - Expenses
 
   // Line 8: Advertising
-  l8 = (): number => this.business()?.expenses?.advertising ?? 0
+  l8 = (): number => this.business()?.expenses.advertising ?? 0
 
   // Line 9: Car and truck expenses
-  l9 = (): number => this.business()?.expenses?.carAndTruck ?? 0
+  l9 = (): number => this.business()?.expenses.carAndTruck ?? 0
 
   // Line 10: Commissions and fees
-  l10 = (): number => this.business()?.expenses?.commissions ?? 0
+  l10 = (): number => this.business()?.expenses.commissions ?? 0
 
   // Line 11: Contract labor
-  l11 = (): number => this.business()?.expenses?.contractLabor ?? 0
+  l11 = (): number => this.business()?.expenses.contractLabor ?? 0
 
   // Line 12: Depletion
-  l12 = (): number => this.business()?.expenses?.depletion ?? 0
+  l12 = (): number => this.business()?.expenses.depletion ?? 0
 
   // Line 13: Depreciation and section 179 expense deduction
   l13 = (): number => {
     // Get from Form 4562 if available, otherwise use direct input
     const f4562Depreciation = this.f1040.f4562?.totalDepreciation() ?? 0
-    const directDepreciation = this.business()?.expenses?.depreciation ?? 0
+    const directDepreciation = this.business()?.expenses.depreciation ?? 0
     return f4562Depreciation > 0 ? f4562Depreciation : directDepreciation
   }
 
   // Line 14: Employee benefit programs
-  l14 = (): number => this.business()?.expenses?.employeeBenefits ?? 0
+  l14 = (): number => this.business()?.expenses.employeeBenefits ?? 0
 
   // Line 15: Insurance (other than health)
-  l15 = (): number => this.business()?.expenses?.insurance ?? 0
+  l15 = (): number => this.business()?.expenses.insurance ?? 0
 
   // Line 16a: Interest on mortgage
-  l16a = (): number => this.business()?.expenses?.interestMortgage ?? 0
+  l16a = (): number => this.business()?.expenses.interestMortgage ?? 0
 
   // Line 16b: Interest on other business debt
-  l16b = (): number => this.business()?.expenses?.interestOther ?? 0
+  l16b = (): number => this.business()?.expenses.interestOther ?? 0
 
   // Line 17: Legal and professional services
-  l17 = (): number => this.business()?.expenses?.legal ?? 0
+  l17 = (): number => this.business()?.expenses.legal ?? 0
 
   // Line 18: Office expense
-  l18 = (): number => this.business()?.expenses?.office ?? 0
+  l18 = (): number => this.business()?.expenses.office ?? 0
 
   // Line 19: Pension and profit-sharing plans
-  l19 = (): number => this.business()?.expenses?.pensionPlans ?? 0
+  l19 = (): number => this.business()?.expenses.pensionPlans ?? 0
 
   // Line 20a: Rent or lease - vehicles, machinery, equipment
-  l20a = (): number => this.business()?.expenses?.rentVehicles ?? 0
+  l20a = (): number => this.business()?.expenses.rentVehicles ?? 0
 
   // Line 20b: Rent or lease - other business property
-  l20b = (): number => this.business()?.expenses?.rentOther ?? 0
+  l20b = (): number => this.business()?.expenses.rentOther ?? 0
 
   // Line 21: Repairs and maintenance
-  l21 = (): number => this.business()?.expenses?.repairs ?? 0
+  l21 = (): number => this.business()?.expenses.repairs ?? 0
 
   // Line 22: Supplies
-  l22 = (): number => this.business()?.expenses?.supplies ?? 0
+  l22 = (): number => this.business()?.expenses.supplies ?? 0
 
   // Line 23: Taxes and licenses
-  l23 = (): number => this.business()?.expenses?.taxes ?? 0
+  l23 = (): number => this.business()?.expenses.taxes ?? 0
 
   // Line 24a: Travel (not meals)
-  l24a = (): number => this.business()?.expenses?.travel ?? 0
+  l24a = (): number => this.business()?.expenses.travel ?? 0
 
   // Line 24b: Deductible meals (50% or 100% for certain)
-  l24b = (): number => this.business()?.expenses?.deductibleMeals ?? 0
+  l24b = (): number => this.business()?.expenses.deductibleMeals ?? 0
 
   // Line 25: Utilities
-  l25 = (): number => this.business()?.expenses?.utilities ?? 0
+  l25 = (): number => this.business()?.expenses.utilities ?? 0
 
   // Line 26: Wages (less employment credits)
-  l26 = (): number => this.business()?.expenses?.wages ?? 0
+  l26 = (): number => this.business()?.expenses.wages ?? 0
 
   // Line 27a: Other expenses (from line 48)
-  l27a = (): number => this.business()?.expenses?.otherExpenses ?? 0
+  l27a = (): number => this.business()?.expenses.otherExpenses ?? 0
 
   // Line 27b: Reserved for future use
   l27b = (): number => 0
@@ -222,10 +223,29 @@ export default class ScheduleC extends F1040Attachment {
   // Line 28: Total expenses before expenses for business use of home
   l28 = (): number => {
     return sumFields([
-      this.l8(), this.l9(), this.l10(), this.l11(), this.l12(), this.l13(),
-      this.l14(), this.l15(), this.l16a(), this.l16b(), this.l17(), this.l18(),
-      this.l19(), this.l20a(), this.l20b(), this.l21(), this.l22(), this.l23(),
-      this.l24a(), this.l24b(), this.l25(), this.l26(), this.l27a()
+      this.l8(),
+      this.l9(),
+      this.l10(),
+      this.l11(),
+      this.l12(),
+      this.l13(),
+      this.l14(),
+      this.l15(),
+      this.l16a(),
+      this.l16b(),
+      this.l17(),
+      this.l18(),
+      this.l19(),
+      this.l20a(),
+      this.l20b(),
+      this.l21(),
+      this.l22(),
+      this.l23(),
+      this.l24a(),
+      this.l24b(),
+      this.l25(),
+      this.l26(),
+      this.l27a()
     ])
   }
 
@@ -236,8 +256,11 @@ export default class ScheduleC extends F1040Attachment {
 
   // Line 30: Expenses for business use of home (Form 8829)
   l30 = (): number => {
-    return this.f1040.f8829?.deductionToScheduleC() ??
-           this.business()?.homeOfficeDeduction ?? 0
+    return (
+      this.f1040.f8829?.deductionToScheduleC() ??
+      this.business()?.homeOfficeDeduction ??
+      0
+    )
   }
 
   // Line 31: Net profit or (loss) (line 29 - line 30)
@@ -252,7 +275,7 @@ export default class ScheduleC extends F1040Attachment {
   // Part III - Cost of Goods Sold
 
   // Line 33: Inventory method
-  inventoryMethod = (): string => 'cost'  // cost, lower of cost or market, other
+  inventoryMethod = (): string => 'cost' // cost, lower of cost or market, other
 
   // Line 35: Inventory at beginning of year
   l35 = (): number => this.business()?.costOfGoodsSold?.beginningInventory ?? 0
@@ -271,7 +294,13 @@ export default class ScheduleC extends F1040Attachment {
 
   // Line 40: Add lines 35-39
   l40 = (): number => {
-    return sumFields([this.l35(), this.l36(), this.l37(), this.l38(), this.l39()])
+    return sumFields([
+      this.l35(),
+      this.l36(),
+      this.l37(),
+      this.l38(),
+      this.l39()
+    ])
   }
 
   // Line 41: Inventory at end of year
@@ -286,12 +315,14 @@ export default class ScheduleC extends F1040Attachment {
   // Information helpers
   businessName = (): string => this.business()?.name ?? ''
   businessEin = (): string => this.business()?.ein ?? ''
-  principalBusinessCode = (): string => this.business()?.principalBusinessCode ?? ''
+  principalBusinessCode = (): string =>
+    this.business()?.principalBusinessCode ?? ''
   businessDescription = (): string => this.business()?.businessDescription ?? ''
-  accountingMethod = (): BusinessAccountingMethod => this.business()?.accountingMethod ?? 'cash'
+  accountingMethod = (): BusinessAccountingMethod =>
+    this.business()?.accountingMethod ?? 'cash'
 
   // For Schedule 8812 earned income calculation
-  statutoryEmployeeIncome = (): number => 0  // Box 13 on W-2 if statutory employee
+  statutoryEmployeeIncome = (): number => 0 // Box 13 on W-2 if statutory employee
 
   // Creates additional copies if multiple businesses
   copies = (): ScheduleC[] => {

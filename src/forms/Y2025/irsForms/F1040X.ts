@@ -63,7 +63,7 @@ export default class F1040X extends F1040Attachment {
   }
 
   hasAmendedData = (): boolean => {
-    return false  // Would check if amendment is needed
+    return false // Would check if amendment is needed
   }
 
   f1040XData = (): F1040XData | undefined => {
@@ -80,12 +80,17 @@ export default class F1040X extends F1040Attachment {
 
   deductionChange = (): number => {
     const data = this.f1040XData()
-    return (data?.correctedItemizedOrStandard ?? 0) - (data?.originalItemizedOrStandard ?? 0)
+    return (
+      (data?.correctedItemizedOrStandard ?? 0) -
+      (data?.originalItemizedOrStandard ?? 0)
+    )
   }
 
   taxableIncomeChange = (): number => {
     const data = this.f1040XData()
-    return (data?.correctedTaxableIncome ?? 0) - (data?.originalTaxableIncome ?? 0)
+    return (
+      (data?.correctedTaxableIncome ?? 0) - (data?.originalTaxableIncome ?? 0)
+    )
   }
 
   taxChange = (): number => {
@@ -143,7 +148,7 @@ export default class F1040X extends F1040Attachment {
     return [
       // Header
       data?.taxYear ?? 0,
-      data?.originalFilingDate?.toLocaleDateString() ?? '',
+      data?.originalFilingDate.toLocaleDateString() ?? '',
       data?.filingStatus ?? 'single',
       data?.amendedFilingStatus ?? data?.filingStatus ?? 'single',
       // Part I, Line 1: AGI

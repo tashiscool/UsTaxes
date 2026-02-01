@@ -107,7 +107,7 @@ export default class F1099B extends F1040Attachment {
 
   // Short-term transactions
   shortTermTransactions = (): F1099BTransaction[] => {
-    return this.transactions().filter(t => t.shortTermLongTerm === 'short')
+    return this.transactions().filter((t) => t.shortTermLongTerm === 'short')
   }
 
   shortTermProceeds = (): number => {
@@ -115,7 +115,10 @@ export default class F1099B extends F1040Attachment {
   }
 
   shortTermCostBasis = (): number => {
-    return this.shortTermTransactions().reduce((sum, t) => sum + (t.costBasis ?? 0), 0)
+    return this.shortTermTransactions().reduce(
+      (sum, t) => sum + (t.costBasis ?? 0),
+      0
+    )
   }
 
   shortTermGainLoss = (): number => {
@@ -124,7 +127,7 @@ export default class F1099B extends F1040Attachment {
 
   // Long-term transactions
   longTermTransactions = (): F1099BTransaction[] => {
-    return this.transactions().filter(t => t.shortTermLongTerm === 'long')
+    return this.transactions().filter((t) => t.shortTermLongTerm === 'long')
   }
 
   longTermProceeds = (): number => {
@@ -132,7 +135,10 @@ export default class F1099B extends F1040Attachment {
   }
 
   longTermCostBasis = (): number => {
-    return this.longTermTransactions().reduce((sum, t) => sum + (t.costBasis ?? 0), 0)
+    return this.longTermTransactions().reduce(
+      (sum, t) => sum + (t.costBasis ?? 0),
+      0
+    )
   }
 
   longTermGainLoss = (): number => {
@@ -141,7 +147,10 @@ export default class F1099B extends F1040Attachment {
 
   // Wash sales
   totalWashSaleDisallowed = (): number => {
-    return this.transactions().reduce((sum, t) => sum + (t.washSaleLossDisallowed ?? 0), 0)
+    return this.transactions().reduce(
+      (sum, t) => sum + (t.washSaleLossDisallowed ?? 0),
+      0
+    )
   }
 
   // Federal tax withheld

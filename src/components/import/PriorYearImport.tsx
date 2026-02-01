@@ -135,38 +135,37 @@ const PriorYearImport = (): ReactElement => {
   const validSourceYears = getValidPriorYears(targetYear)
 
   // Handle file load
-  const handleFileLoad = useCallback(
-    (contents: string) => {
-      const { data, error } = parsePriorYearJson(contents)
+  const handleFileLoad = useCallback((contents: string) => {
+    const { data, error } = parsePriorYearJson(contents)
 
-      if (error || !data) {
-        setState({
-          ...initialState,
-          step: 'error',
-          error: error ?? 'Failed to parse file'
-        })
-        return
-      }
-
-      // Validate the data
-      const validationResult = validatePriorYearData(data)
-
-      // Try to detect the source year
-      const detectedYear = detectSourceYear(contents)
-
+    if (error || !data) {
       setState({
-        step: 'loaded',
-        rawData: contents,
-        parsedData: data,
-        validationResult,
-        preview: null,
-        selectedSourceYear: detectedYear,
-        progress: 0,
-        error: validationResult.isValid ? null : validationResult.errors.join(', ')
+        ...initialState,
+        step: 'error',
+        error: error ?? 'Failed to parse file'
       })
-    },
-    []
-  )
+      return
+    }
+
+    // Validate the data
+    const validationResult = validatePriorYearData(data)
+
+    // Try to detect the source year
+    const detectedYear = detectSourceYear(contents)
+
+    setState({
+      step: 'loaded',
+      rawData: contents,
+      parsedData: data,
+      validationResult,
+      preview: null,
+      selectedSourceYear: detectedYear,
+      progress: 0,
+      error: validationResult.isValid
+        ? null
+        : validationResult.errors.join(', ')
+    })
+  }, [])
 
   // Handle year selection change
   const handleYearChange = useCallback(
@@ -263,7 +262,11 @@ const PriorYearImport = (): ReactElement => {
 
   // Get icon for a field type
   const getFieldIcon = (field: string): ReactElement => {
-    if (field.includes('Taxpayer') || field.includes('Spouse') || field.includes('Dependent')) {
+    if (
+      field.includes('Taxpayer') ||
+      field.includes('Spouse') ||
+      field.includes('Dependent')
+    ) {
       return <PersonIcon />
     }
     if (field.includes('Employer')) {

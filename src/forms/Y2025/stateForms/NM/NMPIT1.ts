@@ -31,12 +31,12 @@ export class NMPIT1 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   private getNumQualifyingChildren(): number {
     return this.info.taxPayer.dependents.filter(
-      (d) => new Date().getFullYear() - new Date(d.dateOfBirth).getFullYear() < 17
+      (d) =>
+        new Date().getFullYear() - new Date(d.dateOfBirth).getFullYear() < 17
     ).length
   }
 
@@ -114,7 +114,8 @@ export class NMPIT1 extends Form {
       const bracket = brackets[i] ?? Infinity
       if (taxableIncome <= previousBracket) break
 
-      const taxableInBracket = Math.min(taxableIncome, bracket) - previousBracket
+      const taxableInBracket =
+        Math.min(taxableIncome, bracket) - previousBracket
       tax += taxableInBracket * rates[i]
       previousBracket = bracket
     }
@@ -153,7 +154,8 @@ export class NMPIT1 extends Form {
   l18 = (): number | undefined => undefined
 
   // Line 19: Total credits
-  l19 = (): number => sumFields([this.l15(), this.l16(), this.l17(), this.l18()])
+  l19 = (): number =>
+    sumFields([this.l15(), this.l16(), this.l17(), this.l18()])
 
   // Line 20: Net tax (cannot be less than zero)
   l20 = (): number => Math.max(0, this.l14() - this.l19())
@@ -185,9 +187,9 @@ export class NMPIT1 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
     this.filingStatus() === FilingStatus.S,
     this.filingStatus() === FilingStatus.MFJ,
     this.filingStatus() === FilingStatus.MFS,

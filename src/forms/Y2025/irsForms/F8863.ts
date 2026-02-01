@@ -226,16 +226,16 @@ export default class F8863 extends F1040Attachment {
     for (let i = 0; i < 4; i++) {
       const student = allStudents[i]
       studentFields.push(
-        student?.studentName ?? '',
-        student?.studentSsn ?? '',
-        student?.institutionName ?? '',
-        student?.institutionEin ?? '',
-        student?.qualifiedExpenses ?? 0,
-        student?.scholarshipsReceived ?? 0,
-        student?.creditType === 'AOTC',
-        student?.creditType === 'LLC',
-        student?.isFirstFourYears ?? false,
-        student?.isHalfTimeStudent ?? false
+        student.studentName ?? '',
+        student.studentSsn ?? '',
+        student.institutionName ?? '',
+        student.institutionEin ?? '',
+        student.qualifiedExpenses ?? 0,
+        student.scholarshipsReceived ?? 0,
+        student.creditType === 'AOTC',
+        student.creditType === 'LLC',
+        student.isFirstFourYears ?? false,
+        student.isHalfTimeStudent ?? false
       )
     }
 

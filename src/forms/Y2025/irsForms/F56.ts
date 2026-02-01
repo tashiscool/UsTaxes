@@ -18,13 +18,13 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 
 export interface F56Data {
   // Section A: Identification
-  decedentOrEntity: string                 // Name of decedent, estate, or entity
-  decedentSSN: string                      // SSN or EIN
+  decedentOrEntity: string // Name of decedent, estate, or entity
+  decedentSSN: string // SSN or EIN
   decedentAddress: string
   decedentCity: string
   decedentState: string
   decedentZip: string
-  dateOfDeath?: Date                       // For decedent estates
+  dateOfDeath?: Date // For decedent estates
   // Section B: Fiduciary Information
   fiduciaryName: string
   fiduciaryAddress: string
@@ -33,8 +33,15 @@ export interface F56Data {
   fiduciaryZip: string
   fiduciaryPhone: string
   // Type of fiduciary
-  fiduciaryType: 'executor' | 'administrator' | 'trustee' | 'guardian' |
-                 'conservator' | 'receiver' | 'assignee' | 'other'
+  fiduciaryType:
+    | 'executor'
+    | 'administrator'
+    | 'trustee'
+    | 'guardian'
+    | 'conservator'
+    | 'receiver'
+    | 'assignee'
+    | 'other'
   otherFiduciaryType?: string
   // Section C: Authority
   dateAppointed: Date
@@ -133,7 +140,7 @@ export default class F56 extends F1040Attachment {
       data?.fiduciaryType === 'other',
       data?.otherFiduciaryType ?? '',
       // Section C: Authority
-      data?.dateAppointed?.toLocaleDateString() ?? '',
+      data?.dateAppointed.toLocaleDateString() ?? '',
       data?.courtName ?? '',
       data?.courtAddress ?? '',
       // Tax type checkboxes
@@ -148,7 +155,7 @@ export default class F56 extends F1040Attachment {
       data?.dateTerminated?.toLocaleDateString() ?? '',
       data?.terminationReason ?? '',
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? ''
+      data?.signatureDate.toLocaleDateString() ?? ''
     ]
   }
 }

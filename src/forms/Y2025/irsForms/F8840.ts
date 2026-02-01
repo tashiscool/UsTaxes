@@ -85,9 +85,11 @@ export default class F8840 extends F1040Attachment {
     if (!info) return 0
 
     // Current year days + 1/3 of prior year + 1/6 of year before
-    return info.daysInUSCurrentYear +
-           Math.floor(info.daysInUSPriorYear1 / 3) +
-           Math.floor(info.daysInUSPriorYear2 / 6)
+    return (
+      info.daysInUSCurrentYear +
+      Math.floor(info.daysInUSPriorYear1 / 3) +
+      Math.floor(info.daysInUSPriorYear2 / 6)
+    )
   }
 
   meetsSubstantialPresenceTest = (): boolean => {
@@ -104,7 +106,10 @@ export default class F8840 extends F1040Attachment {
 
   // Line 3: Date permanent home was established
   l3 = (): string => {
-    return this.closerConnectionInfo()?.permanentHomeDateEstablished?.toLocaleDateString() ?? ''
+    return (
+      this.closerConnectionInfo()?.permanentHomeDateEstablished.toLocaleDateString() ??
+      ''
+    )
   }
 
   // Part II - Days Present in the United States
@@ -122,34 +127,46 @@ export default class F8840 extends F1040Attachment {
 
   // Line 7: Family location
   l7US = (): boolean => this.closerConnectionInfo()?.familyLocation === 'us'
-  l7Foreign = (): boolean => this.closerConnectionInfo()?.familyLocation === 'foreign'
+  l7Foreign = (): boolean =>
+    this.closerConnectionInfo()?.familyLocation === 'foreign'
   l7Both = (): boolean => this.closerConnectionInfo()?.familyLocation === 'both'
 
   // Line 8: Location of personal belongings
-  l8US = (): boolean => this.closerConnectionInfo()?.personalBelongingsLocation === 'us'
-  l8Foreign = (): boolean => this.closerConnectionInfo()?.personalBelongingsLocation === 'foreign'
-  l8Both = (): boolean => this.closerConnectionInfo()?.personalBelongingsLocation === 'both'
+  l8US = (): boolean =>
+    this.closerConnectionInfo()?.personalBelongingsLocation === 'us'
+  l8Foreign = (): boolean =>
+    this.closerConnectionInfo()?.personalBelongingsLocation === 'foreign'
+  l8Both = (): boolean =>
+    this.closerConnectionInfo()?.personalBelongingsLocation === 'both'
 
   // Line 9: Social ties
   l9US = (): boolean => this.closerConnectionInfo()?.socialTiesLocation === 'us'
-  l9Foreign = (): boolean => this.closerConnectionInfo()?.socialTiesLocation === 'foreign'
-  l9Both = (): boolean => this.closerConnectionInfo()?.socialTiesLocation === 'both'
+  l9Foreign = (): boolean =>
+    this.closerConnectionInfo()?.socialTiesLocation === 'foreign'
+  l9Both = (): boolean =>
+    this.closerConnectionInfo()?.socialTiesLocation === 'both'
 
   // Line 10: Business activities
-  l10US = (): boolean => this.closerConnectionInfo()?.businessActivitiesLocation === 'us'
-  l10Foreign = (): boolean => this.closerConnectionInfo()?.businessActivitiesLocation === 'foreign'
-  l10Both = (): boolean => this.closerConnectionInfo()?.businessActivitiesLocation === 'both'
+  l10US = (): boolean =>
+    this.closerConnectionInfo()?.businessActivitiesLocation === 'us'
+  l10Foreign = (): boolean =>
+    this.closerConnectionInfo()?.businessActivitiesLocation === 'foreign'
+  l10Both = (): boolean =>
+    this.closerConnectionInfo()?.businessActivitiesLocation === 'both'
 
   // Line 11: Driver's license country
   l11 = (): string => this.closerConnectionInfo()?.driversLicenseCountry ?? ''
 
   // Line 12: Voting registration
-  l12 = (): string => this.closerConnectionInfo()?.votingRegistrationCountry ?? ''
+  l12 = (): string =>
+    this.closerConnectionInfo()?.votingRegistrationCountry ?? ''
 
   // Line 13: Banking location
   l13US = (): boolean => this.closerConnectionInfo()?.bankingLocation === 'us'
-  l13Foreign = (): boolean => this.closerConnectionInfo()?.bankingLocation === 'foreign'
-  l13Both = (): boolean => this.closerConnectionInfo()?.bankingLocation === 'both'
+  l13Foreign = (): boolean =>
+    this.closerConnectionInfo()?.bankingLocation === 'foreign'
+  l13Both = (): boolean =>
+    this.closerConnectionInfo()?.bankingLocation === 'both'
 
   // Part IV - Other Information
 
@@ -185,13 +202,23 @@ export default class F8840 extends F1040Attachment {
     this.l5(),
     this.l6(),
     // Part III
-    this.l7US(), this.l7Foreign(), this.l7Both(),
-    this.l8US(), this.l8Foreign(), this.l8Both(),
-    this.l9US(), this.l9Foreign(), this.l9Both(),
-    this.l10US(), this.l10Foreign(), this.l10Both(),
+    this.l7US(),
+    this.l7Foreign(),
+    this.l7Both(),
+    this.l8US(),
+    this.l8Foreign(),
+    this.l8Both(),
+    this.l9US(),
+    this.l9Foreign(),
+    this.l9Both(),
+    this.l10US(),
+    this.l10Foreign(),
+    this.l10Both(),
     this.l11(),
     this.l12(),
-    this.l13US(), this.l13Foreign(), this.l13Both(),
+    this.l13US(),
+    this.l13Foreign(),
+    this.l13Both(),
     // Part IV
     this.l14(),
     this.l15(),

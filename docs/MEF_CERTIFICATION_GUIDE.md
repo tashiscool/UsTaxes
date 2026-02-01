@@ -33,37 +33,41 @@ MeF (Modernized e-File) is the IRS's web-based system for receiving electronical
 
 ### Benefits of MeF
 
-| Benefit | Description |
-|---------|-------------|
-| Faster Processing | Returns processed within 24-48 hours |
-| Immediate Acknowledgment | Know if return accepted/rejected instantly |
-| Reduced Errors | XML validation catches errors before submission |
-| Direct Deposit | Faster refunds via direct deposit |
-| Audit Trail | Complete electronic record of submission |
+| Benefit                  | Description                                     |
+| ------------------------ | ----------------------------------------------- |
+| Faster Processing        | Returns processed within 24-48 hours            |
+| Immediate Acknowledgment | Know if return accepted/rejected instantly      |
+| Reduced Errors           | XML validation catches errors before submission |
+| Direct Deposit           | Faster refunds via direct deposit               |
+| Audit Trail              | Complete electronic record of submission        |
 
 ---
 
 ## Provider Types
 
 ### Software Developer
+
 - Develops software that formats returns per IRS specifications
 - Creates XML files conforming to IRS schemas
 - Does NOT transmit directly to IRS (unless also a Transmitter)
 - **Suitability check exemption**: No background check required if software-only
 
 ### Transmitter
+
 - Sends electronic return data directly to IRS
 - Must have secure connection to IRS systems
 - Requires additional security certifications
 - Can transmit returns from multiple EROs
 
 ### Electronic Return Originator (ERO)
+
 - Originates electronic returns (tax preparers)
 - Collects taxpayer signatures (Form 8879)
 - Responsible for return accuracy
 - Requires suitability/background check
 
 ### For UsTaxes
+
 We need to be certified as both **Software Developer** AND **Transmitter** to offer direct e-filing.
 
 ---
@@ -77,6 +81,7 @@ We need to be certified as both **Software Developer** AND **Transmitter** to of
 3. Complete identity proofing process
 
 **Requirements:**
+
 - Valid SSN or ITIN
 - U.S. address
 - Financial account information (for verification)
@@ -100,6 +105,7 @@ We need to be certified as both **Software Developer** AND **Transmitter** to of
 ### Step 3: Obtain EFIN and ETIN
 
 After approval, you receive:
+
 - **EFIN** (Electronic Filing Identification Number) - 6 digits
 - **ETIN** (Electronic Transmitter Identification Number) - For transmitters
 
@@ -110,6 +116,7 @@ See [Testing (ATS)](#testing-ats) section below.
 ### Step 5: Receive Production Access
 
 After passing ATS:
+
 - Receive Software Identification Number (STIN)
 - Listed on IRS approved providers page
 - Can transmit live returns
@@ -120,13 +127,13 @@ After passing ATS:
 
 ### Communication Protocol
 
-| Requirement | Specification |
-|-------------|---------------|
-| Protocol | SOAP 1.1 over HTTPS |
-| Authentication | WS-Security with X.509 certificates |
-| Encryption | TLS 1.2 or higher |
-| Signatures | XML-DSIG with SHA-256 (SHA-1 rejected) |
-| Format | XML per IRS MeF schemas |
+| Requirement    | Specification                          |
+| -------------- | -------------------------------------- |
+| Protocol       | SOAP 1.1 over HTTPS                    |
+| Authentication | WS-Security with X.509 certificates    |
+| Encryption     | TLS 1.2 or higher                      |
+| Signatures     | XML-DSIG with SHA-256 (SHA-1 rejected) |
+| Format         | XML per IRS MeF schemas                |
 
 ### XML Schema Requirements
 
@@ -150,11 +157,13 @@ MeF XML Structure:
 ### Security Requirements
 
 1. **Digital Certificates**
+
    - X.509 certificates from IRS-approved CA
    - RSA 2048-bit or higher
    - Valid chain to trusted root
 
 2. **XML Signatures**
+
    - Enveloped signature format
    - SHA-256 digest algorithm (minimum)
    - RSA-SHA256 signature algorithm
@@ -166,13 +175,13 @@ MeF XML Structure:
 
 ### System Requirements
 
-| Component | Requirement |
-|-----------|-------------|
-| Availability | 99.5% uptime for production systems |
-| Response Time | Process IRS acknowledgments within 24 hours |
-| Data Retention | 3 years minimum (7 years recommended) |
-| Audit Logging | All transmissions logged with timestamps |
-| Disaster Recovery | Documented backup/recovery procedures |
+| Component         | Requirement                                 |
+| ----------------- | ------------------------------------------- |
+| Availability      | 99.5% uptime for production systems         |
+| Response Time     | Process IRS acknowledgments within 24 hours |
+| Data Retention    | 3 years minimum (7 years recommended)       |
+| Audit Logging     | All transmissions logged with timestamps    |
+| Disaster Recovery | Documented backup/recovery procedures       |
 
 ---
 
@@ -206,6 +215,7 @@ MeF XML Structure:
 ### Key Components
 
 #### 1. XML Serializer
+
 Converts UsTaxes form data to IRS XML format.
 
 ```typescript
@@ -214,28 +224,31 @@ const xml = serializer.serialize(f1040, {
   taxYear: 2025,
   softwareId: 'USTAXES2025',
   transmitterId: 'XXXXX'
-});
+})
 ```
 
 #### 2. Schema Validator
+
 Validates XML against IRS schemas before submission.
 
 ```typescript
-const errors = validator.validate(xml, 'IRS1040');
+const errors = validator.validate(xml, 'IRS1040')
 if (errors.length > 0) {
   // Handle validation errors
 }
 ```
 
 #### 3. Business Rules Engine
+
 Applies IRS business rules (beyond schema validation).
 
 ```typescript
-const ruleErrors = businessRules.check(returnData);
+const ruleErrors = businessRules.check(returnData)
 // Example: "Line 11 must equal sum of lines 1-10"
 ```
 
 #### 4. XML Signer
+
 Signs XML with SHA-256 digital signature.
 
 ```typescript
@@ -243,22 +256,24 @@ const signedXml = signer.sign(xml, {
   certificate: cert,
   privateKey: key,
   algorithm: 'RSA-SHA256'
-});
+})
 ```
 
 #### 5. SOAP Client
+
 Communicates with IRS MeF web services.
 
 ```typescript
-const response = await mefClient.submitReturn(signedXml);
+const response = await mefClient.submitReturn(signedXml)
 // Returns: SubmissionId, Timestamp, Status
 ```
 
 #### 6. Acknowledgment Processor
+
 Handles IRS responses (accepted/rejected).
 
 ```typescript
-const ack = await mefClient.getAcknowledgment(submissionId);
+const ack = await mefClient.getAcknowledgment(submissionId)
 if (ack.status === 'Accepted') {
   // Store confirmation number
 } else {
@@ -268,23 +283,25 @@ if (ack.status === 'Accepted') {
 
 ### MeF Web Services
 
-| Service | Description |
-|---------|-------------|
-| `Login` | Authenticate transmitter |
-| `SubmitReturn` | Submit a tax return |
-| `GetAck` | Retrieve acknowledgment |
-| `GetSubmissionStatus` | Check submission status |
-| `GetNewAcks` | Get all new acknowledgments |
-| `GetStateSubmission` | For state e-file (if applicable) |
+| Service               | Description                      |
+| --------------------- | -------------------------------- |
+| `Login`               | Authenticate transmitter         |
+| `SubmitReturn`        | Submit a tax return              |
+| `GetAck`              | Retrieve acknowledgment          |
+| `GetSubmissionStatus` | Check submission status          |
+| `GetNewAcks`          | Get all new acknowledgments      |
+| `GetStateSubmission`  | For state e-file (if applicable) |
 
 ### WSDL Endpoints
 
 **ATS (Testing):**
+
 ```
 https://la.www4.irs.gov/a2a/MEFATS/MeFTransmitterService.wsdl
 ```
 
 **Production:**
+
 ```
 https://la.www4.irs.gov/a2a/MEF/MeFTransmitterService.wsdl
 ```
@@ -326,22 +343,22 @@ For each form type, you must submit test returns that cover:
 
 ### Required Test Categories
 
-| Category | Description |
-|----------|-------------|
-| Accept | Returns that should be accepted |
-| Reject | Returns with intentional errors (test error handling) |
-| Alert | Returns with warnings but still accepted |
+| Category | Description                                           |
+| -------- | ----------------------------------------------------- |
+| Accept   | Returns that should be accepted                       |
+| Reject   | Returns with intentional errors (test error handling) |
+| Alert    | Returns with warnings but still accepted              |
 
 ### ATS Timeline
 
-| Phase | Duration |
-|-------|----------|
-| ATS Environment Access | 1-2 weeks |
-| Test Development | 2-4 weeks |
-| Test Execution | 1-2 weeks |
-| Issue Resolution | 1-2 weeks |
-| IRS Review | 1-2 weeks |
-| **Total** | **6-12 weeks** |
+| Phase                  | Duration       |
+| ---------------------- | -------------- |
+| ATS Environment Access | 1-2 weeks      |
+| Test Development       | 2-4 weeks      |
+| Test Execution         | 1-2 weeks      |
+| Issue Resolution       | 1-2 weeks      |
+| IRS Review             | 1-2 weeks      |
+| **Total**              | **6-12 weeks** |
 
 ---
 
@@ -367,6 +384,7 @@ For each form type, you must submit test returns that cover:
 ### Monitoring
 
 Track these metrics:
+
 - Acceptance rate (target: >98%)
 - Rejection reasons (categorize and fix)
 - Response times
@@ -379,6 +397,7 @@ Track these metrics:
 ### Requirements
 
 Each tax year requires:
+
 1. Download new schemas/WSDLs
 2. Update software for tax law changes
 3. Pass ATS testing again
@@ -386,12 +405,12 @@ Each tax year requires:
 
 ### Timeline
 
-| Month | Activity |
-|-------|----------|
-| October | New schemas released |
-| November | Development/updates |
-| December | ATS testing |
-| January | Production ready |
+| Month    | Activity             |
+| -------- | -------------------- |
+| October  | New schemas released |
+| November | Development/updates  |
+| December | ATS testing          |
+| January  | Production ready     |
 
 ---
 
@@ -399,11 +418,11 @@ Each tax year requires:
 
 ### Official IRS Publications
 
-| Publication | Description |
-|-------------|-------------|
-| [Publication 3112](https://www.irs.gov/pub/irs-pdf/p3112.pdf) | IRS e-File Application & Participation |
-| [Publication 4163](https://www.irs.gov/pub/irs-pdf/p4163.pdf) | MeF Information for Business Returns |
-| [Publication 4164](https://www.irs.gov/pub/irs-pdf/p4164.pdf) | MeF Guide for Software Developers |
+| Publication                                                   | Description                              |
+| ------------------------------------------------------------- | ---------------------------------------- |
+| [Publication 3112](https://www.irs.gov/pub/irs-pdf/p3112.pdf) | IRS e-File Application & Participation   |
+| [Publication 4163](https://www.irs.gov/pub/irs-pdf/p4163.pdf) | MeF Information for Business Returns     |
+| [Publication 4164](https://www.irs.gov/pub/irs-pdf/p4164.pdf) | MeF Guide for Software Developers        |
 | [Publication 1345](https://www.irs.gov/pub/irs-pdf/p1345.pdf) | Handbook for Authorized e-File Providers |
 
 ### IRS Websites
@@ -423,14 +442,14 @@ Each tax year requires:
 
 ## Cost Summary
 
-| Item | Cost |
-|------|------|
-| IRS Application Fee | **$0** (Free) |
-| IRS ATS Testing | **$0** (Free) |
-| Digital Certificates | $200-500/year |
-| Development Time | 3-6 months FTE |
-| Infrastructure | Varies (hosting, security) |
-| Annual Maintenance | Ongoing development |
+| Item                 | Cost                       |
+| -------------------- | -------------------------- |
+| IRS Application Fee  | **$0** (Free)              |
+| IRS ATS Testing      | **$0** (Free)              |
+| Digital Certificates | $200-500/year              |
+| Development Time     | 3-6 months FTE             |
+| Infrastructure       | Varies (hosting, security) |
+| Annual Maintenance   | Ongoing development        |
 
 ---
 
@@ -439,16 +458,19 @@ Each tax year requires:
 If full MeF certification is too complex, consider:
 
 ### 1. Partner with Existing Transmitter
+
 - Use established transmitter's infrastructure
 - Pay per-return fee
 - Faster time to market
 
 ### 2. IRS Free File Integration
+
 - For AGI < $84,000 (2025)
 - Partner with Free File Alliance
 - Limited to eligible taxpayers
 
 ### 3. PDF Generation Only
+
 - Current UsTaxes approach
 - Users print and mail, or use IRS Direct File
 - No certification required
@@ -479,5 +501,5 @@ src/efile/
 
 ---
 
-*Last Updated: January 2025*
-*For UsTaxes v0.2.0+*
+_Last Updated: January 2025_
+_For UsTaxes v0.2.0+_

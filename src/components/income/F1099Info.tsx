@@ -337,7 +337,8 @@ const toF1099 = (input: F1099UserInput): Supported1099 | undefined => {
         type: input.formType,
         form: {
           nonemployeeCompensation: Number(input.nonemployeeCompensation),
-          federalIncomeTaxWithheld: Number(input.necFederalWithholding) || undefined,
+          federalIncomeTaxWithheld:
+            Number(input.necFederalWithholding) || undefined,
           state: input.necState,
           stateTaxWithheld: Number(input.necStateWithholding) || undefined
         }
@@ -352,7 +353,8 @@ const toF1099 = (input: F1099UserInput): Supported1099 | undefined => {
           rents: Number(input.rents) || undefined,
           royalties: Number(input.royalties) || undefined,
           otherIncome: Number(input.otherIncome) || undefined,
-          federalIncomeTaxWithheld: Number(input.miscFederalWithholding) || undefined
+          federalIncomeTaxWithheld:
+            Number(input.miscFederalWithholding) || undefined
         }
       }
     }
@@ -362,10 +364,12 @@ const toF1099 = (input: F1099UserInput): Supported1099 | undefined => {
         personRole: input.personRole ?? PersonRole.PRIMARY,
         type: input.formType,
         form: {
-          unemploymentCompensation: Number(input.unemploymentCompensation) || undefined,
+          unemploymentCompensation:
+            Number(input.unemploymentCompensation) || undefined,
           stateLocalTaxRefund: Number(input.stateLocalTaxRefund) || undefined,
           taxYear: Number(input.refundTaxYear) || undefined,
-          federalIncomeTaxWithheld: Number(input.gFederalWithholding) || undefined
+          federalIncomeTaxWithheld:
+            Number(input.gFederalWithholding) || undefined
         }
       }
     }
@@ -547,8 +551,8 @@ export default function F1099Info(): ReactElement {
     <Grid container spacing={2}>
       <Alert severity="info">
         Form 1099-NEC reports nonemployee compensation (freelance, gig economy,
-        independent contractor income). This income is subject to self-employment
-        tax and should be reported on Schedule C.
+        independent contractor income). This income is subject to
+        self-employment tax and should be reported on Schedule C.
       </Alert>
       <LabeledInput
         label={boxLabel('1', 'Nonemployee Compensation')}

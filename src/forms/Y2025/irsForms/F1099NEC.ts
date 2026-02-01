@@ -30,13 +30,13 @@ export interface F1099NECData {
   // Account number
   accountNumber?: string
   // Amounts
-  nonemployeeCompensation: number  // Box 1
-  directSalesIndicator: boolean    // Box 2 (checkbox)
-  federalTaxWithheld: number       // Box 4
+  nonemployeeCompensation: number // Box 1
+  directSalesIndicator: boolean // Box 2 (checkbox)
+  federalTaxWithheld: number // Box 4
   // State information
-  stateTaxWithheld1: number        // Box 5
-  statePayerNumber1: string        // Box 6
-  stateIncome1: number             // Box 7
+  stateTaxWithheld1: number // Box 5
+  statePayerNumber1: string // Box 6
+  stateIncome1: number // Box 7
   stateTaxWithheld2?: number
   statePayerNumber2?: string
   stateIncome2?: number
@@ -51,7 +51,7 @@ export default class F1099NEC extends F1040Attachment {
   }
 
   hasF1099NECData = (): boolean => {
-    return false  // Would check for 1099-NEC data
+    return false // Would check for 1099-NEC data
   }
 
   f1099NECData = (): F1099NECData | undefined => {
@@ -97,13 +97,13 @@ export default class F1099NEC extends F1040Attachment {
       data?.recipientTIN ?? '',
       data?.accountNumber ?? '',
       // Amounts
-      data?.nonemployeeCompensation ?? 0,  // Box 1
+      data?.nonemployeeCompensation ?? 0, // Box 1
       data?.directSalesIndicator ?? false, // Box 2
-      data?.federalTaxWithheld ?? 0,       // Box 4
+      data?.federalTaxWithheld ?? 0, // Box 4
       // State 1
-      data?.stateTaxWithheld1 ?? 0,        // Box 5
-      data?.statePayerNumber1 ?? '',       // Box 6
-      data?.stateIncome1 ?? 0,             // Box 7
+      data?.stateTaxWithheld1 ?? 0, // Box 5
+      data?.statePayerNumber1 ?? '', // Box 6
+      data?.stateIncome1 ?? 0, // Box 7
       // State 2
       data?.stateTaxWithheld2 ?? 0,
       data?.statePayerNumber2 ?? '',

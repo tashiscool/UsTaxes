@@ -45,9 +45,9 @@ export interface ScheduleC1120Data {
 
 // DRD percentages based on ownership
 const DRD_RATES = {
-  lessThan20: 0.50,      // 50% DRD
-  between20And80: 0.65,  // 65% DRD
-  over80: 1.00           // 100% DRD (affiliated group)
+  lessThan20: 0.5, // 50% DRD
+  between20And80: 0.65, // 65% DRD
+  over80: 1.0 // 100% DRD (affiliated group)
 }
 
 export default class ScheduleC1120 extends F1040Attachment {
@@ -64,7 +64,7 @@ export default class ScheduleC1120 extends F1040Attachment {
   }
 
   scheduleC1120Data = (): ScheduleC1120Data | undefined => {
-    return undefined  // Would be populated from entity data
+    return undefined // Would be populated from entity data
   }
 
   // Dividends from domestic corporations
@@ -76,7 +76,7 @@ export default class ScheduleC1120 extends F1040Attachment {
   // Line 1: Dividends from less-than-20%-owned domestic corporations
   dividendsLessThan20 = (): number => {
     return this.domesticDividends()
-      .filter(d => d.ownershipPercentage < 20)
+      .filter((d) => d.ownershipPercentage < 20)
       .reduce((sum, d) => sum + d.dividendAmount, 0)
   }
 
@@ -87,7 +87,7 @@ export default class ScheduleC1120 extends F1040Attachment {
   // Line 2: Dividends from 20%-or-more-owned domestic corporations
   dividends20To80 = (): number => {
     return this.domesticDividends()
-      .filter(d => d.ownershipPercentage >= 20 && d.ownershipPercentage < 80)
+      .filter((d) => d.ownershipPercentage >= 20 && d.ownershipPercentage < 80)
       .reduce((sum, d) => sum + d.dividendAmount, 0)
   }
 
@@ -98,7 +98,7 @@ export default class ScheduleC1120 extends F1040Attachment {
   // Line 3: Dividends from wholly-owned domestic subsidiaries
   dividendsOver80 = (): number => {
     return this.domesticDividends()
-      .filter(d => d.ownershipPercentage >= 80)
+      .filter((d) => d.ownershipPercentage >= 80)
       .reduce((sum, d) => sum + d.dividendAmount, 0)
   }
 
@@ -108,7 +108,11 @@ export default class ScheduleC1120 extends F1040Attachment {
 
   // Total domestic dividends
   totalDomesticDividends = (): number => {
-    return this.dividendsLessThan20() + this.dividends20To80() + this.dividendsOver80()
+    return (
+      this.dividendsLessThan20() +
+      this.dividends20To80() +
+      this.dividendsOver80()
+    )
   }
 
   // Total DRD for domestic dividends
@@ -129,19 +133,21 @@ export default class ScheduleC1120 extends F1040Attachment {
   // Foreign-derived dividends eligible for DRD
   foreignDRD = (): number => {
     // Simplified - actual calculation is more complex
-    return Math.round(this.totalForeignDividends() * 0.50)
+    return Math.round(this.totalForeignDividends() * 0.5)
   }
 
   // Inclusions
 
   // Section 951 - Subpart F income
-  subpartFInclusions = (): number => this.scheduleC1120Data()?.subpartFInclusions ?? 0
+  subpartFInclusions = (): number =>
+    this.scheduleC1120Data()?.subpartFInclusions ?? 0
 
   // Section 951A - GILTI
   giltiInclusions = (): number => this.scheduleC1120Data()?.giltiInclusions ?? 0
 
   // Section 965 - Transition tax
-  section965Inclusions = (): number => this.scheduleC1120Data()?.section965Inclusions ?? 0
+  section965Inclusions = (): number =>
+    this.scheduleC1120Data()?.section965Inclusions ?? 0
 
   // Other inclusions
   otherInclusions = (): number => this.scheduleC1120Data()?.otherInclusions ?? 0

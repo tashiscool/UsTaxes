@@ -39,13 +39,13 @@ const SENIOR_STANDARD_DEDUCTIONS_2025 = {
   [FilingStatus.HOH]: 22500,
   [FilingStatus.W]: 30000,
   // Additional amounts for age 65+ and/or blind
-  additionalSingleOrHOH: 2000,  // Per qualifying condition
-  additionalMarried: 1600       // Per qualifying condition
+  additionalSingleOrHOH: 2000, // Per qualifying condition
+  additionalMarried: 1600 // Per qualifying condition
 }
 
 export default class F1040SR extends F1040Attachment {
   tag: FormTag = 'f1040sr'
-  sequenceIndex = 0  // Primary form
+  sequenceIndex = 0 // Primary form
 
   isNeeded = (): boolean => {
     // Form 1040-SR is needed if primary or spouse is 65 or older
@@ -55,7 +55,7 @@ export default class F1040SR extends F1040Attachment {
   // Check if taxpayer is born before January 2, 1961 (age 65+ by end of 2025)
   isPrimaryEligible = (): boolean => {
     const dob = this.f1040.info.taxPayer.primaryPerson.dateOfBirth
-    const seniorCutoff = new Date(1961, 0, 2)  // January 2, 1961
+    const seniorCutoff = new Date(1961, 0, 2) // January 2, 1961
     return dob < seniorCutoff
   }
 
@@ -105,7 +105,9 @@ export default class F1040SR extends F1040Attachment {
 
   // Total additional deductions
   totalAdditionalDeductions = (): number => {
-    return this.numberOfAdditionalDeductions() * this.additionalDeductionAmount()
+    return (
+      this.numberOfAdditionalDeductions() * this.additionalDeductionAmount()
+    )
   }
 
   // Total standard deduction for seniors
@@ -116,26 +118,34 @@ export default class F1040SR extends F1040Attachment {
   // Standard deduction chart values (displayed on Form 1040-SR)
   standardDeductionChartSingle = (): number => {
     // Single, 65+, not blind
-    return SENIOR_STANDARD_DEDUCTIONS_2025[FilingStatus.S] +
-           SENIOR_STANDARD_DEDUCTIONS_2025.additionalSingleOrHOH
+    return (
+      SENIOR_STANDARD_DEDUCTIONS_2025[FilingStatus.S] +
+      SENIOR_STANDARD_DEDUCTIONS_2025.additionalSingleOrHOH
+    )
   }
 
   standardDeductionChartSingleBlind = (): number => {
     // Single, 65+, blind
-    return SENIOR_STANDARD_DEDUCTIONS_2025[FilingStatus.S] +
-           (SENIOR_STANDARD_DEDUCTIONS_2025.additionalSingleOrHOH * 2)
+    return (
+      SENIOR_STANDARD_DEDUCTIONS_2025[FilingStatus.S] +
+      SENIOR_STANDARD_DEDUCTIONS_2025.additionalSingleOrHOH * 2
+    )
   }
 
   standardDeductionChartMFJBoth65 = (): number => {
     // MFJ, both 65+, neither blind
-    return SENIOR_STANDARD_DEDUCTIONS_2025[FilingStatus.MFJ] +
-           (SENIOR_STANDARD_DEDUCTIONS_2025.additionalMarried * 2)
+    return (
+      SENIOR_STANDARD_DEDUCTIONS_2025[FilingStatus.MFJ] +
+      SENIOR_STANDARD_DEDUCTIONS_2025.additionalMarried * 2
+    )
   }
 
   standardDeductionChartMFJBoth65BothBlind = (): number => {
     // MFJ, both 65+, both blind
-    return SENIOR_STANDARD_DEDUCTIONS_2025[FilingStatus.MFJ] +
-           (SENIOR_STANDARD_DEDUCTIONS_2025.additionalMarried * 4)
+    return (
+      SENIOR_STANDARD_DEDUCTIONS_2025[FilingStatus.MFJ] +
+      SENIOR_STANDARD_DEDUCTIONS_2025.additionalMarried * 4
+    )
   }
 
   // Checkboxes for line 12 (standard deduction section)

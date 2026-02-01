@@ -31,27 +31,27 @@ export interface F8948Data {
   reasonCode: 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h'
   otherExplanation?: string
   // Checkbox reasons
-  taxpayerChoseToFile: boolean           // (a) Taxpayer chose to file on paper
-  returnTypeNotAccepted: boolean         // (b) Return type not accepted
-  schedulesNotAccepted: boolean          // (c) Schedules/forms not accepted
-  irsRejectedReturn: boolean             // (d) IRS rejected e-filed return
-  softwareNotReady: boolean              // (e) Software not ready
-  taxpayerFilesLater: boolean            // (f) Taxpayer will file return later
-  other: boolean                         // (g) Other
+  taxpayerChoseToFile: boolean // (a) Taxpayer chose to file on paper
+  returnTypeNotAccepted: boolean // (b) Return type not accepted
+  schedulesNotAccepted: boolean // (c) Schedules/forms not accepted
+  irsRejectedReturn: boolean // (d) IRS rejected e-filed return
+  softwareNotReady: boolean // (e) Software not ready
+  taxpayerFilesLater: boolean // (f) Taxpayer will file return later
+  other: boolean // (g) Other
   // Signature
   signatureDate: Date
 }
 
 // Reason code descriptions
 const REASON_CODES: Record<string, string> = {
-  'a': 'Taxpayer chose to file on paper',
-  'b': 'Return type not accepted for e-filing',
-  'c': 'Schedules, forms, or attachments cannot be e-filed',
-  'd': 'IRS rejected the e-filed return and preparer cannot correct issue',
-  'e': 'E-file software not ready for this return type',
-  'f': 'Taxpayer will file return at later date',
-  'g': 'Other (explanation required)',
-  'h': 'Preparer has waiver from e-file requirement'
+  a: 'Taxpayer chose to file on paper',
+  b: 'Return type not accepted for e-filing',
+  c: 'Schedules, forms, or attachments cannot be e-filed',
+  d: 'IRS rejected the e-filed return and preparer cannot correct issue',
+  e: 'E-file software not ready for this return type',
+  f: 'Taxpayer will file return at later date',
+  g: 'Other (explanation required)',
+  h: 'Preparer has waiver from e-file requirement'
 }
 
 export default class F8948 extends F1040Attachment {
@@ -63,7 +63,7 @@ export default class F8948 extends F1040Attachment {
   }
 
   hasF8948Data = (): boolean => {
-    return false  // Only needed by paid preparers filing paper returns
+    return false // Only needed by paid preparers filing paper returns
   }
 
   f8948Data = (): F8948Data | undefined => {
@@ -86,9 +86,11 @@ export default class F8948 extends F1040Attachment {
   isTechnicalLimitation = (): boolean => {
     const data = this.f8948Data()
     if (!data) return false
-    return data.returnTypeNotAccepted ||
-           data.schedulesNotAccepted ||
-           data.softwareNotReady
+    return (
+      data.returnTypeNotAccepted ||
+      data.schedulesNotAccepted ||
+      data.softwareNotReady
+    )
   }
 
   // Is IRS rejection?
@@ -126,13 +128,13 @@ export default class F8948 extends F1040Attachment {
       data?.taxpayerSSN ?? '',
       data?.taxYear ?? 2025,
       // Reason checkboxes
-      data?.taxpayerChoseToFile ?? false,      // (a)
-      data?.returnTypeNotAccepted ?? false,    // (b)
-      data?.schedulesNotAccepted ?? false,     // (c)
-      data?.irsRejectedReturn ?? false,        // (d)
-      data?.softwareNotReady ?? false,         // (e)
-      data?.taxpayerFilesLater ?? false,       // (f)
-      data?.other ?? false,                    // (g)
+      data?.taxpayerChoseToFile ?? false, // (a)
+      data?.returnTypeNotAccepted ?? false, // (b)
+      data?.schedulesNotAccepted ?? false, // (c)
+      data?.irsRejectedReturn ?? false, // (d)
+      data?.softwareNotReady ?? false, // (e)
+      data?.taxpayerFilesLater ?? false, // (f)
+      data?.other ?? false, // (g)
       data?.otherExplanation ?? '',
       // Analysis
       this.reasonCode(),
@@ -142,7 +144,7 @@ export default class F8948 extends F1040Attachment {
       this.isIRSRejection(),
       this.hasValidExplanation(),
       // Signature
-      data?.signatureDate?.toLocaleDateString() ?? ''
+      data?.signatureDate.toLocaleDateString() ?? ''
     ]
   }
 }

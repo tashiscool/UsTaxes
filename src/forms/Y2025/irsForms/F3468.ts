@@ -34,17 +34,17 @@ import { Form3468Data } from 'ustaxes/core/data'
 // 2025 credit rates
 const investmentCreditRates = {
   // Rehabilitation
-  historicRehab: 0.20,          // 20% for certified historic structures
+  historicRehab: 0.2, // 20% for certified historic structures
   // Energy - with prevailing wage/apprenticeship
-  solarWithBonus: 0.30,
-  geothermalWithBonus: 0.30,
-  fuelCellWithBonus: 0.30,
-  microturbineWithBonus: 0.30,
-  chpWithBonus: 0.30,
-  smallWindWithBonus: 0.30,
-  offshoreWindWithBonus: 0.30,
-  geothermalHeatPumpWithBonus: 0.30,
-  wasteEnergyWithBonus: 0.30,
+  solarWithBonus: 0.3,
+  geothermalWithBonus: 0.3,
+  fuelCellWithBonus: 0.3,
+  microturbineWithBonus: 0.3,
+  chpWithBonus: 0.3,
+  smallWindWithBonus: 0.3,
+  offshoreWindWithBonus: 0.3,
+  geothermalHeatPumpWithBonus: 0.3,
+  wasteEnergyWithBonus: 0.3,
   // Energy - base rates (without prevailing wage/apprenticeship)
   solarBase: 0.06,
   geothermalBase: 0.06,
@@ -67,11 +67,12 @@ export default class F3468 extends F1040Attachment {
 
   hasInvestmentCredit = (): boolean => {
     const data = this.creditData()
-    return data !== undefined && (
-      data.rehabilitatedBuildings.length > 0 ||
-      data.energyProperty.length > 0 ||
-      (data.advancedEnergyProjectCredit ?? 0) > 0 ||
-      (data.passthrough3468Credit ?? 0) > 0
+    return (
+      data !== undefined &&
+      (data.rehabilitatedBuildings.length > 0 ||
+        data.energyProperty.length > 0 ||
+        (data.advancedEnergyProjectCredit ?? 0) > 0 ||
+        (data.passthrough3468Credit ?? 0) > 0)
     )
   }
 
@@ -86,13 +87,19 @@ export default class F3468 extends F1040Attachment {
   l1Basis = (): number => {
     const data = this.creditData()
     if (!data) return 0
-    return data.rehabilitatedBuildings.reduce((sum, b) => sum + b.qualifiedRehabilitationExpenditures, 0)
+    return data.rehabilitatedBuildings.reduce(
+      (sum, b) => sum + b.qualifiedRehabilitationExpenditures,
+      0
+    )
   }
 
   l1Credit = (): number => {
     const data = this.creditData()
     if (!data) return 0
-    return data.rehabilitatedBuildings.reduce((sum, b) => sum + b.creditAmount, 0)
+    return data.rehabilitatedBuildings.reduce(
+      (sum, b) => sum + b.creditAmount,
+      0
+    )
   }
 
   // Part II - Energy Credit
@@ -102,7 +109,7 @@ export default class F3468 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.energyProperty
-      .filter(p => p.propertyType === 'solar')
+      .filter((p) => p.propertyType === 'solar')
       .reduce((sum, p) => sum + p.basisForCredit, 0)
   }
 
@@ -110,7 +117,7 @@ export default class F3468 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.energyProperty
-      .filter(p => p.propertyType === 'solar')
+      .filter((p) => p.propertyType === 'solar')
       .reduce((sum, p) => sum + p.creditAmount, 0)
   }
 
@@ -119,7 +126,7 @@ export default class F3468 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.energyProperty
-      .filter(p => p.propertyType === 'geothermal')
+      .filter((p) => p.propertyType === 'geothermal')
       .reduce((sum, p) => sum + p.basisForCredit, 0)
   }
 
@@ -127,7 +134,7 @@ export default class F3468 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.energyProperty
-      .filter(p => p.propertyType === 'geothermal')
+      .filter((p) => p.propertyType === 'geothermal')
       .reduce((sum, p) => sum + p.creditAmount, 0)
   }
 
@@ -136,7 +143,7 @@ export default class F3468 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.energyProperty
-      .filter(p => p.propertyType === 'fuelCell')
+      .filter((p) => p.propertyType === 'fuelCell')
       .reduce((sum, p) => sum + p.basisForCredit, 0)
   }
 
@@ -144,7 +151,7 @@ export default class F3468 extends F1040Attachment {
     const data = this.creditData()
     if (!data) return 0
     return data.energyProperty
-      .filter(p => p.propertyType === 'fuelCell')
+      .filter((p) => p.propertyType === 'fuelCell')
       .reduce((sum, p) => sum + p.creditAmount, 0)
   }
 
@@ -152,18 +159,32 @@ export default class F3468 extends F1040Attachment {
   l5Basis = (): number => {
     const data = this.creditData()
     if (!data) return 0
-    const otherTypes = ['microturbine', 'chp', 'smallWind', 'offshoreWind', 'geothermalHeatPump', 'wasteEnergyRecovery']
+    const otherTypes = [
+      'microturbine',
+      'chp',
+      'smallWind',
+      'offshoreWind',
+      'geothermalHeatPump',
+      'wasteEnergyRecovery'
+    ]
     return data.energyProperty
-      .filter(p => otherTypes.includes(p.propertyType))
+      .filter((p) => otherTypes.includes(p.propertyType))
       .reduce((sum, p) => sum + p.basisForCredit, 0)
   }
 
   l5Credit = (): number => {
     const data = this.creditData()
     if (!data) return 0
-    const otherTypes = ['microturbine', 'chp', 'smallWind', 'offshoreWind', 'geothermalHeatPump', 'wasteEnergyRecovery']
+    const otherTypes = [
+      'microturbine',
+      'chp',
+      'smallWind',
+      'offshoreWind',
+      'geothermalHeatPump',
+      'wasteEnergyRecovery'
+    ]
     return data.energyProperty
-      .filter(p => otherTypes.includes(p.propertyType))
+      .filter((p) => otherTypes.includes(p.propertyType))
       .reduce((sum, p) => sum + p.creditAmount, 0)
   }
 
@@ -173,7 +194,8 @@ export default class F3468 extends F1040Attachment {
   totalRehabCredit = (): number => this.l1Credit()
 
   // Line 7: Total energy credit
-  totalEnergyCredit = (): number => this.l2Credit() + this.l3Credit() + this.l4Credit() + this.l5Credit()
+  totalEnergyCredit = (): number =>
+    this.l2Credit() + this.l3Credit() + this.l4Credit() + this.l5Credit()
 
   // Line 8: Advanced energy project credit
   l8 = (): number => this.creditData()?.advancedEnergyProjectCredit ?? 0
@@ -182,13 +204,19 @@ export default class F3468 extends F1040Attachment {
   l9 = (): number => this.creditData()?.passthrough3468Credit ?? 0
 
   // Line 10: Total investment credit
-  l10 = (): number => this.totalRehabCredit() + this.totalEnergyCredit() + this.l8() + this.l9()
+  l10 = (): number =>
+    this.totalRehabCredit() + this.totalEnergyCredit() + this.l8() + this.l9()
 
   // Credit for Form 3800
   credit = (): number => this.creditData()?.totalCredit ?? this.l10()
 
   // Total basis
-  totalBasis = (): number => this.l1Basis() + this.l2Basis() + this.l3Basis() + this.l4Basis() + this.l5Basis()
+  totalBasis = (): number =>
+    this.l1Basis() +
+    this.l2Basis() +
+    this.l3Basis() +
+    this.l4Basis() +
+    this.l5Basis()
 
   // Number of properties
   numberOfProperties = (): number => {
@@ -199,7 +227,7 @@ export default class F3468 extends F1040Attachment {
 
   fields = (): Field[] => [
     this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson?.ssid,
+    this.f1040.info.taxPayer.primaryPerson.ssid,
     // Rehabilitation
     this.l1Basis(),
     this.l1Credit(),

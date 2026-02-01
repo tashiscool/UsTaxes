@@ -115,10 +115,14 @@ interface NotificationSettingsProps {
   onPreferencesChange: (update: Partial<NotificationPreferences>) => void
   onToggleType: (type: NotificationType) => void
   onTimingsChange: (timings: ReminderTiming[]) => void
-  onPermissionChange: (status: 'default' | 'granted' | 'denied' | 'unsupported') => void
+  onPermissionChange: (
+    status: 'default' | 'granted' | 'denied' | 'unsupported'
+  ) => void
 }
 
-const NotificationSettings = (props: NotificationSettingsProps): ReactElement => {
+const NotificationSettings = (
+  props: NotificationSettingsProps
+): ReactElement => {
   const {
     preferences,
     browserPermissionStatus,
@@ -196,11 +200,13 @@ const NotificationSettings = (props: NotificationSettingsProps): ReactElement =>
 
     if (!isSupported) {
       return (
-        <Box className={`${classes.permissionWarning} ${classes.permissionDenied}`}>
+        <Box
+          className={`${classes.permissionWarning} ${classes.permissionDenied}`}
+        >
           <WarningIcon />
           <Typography variant="body2">
-            Your browser does not support push notifications. In-app reminders will be
-            shown instead.
+            Your browser does not support push notifications. In-app reminders
+            will be shown instead.
           </Typography>
         </Box>
       )
@@ -208,11 +214,13 @@ const NotificationSettings = (props: NotificationSettingsProps): ReactElement =>
 
     if (permissionDenied) {
       return (
-        <Box className={`${classes.permissionWarning} ${classes.permissionDenied}`}>
+        <Box
+          className={`${classes.permissionWarning} ${classes.permissionDenied}`}
+        >
           <WarningIcon />
           <Typography variant="body2">
-            Push notifications are blocked. Please enable them in your browser settings,
-            or switch to in-app reminders.
+            Push notifications are blocked. Please enable them in your browser
+            settings, or switch to in-app reminders.
           </Typography>
         </Box>
       )
@@ -255,7 +263,9 @@ const NotificationSettings = (props: NotificationSettingsProps): ReactElement =>
         <Switch
           checked={preferences.enabled}
           onChange={
-            preferences.enabled ? handleDisableNotifications : handleEnableNotifications
+            preferences.enabled
+              ? handleDisableNotifications
+              : handleEnableNotifications
           }
           color="primary"
           disabled={isRequestingPermission}
@@ -396,11 +406,17 @@ const NotificationSettings = (props: NotificationSettingsProps): ReactElement =>
             <Chip
               key={value}
               label={label}
-              color={preferences.reminderTimings.includes(value) ? 'primary' : 'default'}
+              color={
+                preferences.reminderTimings.includes(value)
+                  ? 'primary'
+                  : 'default'
+              }
               onClick={() => handleTimingToggle(value)}
               className={classes.timingChip}
               variant={
-                preferences.reminderTimings.includes(value) ? 'default' : 'outlined'
+                preferences.reminderTimings.includes(value)
+                  ? 'default'
+                  : 'outlined'
               }
             />
           ))}
@@ -415,7 +431,8 @@ const NotificationSettings = (props: NotificationSettingsProps): ReactElement =>
         Notification Settings
       </Typography>
       <Typography variant="body2" color="textSecondary" paragraph>
-        Configure how and when you want to be reminded about important tax deadlines.
+        Configure how and when you want to be reminded about important tax
+        deadlines.
       </Typography>
 
       <Card className={classes.card}>
@@ -423,7 +440,11 @@ const NotificationSettings = (props: NotificationSettingsProps): ReactElement =>
           {renderMasterToggle()}
           {renderPermissionStatus()}
 
-          <Box className={!preferences.enabled ? classes.disabledOverlay : undefined}>
+          <Box
+            className={
+              !preferences.enabled ? classes.disabledOverlay : undefined
+            }
+          >
             <Divider style={{ margin: '16px 0' }} />
             {renderNotificationTypes()}
             <Divider style={{ margin: '16px 0' }} />

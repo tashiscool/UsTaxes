@@ -18,7 +18,12 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 
 export interface ScheduleB1065Data {
   // Question 1: Type of entity
-  entityType: 'domesticGeneralPartnership' | 'domesticLLP' | 'domesticLLC' | 'foreign' | 'other'
+  entityType:
+    | 'domesticGeneralPartnership'
+    | 'domesticLLP'
+    | 'domesticLLC'
+    | 'foreign'
+    | 'other'
   // Question 2: Partnership schedule
   scheduleM3Required: boolean
   // Question 3: Filing method
@@ -82,38 +87,49 @@ export default class ScheduleB1065 extends F1040Attachment {
   }
 
   scheduleB1065Data = (): ScheduleB1065Data | undefined => {
-    return undefined  // Would be populated from entity data
+    return undefined // Would be populated from entity data
   }
 
   // Entity type
-  entityType = (): string => this.scheduleB1065Data()?.entityType ?? 'domesticGeneralPartnership'
+  entityType = (): string =>
+    this.scheduleB1065Data()?.entityType ?? 'domesticGeneralPartnership'
 
   // Number of partners
-  numberOfPartners = (): number => this.scheduleB1065Data()?.numberOfPartners ?? 0
+  numberOfPartners = (): number =>
+    this.scheduleB1065Data()?.numberOfPartners ?? 0
 
   // Foreign partners
-  anyForeignPartners = (): boolean => this.scheduleB1065Data()?.anyForeignPartners ?? false
-  numberOfForeignPartners = (): number => this.scheduleB1065Data()?.numberOfForeignPartners ?? 0
+  anyForeignPartners = (): boolean =>
+    this.scheduleB1065Data()?.anyForeignPartners ?? false
+  numberOfForeignPartners = (): number =>
+    this.scheduleB1065Data()?.numberOfForeignPartners ?? 0
 
   // Section 754 election
-  hasSection754Election = (): boolean => this.scheduleB1065Data()?.section754Election ?? false
+  hasSection754Election = (): boolean =>
+    this.scheduleB1065Data()?.section754Election ?? false
 
   // Partnership representative
-  partnershipRepName = (): string => this.scheduleB1065Data()?.partnershipRepName ?? ''
-  partnershipRepPhone = (): string => this.scheduleB1065Data()?.partnershipRepPhone ?? ''
+  partnershipRepName = (): string =>
+    this.scheduleB1065Data()?.partnershipRepName ?? ''
+  partnershipRepPhone = (): string =>
+    this.scheduleB1065Data()?.partnershipRepPhone ?? ''
 
   // Accounting method
-  accountingMethod = (): string => this.scheduleB1065Data()?.accountingMethod ?? 'cash'
+  accountingMethod = (): string =>
+    this.scheduleB1065Data()?.accountingMethod ?? 'cash'
 
   // Capital
-  capitalAtBeginning = (): number => this.scheduleB1065Data()?.capitalAtBeginning ?? 0
+  capitalAtBeginning = (): number =>
+    this.scheduleB1065Data()?.capitalAtBeginning ?? 0
   capitalAtEnd = (): number => this.scheduleB1065Data()?.capitalAtEnd ?? 0
 
   // Qualified opportunity fund
-  isQualifiedOpportunityFund = (): boolean => this.scheduleB1065Data()?.qualifiedOpportunityFund ?? false
+  isQualifiedOpportunityFund = (): boolean =>
+    this.scheduleB1065Data()?.qualifiedOpportunityFund ?? false
 
   // Elected out of centralized audit
-  electedOutOfAudit = (): boolean => this.scheduleB1065Data()?.electedOutOfAuditRegime ?? false
+  electedOutOfAudit = (): boolean =>
+    this.scheduleB1065Data()?.electedOutOfAuditRegime ?? false
 
   fields = (): Field[] => {
     const data = this.scheduleB1065Data()

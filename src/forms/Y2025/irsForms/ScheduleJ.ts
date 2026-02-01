@@ -99,7 +99,9 @@ export default class ScheduleJ extends F1040Attachment {
 
   // Line 3d: Tax on line 3c
   l3d = (): number => {
-    const fs = this.priorYearTax(1)?.filingStatus ?? this.f1040.info.taxPayer.filingStatus
+    const fs =
+      this.priorYearTax(1)?.filingStatus ??
+      this.f1040.info.taxPayer.filingStatus
     return computeOrdinaryTax(fs, this.l3c())
   }
 
@@ -121,7 +123,9 @@ export default class ScheduleJ extends F1040Attachment {
 
   // Line 4d: Tax on line 4c
   l4d = (): number => {
-    const fs = this.priorYearTax(2)?.filingStatus ?? this.f1040.info.taxPayer.filingStatus
+    const fs =
+      this.priorYearTax(2)?.filingStatus ??
+      this.f1040.info.taxPayer.filingStatus
     return computeOrdinaryTax(fs, this.l4c())
   }
 
@@ -143,7 +147,9 @@ export default class ScheduleJ extends F1040Attachment {
 
   // Line 5d: Tax on line 5c
   l5d = (): number => {
-    const fs = this.priorYearTax(3)?.filingStatus ?? this.f1040.info.taxPayer.filingStatus
+    const fs =
+      this.priorYearTax(3)?.filingStatus ??
+      this.f1040.info.taxPayer.filingStatus
     return computeOrdinaryTax(fs, this.l5c())
   }
 

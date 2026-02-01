@@ -27,7 +27,12 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
  * - Part V: Self-Employment Tax (similar to Schedule SE)
  */
 
-export type USTerritory = 'PuertoRico' | 'VirginIslands' | 'Guam' | 'AmericanSamoa' | 'CNMI'
+export type USTerritory =
+  | 'PuertoRico'
+  | 'VirginIslands'
+  | 'Guam'
+  | 'AmericanSamoa'
+  | 'CNMI'
 
 export interface TerritoryResidencyInfo {
   territory: USTerritory
@@ -114,13 +119,13 @@ export interface Form1040SSInfo {
 }
 
 // 2025 Self-Employment Tax rates
-const SE_TAX_RATE = 0.153  // 15.3% (12.4% Social Security + 2.9% Medicare)
-const SE_SOCIAL_SECURITY_WAGE_BASE = 176100  // 2025 limit
-const SE_DEDUCTION_RATE = 0.9235  // 92.35% of net earnings
+const SE_TAX_RATE = 0.153 // 15.3% (12.4% Social Security + 2.9% Medicare)
+const SE_SOCIAL_SECURITY_WAGE_BASE = 176100 // 2025 limit
+const SE_DEDUCTION_RATE = 0.9235 // 92.35% of net earnings
 
 export default class F1040SS extends F1040Attachment {
   tag: FormTag = 'f1040ss'
-  sequenceIndex = 0  // Primary form for territory residents
+  sequenceIndex = 0 // Primary form for territory residents
 
   isNeeded = (): boolean => {
     return this.hasForm1040SSInfo()
@@ -135,11 +140,13 @@ export default class F1040SS extends F1040Attachment {
   }
 
   // Residency Information
-  residency = (): TerritoryResidencyInfo | undefined => this.f1040SSInfo()?.residency
+  residency = (): TerritoryResidencyInfo | undefined =>
+    this.f1040SSInfo()?.residency
 
   territory = (): USTerritory => this.residency()?.territory ?? 'PuertoRico'
   yearsOfResidence = (): number => this.residency()?.yearsOfResidence ?? 0
-  isPermanentResident = (): boolean => this.residency()?.isPermanentResident ?? false
+  isPermanentResident = (): boolean =>
+    this.residency()?.isPermanentResident ?? false
 
   isPuertoRico = (): boolean => this.territory() === 'PuertoRico'
   isVirginIslands = (): boolean => this.territory() === 'VirginIslands'
@@ -148,17 +155,20 @@ export default class F1040SS extends F1040Attachment {
   isCNMI = (): boolean => this.territory() === 'CNMI'
 
   // Part IV: Business Income
-  businessIncome = (): TerritoryBusinessIncome | undefined => this.f1040SSInfo()?.businessIncome
+  businessIncome = (): TerritoryBusinessIncome | undefined =>
+    this.f1040SSInfo()?.businessIncome
 
   grossReceipts = (): number => this.businessIncome()?.grossReceipts ?? 0
   costOfGoodsSold = (): number => this.businessIncome()?.costOfGoodsSold ?? 0
   grossProfit = (): number => this.businessIncome()?.grossProfit ?? 0
   totalBusinessIncome = (): number => this.businessIncome()?.totalIncome ?? 0
-  totalBusinessExpenses = (): number => this.businessIncome()?.totalExpenses ?? 0
+  totalBusinessExpenses = (): number =>
+    this.businessIncome()?.totalExpenses ?? 0
   netBusinessProfit = (): number => this.businessIncome()?.netProfit ?? 0
 
   // Part III: Farm Income
-  farmIncome = (): TerritoryFarmIncome | undefined => this.f1040SSInfo()?.farmIncome
+  farmIncome = (): TerritoryFarmIncome | undefined =>
+    this.f1040SSInfo()?.farmIncome
 
   grossFarmIncome = (): number => this.farmIncome()?.grossFarmIncome ?? 0
   totalFarmExpenses = (): number => this.farmIncome()?.totalFarmExpenses ?? 0
@@ -166,8 +176,10 @@ export default class F1040SS extends F1040Attachment {
 
   // Part V: Self-Employment Tax Calculation
   combinedNetEarnings = (): number => {
-    return this.f1040SSInfo()?.combinedNetEarnings ??
-           (this.netBusinessProfit() + this.netFarmProfit())
+    return (
+      this.f1040SSInfo()?.combinedNetEarnings ??
+      this.netBusinessProfit() + this.netFarmProfit()
+    )
   }
 
   // Line 4: Net earnings from self-employment (92.35% of combined)
@@ -200,7 +212,11 @@ export default class F1040SS extends F1040Attachment {
 
   // Total self-employment tax
   selfEmploymentTax = (): number => {
-    return this.socialSecurityTax() + this.medicareTax() + this.additionalMedicareTax()
+    return (
+      this.socialSecurityTax() +
+      this.medicareTax() +
+      this.additionalMedicareTax()
+    )
   }
 
   // Deductible portion of SE tax (50%)
@@ -209,10 +225,13 @@ export default class F1040SS extends F1040Attachment {
   }
 
   // Part II: Additional Child Tax Credit (Puerto Rico only)
-  hasQualifyingChildren = (): boolean => this.residency()?.hasQualifyingChildren ?? false
-  numberOfQualifyingChildren = (): number => this.residency()?.numberOfQualifyingChildren ?? 0
+  hasQualifyingChildren = (): boolean =>
+    this.residency()?.hasQualifyingChildren ?? false
+  numberOfQualifyingChildren = (): number =>
+    this.residency()?.numberOfQualifyingChildren ?? 0
 
-  earnedIncome = (): number => this.f1040SSInfo()?.earnedIncome ?? this.combinedNetEarnings()
+  earnedIncome = (): number =>
+    this.f1040SSInfo()?.earnedIncome ?? this.combinedNetEarnings()
 
   // ACTC calculation (simplified)
   calculateACTC = (): number => {
@@ -223,7 +242,9 @@ export default class F1040SS extends F1040Attachment {
     // Phase in based on earned income
     const earnedIncomeThreshold = 2500
     if (this.earnedIncome() <= earnedIncomeThreshold) return 0
-    const phaseInAmount = Math.round((this.earnedIncome() - earnedIncomeThreshold) * 0.15)
+    const phaseInAmount = Math.round(
+      (this.earnedIncome() - earnedIncomeThreshold) * 0.15
+    )
     return Math.min(maxACTC, phaseInAmount)
   }
 

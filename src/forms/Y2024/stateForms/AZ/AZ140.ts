@@ -51,8 +51,7 @@ export class AZ140 extends Form {
   address = (): string | undefined =>
     this.info.taxPayer.primaryPerson.address.address
 
-  city = (): string | undefined =>
-    this.info.taxPayer.primaryPerson.address.city
+  city = (): string | undefined => this.info.taxPayer.primaryPerson.address.city
 
   stateField = (): string | undefined =>
     this.info.taxPayer.primaryPerson.address.state

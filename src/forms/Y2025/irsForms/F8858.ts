@@ -161,7 +161,8 @@ export default class F8858 extends F1040Attachment {
   isForeignBranch = (): boolean => this.fdeType() === 'foreignBranch'
 
   // Income Statement
-  incomeStatement = (): FDEIncomeStatement | undefined => this.f8858Info()?.incomeStatement
+  incomeStatement = (): FDEIncomeStatement | undefined =>
+    this.f8858Info()?.incomeStatement
 
   totalIncome = (): number => this.incomeStatement()?.totalIncome ?? 0
   totalDeductions = (): number => this.incomeStatement()?.totalDeductions ?? 0
@@ -169,14 +170,16 @@ export default class F8858 extends F1040Attachment {
   grossProfit = (): number => this.incomeStatement()?.grossProfit ?? 0
 
   // Balance Sheet
-  balanceSheet = (): FDEBalanceSheet | undefined => this.f8858Info()?.balanceSheet
+  balanceSheet = (): FDEBalanceSheet | undefined =>
+    this.f8858Info()?.balanceSheet
 
   totalAssets = (): number => this.balanceSheet()?.totalAssets ?? 0
   totalLiabilities = (): number => this.balanceSheet()?.totalLiabilities ?? 0
   ownerEquity = (): number => this.balanceSheet()?.ownerEquity ?? 0
 
   // Related Party Transactions
-  relatedParty = (): RelatedPartyTransactions | undefined => this.f8858Info()?.relatedPartyTransactions
+  relatedParty = (): RelatedPartyTransactions | undefined =>
+    this.f8858Info()?.relatedPartyTransactions
 
   totalRelatedPartyReceived = (): number => {
     const rp = this.relatedParty()
@@ -224,7 +227,7 @@ export default class F8858 extends F1040Attachment {
       fde?.referenceIDNumber ?? '',
       fde?.address ?? '',
       this.fdeCountry(),
-      fde?.dateOfOrganization?.toLocaleDateString() ?? '',
+      fde?.dateOfOrganization.toLocaleDateString() ?? '',
       this.isDisregardedEntity(),
       this.isForeignBranch(),
       fde?.principalBusinessActivity ?? '',

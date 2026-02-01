@@ -21,8 +21,8 @@ export default class Schedule1 extends F1040Attachment {
       this.f1040.studentLoanInterestWorksheet.isNotDependent()) ||
     this.f1040.f8889.isNeeded() ||
     (this.f1040.f8889Spouse?.isNeeded() ?? false) ||
-    (this.f1040.scheduleF?.isNeeded() ?? false) ||  // Farm income
-    (this.f1040.f3903?.isNeeded() ?? false)  // Moving expenses (military)
+    (this.f1040.scheduleF?.isNeeded() ?? false) || // Farm income
+    (this.f1040.f3903?.isNeeded() ?? false) // Moving expenses (military)
 
   l1 = (): number | undefined => undefined
   l2a = (): number | undefined => undefined
@@ -30,7 +30,7 @@ export default class Schedule1 extends F1040Attachment {
   l3 = (): number | undefined => undefined
   l4 = (): number | undefined => undefined
   l5 = (): number | undefined => this.f1040.scheduleE.l41()
-  l6 = (): number | undefined => this.f1040.scheduleF?.netProfit()  // Schedule F: Farm income
+  l6 = (): number | undefined => this.f1040.scheduleF?.netProfit() // Schedule F: Farm income
   l7 = (): number | undefined => undefined
   l8a = (): number | undefined => undefined
   l8b = (): number | undefined => undefined
@@ -114,7 +114,7 @@ export default class Schedule1 extends F1040Attachment {
   l12 = (): number | undefined => undefined
   l13 = (): number | undefined =>
     sumFields([this.f1040.f8889.l13(), this.f1040.f8889Spouse?.l13()])
-  l14 = (): number | undefined => this.f1040.f3903?.deduction()  // Form 3903: Moving expenses (military only)
+  l14 = (): number | undefined => this.f1040.f3903?.deduction() // Form 3903: Moving expenses (military only)
   l15 = (): number | undefined => this.f1040.scheduleSE.l13()
   l16 = (): number | undefined => undefined
   l17 = (): number | undefined => undefined

@@ -62,7 +62,7 @@ export default class Schedule990I extends F1040Attachment {
   }
 
   schedule990IData = (): Schedule990IData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Part I: General
@@ -84,15 +84,24 @@ export default class Schedule990I extends F1040Attachment {
   }
 
   totalCashGrantsToOrganizations = (): number => {
-    return this.organizationGrants().reduce((sum, g) => sum + g.amountOfCashGrant, 0)
+    return this.organizationGrants().reduce(
+      (sum, g) => sum + g.amountOfCashGrant,
+      0
+    )
   }
 
   totalNoncashGrantsToOrganizations = (): number => {
-    return this.organizationGrants().reduce((sum, g) => sum + g.amountOfNoncashAssistance, 0)
+    return this.organizationGrants().reduce(
+      (sum, g) => sum + g.amountOfNoncashAssistance,
+      0
+    )
   }
 
   totalGrantsToOrganizations = (): number => {
-    return this.totalCashGrantsToOrganizations() + this.totalNoncashGrantsToOrganizations()
+    return (
+      this.totalCashGrantsToOrganizations() +
+      this.totalNoncashGrantsToOrganizations()
+    )
   }
 
   // Part III: Individual grants
@@ -101,19 +110,31 @@ export default class Schedule990I extends F1040Attachment {
   }
 
   totalIndividualRecipients = (): number => {
-    return this.individualGrants().reduce((sum, g) => sum + g.numberOfRecipients, 0)
+    return this.individualGrants().reduce(
+      (sum, g) => sum + g.numberOfRecipients,
+      0
+    )
   }
 
   totalCashGrantsToIndividuals = (): number => {
-    return this.individualGrants().reduce((sum, g) => sum + g.amountOfCashGrant, 0)
+    return this.individualGrants().reduce(
+      (sum, g) => sum + g.amountOfCashGrant,
+      0
+    )
   }
 
   totalNoncashGrantsToIndividuals = (): number => {
-    return this.individualGrants().reduce((sum, g) => sum + g.amountOfNoncashAssistance, 0)
+    return this.individualGrants().reduce(
+      (sum, g) => sum + g.amountOfNoncashAssistance,
+      0
+    )
   }
 
   totalGrantsToIndividuals = (): number => {
-    return this.totalCashGrantsToIndividuals() + this.totalNoncashGrantsToIndividuals()
+    return (
+      this.totalCashGrantsToIndividuals() +
+      this.totalNoncashGrantsToIndividuals()
+    )
   }
 
   // Grand totals

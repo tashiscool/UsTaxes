@@ -31,8 +31,7 @@ export class NCD400 extends Form {
 
   attachments = (): Form[] => []
 
-  filingStatus = (): FilingStatus | undefined =>
-    this.info.taxPayer.filingStatus
+  filingStatus = (): FilingStatus | undefined => this.info.taxPayer.filingStatus
 
   // Line 6: Federal Adjusted Gross Income (Form 1040 line 11)
   l6 = (): number => this.f1040.l11()
@@ -65,7 +64,8 @@ export class NCD400 extends Form {
   l14 = (): number | undefined => undefined
 
   // Line 15: Total deductions
-  l15 = (): number => sumFields([this.l11(), this.l12(), this.l13(), this.l14()])
+  l15 = (): number =>
+    sumFields([this.l11(), this.l12(), this.l13(), this.l14()])
 
   // Line 16: NC adjusted gross income
   l16 = (): number => this.l6() + this.l10() - this.l15()
@@ -91,7 +91,10 @@ export class NCD400 extends Form {
     if (agi > incomeLimit) {
       const excess = agi - incomeLimit
       const reductionUnits = Math.floor(excess / 2000)
-      const reduction = reductionUnits * parameters.childDeduction.amount * parameters.childDeduction.phaseOutRate
+      const reduction =
+        reductionUnits *
+        parameters.childDeduction.amount *
+        parameters.childDeduction.phaseOutRate
       deduction = Math.max(0, deduction - reduction)
     }
 
@@ -115,7 +118,8 @@ export class NCD400 extends Form {
   l23 = (): number | undefined => undefined
 
   // Line 24: Total tax credits (limited to tax)
-  l24 = (): number => Math.min(sumFields([this.l21(), this.l22(), this.l23()]), this.l20())
+  l24 = (): number =>
+    Math.min(sumFields([this.l21(), this.l22(), this.l23()]), this.l20())
 
   // Line 25: Net tax
   l25 = (): number => Math.max(0, this.l20() - this.l24())
@@ -150,15 +154,35 @@ export class NCD400 extends Form {
   accountType = (): AccountType | undefined => this.info.refund?.accountType
 
   fields = (): Field[] => [
-    this.info.taxPayer.primaryPerson?.firstName,
-    this.info.taxPayer.primaryPerson?.lastName,
-    this.info.taxPayer.primaryPerson?.ssid,
-    this.l6(), this.l7(), this.l8(), this.l9(), this.l10(),
-    this.l11(), this.l12(), this.l13(), this.l14(), this.l15(),
-    this.l16(), this.l17(), this.l18(), this.l19(), this.l20(),
-    this.l21(), this.l22(), this.l23(), this.l24(), this.l25(),
-    this.l26(), this.l27(), this.l28(), this.l29(),
-    this.l30(), this.l31()
+    this.info.taxPayer.primaryPerson.firstName,
+    this.info.taxPayer.primaryPerson.lastName,
+    this.info.taxPayer.primaryPerson.ssid,
+    this.l6(),
+    this.l7(),
+    this.l8(),
+    this.l9(),
+    this.l10(),
+    this.l11(),
+    this.l12(),
+    this.l13(),
+    this.l14(),
+    this.l15(),
+    this.l16(),
+    this.l17(),
+    this.l18(),
+    this.l19(),
+    this.l20(),
+    this.l21(),
+    this.l22(),
+    this.l23(),
+    this.l24(),
+    this.l25(),
+    this.l26(),
+    this.l27(),
+    this.l28(),
+    this.l29(),
+    this.l30(),
+    this.l31()
   ]
 }
 

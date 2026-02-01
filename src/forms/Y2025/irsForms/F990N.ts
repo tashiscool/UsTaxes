@@ -73,7 +73,7 @@ export default class F990N extends F1040Attachment {
   }
 
   f990NData = (): F990NData | undefined => {
-    return undefined  // Would be populated from organization data
+    return undefined // Would be populated from organization data
   }
 
   // Organization information
@@ -89,7 +89,8 @@ export default class F990N extends F1040Attachment {
   }
 
   // Principal officer
-  principalOfficerName = (): string => this.f990NData()?.principalOfficerName ?? ''
+  principalOfficerName = (): string =>
+    this.f990NData()?.principalOfficerName ?? ''
   principalOfficerAddress = (): string => {
     const addr = this.f990NData()?.principalOfficerAddress
     if (!addr) return ''
@@ -128,7 +129,8 @@ export default class F990N extends F1040Attachment {
     if (!data.grossReceiptsNormally50kOrLess) return false
 
     // Must have required fields
-    if (!data.organizationName || !data.ein || !data.principalOfficerName) return false
+    if (!data.organizationName || !data.ein || !data.principalOfficerName)
+      return false
 
     return true
   }
@@ -150,15 +152,15 @@ export default class F990N extends F1040Attachment {
       addr?.country ?? 'United States',
       // Principal officer
       this.principalOfficerName(),
-      data?.principalOfficerAddress?.street ?? '',
-      data?.principalOfficerAddress?.city ?? '',
-      data?.principalOfficerAddress?.state ?? '',
-      data?.principalOfficerAddress?.zip ?? '',
+      data?.principalOfficerAddress.street ?? '',
+      data?.principalOfficerAddress.city ?? '',
+      data?.principalOfficerAddress.state ?? '',
+      data?.principalOfficerAddress.zip ?? '',
       // Website
       this.websiteAddress(),
       // Tax year
-      data?.taxYearBeginning?.toLocaleDateString() ?? '',
-      data?.taxYearEnding?.toLocaleDateString() ?? '',
+      data?.taxYearBeginning.toLocaleDateString() ?? '',
+      data?.taxYearEnding.toLocaleDateString() ?? '',
       // Gross receipts
       this.grossReceiptsUnderThreshold(),
       GROSS_RECEIPTS_THRESHOLD,

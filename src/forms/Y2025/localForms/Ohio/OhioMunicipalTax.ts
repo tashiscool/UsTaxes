@@ -49,10 +49,14 @@ export class OhioMunicipalTax extends Form {
    * Check if Ohio municipal tax applies
    */
   isNeeded = (): boolean => {
-    const stateResidency = this.info.stateResidencies.find(s => s.state === 'OH')
-    return stateResidency !== undefined &&
-           (this.localTaxInfo?.residenceCity !== undefined ||
-            this.localTaxInfo?.workCity !== undefined)
+    const stateResidency = this.info.stateResidencies.find(
+      (s) => s.state === 'OH'
+    )
+    return (
+      stateResidency !== undefined &&
+      (this.localTaxInfo?.residenceCity !== undefined ||
+        this.localTaxInfo?.workCity !== undefined)
+    )
   }
 
   // Taxpayer information
@@ -74,7 +78,8 @@ export class OhioMunicipalTax extends Form {
 
     // Normalize city name for lookup
     const normalizedName = cityName.replace(/\s+/g, '_')
-    const cityInfo = parameters.cityRates[normalizedName as keyof typeof parameters.cityRates]
+    const cityInfo =
+      parameters.cityRates[normalizedName as keyof typeof parameters.cityRates]
 
     if (cityInfo) {
       return cityInfo.rate
@@ -91,7 +96,8 @@ export class OhioMunicipalTax extends Form {
     if (!cityName) return 1.0
 
     const normalizedName = cityName.replace(/\s+/g, '_')
-    const cityInfo = parameters.cityRates[normalizedName as keyof typeof parameters.cityRates]
+    const cityInfo =
+      parameters.cityRates[normalizedName as keyof typeof parameters.cityRates]
 
     if (cityInfo) {
       return cityInfo.creditRate
@@ -137,7 +143,7 @@ export class OhioMunicipalTax extends Form {
    */
   l5 = (): number => {
     return this.info.w2s
-      .filter(w2 => w2.state === 'OH')
+      .filter((w2) => w2.state === 'OH')
       .reduce((sum, w2) => sum + w2.income, 0)
   }
 
@@ -266,10 +272,7 @@ export class OhioMunicipalTax extends Form {
     // Otherwise, both cities may have tax due
     // Work city: any difference between tax and withholding
     // Residence city: tax after credit
-    return sumFields([
-      Math.max(0, this.l10() - this.l11()),
-      this.l15()
-    ])
+    return sumFields([Math.max(0, this.l10() - this.l11()), this.l15()])
   }
 
   /**
@@ -334,8 +337,20 @@ export class OhioMunicipalTax extends Form {
    * Get breakdown by city for detailed reporting
    */
   getTaxBreakdown = (): {
-    residenceCity: { name: string; rate: number; tax: number; withholding: number; due: number }
-    workCity?: { name: string; rate: number; tax: number; withholding: number; due: number }
+    residenceCity: {
+      name: string
+      rate: number
+      tax: number
+      withholding: number
+      due: number
+    }
+    workCity?: {
+      name: string
+      rate: number
+      tax: number
+      withholding: number
+      due: number
+    }
   } => {
     const result: ReturnType<typeof this.getTaxBreakdown> = {
       residenceCity: {

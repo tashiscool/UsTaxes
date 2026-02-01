@@ -28,7 +28,7 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
 
 export interface RelatedPartyInfo {
   name: string
-  identifyingNumber: string  // EIN, SSN, or foreign reference
+  identifyingNumber: string // EIN, SSN, or foreign reference
   country: string
   relationship: 'parent' | 'subsidiary' | 'affiliate' | 'other'
   ownershipPercentage: number
@@ -101,26 +101,35 @@ export default class F5472 extends F1040Attachment {
   corporationName = (): string => this.f5472Info()?.corporationName ?? ''
   corporationEin = (): string => this.f5472Info()?.corporationEin ?? ''
   corporationAddress = (): string => this.f5472Info()?.corporationAddress ?? ''
-  stateOfIncorporation = (): string => this.f5472Info()?.stateOfIncorporation ?? ''
-  countryOfIncorporation = (): string => this.f5472Info()?.countryOfIncorporation ?? 'US'
+  stateOfIncorporation = (): string =>
+    this.f5472Info()?.stateOfIncorporation ?? ''
+  countryOfIncorporation = (): string =>
+    this.f5472Info()?.countryOfIncorporation ?? 'US'
   totalAssets = (): number => this.f5472Info()?.totalAssets ?? 0
-  principalBusinessActivity = (): string => this.f5472Info()?.principalBusinessActivity ?? ''
+  principalBusinessActivity = (): string =>
+    this.f5472Info()?.principalBusinessActivity ?? ''
   naicsCode = (): string => this.f5472Info()?.naicsCode ?? ''
 
   // Part II: Foreign Shareholder
-  foreignShareholder = (): RelatedPartyInfo | undefined => this.f5472Info()?.foreignShareholder
+  foreignShareholder = (): RelatedPartyInfo | undefined =>
+    this.f5472Info()?.foreignShareholder
   foreignShareholderName = (): string => this.foreignShareholder()?.name ?? ''
-  foreignShareholderCountry = (): string => this.foreignShareholder()?.country ?? ''
-  foreignOwnershipPercentage = (): number => this.foreignShareholder()?.ownershipPercentage ?? 0
+  foreignShareholderCountry = (): string =>
+    this.foreignShareholder()?.country ?? ''
+  foreignOwnershipPercentage = (): number =>
+    this.foreignShareholder()?.ownershipPercentage ?? 0
 
   // Part III: Related Party
-  relatedParty = (): RelatedPartyInfo | undefined => this.f5472Info()?.relatedParty
+  relatedParty = (): RelatedPartyInfo | undefined =>
+    this.f5472Info()?.relatedParty
   relatedPartyName = (): string => this.relatedParty()?.name ?? ''
   relatedPartyCountry = (): string => this.relatedParty()?.country ?? ''
-  relatedPartyRelationship = (): string => this.relatedParty()?.relationship ?? ''
+  relatedPartyRelationship = (): string =>
+    this.relatedParty()?.relationship ?? ''
 
   // Part IV: Transactions
-  transactions = (): ReportableTransactions | undefined => this.f5472Info()?.transactions
+  transactions = (): ReportableTransactions | undefined =>
+    this.f5472Info()?.transactions
 
   // Line 1: Sales of tangible property to related party
   l1 = (): number => this.transactions()?.salesOfTangibleProperty ?? 0
@@ -133,7 +142,8 @@ export default class F5472 extends F1040Attachment {
   // Line 5: Compensation paid for technical services
   l5 = (): number => this.transactions()?.compensationForTechnicalServices ?? 0
   // Line 6: Compensation received for technical services
-  l6 = (): number => this.transactions()?.compensationReceivedForTechnicalServices ?? 0
+  l6 = (): number =>
+    this.transactions()?.compensationReceivedForTechnicalServices ?? 0
   // Line 7: Commissions paid
   l7 = (): number => this.transactions()?.commissionsPaid ?? 0
   // Line 8: Commissions received
@@ -162,16 +172,30 @@ export default class F5472 extends F1040Attachment {
   // Total amounts paid to related party
   totalAmountsPaid = (): number => {
     return sumFields([
-      this.l1(), this.l3(), this.l5(), this.l7(), this.l9(),
-      this.l11(), this.l13(), this.l15(), this.l17()
+      this.l1(),
+      this.l3(),
+      this.l5(),
+      this.l7(),
+      this.l9(),
+      this.l11(),
+      this.l13(),
+      this.l15(),
+      this.l17()
     ])
   }
 
   // Total amounts received from related party
   totalAmountsReceived = (): number => {
     return sumFields([
-      this.l2(), this.l4(), this.l6(), this.l8(), this.l10(),
-      this.l12(), this.l14(), this.l16(), this.l18()
+      this.l2(),
+      this.l4(),
+      this.l6(),
+      this.l8(),
+      this.l10(),
+      this.l12(),
+      this.l14(),
+      this.l16(),
+      this.l18()
     ])
   }
 
@@ -185,7 +209,7 @@ export default class F5472 extends F1040Attachment {
     this.corporationName(),
     this.corporationEin(),
     this.corporationAddress(),
-    this.f5472Info()?.dateOfIncorporation?.toLocaleDateString() ?? '',
+    this.f5472Info()?.dateOfIncorporation.toLocaleDateString() ?? '',
     this.stateOfIncorporation(),
     this.countryOfIncorporation(),
     this.totalAssets(),

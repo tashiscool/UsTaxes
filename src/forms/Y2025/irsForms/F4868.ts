@@ -16,7 +16,7 @@ import { CURRENT_YEAR } from '../data/federal'
 
 export default class F4868 extends F1040Attachment {
   tag: FormTag = 'f4868'
-  sequenceIndex = 0  // Filed separately before main return
+  sequenceIndex = 0 // Filed separately before main return
 
   isNeeded = (): boolean => {
     // User must explicitly request extension
@@ -71,7 +71,9 @@ export default class F4868 extends F1040Attachment {
   // Filing deadline message
   filingDeadline = (): string => {
     if (this.outOfCountry()) {
-      return `June 15, ${CURRENT_YEAR + 1} (automatic 2-month extension for those abroad)`
+      return `June 15, ${
+        CURRENT_YEAR + 1
+      } (automatic 2-month extension for those abroad)`
     }
     return this.originalDueDate()
   }

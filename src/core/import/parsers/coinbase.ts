@@ -37,7 +37,12 @@ const COINBASE_COLUMN_MAPPINGS = {
   transactionType: ['transaction type', 'type', 'action'],
   asset: ['asset', 'currency', 'crypto', 'coin', 'symbol'],
   quantity: ['quantity transacted', 'quantity', 'amount', 'qty'],
-  spotPrice: ['spot price at transaction', 'spot price', 'price', 'price at transaction'],
+  spotPrice: [
+    'spot price at transaction',
+    'spot price',
+    'price',
+    'price at transaction'
+  ],
   spotPriceCurrency: ['spot price currency', 'currency'],
   subtotal: ['subtotal', 'sub total', 'amount before fees'],
   total: ['total (inclusive of fees)', 'total', 'amount with fees'],
@@ -95,7 +100,7 @@ function mapTransactionType(coinbaseType: string): CryptoTransactionType {
  */
 function findColumn(headers: string[], possibleNames: string[]): number {
   for (const name of possibleNames) {
-    const index = headers.findIndex(h => h.includes(name))
+    const index = headers.findIndex((h) => h.includes(name))
     if (index >= 0) return index
   }
   return -1
@@ -161,22 +166,29 @@ export class CoinbaseParser extends BaseBrokerageParser {
     // Find header row (Coinbase sometimes has intro text before headers)
     let headerRowIndex = 0
     for (let i = 0; i < Math.min(rows.length, 10); i++) {
-      const rowLower = rows[i].map(c => c.toLowerCase())
+      const rowLower = rows[i].map((c) => c.toLowerCase())
       if (
-        rowLower.some(c => c.includes('timestamp') || c.includes('transaction type')) &&
-        rowLower.some(c => c.includes('asset') || c.includes('quantity'))
+        rowLower.some(
+          (c) => c.includes('timestamp') || c.includes('transaction type')
+        ) &&
+        rowLower.some((c) => c.includes('asset') || c.includes('quantity'))
       ) {
         headerRowIndex = i
         break
       }
     }
 
-    const actualHeaders = rows[headerRowIndex].map(h => h.toLowerCase().trim())
+    const actualHeaders = rows[headerRowIndex].map((h) =>
+      h.toLowerCase().trim()
+    )
 
     // Map columns
     const columnMap = {
       timestamp: findColumn(actualHeaders, COINBASE_COLUMN_MAPPINGS.timestamp),
-      transactionType: findColumn(actualHeaders, COINBASE_COLUMN_MAPPINGS.transactionType),
+      transactionType: findColumn(
+        actualHeaders,
+        COINBASE_COLUMN_MAPPINGS.transactionType
+      ),
       asset: findColumn(actualHeaders, COINBASE_COLUMN_MAPPINGS.asset),
       quantity: findColumn(actualHeaders, COINBASE_COLUMN_MAPPINGS.quantity),
       spotPrice: findColumn(actualHeaders, COINBASE_COLUMN_MAPPINGS.spotPrice),
@@ -188,16 +200,32 @@ export class CoinbaseParser extends BaseBrokerageParser {
 
     // Validate required columns
     if (columnMap.timestamp < 0) {
-      errors.push({ row: headerRowIndex, column: 'timestamp', message: 'Could not find Timestamp column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'timestamp',
+        message: 'Could not find Timestamp column'
+      })
     }
     if (columnMap.transactionType < 0) {
-      errors.push({ row: headerRowIndex, column: 'transactionType', message: 'Could not find Transaction Type column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'transactionType',
+        message: 'Could not find Transaction Type column'
+      })
     }
     if (columnMap.asset < 0) {
-      errors.push({ row: headerRowIndex, column: 'asset', message: 'Could not find Asset column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'asset',
+        message: 'Could not find Asset column'
+      })
     }
     if (columnMap.quantity < 0) {
-      errors.push({ row: headerRowIndex, column: 'quantity', message: 'Could not find Quantity column' })
+      errors.push({
+        row: headerRowIndex,
+        column: 'quantity',
+        message: 'Could not find Quantity column'
+      })
     }
 
     if (errors.length > 0) {
@@ -209,7 +237,7 @@ export class CoinbaseParser extends BaseBrokerageParser {
       const row = rows[i]
 
       // Skip empty rows
-      if (row.length === 0 || row.every(c => c === '')) continue
+      if (row.length === 0 || row.every((c) => c === '')) continue
 
       try {
         const timestampStr = row[columnMap.timestamp]
@@ -229,16 +257,26 @@ export class CoinbaseParser extends BaseBrokerageParser {
             if (!isNaN(parsedDate.getTime())) {
               // Use parsed date
             } else {
-              errors.push({ row: i + 1, column: 'timestamp', message: `Invalid timestamp: ${timestampStr}` })
+              errors.push({
+                row: i + 1,
+                column: 'timestamp',
+                message: `Invalid timestamp: ${timestampStr}`
+              })
               continue
             }
           } else {
-            errors.push({ row: i + 1, column: 'timestamp', message: `Invalid timestamp: ${timestampStr}` })
+            errors.push({
+              row: i + 1,
+              column: 'timestamp',
+              message: `Invalid timestamp: ${timestampStr}`
+            })
             continue
           }
         }
 
-        const quantity = Math.abs(parseFloat(quantityStr.replace(/,/g, '')) || 0)
+        const quantity = Math.abs(
+          parseFloat(quantityStr.replace(/,/g, '')) || 0
+        )
         if (quantity === 0) {
           warnings.push(`Row ${i + 1}: Zero quantity for ${asset}, skipping`)
           continue
@@ -247,10 +285,14 @@ export class CoinbaseParser extends BaseBrokerageParser {
         const transactionType = mapTransactionType(transactionTypeStr)
 
         // Parse monetary values
-        const spotPrice = columnMap.spotPrice >= 0 ? parseCurrency(row[columnMap.spotPrice]) : 0
-        const subtotal = columnMap.subtotal >= 0 ? parseCurrency(row[columnMap.subtotal]) : 0
-        const total = columnMap.total >= 0 ? parseCurrency(row[columnMap.total]) : subtotal
-        const fees = columnMap.fees >= 0 ? parseCurrency(row[columnMap.fees]) : 0
+        const spotPrice =
+          columnMap.spotPrice >= 0 ? parseCurrency(row[columnMap.spotPrice]) : 0
+        const subtotal =
+          columnMap.subtotal >= 0 ? parseCurrency(row[columnMap.subtotal]) : 0
+        const total =
+          columnMap.total >= 0 ? parseCurrency(row[columnMap.total]) : subtotal
+        const fees =
+          columnMap.fees >= 0 ? parseCurrency(row[columnMap.fees]) : 0
         const notes = columnMap.notes >= 0 ? row[columnMap.notes] : undefined
 
         // Calculate price per unit if not provided
@@ -263,7 +305,7 @@ export class CoinbaseParser extends BaseBrokerageParser {
           asset: asset.trim().toUpperCase(),
           quantity,
           pricePerUnit,
-          totalValue: total || subtotal || (quantity * pricePerUnit),
+          totalValue: total || subtotal || quantity * pricePerUnit,
           fees,
           notes,
           exchange: 'Coinbase',
@@ -272,7 +314,9 @@ export class CoinbaseParser extends BaseBrokerageParser {
 
         // Handle convert transactions - they involve two assets
         if (transactionType === 'convert' && notes) {
-          const convertMatch = notes.match(/Converted\s+([\d.]+)\s+(\w+)\s+to\s+([\d.]+)\s+(\w+)/i)
+          const convertMatch = notes.match(
+            /Converted\s+([\d.]+)\s+(\w+)\s+to\s+([\d.]+)\s+(\w+)/i
+          )
           if (convertMatch) {
             transaction.convertFromAsset = convertMatch[2].toUpperCase()
             transaction.convertFromQuantity = parseFloat(convertMatch[1])
@@ -283,7 +327,12 @@ export class CoinbaseParser extends BaseBrokerageParser {
 
         transactions.push(transaction)
       } catch (e) {
-        errors.push({ row: i + 1, message: `Error parsing row: ${e instanceof Error ? e.message : String(e)}` })
+        errors.push({
+          row: i + 1,
+          message: `Error parsing row: ${
+            e instanceof Error ? e.message : String(e)
+          }`
+        })
       }
     }
 
@@ -295,21 +344,30 @@ export class CoinbaseParser extends BaseBrokerageParser {
    * This calculates cost basis for sells using the specified method
    */
   parse(content: string): ParseResult {
-    const { transactions: cryptoTxs, errors, warnings } = this.parseCryptoTransactions(content)
+    const {
+      transactions: cryptoTxs,
+      errors,
+      warnings
+    } = this.parseCryptoTransactions(content)
     const brokerageTransactions: BrokerageTransaction[] = []
 
     // Reset holdings for fresh calculation
     this.holdings.clear()
 
     // Sort transactions by timestamp
-    const sortedTxs = [...cryptoTxs].sort((a, b) =>
-      a.timestamp.getTime() - b.timestamp.getTime()
+    const sortedTxs = [...cryptoTxs].sort(
+      (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
     )
 
     // Process transactions to build holdings and generate Form 8949 entries
     for (const tx of sortedTxs) {
-      if (tx.type === 'buy' || tx.type === 'receive' || tx.type === 'income' ||
-          tx.type === 'airdrop' || tx.type === 'mining') {
+      if (
+        tx.type === 'buy' ||
+        tx.type === 'receive' ||
+        tx.type === 'income' ||
+        tx.type === 'airdrop' ||
+        tx.type === 'mining'
+      ) {
         // Add to holdings
         const holding: CryptoHolding = {
           asset: tx.asset,
@@ -325,8 +383,16 @@ export class CoinbaseParser extends BaseBrokerageParser {
         this.holdings.set(tx.asset, assetHoldings)
 
         // Income transactions should also be reported as income
-        if (tx.type === 'income' || tx.type === 'airdrop' || tx.type === 'mining') {
-          warnings.push(`Row: ${tx.asset} ${tx.type} of $${tx.totalValue.toFixed(2)} should be reported as ordinary income`)
+        if (
+          tx.type === 'income' ||
+          tx.type === 'airdrop' ||
+          tx.type === 'mining'
+        ) {
+          warnings.push(
+            `Row: ${tx.asset} ${tx.type} of $${tx.totalValue.toFixed(
+              2
+            )} should be reported as ordinary income`
+          )
         }
       } else if (tx.type === 'sell') {
         // Calculate cost basis and create Form 8949 entry
@@ -345,7 +411,9 @@ export class CoinbaseParser extends BaseBrokerageParser {
 
         // Create brokerage transaction for each lot sold
         for (const lot of result.lotsUsed) {
-          const proceeds = (tx.pricePerUnit * lot.quantitySold) - (tx.fees * (lot.quantitySold / tx.quantity))
+          const proceeds =
+            tx.pricePerUnit * lot.quantitySold -
+            tx.fees * (lot.quantitySold / tx.quantity)
           const gainLoss = proceeds - lot.costBasis
 
           const brokerageTx: BrokerageTransaction = {
@@ -376,18 +444,24 @@ export class CoinbaseParser extends BaseBrokerageParser {
           this.holdings.set(tx.convertFromAsset, result.remainingHoldings)
 
           for (const lot of result.lotsUsed) {
-            const proceeds = tx.totalValue * (lot.quantitySold / tx.convertFromQuantity)
+            const proceeds =
+              tx.totalValue * (lot.quantitySold / tx.convertFromQuantity)
             const gainLoss = proceeds - lot.costBasis
 
             const brokerageTx: BrokerageTransaction = {
               symbol: tx.convertFromAsset,
-              description: `${tx.convertFromAsset} converted to ${tx.convertToAsset || 'unknown'} - Coinbase`,
+              description: `${tx.convertFromAsset} converted to ${
+                tx.convertToAsset || 'unknown'
+              } - Coinbase`,
               dateAcquired: lot.acquiredDate,
               dateSold: tx.timestamp,
               proceeds,
               costBasis: lot.costBasis,
               gainLoss,
-              isShortTerm: isShortTermTransaction(lot.acquiredDate, tx.timestamp),
+              isShortTerm: isShortTermTransaction(
+                lot.acquiredDate,
+                tx.timestamp
+              ),
               isCovered: true,
               quantity: lot.quantitySold
             }
@@ -414,7 +488,9 @@ export class CoinbaseParser extends BaseBrokerageParser {
       } else if (tx.type === 'send') {
         // Sending crypto may be a taxable event (treat as sell at current value)
         // Or it could be a transfer to another wallet (not taxable)
-        warnings.push(`Row: ${tx.asset} send of ${tx.quantity} units - verify if this is a gift, payment, or wallet transfer`)
+        warnings.push(
+          `Row: ${tx.asset} send of ${tx.quantity} units - verify if this is a gift, payment, or wallet transfer`
+        )
       }
     }
 

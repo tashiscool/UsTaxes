@@ -92,86 +92,378 @@ export interface KnownIssue {
  */
 export const FORM_1040_ACCEPTANCE_MATRIX: FormAcceptance[] = [
   // Main forms
-  { formName: 'Form 1040', xmlElement: 'IRS1040', cardinality: { '1040': 1, '1040SS': 0, '1040NR': 0 } },
-  { formName: 'Schedule 1', xmlElement: 'IRS1040Schedule1', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Schedule 2', xmlElement: 'IRS1040Schedule2', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Schedule 3', xmlElement: 'IRS1040Schedule3', cardinality: { '1040': 1, '1040NR': 1 } },
+  {
+    formName: 'Form 1040',
+    xmlElement: 'IRS1040',
+    cardinality: { '1040': 1, '1040SS': 0, '1040NR': 0 }
+  },
+  {
+    formName: 'Schedule 1',
+    xmlElement: 'IRS1040Schedule1',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Schedule 2',
+    xmlElement: 'IRS1040Schedule2',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Schedule 3',
+    xmlElement: 'IRS1040Schedule3',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
 
   // Income schedules
-  { formName: 'Schedule A', xmlElement: 'IRS1040ScheduleA', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Schedule B', xmlElement: 'IRS1040ScheduleB', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Schedule C', xmlElement: 'IRS1040ScheduleC', cardinality: { '1040': 8, '1040SS': 8, '1040NR': 8 } },
-  { formName: 'Schedule D', xmlElement: 'IRS1040ScheduleD', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Schedule E', xmlElement: 'IRS1040ScheduleE', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Schedule F', xmlElement: 'IRS1040ScheduleF', cardinality: { '1040': 'unbounded', '1040SS': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: 'Schedule H', xmlElement: 'IRS1040ScheduleH', cardinality: { '1040': 2, '1040SS': 2, '1040NR': 1 } },
-  { formName: 'Schedule J', xmlElement: 'IRS1040ScheduleJ', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Schedule R', xmlElement: 'IRS1040ScheduleR', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Schedule SE', xmlElement: 'IRS1040ScheduleSE', cardinality: { '1040': 2, '1040SS': 2, '1040NR': 1 } },
+  {
+    formName: 'Schedule A',
+    xmlElement: 'IRS1040ScheduleA',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Schedule B',
+    xmlElement: 'IRS1040ScheduleB',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Schedule C',
+    xmlElement: 'IRS1040ScheduleC',
+    cardinality: { '1040': 8, '1040SS': 8, '1040NR': 8 }
+  },
+  {
+    formName: 'Schedule D',
+    xmlElement: 'IRS1040ScheduleD',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Schedule E',
+    xmlElement: 'IRS1040ScheduleE',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Schedule F',
+    xmlElement: 'IRS1040ScheduleF',
+    cardinality: {
+      '1040': 'unbounded',
+      '1040SS': 'unbounded',
+      '1040NR': 'unbounded'
+    }
+  },
+  {
+    formName: 'Schedule H',
+    xmlElement: 'IRS1040ScheduleH',
+    cardinality: { '1040': 2, '1040SS': 2, '1040NR': 1 }
+  },
+  {
+    formName: 'Schedule J',
+    xmlElement: 'IRS1040ScheduleJ',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Schedule R',
+    xmlElement: 'IRS1040ScheduleR',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Schedule SE',
+    xmlElement: 'IRS1040ScheduleSE',
+    cardinality: { '1040': 2, '1040SS': 2, '1040NR': 1 }
+  },
 
   // Credit schedules
-  { formName: 'Schedule 8812', xmlElement: 'IRS1040Schedule8812', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Schedule EIC', xmlElement: 'IRS1040ScheduleEIC', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Schedule LEP', xmlElement: 'IRS1040ScheduleLEP', cardinality: { '1040': 2, '1040SS': 2, '1040NR': 1 } },
+  {
+    formName: 'Schedule 8812',
+    xmlElement: 'IRS1040Schedule8812',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Schedule EIC',
+    xmlElement: 'IRS1040ScheduleEIC',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Schedule LEP',
+    xmlElement: 'IRS1040ScheduleLEP',
+    cardinality: { '1040': 2, '1040SS': 2, '1040NR': 1 }
+  },
 
   // Information returns
-  { formName: 'W-2', xmlElement: 'IRSW2', cardinality: { '1040': 'unbounded', '1040SS': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: '1099-INT', xmlElement: 'IRS1099INT', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: '1099-DIV', xmlElement: 'IRS1099DIV', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: '1099-B', xmlElement: 'IRS1099B', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: '1099-R', xmlElement: 'IRS1099R', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: '1099-G', xmlElement: 'IRS1099G', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: '1099-MISC', xmlElement: 'IRS1099MISC', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: '1099-NEC', xmlElement: 'IRS1099NEC', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: '1099-SSA', xmlElement: 'SSA1099', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
+  {
+    formName: 'W-2',
+    xmlElement: 'IRSW2',
+    cardinality: {
+      '1040': 'unbounded',
+      '1040SS': 'unbounded',
+      '1040NR': 'unbounded'
+    }
+  },
+  {
+    formName: '1099-INT',
+    xmlElement: 'IRS1099INT',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: '1099-DIV',
+    xmlElement: 'IRS1099DIV',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: '1099-B',
+    xmlElement: 'IRS1099B',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: '1099-R',
+    xmlElement: 'IRS1099R',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: '1099-G',
+    xmlElement: 'IRS1099G',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: '1099-MISC',
+    xmlElement: 'IRS1099MISC',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: '1099-NEC',
+    xmlElement: 'IRS1099NEC',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: '1099-SSA',
+    xmlElement: 'SSA1099',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
 
   // Other forms
-  { formName: 'Form 2106', xmlElement: 'IRS2106', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 2210', xmlElement: 'IRS2210', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 2441', xmlElement: 'IRS2441', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 2555', xmlElement: 'IRS2555', cardinality: { '1040': 2, '1040NR': 0 } },
-  { formName: 'Form 3903', xmlElement: 'IRS3903', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 4137', xmlElement: 'IRS4137', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 4562', xmlElement: 'IRS4562', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: 'Form 4684', xmlElement: 'IRS4684', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 4797', xmlElement: 'IRS4797', cardinality: { '1040': 1, '1040NR': 1 } },
+  {
+    formName: 'Form 2106',
+    xmlElement: 'IRS2106',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 2210',
+    xmlElement: 'IRS2210',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 2441',
+    xmlElement: 'IRS2441',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 2555',
+    xmlElement: 'IRS2555',
+    cardinality: { '1040': 2, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 3903',
+    xmlElement: 'IRS3903',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 4137',
+    xmlElement: 'IRS4137',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 4562',
+    xmlElement: 'IRS4562',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: 'Form 4684',
+    xmlElement: 'IRS4684',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 4797',
+    xmlElement: 'IRS4797',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
   { formName: 'Form 4868', xmlElement: 'IRS4868', cardinality: { '4868': 1 } },
-  { formName: 'Form 5329', xmlElement: 'IRS5329', cardinality: { '1040': 2, '1040NR': 1 } },
-  { formName: 'Form 5405', xmlElement: 'IRS5405', cardinality: { '1040': 2, '1040NR': 0 } },
-  { formName: 'Form 5695', xmlElement: 'IRS5695', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 6251', xmlElement: 'IRS6251', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 6252', xmlElement: 'IRS6252', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: 'Form 6781', xmlElement: 'IRS6781', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8283', xmlElement: 'IRS8283', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: 'Form 8379', xmlElement: 'IRS8379', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 8582', xmlElement: 'IRS8582', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8586', xmlElement: 'IRS8586', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8606', xmlElement: 'IRS8606', cardinality: { '1040': 2, '1040NR': 1 } },
-  { formName: 'Form 8615', xmlElement: 'IRS8615', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8801', xmlElement: 'IRS8801', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8812', xmlElement: 'IRS8812', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8814', xmlElement: 'IRS8814', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 8822', xmlElement: 'IRS8822', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8839', xmlElement: 'IRS8839', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 8853', xmlElement: 'IRS8853', cardinality: { '1040': 2, '1040NR': 1 } },
-  { formName: 'Form 8862', xmlElement: 'IRS8862', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 8863', xmlElement: 'IRS8863', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8880', xmlElement: 'IRS8880', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 8888', xmlElement: 'IRS8888', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8889', xmlElement: 'IRS8889', cardinality: { '1040': 2, '1040NR': 1 } },
-  { formName: 'Form 8910', xmlElement: 'IRS8910', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8911', xmlElement: 'IRS8911', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8915-F', xmlElement: 'IRS8915F', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8917', xmlElement: 'IRS8917', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 8919', xmlElement: 'IRS8919', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 8936', xmlElement: 'IRS8936', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8938', xmlElement: 'IRS8938', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8949', xmlElement: 'IRS8949', cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' } },
-  { formName: 'Form 8959', xmlElement: 'IRS8959', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8960', xmlElement: 'IRS8960', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8962', xmlElement: 'IRS8962', cardinality: { '1040': 1, '1040NR': 0 } },
-  { formName: 'Form 8995', xmlElement: 'IRS8995', cardinality: { '1040': 1, '1040NR': 1 } },
-  { formName: 'Form 8995-A', xmlElement: 'IRS8995A', cardinality: { '1040': 1, '1040NR': 1 } }
+  {
+    formName: 'Form 5329',
+    xmlElement: 'IRS5329',
+    cardinality: { '1040': 2, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 5405',
+    xmlElement: 'IRS5405',
+    cardinality: { '1040': 2, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 5695',
+    xmlElement: 'IRS5695',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 6251',
+    xmlElement: 'IRS6251',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 6252',
+    xmlElement: 'IRS6252',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: 'Form 6781',
+    xmlElement: 'IRS6781',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8283',
+    xmlElement: 'IRS8283',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: 'Form 8379',
+    xmlElement: 'IRS8379',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 8582',
+    xmlElement: 'IRS8582',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8586',
+    xmlElement: 'IRS8586',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8606',
+    xmlElement: 'IRS8606',
+    cardinality: { '1040': 2, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8615',
+    xmlElement: 'IRS8615',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8801',
+    xmlElement: 'IRS8801',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8812',
+    xmlElement: 'IRS8812',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8814',
+    xmlElement: 'IRS8814',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 8822',
+    xmlElement: 'IRS8822',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8839',
+    xmlElement: 'IRS8839',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 8853',
+    xmlElement: 'IRS8853',
+    cardinality: { '1040': 2, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8862',
+    xmlElement: 'IRS8862',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 8863',
+    xmlElement: 'IRS8863',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8880',
+    xmlElement: 'IRS8880',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 8888',
+    xmlElement: 'IRS8888',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8889',
+    xmlElement: 'IRS8889',
+    cardinality: { '1040': 2, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8910',
+    xmlElement: 'IRS8910',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8911',
+    xmlElement: 'IRS8911',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8915-F',
+    xmlElement: 'IRS8915F',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8917',
+    xmlElement: 'IRS8917',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 8919',
+    xmlElement: 'IRS8919',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 8936',
+    xmlElement: 'IRS8936',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8938',
+    xmlElement: 'IRS8938',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8949',
+    xmlElement: 'IRS8949',
+    cardinality: { '1040': 'unbounded', '1040NR': 'unbounded' }
+  },
+  {
+    formName: 'Form 8959',
+    xmlElement: 'IRS8959',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8960',
+    xmlElement: 'IRS8960',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8962',
+    xmlElement: 'IRS8962',
+    cardinality: { '1040': 1, '1040NR': 0 }
+  },
+  {
+    formName: 'Form 8995',
+    xmlElement: 'IRS8995',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  },
+  {
+    formName: 'Form 8995-A',
+    xmlElement: 'IRS8995A',
+    cardinality: { '1040': 1, '1040NR': 1 }
+  }
 ]
 
 // =============================================================================
@@ -334,8 +626,10 @@ export const KNOWN_ISSUES: KnownIssue[] = [
   {
     issueId: 'ATS-2025-001',
     form: '1040',
-    description: 'Schedule C with negative gross receipts may cause validation error',
-    solution: 'Ensure gross receipts is zero or positive; report net loss on line 31',
+    description:
+      'Schedule C with negative gross receipts may cause validation error',
+    solution:
+      'Ensure gross receipts is zero or positive; report net loss on line 31',
     status: 'Workaround',
     taxYear: 2025,
     severity: 'Medium'
@@ -343,7 +637,8 @@ export const KNOWN_ISSUES: KnownIssue[] = [
   {
     issueId: 'ATS-2025-002',
     form: '8949',
-    description: 'Long-term transactions dated before 2011 may fail checkbox validation',
+    description:
+      'Long-term transactions dated before 2011 may fail checkbox validation',
     solution: 'Use Box F for transactions without basis reported',
     status: 'Workaround',
     taxYear: 2025,
@@ -389,7 +684,9 @@ export function getFormCardinality(
   formName: string,
   returnType: string
 ): number | 'unbounded' | undefined {
-  const acceptance = FORM_1040_ACCEPTANCE_MATRIX.find(f => f.formName === formName)
+  const acceptance = FORM_1040_ACCEPTANCE_MATRIX.find(
+    (f) => f.formName === formName
+  )
   if (!acceptance) return undefined
   return acceptance.cardinality[returnType]
 }
@@ -406,8 +703,9 @@ export function isFormAccepted(formName: string, returnType: string): boolean {
  * Get all accepted forms for a return type
  */
 export function getAcceptedForms(returnType: string): FormAcceptance[] {
-  return FORM_1040_ACCEPTANCE_MATRIX.filter(f =>
-    f.cardinality[returnType] !== undefined && f.cardinality[returnType] !== 0
+  return FORM_1040_ACCEPTANCE_MATRIX.filter(
+    (f) =>
+      f.cardinality[returnType] !== undefined && f.cardinality[returnType] !== 0
   )
 }
 
@@ -415,14 +713,16 @@ export function getAcceptedForms(returnType: string): FormAcceptance[] {
  * Get attachments for a form
  */
 export function getFormAttachments(formNumber: string): AttachmentRule[] {
-  return FORM_709_ATTACHMENTS.filter(a => a.parentForm === formNumber)
+  return FORM_709_ATTACHMENTS.filter((a) => a.parentForm === formNumber)
 }
 
 /**
  * Get PDF naming convention for attachment type
  */
-export function getPDFNamingConvention(attachmentType: string): PDFNamingRule | undefined {
-  return PDF_NAMING_CONVENTIONS.find(p => p.attachmentType === attachmentType)
+export function getPDFNamingConvention(
+  attachmentType: string
+): PDFNamingRule | undefined {
+  return PDF_NAMING_CONVENTIONS.find((p) => p.attachmentType === attachmentType)
 }
 
 /**
@@ -456,10 +756,11 @@ export function getKnownIssues(
   taxYear: number,
   severity?: 'High' | 'Medium' | 'Low'
 ): KnownIssue[] {
-  return KNOWN_ISSUES.filter(i =>
-    i.form === form &&
-    i.taxYear === taxYear &&
-    (severity === undefined || i.severity === severity)
+  return KNOWN_ISSUES.filter(
+    (i) =>
+      i.form === form &&
+      i.taxYear === taxYear &&
+      (severity === undefined || i.severity === severity)
   )
 }
 
@@ -467,7 +768,7 @@ export function getKnownIssues(
  * Get all open issues
  */
 export function getOpenIssues(): KnownIssue[] {
-  return KNOWN_ISSUES.filter(i => i.status === 'Open')
+  return KNOWN_ISSUES.filter((i) => i.status === 'Open')
 }
 
 /**
@@ -479,7 +780,7 @@ export function validateAttachmentCount(
   count: number
 ): { valid: boolean; message?: string } {
   const rules = getFormAttachments(formNumber)
-  const rule = rules.find(r => r.attachmentSchema === attachmentSchema)
+  const rule = rules.find((r) => r.attachmentSchema === attachmentSchema)
 
   if (!rule) {
     return { valid: true } // No rule means no restriction

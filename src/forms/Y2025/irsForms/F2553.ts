@@ -89,7 +89,7 @@ export default class F2553 extends Form {
 
   // All shareholders must consent
   allShareholdersConsented = (): boolean => {
-    return this.shareholders().every(s => s.consent)
+    return this.shareholders().every((s) => s.consent)
   }
 
   // Number of shareholders (max 100)
