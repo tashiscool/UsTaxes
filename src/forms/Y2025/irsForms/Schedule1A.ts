@@ -13,9 +13,9 @@ import { CURRENT_YEAR } from '../data/federal'
 
 /**
  * Schedule 1-A: Additional Deductions
- * 
+ *
  * New for 2025 under OBBBA (One Big Beautiful Bill Act)
- * 
+ *
  * This schedule handles the following new above-the-line deductions:
  * - Part I: Overtime Income Exemption
  * - Part II: Tip Income Exemption
@@ -24,7 +24,7 @@ import { CURRENT_YEAR } from '../data/federal'
  */
 export default class Schedule1A extends F1040Attachment {
   tag: FormTag = 'f1040s1a'
-  sequenceIndex = 1.5  // After Schedule 1, before Schedule 2
+  sequenceIndex = 1.5 // After Schedule 1, before Schedule 2
 
   constructor(f1040: F1040) {
     super(f1040)
@@ -53,19 +53,22 @@ export default class Schedule1A extends F1040Attachment {
   }
 
   // Line 2: Phase-out calculation
+  // Note: Uses total income (l9) instead of AGI (l11) to avoid circular dependency.
+  // AGI depends on this schedule's deductions, so we use pre-adjustment income.
   l2 = (): number => {
-    const agi = this.f1040.l11()
+    // Use total income before adjustments to avoid circular dependency
+    const totalIncome = this.f1040.l9()
     const filingStatus = this.f1040.info.taxPayer.filingStatus
     const phaseOutStart = overtimeExemption.phaseOutStart(filingStatus)
     const phaseOutEnd = overtimeExemption.phaseOutEnd(filingStatus)
-    
-    if (agi <= phaseOutStart) {
-      return 1  // 100% allowed
-    } else if (agi >= phaseOutEnd) {
-      return 0  // 0% allowed
+
+    if (totalIncome <= phaseOutStart) {
+      return 1 // 100% allowed
+    } else if (totalIncome >= phaseOutEnd) {
+      return 0 // 0% allowed
     } else {
       // Linear phase-out
-      return (phaseOutEnd - agi) / (phaseOutEnd - phaseOutStart)
+      return (phaseOutEnd - totalIncome) / (phaseOutEnd - phaseOutStart)
     }
   }
 
@@ -98,19 +101,21 @@ export default class Schedule1A extends F1040Attachment {
   }
 
   // Line 7: Phase-out calculation
+  // Note: Uses total income (l9) instead of AGI (l11) to avoid circular dependency.
+  // AGI depends on this schedule's deductions, so we use pre-adjustment income.
   l7 = (): number => {
-    const agi = this.f1040.l11()
+    const totalIncome = this.f1040.l9()
     const filingStatus = this.f1040.info.taxPayer.filingStatus
     const phaseOutStart = tipIncomeExemption.phaseOutStart(filingStatus)
     const phaseOutEnd = tipIncomeExemption.phaseOutEnd(filingStatus)
-    
-    if (agi <= phaseOutStart) {
-      return 1  // 100% allowed
-    } else if (agi >= phaseOutEnd) {
-      return 0  // 0% allowed
+
+    if (totalIncome <= phaseOutStart) {
+      return 1 // 100% allowed
+    } else if (totalIncome >= phaseOutEnd) {
+      return 0 // 0% allowed
     } else {
       // Linear phase-out
-      return (phaseOutEnd - agi) / (phaseOutEnd - phaseOutStart)
+      return (phaseOutEnd - totalIncome) / (phaseOutEnd - phaseOutStart)
     }
   }
 
@@ -145,19 +150,21 @@ export default class Schedule1A extends F1040Attachment {
   }
 
   // Line 11: Phase-out calculation
+  // Note: Uses total income (f1040.l9) instead of AGI (f1040.l11) to avoid circular dependency.
+  // AGI depends on this schedule's deductions, so we use pre-adjustment income.
   l11 = (): number => {
-    const agi = this.f1040.l11()
+    const totalIncome = this.f1040.l9()
     const filingStatus = this.f1040.info.taxPayer.filingStatus
     const phaseOutStart = autoLoanInterestDeduction.phaseOutStart(filingStatus)
     const phaseOutEnd = autoLoanInterestDeduction.phaseOutEnd(filingStatus)
-    
-    if (agi <= phaseOutStart) {
-      return 1  // 100% allowed
-    } else if (agi >= phaseOutEnd) {
-      return 0  // 0% allowed
+
+    if (totalIncome <= phaseOutStart) {
+      return 1 // 100% allowed
+    } else if (totalIncome >= phaseOutEnd) {
+      return 0 // 0% allowed
     } else {
       // Linear phase-out
-      return (phaseOutEnd - agi) / (phaseOutEnd - phaseOutStart)
+      return (phaseOutEnd - totalIncome) / (phaseOutEnd - phaseOutStart)
     }
   }
 
@@ -168,7 +175,9 @@ export default class Schedule1A extends F1040Attachment {
 
   // Line 13: Annual cap
   l13 = (): number => {
-    return autoLoanInterestDeduction.annualCap(this.f1040.info.taxPayer.filingStatus)
+    return autoLoanInterestDeduction.annualCap(
+      this.f1040.info.taxPayer.filingStatus
+    )
   }
 
   // Line 14: Auto loan interest deduction (smaller of l12 or l13)
@@ -229,7 +238,7 @@ export default class Schedule1A extends F1040Attachment {
   // Transfer to Form 1040 Line 10 (above-the-line deductions)
   // Senior deduction goes separately to Line 12
   to1040 = (): number => this.l17()
-  
+
   // Transfer senior deduction to Form 1040 Line 12
   seniorDeductionTo1040 = (): number => {
     return this.isNeeded() ? this.l16() : 0

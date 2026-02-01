@@ -42,8 +42,8 @@ export interface HomeOfficeInfo {
 }
 
 // 2025 simplified method rate
-const simplifiedRate = 5  // $5 per square foot
-const maxSimplifiedSqFt = 300  // Maximum 300 square feet
+const simplifiedRate = 5 // $5 per square foot
+const maxSimplifiedSqFt = 300 // Maximum 300 square feet
 
 export default class F8829 extends F1040Attachment {
   tag: FormTag = 'f8829'
@@ -111,8 +111,10 @@ export default class F8829 extends F1040Attachment {
 
   // Line 8: Gross income from business use of home
   l8 = (): number => {
-    // From Schedule C net profit
-    return this.f1040.scheduleC?.l31() ?? 0
+    // From Schedule C tentative profit BEFORE home office deduction (l29)
+    // Using l31 would create a circular dependency since l31 = l29 - l30
+    // and l30 calls this form's deductionToScheduleC
+    return this.f1040.scheduleC?.l29() ?? 0
   }
 
   // Line 9: Casualty losses
@@ -170,10 +172,16 @@ export default class F8829 extends F1040Attachment {
   }
 
   // Line 21: Add lines 14-20
-  l21 = (): number => sumFields([
-    this.l14(), this.l15(), this.l16(), this.l17(),
-    this.l18(), this.l19(), this.l20()
-  ])
+  l21 = (): number =>
+    sumFields([
+      this.l14(),
+      this.l15(),
+      this.l16(),
+      this.l17(),
+      this.l18(),
+      this.l19(),
+      this.l20()
+    ])
 
   // Line 22: Allowable expenses (smaller of line 13 or 21)
   l22 = (): number => Math.min(this.l13(), this.l21())

@@ -27,13 +27,13 @@ const educationCredits = {
   aotcMaxCredit: 2500,
   aotcFirstTierExpenses: 2000,
   aotcSecondTierExpenses: 2000,
-  aotcRefundablePercent: 0.40,
+  aotcRefundablePercent: 0.4,
   aotcPhaseOutStart: { single: 80000, mfj: 160000 },
   aotcPhaseOutEnd: { single: 90000, mfj: 180000 },
 
   // LLC
   llcMaxExpenses: 10000,
-  llcCreditRate: 0.20,
+  llcCreditRate: 0.2,
   llcMaxCredit: 2000,
   llcPhaseOutStart: { single: 80000, mfj: 160000 },
   llcPhaseOutEnd: { single: 90000, mfj: 180000 }
@@ -56,11 +56,11 @@ export default class F8863 extends F1040Attachment {
   }
 
   aotcStudents = (): EducationExpense[] => {
-    return this.educationExpenses().filter(e => e.creditType === 'AOTC')
+    return this.educationExpenses().filter((e) => e.creditType === 'AOTC')
   }
 
   llcStudents = (): EducationExpense[] => {
-    return this.educationExpenses().filter(e => e.creditType === 'LLC')
+    return this.educationExpenses().filter((e) => e.creditType === 'LLC')
   }
 
   // Calculate modified AGI for education credits
@@ -77,8 +77,12 @@ export default class F8863 extends F1040Attachment {
   // Calculate phase-out multiplier
   aotcPhaseOutMultiplier = (): number => {
     const magi = this.magi()
-    const start = this.isMfj() ? educationCredits.aotcPhaseOutStart.mfj : educationCredits.aotcPhaseOutStart.single
-    const end = this.isMfj() ? educationCredits.aotcPhaseOutEnd.mfj : educationCredits.aotcPhaseOutEnd.single
+    const start = this.isMfj()
+      ? educationCredits.aotcPhaseOutStart.mfj
+      : educationCredits.aotcPhaseOutStart.single
+    const end = this.isMfj()
+      ? educationCredits.aotcPhaseOutEnd.mfj
+      : educationCredits.aotcPhaseOutEnd.single
 
     if (magi <= start) return 1
     if (magi >= end) return 0
@@ -87,8 +91,12 @@ export default class F8863 extends F1040Attachment {
 
   llcPhaseOutMultiplier = (): number => {
     const magi = this.magi()
-    const start = this.isMfj() ? educationCredits.llcPhaseOutStart.mfj : educationCredits.llcPhaseOutStart.single
-    const end = this.isMfj() ? educationCredits.llcPhaseOutEnd.mfj : educationCredits.llcPhaseOutEnd.single
+    const start = this.isMfj()
+      ? educationCredits.llcPhaseOutStart.mfj
+      : educationCredits.llcPhaseOutStart.single
+    const end = this.isMfj()
+      ? educationCredits.llcPhaseOutEnd.mfj
+      : educationCredits.llcPhaseOutEnd.single
 
     if (magi <= start) return 1
     if (magi >= end) return 0
@@ -99,31 +107,39 @@ export default class F8863 extends F1040Attachment {
   calculateAotcForStudent = (expense: EducationExpense): number => {
     if (!expense.isFirstFourYears || expense.hasConviction) return 0
 
-    const qualified = Math.max(0, expense.qualifiedExpenses - expense.scholarshipsReceived)
+    const qualified = Math.max(
+      0,
+      expense.qualifiedExpenses - expense.scholarshipsReceived
+    )
 
     // 100% of first $2,000 + 25% of next $2,000
-    const firstTier = Math.min(qualified, educationCredits.aotcFirstTierExpenses)
+    const firstTier = Math.min(
+      qualified,
+      educationCredits.aotcFirstTierExpenses
+    )
     const secondTier = Math.min(
       Math.max(0, qualified - educationCredits.aotcFirstTierExpenses),
       educationCredits.aotcSecondTierExpenses
     )
 
-    return firstTier + (secondTier * 0.25)
+    return firstTier + secondTier * 0.25
   }
 
   // Part I - Refundable American Opportunity Credit
 
   // Line 1: AOTC credit amount before phase-out (total for all students)
   l1 = (): number => {
-    return this.aotcStudents()
-      .reduce((sum, s) => sum + this.calculateAotcForStudent(s), 0)
+    return this.aotcStudents().reduce(
+      (sum, s) => sum + this.calculateAotcForStudent(s),
+      0
+    )
   }
 
   // Line 2: MAGI
   l2 = (): number => this.magi()
 
   // Line 3: Phase-out threshold
-  l3 = (): number => this.isMfj() ? 160000 : 80000
+  l3 = (): number => (this.isMfj() ? 160000 : 80000)
 
   // Line 4: Subtract line 3 from line 2
   l4 = (): number => Math.max(0, this.l2() - this.l3())
@@ -142,7 +158,9 @@ export default class F8863 extends F1040Attachment {
 
   // Line 8: Refundable AOTC (40% of line 7, max $1,000 per student)
   l8 = (): number => {
-    const refundableAmount = Math.round(this.l7() * educationCredits.aotcRefundablePercent)
+    const refundableAmount = Math.round(
+      this.l7() * educationCredits.aotcRefundablePercent
+    )
     // Maximum $1,000 per student
     const maxRefundable = this.aotcStudents().length * 1000
     return Math.min(refundableAmount, maxRefundable)
@@ -155,8 +173,11 @@ export default class F8863 extends F1040Attachment {
 
   // Line 10: LLC qualified expenses
   l10 = (): number => {
-    const totalExpenses = this.llcStudents()
-      .reduce((sum, s) => sum + Math.max(0, s.qualifiedExpenses - s.scholarshipsReceived), 0)
+    const totalExpenses = this.llcStudents().reduce(
+      (sum, s) =>
+        sum + Math.max(0, s.qualifiedExpenses - s.scholarshipsReceived),
+      0
+    )
     return Math.min(totalExpenses, educationCredits.llcMaxExpenses)
   }
 
@@ -165,7 +186,7 @@ export default class F8863 extends F1040Attachment {
 
   // Line 12-17: LLC phase-out (similar to AOTC)
   l12 = (): number => this.magi()
-  l13 = (): number => this.isMfj() ? 160000 : 80000
+  l13 = (): number => (this.isMfj() ? 160000 : 80000)
   l14 = (): number => Math.max(0, this.l12() - this.l13())
   l15 = (): number => {
     const divisor = this.isMfj() ? 20000 : 10000
@@ -179,20 +200,23 @@ export default class F8863 extends F1040Attachment {
 
   // Line 19: Credit limit based on tax liability
   l19 = (): number => {
-    // Limited by tax minus other nonrefundable credits
+    // Limited by tax minus other nonrefundable credits that come BEFORE this one
+    // on Schedule 3. Education credits (line 3) are calculated before Saver's Credit
+    // (line 4), so we don't subtract l4 here to avoid circular dependency.
     const tax = this.f1040.l18()
     const otherCredits = sumFields([
-      this.f1040.schedule3.l1(),
-      this.f1040.schedule3.l2(),
-      this.f1040.schedule3.l4()
+      this.f1040.schedule3.l1(), // Foreign Tax Credit
+      this.f1040.schedule3.l2() // Child/Dependent Care Credit
+      // Note: l4 (Saver's Credit) comes AFTER l3 (this credit) on Schedule 3
+      // so we don't subtract it here
     ])
     const limit = Math.max(0, tax - otherCredits)
     return Math.min(this.l18(), limit)
   }
 
   // Summary methods
-  refundableCredit = (): number => this.l8()  // Goes to Form 1040 line 29
-  nonrefundableCredit = (): number => this.l19()  // Goes to Schedule 3 line 3
+  refundableCredit = (): number => this.l8() // Goes to Form 1040 line 29
+  nonrefundableCredit = (): number => this.l19() // Goes to Schedule 3 line 3
 
   fields = (): Field[] => {
     // Student information (up to 4 students)
