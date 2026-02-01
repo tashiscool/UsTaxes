@@ -37,6 +37,8 @@ import NumberFormat from 'react-number-format'
 import { InterviewQuestion as InterviewQuestionType } from './interviewFlow'
 import { useInterview } from './InterviewContext'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {

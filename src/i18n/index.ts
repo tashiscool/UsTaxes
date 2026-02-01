@@ -5,6 +5,8 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import enTranslation from './locales/en.json'
 import esTranslation from './locales/es.json'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 // Language preference storage key
 const LANGUAGE_STORAGE_KEY = 'ustaxes_language'
 

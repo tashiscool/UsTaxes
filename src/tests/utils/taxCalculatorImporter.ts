@@ -14,6 +14,8 @@
  * - Supports all filing statuses
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
+
 import { FilingStatus } from 'ustaxes/core/data'
 
 // =============================================================================
@@ -252,8 +254,8 @@ function getYearArrayValue(
 
   const yearValue = param.value[String(applicableYear)]
   if (yearValue === undefined) return defaultValue
-  if (Array.isArray(yearValue)) return yearValue 
-  return [yearValue ]
+  if (Array.isArray(yearValue)) return yearValue
+  return [yearValue]
 }
 
 // =============================================================================

@@ -18,6 +18,8 @@
  * Tax Year: 2025
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { FilingStatus } from 'ustaxes/core/data'
 
 // =============================================================================
@@ -256,7 +258,8 @@ const form1040Data = (() => {
   const calculatedTax = Math.round(taxBracket1 + taxBracket2) // $2,290
 
   // Credits (limited by tax liability)
-  const totalCreditsAvailable = form8835.line15Credit + form8936.line9PersonalCredit
+  const totalCreditsAvailable =
+    form8835.line15Credit + form8936.line9PersonalCredit
   const nonrefundableCredits = Math.min(calculatedTax, totalCreditsAvailable)
 
   // Tax after credits

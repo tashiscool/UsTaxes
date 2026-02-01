@@ -305,7 +305,8 @@ describe('ATS End-to-End Submission Simulation', () => {
     }
 
     it('should calculate balance due', () => {
-      const balanceDue = extension.estimatedTaxLiability - extension.totalPayments
+      const balanceDue =
+        extension.estimatedTaxLiability - extension.totalPayments
       expect(balanceDue).toBe(extension.balanceDue)
     })
 
@@ -396,3 +397,5 @@ describe('Business Entity E2E Submission', () => {
     })
   })
 })
+
+export {}

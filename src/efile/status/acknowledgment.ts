@@ -5,6 +5,8 @@
  * including error code mapping and resolution guidance.
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 // ============================================================================
 // Types
 // ============================================================================

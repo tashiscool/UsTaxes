@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import F1040Attachment from './F1040Attachment'
 import {
   FilingStatus,
@@ -6,7 +7,6 @@ import {
 } from 'ustaxes/core/data'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
-import { sumFields } from 'ustaxes/core/irsForms/util'
 
 /**
  * Form 2441 - Child and Dependent Care Expenses

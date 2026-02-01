@@ -12,6 +12,8 @@
  * - Some states have no income tax (FL, TX, WA, etc.)
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 // =============================================================================
 // States Without Income Tax
 // =============================================================================
@@ -275,7 +277,8 @@ describe('State E-File Piggyback', () => {
     })
 
     it('should allocate income by state', () => {
-      const totalWages = multiStateScenario.wages.NY + multiStateScenario.wages.NJ
+      const totalWages =
+        multiStateScenario.wages.NY + multiStateScenario.wages.NJ
       expect(totalWages).toBe(80000)
     })
 
@@ -379,3 +382,5 @@ describe('State E-File XML Generation', () => {
     })
   })
 })
+
+export {}

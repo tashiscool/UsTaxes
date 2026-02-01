@@ -5,6 +5,8 @@
  * web services for electronic tax return submission.
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 import log from '../../core/log'
 
 // ============================================================================

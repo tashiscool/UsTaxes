@@ -364,7 +364,8 @@ describe('ATS Scenario 12 - Sam Gardenia (Schedule C, Form 7206, Form 7217)', ()
     })
 
     it('should calculate net profit correctly', () => {
-      const expected = scheduleC.line7GrossIncome - scheduleC.line28TotalExpenses
+      const expected =
+        scheduleC.line7GrossIncome - scheduleC.line28TotalExpenses
       expect(scheduleC.line31NetProfit).toBe(expected)
     })
 
@@ -463,7 +464,9 @@ describe('ATS Scenario 12 - Sam Gardenia (Schedule C, Form 7206, Form 7217)', ()
     })
 
     it('should have SE tax deduction from Schedule SE', () => {
-      expect(schedule1.line15SeTaxDeduction).toBe(scheduleSE.line13DeductibleSeTax)
+      expect(schedule1.line15SeTaxDeduction).toBe(
+        scheduleSE.line13DeductibleSeTax
+      )
     })
 
     it('should have health insurance deduction from Form 7206', () => {
@@ -561,7 +564,9 @@ describe('ATS Scenario 12 - Sam Gardenia (Schedule C, Form 7206, Form 7217)', ()
     })
 
     it('should flow Schedule SE to Schedule 1 correctly', () => {
-      expect(schedule1.line15SeTaxDeduction).toBe(scheduleSE.line13DeductibleSeTax)
+      expect(schedule1.line15SeTaxDeduction).toBe(
+        scheduleSE.line13DeductibleSeTax
+      )
     })
 
     it('should flow Schedule SE to Schedule 2 correctly', () => {

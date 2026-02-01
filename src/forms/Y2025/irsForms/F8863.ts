@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
 import F1040Attachment from './F1040Attachment'
 import { FilingStatus, EducationExpense, PersonRole } from 'ustaxes/core/data'
 import { Field } from 'ustaxes/core/pdfFiller'

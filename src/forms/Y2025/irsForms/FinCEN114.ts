@@ -1,7 +1,6 @@
 import F1040Attachment from './F1040Attachment'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
-import { sumFields } from 'ustaxes/core/irsForms/util'
 
 /**
  * FinCEN Form 114 - Report of Foreign Bank and Financial Accounts (FBAR)

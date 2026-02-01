@@ -5,12 +5,13 @@
  * into the Information format used by the UsTaxes calculation engine.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import {
   Information,
   FilingStatus,
   PersonRole,
   IncomeW2,
-  Person,
   PrimaryPerson,
   Spouse,
   Dependent,
@@ -23,19 +24,11 @@ import {
   F1099RData,
   F1099BData,
   ItemizedDeductions,
-  EstimatedTaxPayments,
-  Responses,
   StateResidency,
   State,
-  Property,
-  Employer,
-  HealthSavingsAccount,
-  Ira,
-  F1098e,
-  F3921,
-  ScheduleK1Form1065,
-  Credit,
-  PlanType1099
+  IraPlanType,
+  PlanType1099,
+  Responses
 } from 'ustaxes/core/data'
 
 // =============================================================================
@@ -389,12 +382,14 @@ function convertItemizedDeductions(
   return {
     medicalAndDental: deductions.medicalAndDental ?? 0,
     stateAndLocalTaxes: deductions.stateAndLocalTaxes ?? 0,
+    isSalesTax: false,
     stateAndLocalRealEstateTaxes: deductions.realEstateTaxes ?? 0,
     stateAndLocalPropertyTaxes: deductions.personalPropertyTaxes ?? 0,
     interest8a: deductions.mortgageInterest ?? 0,
     interest8b: 0,
     interest8c: 0,
     interest8d: 0,
+    investmentInterest: 0,
     charityCashCheck: deductions.charityCashCheck ?? 0,
     charityOther: deductions.charityOther ?? 0
   }
@@ -446,10 +441,14 @@ export function atsScenarioToInformation(
       taxableAmountNotDetermined: false,
       totalDistribution: false,
       federalIncomeTaxWithheld: f.federalWithholding ?? 0,
-      planType: 0, // Traditional IRA
+      planType: IraPlanType.IRA, // Traditional IRA
       contributions: 0,
       rolloverContributions: 0,
-      fairMarketValue: 0
+      rothIraConversion: 0,
+      recharacterizedContributions: 0,
+      requiredMinimumDistributions: 0,
+      lateContributions: 0,
+      repayments: 0
     }))
 
   // Build Information object
@@ -463,6 +462,7 @@ export function atsScenarioToInformation(
     f3921s: [],
     scheduleK1Form1065s: [],
     itemizedDeductions: convertItemizedDeductions(scenario.itemizedDeductions),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     questions: scenario.questions ?? {
       CRYPTO: scenario.digitalAssets ?? false,
       FOREIGN_ACCOUNT_EXISTS: false,
@@ -539,17 +539,35 @@ export function compareResults(
     const calcVal = calcFn?.() ?? 0
     if (Math.abs(calcVal - expectedVal) > tolerance) {
       discrepancies.push(
-        `${name}: expected ${expectedVal}, got ${calcVal} (diff: ${calcVal - expectedVal})`
+        `${name}: expected ${expectedVal}, got ${calcVal} (diff: ${
+          calcVal - expectedVal
+        })`
       )
     }
   }
 
   check('Line 1 (Wages)', calculated.l1, expected.line1Wages)
   check('Line 2a (Interest)', calculated.l2a, expected.line2aInterest)
-  check('Line 2b (Taxable Interest)', calculated.l2b, expected.line2bTaxableInterest)
-  check('Line 3a (Qualified Dividends)', calculated.l3a, expected.line3aQualifiedDividends)
-  check('Line 3b (Ordinary Dividends)', calculated.l3b, expected.line3bOrdinaryDividends)
-  check('Line 4a (IRA Distributions)', calculated.l4a, expected.line4aIraDistributions)
+  check(
+    'Line 2b (Taxable Interest)',
+    calculated.l2b,
+    expected.line2bTaxableInterest
+  )
+  check(
+    'Line 3a (Qualified Dividends)',
+    calculated.l3a,
+    expected.line3aQualifiedDividends
+  )
+  check(
+    'Line 3b (Ordinary Dividends)',
+    calculated.l3b,
+    expected.line3bOrdinaryDividends
+  )
+  check(
+    'Line 4a (IRA Distributions)',
+    calculated.l4a,
+    expected.line4aIraDistributions
+  )
   check('Line 4b (Taxable IRA)', calculated.l4b, expected.line4bTaxableIra)
   check('Line 7 (Capital Gain)', calculated.l7, expected.line7CapitalGain)
   check('Line 8 (Other Income)', calculated.l8, expected.line8OtherIncome)
@@ -557,13 +575,25 @@ export function compareResults(
   check('Line 10 (Adjustments)', calculated.l10, expected.line10Adjustments)
   check('Line 11 (AGI)', calculated.l11, expected.line11Agi)
   check('Line 12 (Deduction)', calculated.l12, expected.line12Deduction)
-  check('Line 15 (Taxable Income)', calculated.l15, expected.line15TaxableIncome)
+  check(
+    'Line 15 (Taxable Income)',
+    calculated.l15,
+    expected.line15TaxableIncome
+  )
   check('Line 16 (Tax)', calculated.l16, expected.line16Tax)
   check('Line 18 (Total Tax)', calculated.l18, expected.line18TotalTax)
-  check('Line 22 (Tax After Credits)', calculated.l22, expected.line22TaxAfterCredits)
+  check(
+    'Line 22 (Tax After Credits)',
+    calculated.l22,
+    expected.line22TaxAfterCredits
+  )
   check('Line 24 (Total Tax)', calculated.l24, expected.line24TotalTax)
   check('Line 25a (Withholding)', calculated.l25a, expected.line25aWithholding)
-  check('Line 33 (Total Payments)', calculated.l33, expected.line33TotalPayments)
+  check(
+    'Line 33 (Total Payments)',
+    calculated.l33,
+    expected.line33TotalPayments
+  )
   check('Line 34 (Overpaid)', calculated.l34, expected.line34Overpaid)
   check('Line 37 (Amount Owed)', calculated.l37, expected.line37AmountOwed)
 

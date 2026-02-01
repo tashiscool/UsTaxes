@@ -179,7 +179,10 @@ const selfEmployedHealthInsurance = {
   },
   get deductibleAmount() {
     // Limited to net self-employment income
-    return Math.min(this.totalPremiumPaid, scheduleC.netProfit - scheduleSE.deductibleHalf)
+    return Math.min(
+      this.totalPremiumPaid,
+      scheduleC.netProfit - scheduleSE.deductibleHalf
+    )
   }
 }
 
@@ -233,7 +236,10 @@ describe('ATS Scenario 20 - David Lee (Premium Tax Credit)', () => {
     })
 
     it('should calculate deductible half of SE tax', () => {
-      expect(scheduleSE.deductibleHalf).toBeCloseTo(scheduleSE.totalSETax / 2, 2)
+      expect(scheduleSE.deductibleHalf).toBeCloseTo(
+        scheduleSE.totalSETax / 2,
+        2
+      )
     })
   })
 
@@ -329,9 +335,10 @@ describe('ATS Scenario 20 - David Lee (Premium Tax Credit)', () => {
 
   describe('Tax Calculation', () => {
     it('should calculate AGI with adjustments', () => {
-      const agi = scheduleC.netProfit -
-                  scheduleSE.deductibleHalf -
-                  selfEmployedHealthInsurance.deductibleAmount
+      const agi =
+        scheduleC.netProfit -
+        scheduleSE.deductibleHalf -
+        selfEmployedHealthInsurance.deductibleAmount
       expect(agi).toBeGreaterThan(0)
     })
 

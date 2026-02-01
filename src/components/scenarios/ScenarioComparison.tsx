@@ -8,6 +8,8 @@
  * - Key metrics: AGI, taxable income, total tax, refund/owed
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { ReactElement, useMemo } from 'react'
 import {
   Box,

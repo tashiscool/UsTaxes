@@ -20,7 +20,7 @@
  * Tax Year: 2025
  */
 
-import { FilingStatus, PersonRole } from 'ustaxes/core/data'
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 // =============================================================================
 // Test Data Fixtures - Lucas LeBlanc (Scenario NR-1)
@@ -525,8 +525,7 @@ describe('ATS Scenario NR-1 - Lucas LeBlanc (Nonresident Alien)', () => {
 
     it('should calculate total federal withholding correctly', () => {
       const total =
-        w2Google.box2FederalWithholding +
-        w2ChildrenOfGod.box2FederalWithholding
+        w2Google.box2FederalWithholding + w2ChildrenOfGod.box2FederalWithholding
       expect(total).toBe(4788)
     })
   })
@@ -737,3 +736,5 @@ describe('ATS Scenario NR-1 - Lucas LeBlanc (Nonresident Alien)', () => {
     })
   })
 })
+
+export {}

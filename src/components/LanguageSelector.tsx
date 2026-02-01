@@ -22,6 +22,8 @@ import {
   getCurrentLanguage
 } from 'ustaxes/i18n'
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     button: {

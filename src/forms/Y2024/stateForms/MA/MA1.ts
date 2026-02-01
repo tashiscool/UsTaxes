@@ -7,6 +7,8 @@ import parameters from './Parameters'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 import { CURRENT_YEAR } from '../../data/federal'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 /**
  * Massachusetts Form 1 - Resident Income Tax Return
  *

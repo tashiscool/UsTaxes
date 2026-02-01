@@ -2,6 +2,8 @@
  * React hooks for the Tax Explainer service.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { TaxExplainerClient } from './client'
 import {
@@ -148,7 +150,11 @@ export function useIRCSearch() {
 
       try {
         const client = getClient()
-        const result = await client.searchIRC(query, Number(limit), Boolean(includeRegulations))
+        const result = await client.searchIRC(
+          query,
+          Number(limit),
+          Boolean(includeRegulations)
+        )
         setState({ results: result, loading: false, error: null })
         return result
       } catch (err) {

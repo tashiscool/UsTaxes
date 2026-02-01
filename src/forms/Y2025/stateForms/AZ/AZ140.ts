@@ -7,6 +7,8 @@ import parameters from './Parameters'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 import { CURRENT_YEAR } from '../../data/federal'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 /**
  * Arizona Form 140 - Resident Personal Income Tax Return
  *
@@ -51,8 +53,7 @@ export class AZ140 extends Form {
   address = (): string | undefined =>
     this.info.taxPayer.primaryPerson.address.address
 
-  city = (): string | undefined =>
-    this.info.taxPayer.primaryPerson.address.city
+  city = (): string | undefined => this.info.taxPayer.primaryPerson.address.city
 
   stateField = (): string | undefined =>
     this.info.taxPayer.primaryPerson.address.state

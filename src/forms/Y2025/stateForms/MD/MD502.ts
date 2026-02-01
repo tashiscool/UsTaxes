@@ -6,6 +6,8 @@ import { AccountType, FilingStatus, State } from 'ustaxes/core/data'
 import parameters from './Parameters'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 /**
  * Maryland Form 502 - Resident Income Tax Return
  *

@@ -151,10 +151,14 @@ const totals = {
     return w2Raj.box1Wages + w2Priya.box1Wages
   },
   get taxableInterest() {
-    return interestIncome.filter(i => !i.isTaxExempt).reduce((sum, i) => sum + i.amount, 0)
+    return interestIncome
+      .filter((i) => !i.isTaxExempt)
+      .reduce((sum, i) => sum + i.amount, 0)
   },
   get taxExemptInterest() {
-    return interestIncome.filter(i => i.isTaxExempt).reduce((sum, i) => sum + i.amount, 0)
+    return interestIncome
+      .filter((i) => i.isTaxExempt)
+      .reduce((sum, i) => sum + i.amount, 0)
   },
   get ordinaryDividends() {
     return dividendIncome.reduce((sum, d) => sum + d.ordinaryDividends, 0)
@@ -237,7 +241,9 @@ describe('ATS Scenario 17 - Raj & Priya Patel (Investment Income)', () => {
     })
 
     it('should have qualified dividends less than or equal to ordinary', () => {
-      expect(totals.qualifiedDividends).toBeLessThanOrEqual(totals.ordinaryDividends)
+      expect(totals.qualifiedDividends).toBeLessThanOrEqual(
+        totals.ordinaryDividends
+      )
     })
   })
 
@@ -263,8 +269,9 @@ describe('ATS Scenario 17 - Raj & Priya Patel (Investment Income)', () => {
     })
 
     it('should have long-term gains held over 1 year', () => {
-      capitalGains.longTerm.forEach(gain => {
-        const holdingPeriod = gain.dateSold.getTime() - gain.dateAcquired.getTime()
+      capitalGains.longTerm.forEach((gain) => {
+        const holdingPeriod =
+          gain.dateSold.getTime() - gain.dateAcquired.getTime()
         const oneYear = 365 * 24 * 60 * 60 * 1000
         expect(holdingPeriod).toBeGreaterThan(oneYear)
       })
@@ -273,8 +280,11 @@ describe('ATS Scenario 17 - Raj & Priya Patel (Investment Income)', () => {
 
   describe('Tax Calculation', () => {
     it('should calculate total income', () => {
-      const totalIncome = totals.wages + totals.taxableInterest +
-                         totals.ordinaryDividends + totals.netCapitalGain
+      const totalIncome =
+        totals.wages +
+        totals.taxableInterest +
+        totals.ordinaryDividends +
+        totals.netCapitalGain
       expect(totalIncome).toBe(501700)
     })
 
@@ -284,8 +294,11 @@ describe('ATS Scenario 17 - Raj & Priya Patel (Investment Income)', () => {
     })
 
     it('should calculate AGI correctly', () => {
-      const totalIncome = totals.wages + totals.taxableInterest +
-                         totals.ordinaryDividends + totals.netCapitalGain
+      const totalIncome =
+        totals.wages +
+        totals.taxableInterest +
+        totals.ordinaryDividends +
+        totals.netCapitalGain
       // No above-the-line deductions in this scenario
       const agi = totalIncome
       expect(agi).toBe(501700)
@@ -307,7 +320,10 @@ describe('ATS Scenario 17 - Raj & Priya Patel (Investment Income)', () => {
 
   describe('Net Investment Income Tax (NIIT)', () => {
     it('should identify investment income for NIIT', () => {
-      const investmentIncome = totals.taxableInterest + totals.ordinaryDividends + totals.netCapitalGain
+      const investmentIncome =
+        totals.taxableInterest +
+        totals.ordinaryDividends +
+        totals.netCapitalGain
       expect(investmentIncome).toBe(71700)
     })
 

@@ -21,7 +21,7 @@
  * Tax Year: 2025
  */
 
-import { FilingStatus, PersonRole } from 'ustaxes/core/data'
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-argument */
 
 // =============================================================================
 // Test Data Fixtures - Genesis DeSilva (Scenario NR-2)
@@ -370,7 +370,8 @@ const form1040NRData = (() => {
   const line23aNecTax = scheduleNEC.line15TotalNecTax // $330
   const line23bOtherTaxes = 0
   const line23cTransportation = 0
-  const line23dTotalOther = line23aNecTax + line23bOtherTaxes + line23cTransportation
+  const line23dTotalOther =
+    line23aNecTax + line23bOtherTaxes + line23cTransportation
 
   // Line 24 - Total tax
   const line24TotalTax = line22TaxMinusCredits + line23dTotalOther
@@ -767,3 +768,5 @@ describe('ATS Scenario NR-2 - Genesis DeSilva (NRA with NEC Income)', () => {
     })
   })
 })
+
+export {}

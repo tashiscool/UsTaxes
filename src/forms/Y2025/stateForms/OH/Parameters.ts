@@ -1,5 +1,3 @@
-import { FilingStatus } from 'ustaxes/core/data'
-
 /**
  * Ohio 2025 Tax Parameters
  * Ohio uses progressive income tax rates (0% to 3.5%)

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { Worksheet } from '../F1040Attachment'
 
 export default class SDTaxWorksheet extends Worksheet {

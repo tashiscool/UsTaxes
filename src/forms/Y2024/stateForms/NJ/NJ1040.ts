@@ -6,6 +6,8 @@ import { AccountType, FilingStatus, State } from 'ustaxes/core/data'
 import parameters from './Parameters'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 /**
  * New Jersey Form NJ-1040 - Resident Income Tax Return
  *

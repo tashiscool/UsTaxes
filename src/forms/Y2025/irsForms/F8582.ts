@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { MatrixRow } from './ScheduleE'
 import F1040Attachment from './F1040Attachment'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
-import { sumFields } from 'ustaxes/core/irsForms/util'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FilingStatus } from 'ustaxes/core/data'
 

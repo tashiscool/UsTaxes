@@ -106,7 +106,11 @@ const charitableContributions = {
     { organization: "St. Mary's Church", amount: 3600 } // $300/month
   ],
   nonCashDonations: [
-    { organization: 'Goodwill', description: 'Clothing and household items', fairMarketValue: 800 }
+    {
+      organization: 'Goodwill',
+      description: 'Clothing and household items',
+      fairMarketValue: 800
+    }
   ],
 
   get totalCashDonations() {
@@ -248,7 +252,9 @@ describe('ATS Scenario 19 - Carlos & Sofia Garcia (Itemized Deductions)', () => 
     it('should have mortgage originated after 12/15/2017', () => {
       // Mortgage acquisition debt limit is $750,000 for loans after 12/15/2017
       const tcjaDate = new Date(2017, 11, 15)
-      expect(f1098Mortgage.box3OriginationDate.getTime()).toBeGreaterThan(tcjaDate.getTime())
+      expect(f1098Mortgage.box3OriginationDate.getTime()).toBeGreaterThan(
+        tcjaDate.getTime()
+      )
     })
   })
 
@@ -338,7 +344,9 @@ describe('ATS Scenario 19 - Carlos & Sofia Garcia (Itemized Deductions)', () => 
     })
 
     it('should calculate tax benefit of itemizing', () => {
-      const benefit = deductionComparison.itemizedDeductions - deductionComparison.standardDeductionMFJ
+      const benefit =
+        deductionComparison.itemizedDeductions -
+        deductionComparison.standardDeductionMFJ
       expect(benefit).toBe(6900)
     })
   })

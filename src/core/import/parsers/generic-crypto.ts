@@ -11,6 +11,8 @@
  * - Form 8949 category assignment
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 import {
   BaseBrokerageParser,
   BrokerageTransaction,
@@ -681,7 +683,7 @@ export class GenericCryptoParser extends BaseBrokerageParser {
   /**
    * Get CSV headers from content
    */
-  getHeaders(content: string): string[] {
+  getCsvHeaders(content: string): string[] {
     const rows = this.parseCSV(content)
     if (rows.length === 0) return []
     return rows[0]

@@ -20,7 +20,7 @@
  * Tax Year: 2025
  */
 
-import { FilingStatus } from 'ustaxes/core/data'
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-argument */
 
 // =============================================================================
 // Test Data Fixtures - Isaac Hill (Scenario NR-4)
@@ -193,7 +193,8 @@ const form3800 = {
   hasTransferElection: true, // Yes for Form 8835
 
   // Part I - Credits Not Allowed Against TMT
-  line1NonPassiveCredits: form8835.line15ToForm3800 + form8936.line8BusinessUseCredit,
+  line1NonPassiveCredits:
+    form8835.line15ToForm3800 + form8936.line8BusinessUseCredit,
   line3PassiveAllowed: 0,
   line6Total: form8835.line15ToForm3800 + form8936.line8BusinessUseCredit, // 1,005
 
@@ -208,7 +209,8 @@ const form3800 = {
   line14Tmt: 0,
   line15Greater: 0,
   line16CreditLimit: 2775,
-  line17CreditAllowed: form8835.line15ToForm3800 + form8936.line8BusinessUseCredit, // 1,005
+  line17CreditAllowed:
+    form8835.line15ToForm3800 + form8936.line8BusinessUseCredit, // 1,005
 
   // Part III - Current Year GBCs
   line1fForm8835: form8835.line15ToForm3800, // 655
@@ -216,7 +218,8 @@ const form3800 = {
   line2Total: form8835.line15ToForm3800 + form8936.line8BusinessUseCredit, // 1,005
 
   // Section D - Credits Allowed
-  line38CreditAllowed: form8835.line15ToForm3800 + form8936.line8BusinessUseCredit // 1,005
+  line38CreditAllowed:
+    form8835.line15ToForm3800 + form8936.line8BusinessUseCredit // 1,005
 }
 
 /**
@@ -366,7 +369,9 @@ describe('ATS Scenario NR-4 - Isaac Hill (Form 1040-NR QSS with Credits)', () =>
     })
 
     it('should have spouse deceased date', () => {
-      expect(isaacHillTaxpayer.spouseDeceasedDate).toEqual(new Date(2024, 1, 18))
+      expect(isaacHillTaxpayer.spouseDeceasedDate).toEqual(
+        new Date(2024, 1, 18)
+      )
     })
 
     it('should have Federal Disaster designation', () => {
@@ -441,7 +446,8 @@ describe('ATS Scenario NR-4 - Isaac Hill (Form 1040-NR QSS with Credits)', () =>
     })
 
     it('should have 5x multiplier for qualified facility', () => {
-      const ratio = form8835.line9IncreasedCredit / form8835.line4CreditBeforeReduction
+      const ratio =
+        form8835.line9IncreasedCredit / form8835.line4CreditBeforeReduction
       expect(ratio).toBeCloseTo(5, 0)
     })
 
@@ -645,7 +651,8 @@ describe('ATS Scenario NR-4 - Isaac Hill (Form 1040-NR QSS with Credits)', () =>
 
     it('should have consistent line math', () => {
       // Total ECI = Wages + Taxable IRA
-      const expectedEci = form1040NRData.line1aW2Wages + form1040NRData.line4bTaxableIra
+      const expectedEci =
+        form1040NRData.line1aW2Wages + form1040NRData.line4bTaxableIra
       expect(form1040NRData.line9TotalEci).toBe(expectedEci)
 
       // Taxable income = AGI - Deductions
@@ -696,3 +703,5 @@ describe('ATS Scenario NR-4 - Isaac Hill (Form 1040-NR QSS with Credits)', () =>
     })
   })
 })
+
+export {}

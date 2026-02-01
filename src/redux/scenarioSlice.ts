@@ -13,6 +13,8 @@ import {
   TaxCalculationResult
 } from 'ustaxes/core/scenarios/scenarioEngine'
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 /**
  * State shape for scenarios
  */

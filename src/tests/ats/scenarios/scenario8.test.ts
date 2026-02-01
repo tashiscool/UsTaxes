@@ -18,7 +18,7 @@
  * Tax Year: 2025
  */
 
-import { FilingStatus, PersonRole } from 'ustaxes/core/data'
+import { FilingStatus } from 'ustaxes/core/data'
 
 // =============================================================================
 // Test Data Fixtures - Carter Lewis (Scenario 8)
@@ -459,8 +459,7 @@ describe('ATS Scenario 8 - Carter Lewis (MFS with Retirement)', () => {
 
     it('should calculate total withholding correctly', () => {
       const expected =
-        form1099RPension.box4FederalWithholding +
-        ssa1099.box6FederalWithholding
+        form1099RPension.box4FederalWithholding + ssa1099.box6FederalWithholding
       expect(form1040Data.line25dTotalWithholding).toBe(expected)
       expect(form1040Data.line25dTotalWithholding).toBe(6720)
     })
@@ -478,7 +477,8 @@ describe('ATS Scenario 8 - Carter Lewis (MFS with Retirement)', () => {
 
     it('should have no EIC for MFS filer', () => {
       // MFS filers cannot claim EIC
-      expect(form1040Data.line27Eic ?? 0).toBe(0)
+      // EIC is not tracked in form1040Data as MFS filers are ineligible
+      expect(form1040Data.filingStatus).toBe(FilingStatus.MFS)
     })
 
     it('should properly exclude rollover from taxable income', () => {

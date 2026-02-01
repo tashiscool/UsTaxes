@@ -6,6 +6,8 @@ import { AccountType, FilingStatus, State } from 'ustaxes/core/data'
 import parameters from './Parameters'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 /**
  * Utah Form TC-40 - Individual Income Tax Return
  *

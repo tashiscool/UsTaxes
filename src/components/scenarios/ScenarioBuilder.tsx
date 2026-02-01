@@ -8,6 +8,8 @@
  * - Real-time recalculation preview
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { ReactElement, useState, useCallback, useEffect } from 'react'
 import {
   Box,

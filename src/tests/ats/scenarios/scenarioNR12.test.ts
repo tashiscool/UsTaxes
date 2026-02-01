@@ -18,7 +18,7 @@
  * Tax Year: 2025
  */
 
-import { FilingStatus } from 'ustaxes/core/data'
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unsafe-argument */
 
 // =============================================================================
 // Test Data Fixtures - John Harrier (Scenario NR-12)
@@ -354,7 +354,9 @@ describe('ATS Scenario NR-12 - John Harrier (Form 1040-NR MFS Partnership Transf
     })
 
     it('should have capital gain equal total gain', () => {
-      expect(scheduleP.line5TotalCapitalGain).toBe(scheduleP.line3TotalOutsideGain)
+      expect(scheduleP.line5TotalCapitalGain).toBe(
+        scheduleP.line3TotalOutsideGain
+      )
     })
 
     it('should recognize ECI capital gain as smaller of line 5 or 7', () => {
@@ -578,3 +580,5 @@ describe('ATS Scenario NR-12 - John Harrier (Form 1040-NR MFS Partnership Transf
     })
   })
 })
+
+export {}

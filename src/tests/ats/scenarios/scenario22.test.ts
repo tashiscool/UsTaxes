@@ -115,18 +115,78 @@ const cryptoTransactions = {
 // Cryptocurrency mining income
 const cryptoMining = {
   transactions: [
-    { date: new Date(2025, 0, 31), coin: 'Ethereum', amount: 0.05, fairMarketValue: 175 },
-    { date: new Date(2025, 1, 28), coin: 'Ethereum', amount: 0.05, fairMarketValue: 180 },
-    { date: new Date(2025, 2, 31), coin: 'Ethereum', amount: 0.04, fairMarketValue: 145 },
-    { date: new Date(2025, 3, 30), coin: 'Ethereum', amount: 0.05, fairMarketValue: 165 },
-    { date: new Date(2025, 4, 31), coin: 'Ethereum', amount: 0.05, fairMarketValue: 170 },
-    { date: new Date(2025, 5, 30), coin: 'Ethereum', amount: 0.04, fairMarketValue: 140 },
-    { date: new Date(2025, 6, 31), coin: 'Ethereum', amount: 0.05, fairMarketValue: 175 },
-    { date: new Date(2025, 7, 31), coin: 'Ethereum', amount: 0.05, fairMarketValue: 180 },
-    { date: new Date(2025, 8, 30), coin: 'Ethereum', amount: 0.04, fairMarketValue: 145 },
-    { date: new Date(2025, 9, 31), coin: 'Ethereum', amount: 0.05, fairMarketValue: 175 },
-    { date: new Date(2025, 10, 30), coin: 'Ethereum', amount: 0.05, fairMarketValue: 180 },
-    { date: new Date(2025, 11, 31), coin: 'Ethereum', amount: 0.05, fairMarketValue: 185 }
+    {
+      date: new Date(2025, 0, 31),
+      coin: 'Ethereum',
+      amount: 0.05,
+      fairMarketValue: 175
+    },
+    {
+      date: new Date(2025, 1, 28),
+      coin: 'Ethereum',
+      amount: 0.05,
+      fairMarketValue: 180
+    },
+    {
+      date: new Date(2025, 2, 31),
+      coin: 'Ethereum',
+      amount: 0.04,
+      fairMarketValue: 145
+    },
+    {
+      date: new Date(2025, 3, 30),
+      coin: 'Ethereum',
+      amount: 0.05,
+      fairMarketValue: 165
+    },
+    {
+      date: new Date(2025, 4, 31),
+      coin: 'Ethereum',
+      amount: 0.05,
+      fairMarketValue: 170
+    },
+    {
+      date: new Date(2025, 5, 30),
+      coin: 'Ethereum',
+      amount: 0.04,
+      fairMarketValue: 140
+    },
+    {
+      date: new Date(2025, 6, 31),
+      coin: 'Ethereum',
+      amount: 0.05,
+      fairMarketValue: 175
+    },
+    {
+      date: new Date(2025, 7, 31),
+      coin: 'Ethereum',
+      amount: 0.05,
+      fairMarketValue: 180
+    },
+    {
+      date: new Date(2025, 8, 30),
+      coin: 'Ethereum',
+      amount: 0.04,
+      fairMarketValue: 145
+    },
+    {
+      date: new Date(2025, 9, 31),
+      coin: 'Ethereum',
+      amount: 0.05,
+      fairMarketValue: 175
+    },
+    {
+      date: new Date(2025, 10, 30),
+      coin: 'Ethereum',
+      amount: 0.05,
+      fairMarketValue: 180
+    },
+    {
+      date: new Date(2025, 11, 31),
+      coin: 'Ethereum',
+      amount: 0.05,
+      fairMarketValue: 185
+    }
   ],
 
   get totalMined() {
@@ -163,14 +223,26 @@ const stakingRewards = {
 // Form 8949 categorization
 const form8949 = {
   // Part I - Short-term
-  categoryA: cryptoTransactions.shortTerm.filter(t => t.reportingCategory === 'A'),
-  categoryB: cryptoTransactions.shortTerm.filter(t => t.reportingCategory === 'B'),
-  categoryC: cryptoTransactions.shortTerm.filter(t => t.reportingCategory === 'C'),
+  categoryA: cryptoTransactions.shortTerm.filter(
+    (t) => t.reportingCategory === 'A'
+  ),
+  categoryB: cryptoTransactions.shortTerm.filter(
+    (t) => t.reportingCategory === 'B'
+  ),
+  categoryC: cryptoTransactions.shortTerm.filter(
+    (t) => t.reportingCategory === 'C'
+  ),
 
   // Part II - Long-term
-  categoryD: cryptoTransactions.longTerm.filter(t => t.reportingCategory === 'D'),
-  categoryE: cryptoTransactions.longTerm.filter(t => t.reportingCategory === 'E'),
-  categoryF: cryptoTransactions.longTerm.filter(t => t.reportingCategory === 'F')
+  categoryD: cryptoTransactions.longTerm.filter(
+    (t) => t.reportingCategory === 'D'
+  ),
+  categoryE: cryptoTransactions.longTerm.filter(
+    (t) => t.reportingCategory === 'E'
+  ),
+  categoryF: cryptoTransactions.longTerm.filter(
+    (t) => t.reportingCategory === 'F'
+  )
 }
 
 // Schedule D calculations
@@ -253,15 +325,17 @@ describe('ATS Scenario 22 - Tommy Nguyen (Cryptocurrency)', () => {
     })
 
     it('should include both gains and losses', () => {
-      const gains = cryptoTransactions.shortTerm.filter(t => t.gain > 0)
-      const losses = cryptoTransactions.shortTerm.filter(t => t.gain < 0)
+      const gains = cryptoTransactions.shortTerm.filter((t) => t.gain > 0)
+      const losses = cryptoTransactions.shortTerm.filter((t) => t.gain < 0)
       expect(gains.length).toBe(2)
       expect(losses.length).toBe(1)
     })
 
     it('should have holding period under 1 year', () => {
-      cryptoTransactions.shortTerm.forEach(t => {
-        const holdingDays = (t.dateSold.getTime() - t.dateAcquired.getTime()) / (1000 * 60 * 60 * 24)
+      cryptoTransactions.shortTerm.forEach((t) => {
+        const holdingDays =
+          (t.dateSold.getTime() - t.dateAcquired.getTime()) /
+          (1000 * 60 * 60 * 24)
         expect(holdingDays).toBeLessThan(365)
       })
     })
@@ -278,8 +352,10 @@ describe('ATS Scenario 22 - Tommy Nguyen (Cryptocurrency)', () => {
     })
 
     it('should have holding period over 1 year', () => {
-      cryptoTransactions.longTerm.forEach(t => {
-        const holdingDays = (t.dateSold.getTime() - t.dateAcquired.getTime()) / (1000 * 60 * 60 * 24)
+      cryptoTransactions.longTerm.forEach((t) => {
+        const holdingDays =
+          (t.dateSold.getTime() - t.dateAcquired.getTime()) /
+          (1000 * 60 * 60 * 24)
         expect(holdingDays).toBeGreaterThan(365)
       })
     })
@@ -334,7 +410,9 @@ describe('ATS Scenario 22 - Tommy Nguyen (Cryptocurrency)', () => {
 
     it('should not deduct hobby expenses', () => {
       // TCJA eliminated miscellaneous itemized deductions
-      expect(cryptoMining.netMiningIncome).toBe(cryptoMining.totalFairMarketValue)
+      expect(cryptoMining.netMiningIncome).toBe(
+        cryptoMining.totalFairMarketValue
+      )
     })
   })
 

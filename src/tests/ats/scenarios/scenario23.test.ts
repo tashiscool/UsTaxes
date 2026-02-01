@@ -76,7 +76,11 @@ const combatZoneExclusion = {
   familySeparationAllowance: 250 * 6, // $250/month FSA
 
   get totalExcludedIncome() {
-    return this.excludedPay + this.immediateDangerPay + this.familySeparationAllowance
+    return (
+      this.excludedPay +
+      this.immediateDangerPay +
+      this.familySeparationAllowance
+    )
   }
 }
 
@@ -165,7 +169,10 @@ const totals = {
     return w2Military.box1Wages + w2Spouse.box1Wages
   },
   get totalExcludedIncome() {
-    return combatZoneExclusion.totalExcludedIncome + militaryAllowances.totalNonTaxableAllowances
+    return (
+      combatZoneExclusion.totalExcludedIncome +
+      militaryAllowances.totalNonTaxableAllowances
+    )
   },
   get federalWithholding() {
     return w2Military.box2FederalWithholding + w2Spouse.box2FederalWithholding
@@ -216,7 +223,9 @@ describe('ATS Scenario 23 - James Brown (Military)', () => {
     })
 
     it('should be from DFAS', () => {
-      expect(w2Military.employerName).toBe('Defense Finance and Accounting Service')
+      expect(w2Military.employerName).toBe(
+        'Defense Finance and Accounting Service'
+      )
     })
   })
 
@@ -272,12 +281,12 @@ describe('ATS Scenario 23 - James Brown (Military)', () => {
     })
 
     it('should calculate total moving expenses', () => {
-      const expected = 8500 + (2800 * 0.22) + 450 + 1200
+      const expected = 8500 + 2800 * 0.22 + 450 + 1200
       expect(form3903.totalMovingExpenses).toBeCloseTo(expected, 2)
     })
 
     it('should calculate military reimbursements', () => {
-      const expected = 3800 + (2800 * 0.22) + 600
+      const expected = 3800 + 2800 * 0.22 + 600
       expect(form3903.totalReimbursements).toBeCloseTo(expected, 2)
     })
 
@@ -301,7 +310,9 @@ describe('ATS Scenario 23 - James Brown (Military)', () => {
 
     it('should have different duty station from legal residence', () => {
       expect(scraProtections.currentDutyStation).toBe('CA')
-      expect(scraProtections.legalResidence).not.toBe(scraProtections.currentDutyStation)
+      expect(scraProtections.legalResidence).not.toBe(
+        scraProtections.currentDutyStation
+      )
     })
 
     it('should allow spouse to elect same residence', () => {
@@ -320,8 +331,9 @@ describe('ATS Scenario 23 - James Brown (Military)', () => {
 
     it('should calculate total excluded/non-taxable income', () => {
       // Combat exclusion + allowances
-      const expected = combatZoneExclusion.totalExcludedIncome +
-                       militaryAllowances.totalNonTaxableAllowances
+      const expected =
+        combatZoneExclusion.totalExcludedIncome +
+        militaryAllowances.totalNonTaxableAllowances
       expect(totals.totalExcludedIncome).toBe(expected)
     })
 

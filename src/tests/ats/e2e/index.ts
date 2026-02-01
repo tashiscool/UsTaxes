@@ -3,6 +3,11 @@
  *
  * This module contains simulated end-to-end tests for the
  * complete e-file submission workflow.
+ *
+ * Test files in this directory:
+ * - atsSubmission.test.ts
  */
 
-export * from './atsSubmission.test'
+// Test files are not exported as modules - they are run by the test runner
+
+export {}

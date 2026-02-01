@@ -28,18 +28,14 @@ import {
   F1099IntData,
   F1099DivData,
   F1099BData,
-  F1099SSAData,
   AccountType,
   Refund,
   State,
   Employer,
   StateResidency,
-  EstimatedTaxPayments,
   F1098e,
   ItemizedDeductions,
-  HealthSavingsAccount,
-  Ira,
-  IraPlanType
+  HealthSavingsAccount
 } from 'ustaxes/core/data'
 
 // =============================================================================
@@ -603,10 +599,8 @@ export function generateTestScenario(
   const totalIncome =
     w2s.reduce((sum, w2) => sum + w2.income, 0) +
     f1099s.reduce((sum, f) => {
-      if (f.type === Income1099Type.INT)
-        return sum + (f.form ).income
-      if (f.type === Income1099Type.DIV)
-        return sum + (f.form ).dividends
+      if (f.type === Income1099Type.INT) return sum + f.form.income
+      if (f.type === Income1099Type.DIV) return sum + f.form.dividends
       return sum
     }, 0)
 

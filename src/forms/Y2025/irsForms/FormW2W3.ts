@@ -2,7 +2,6 @@ import Form from 'ustaxes/core/irsForms/Form'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { FormW2Generated, FormW3Data, W2Box12Info } from 'ustaxes/core/data'
-import { sumFields } from 'ustaxes/core/irsForms/util'
 
 /**
  * Form W-2 - Wage and Tax Statement

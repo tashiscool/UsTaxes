@@ -22,6 +22,8 @@ import {
   getQuestionsForStep
 } from './interviewFlow'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 // Interview state
 export interface InterviewState {
   currentStepIndex: number

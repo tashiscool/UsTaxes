@@ -226,7 +226,10 @@ const form1040Data = (() => {
   const nonrefundableCredits = schedule3.line8TotalPart1
 
   // Tax after credits
-  const taxAfterCredits = Math.max(0, totalTaxBeforeCredits - nonrefundableCredits) // $2,338
+  const taxAfterCredits = Math.max(
+    0,
+    totalTaxBeforeCredits - nonrefundableCredits
+  ) // $2,338
 
   // Total tax
   const totalTax = taxAfterCredits
@@ -335,7 +338,8 @@ describe('ATS Scenario 1 - Tara Black (Single with Energy Credits)', () => {
     })
 
     it('should calculate total federal withholding correctly', () => {
-      const total = w2GreenLadies.box2FederalWithholding + w2CR.box2FederalWithholding
+      const total =
+        w2GreenLadies.box2FederalWithholding + w2CR.box2FederalWithholding
       expect(w2Totals.federalWithholding).toBe(total)
       expect(w2Totals.federalWithholding).toBe(2713)
     })
@@ -364,7 +368,8 @@ describe('ATS Scenario 1 - Tara Black (Single with Energy Credits)', () => {
     })
 
     it('should calculate Medicare tax correctly', () => {
-      const expected = scheduleH.cashWagesSubjectToMedicare * scheduleH.medicareTaxRate
+      const expected =
+        scheduleH.cashWagesSubjectToMedicare * scheduleH.medicareTaxRate
       expect(scheduleH.medicareTax).toBeCloseTo(expected, 2)
     })
 
@@ -412,7 +417,10 @@ describe('ATS Scenario 1 - Tara Black (Single with Energy Credits)', () => {
     it('should apply annual limit of $1,200', () => {
       expect(form5695.annualLimit).toBe(1200)
       expect(form5695.line32Credit).toBe(
-        Math.min(form5695.line29Total, form5695.annualLimit - form5695.priorYearCreditUsed)
+        Math.min(
+          form5695.line29Total,
+          form5695.annualLimit - form5695.priorYearCreditUsed
+        )
       )
     })
   })
@@ -467,11 +475,15 @@ describe('ATS Scenario 1 - Tara Black (Single with Energy Credits)', () => {
     })
 
     it('should have consistent line math (AGI = Total Income - Adjustments)', () => {
-      expect(form1040Data.agi).toBe(form1040Data.totalIncome - form1040Data.line10Adjustments)
+      expect(form1040Data.agi).toBe(
+        form1040Data.totalIncome - form1040Data.line10Adjustments
+      )
     })
 
     it('should have consistent line math (Taxable = AGI - Deductions)', () => {
-      expect(form1040Data.taxableIncome).toBe(form1040Data.agi - form1040Data.deduction)
+      expect(form1040Data.taxableIncome).toBe(
+        form1040Data.agi - form1040Data.deduction
+      )
     })
 
     it('should flow W-2 wages to Form 1040 correctly', () => {
@@ -479,16 +491,22 @@ describe('ATS Scenario 1 - Tara Black (Single with Energy Credits)', () => {
     })
 
     it('should flow W-2 withholding to Form 1040 correctly', () => {
-      expect(form1040Data.line25aW2Withholding).toBe(w2Totals.federalWithholding)
+      expect(form1040Data.line25aW2Withholding).toBe(
+        w2Totals.federalWithholding
+      )
     })
 
     it('should calculate refund or amount owed correctly', () => {
       if (form1040Data.totalPayments > form1040Data.totalTax) {
-        expect(form1040Data.refund).toBe(form1040Data.totalPayments - form1040Data.totalTax)
+        expect(form1040Data.refund).toBe(
+          form1040Data.totalPayments - form1040Data.totalTax
+        )
         expect(form1040Data.amountOwed).toBe(0)
       } else {
         expect(form1040Data.refund).toBe(0)
-        expect(form1040Data.amountOwed).toBe(form1040Data.totalTax - form1040Data.totalPayments)
+        expect(form1040Data.amountOwed).toBe(
+          form1040Data.totalTax - form1040Data.totalPayments
+        )
       }
     })
   })

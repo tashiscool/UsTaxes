@@ -6,6 +6,8 @@
  * signature timestamp.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { ReactElement, useState, useEffect } from 'react'
 import { useForm, FormProvider } from 'react-hook-form'
 import {
@@ -16,9 +18,9 @@ import {
   Divider,
   FormControlLabel,
   Checkbox,
-  Button,
-  Alert
+  Button
 } from '@material-ui/core'
+import { Alert } from '@material-ui/lab'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
 import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline'
 

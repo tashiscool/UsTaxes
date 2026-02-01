@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { TaxYear } from 'ustaxes/core/data'
 
 // ============================================================================

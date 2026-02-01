@@ -80,8 +80,13 @@ const scheduleC = {
   otherExpenses: 480, // App fees, tolls, parking
 
   get totalExpenses() {
-    return this.carAndTruck + this.insurance + this.cellPhone +
-           this.supplies + this.otherExpenses
+    return (
+      this.carAndTruck +
+      this.insurance +
+      this.cellPhone +
+      this.supplies +
+      this.otherExpenses
+    )
   },
 
   get netProfit() {
@@ -158,8 +163,12 @@ describe('ATS Scenario 14 - Maria Martinez (Gig Worker)', () => {
     })
 
     it('should have Uber as largest income source', () => {
-      expect(nec1Uber.box1NonemployeeComp).toBeGreaterThan(nec2Doordash.box1NonemployeeComp)
-      expect(nec1Uber.box1NonemployeeComp).toBeGreaterThan(nec3Instacart.box1NonemployeeComp)
+      expect(nec1Uber.box1NonemployeeComp).toBeGreaterThan(
+        nec2Doordash.box1NonemployeeComp
+      )
+      expect(nec1Uber.box1NonemployeeComp).toBeGreaterThan(
+        nec3Instacart.box1NonemployeeComp
+      )
     })
   })
 

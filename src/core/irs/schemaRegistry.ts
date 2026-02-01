@@ -6,6 +6,8 @@
  * Based on IRS MeF schema specifications and reference data.
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 // =============================================================================
 // Data Types
 // =============================================================================

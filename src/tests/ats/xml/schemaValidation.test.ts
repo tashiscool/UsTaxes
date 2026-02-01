@@ -5,6 +5,8 @@
  * passes IRS MeF schema validation.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
+
 import { create1040 } from 'ustaxes/forms/Y2025/irsForms/Main'
 import { FilingStatus, PersonRole, State } from 'ustaxes/core/data'
 import { run } from 'ustaxes/core/util'
@@ -12,10 +14,7 @@ import {
   Form1040Serializer,
   SerializerConfig
 } from 'ustaxes/efile/mef/serializer'
-import {
-  SchemaValidator,
-  ValidationSeverity
-} from 'ustaxes/efile/validation/schemaValidator'
+import { SchemaValidator } from 'ustaxes/efile/validation/schemaValidator'
 import {
   atsScenarioToInformation,
   ATSScenarioInput
@@ -50,44 +49,74 @@ describe('Schema Validator', () => {
   describe('Field Value Validation', () => {
     it('should validate SSN format', () => {
       // Valid SSN
-      expect(validator.validateFieldValue('123456789', 'SSNType', 'Form1040')).toBeNull()
+      expect(
+        validator.validateFieldValue('123456789', 'SSNType', 'Form1040')
+      ).toBeNull()
 
       // Invalid SSN - too short
-      const shortError = validator.validateFieldValue('12345678', 'SSNType', 'Form1040')
+      const shortError = validator.validateFieldValue(
+        '12345678',
+        'SSNType',
+        'Form1040'
+      )
       expect(shortError).not.toBeNull()
       expect(shortError?.code).toBe('PATTERN_MISMATCH')
 
       // Invalid SSN - contains letters
-      const letterError = validator.validateFieldValue('12345678A', 'SSNType', 'Form1040')
+      const letterError = validator.validateFieldValue(
+        '12345678A',
+        'SSNType',
+        'Form1040'
+      )
       expect(letterError).not.toBeNull()
     })
 
     it('should validate EIN format', () => {
       // Valid EIN
-      expect(validator.validateFieldValue('123456789', 'EINType', 'Form1040')).toBeNull()
+      expect(
+        validator.validateFieldValue('123456789', 'EINType', 'Form1040')
+      ).toBeNull()
 
       // Invalid EIN
-      const error = validator.validateFieldValue('12345678', 'EINType', 'Form1040')
+      const error = validator.validateFieldValue(
+        '12345678',
+        'EINType',
+        'Form1040'
+      )
       expect(error).not.toBeNull()
     })
 
     it('should validate ZIP code format', () => {
       // Valid 5-digit ZIP
-      expect(validator.validateFieldValue('90210', 'ZIPCodeType', 'Form1040')).toBeNull()
+      expect(
+        validator.validateFieldValue('90210', 'ZIPCodeType', 'Form1040')
+      ).toBeNull()
 
       // Valid ZIP+4
-      expect(validator.validateFieldValue('90210-1234', 'ZIPCodeType', 'Form1040')).toBeNull()
+      expect(
+        validator.validateFieldValue('90210-1234', 'ZIPCodeType', 'Form1040')
+      ).toBeNull()
 
       // Invalid ZIP
-      const error = validator.validateFieldValue('9021', 'ZIPCodeType', 'Form1040')
+      const error = validator.validateFieldValue(
+        '9021',
+        'ZIPCodeType',
+        'Form1040'
+      )
       expect(error).not.toBeNull()
     })
 
     it('should validate state codes', () => {
       // Valid state
-      expect(validator.validateFieldValue('CA', 'StateType', 'Form1040')).toBeNull()
-      expect(validator.validateFieldValue('NY', 'StateType', 'Form1040')).toBeNull()
-      expect(validator.validateFieldValue('TX', 'StateType', 'Form1040')).toBeNull()
+      expect(
+        validator.validateFieldValue('CA', 'StateType', 'Form1040')
+      ).toBeNull()
+      expect(
+        validator.validateFieldValue('NY', 'StateType', 'Form1040')
+      ).toBeNull()
+      expect(
+        validator.validateFieldValue('TX', 'StateType', 'Form1040')
+      ).toBeNull()
 
       // Invalid state
       const error = validator.validateFieldValue('XX', 'StateType', 'Form1040')
@@ -97,33 +126,63 @@ describe('Schema Validator', () => {
 
     it('should validate filing status', () => {
       // Valid status codes
-      expect(validator.validateFieldValue('1', 'FilingStatusType', 'Form1040')).toBeNull() // Single
-      expect(validator.validateFieldValue('2', 'FilingStatusType', 'Form1040')).toBeNull() // MFJ
-      expect(validator.validateFieldValue('3', 'FilingStatusType', 'Form1040')).toBeNull() // MFS
-      expect(validator.validateFieldValue('4', 'FilingStatusType', 'Form1040')).toBeNull() // HOH
-      expect(validator.validateFieldValue('5', 'FilingStatusType', 'Form1040')).toBeNull() // QSS
+      expect(
+        validator.validateFieldValue('1', 'FilingStatusType', 'Form1040')
+      ).toBeNull() // Single
+      expect(
+        validator.validateFieldValue('2', 'FilingStatusType', 'Form1040')
+      ).toBeNull() // MFJ
+      expect(
+        validator.validateFieldValue('3', 'FilingStatusType', 'Form1040')
+      ).toBeNull() // MFS
+      expect(
+        validator.validateFieldValue('4', 'FilingStatusType', 'Form1040')
+      ).toBeNull() // HOH
+      expect(
+        validator.validateFieldValue('5', 'FilingStatusType', 'Form1040')
+      ).toBeNull() // QSS
 
       // Invalid status
-      const error = validator.validateFieldValue('6', 'FilingStatusType', 'Form1040')
+      const error = validator.validateFieldValue(
+        '6',
+        'FilingStatusType',
+        'Form1040'
+      )
       expect(error).not.toBeNull()
     })
 
     it('should validate phone number format', () => {
       // Valid phone
-      expect(validator.validateFieldValue('1234567890', 'PhoneNumberType', 'Form1040')).toBeNull()
+      expect(
+        validator.validateFieldValue(
+          '1234567890',
+          'PhoneNumberType',
+          'Form1040'
+        )
+      ).toBeNull()
 
       // Invalid phone - too short
-      const error = validator.validateFieldValue('123456789', 'PhoneNumberType', 'Form1040')
+      const error = validator.validateFieldValue(
+        '123456789',
+        'PhoneNumberType',
+        'Form1040'
+      )
       expect(error).not.toBeNull()
     })
 
     it('should validate person name length', () => {
       // Valid name
-      expect(validator.validateFieldValue('John', 'PersonNameType', 'Form1040')).toBeNull()
+      expect(
+        validator.validateFieldValue('John', 'PersonNameType', 'Form1040')
+      ).toBeNull()
 
       // Too long (over 35 chars)
       const longName = 'A'.repeat(36)
-      const error = validator.validateFieldValue(longName, 'PersonNameType', 'Form1040')
+      const error = validator.validateFieldValue(
+        longName,
+        'PersonNameType',
+        'Form1040'
+      )
       expect(error).not.toBeNull()
       expect(error?.code).toBe('LENGTH_ERROR')
     })
@@ -156,7 +215,9 @@ describe('Schema Validator', () => {
 
       const result = await validator.validate(basicXml, 'Form1040')
       // Structure should be valid (content validation may have warnings)
-      expect(result.errors.filter(e => e.code === 'UNBALANCED_TAG')).toHaveLength(0)
+      expect(
+        result.errors.filter((e) => e.code === 'UNBALANCED_TAG')
+      ).toHaveLength(0)
     })
   })
 
@@ -262,7 +323,11 @@ describe('ATS Scenario Schema Validation', () => {
           expect(ssnMatch).not.toBeNull()
 
           const ssn = ssnMatch![1]
-          const ssnValidation = validator.validateFieldValue(ssn, 'SSNType', 'Form1040')
+          const ssnValidation = validator.validateFieldValue(
+            ssn,
+            'SSNType',
+            'Form1040'
+          )
           expect(ssnValidation).toBeNull()
         }
       )
@@ -368,7 +433,11 @@ describe('ATS Scenario Schema Validation', () => {
           expect(spouseSsnMatch).not.toBeNull()
 
           const ssn = spouseSsnMatch![1]
-          const ssnValidation = validator.validateFieldValue(ssn, 'SSNType', 'Form1040')
+          const ssnValidation = validator.validateFieldValue(
+            ssn,
+            'SSNType',
+            'Form1040'
+          )
           expect(ssnValidation).toBeNull()
         }
       )
@@ -403,13 +472,13 @@ describe('ATS Scenario Schema Validation', () => {
         }
       ],
       f1099Ints: [
-        { payer: 'First Bank', amount: 2500 },
-        { payer: 'Second Bank', amount: 1500 }
+        { payer: 'First Bank', income: 2500 },
+        { payer: 'Second Bank', income: 1500 }
       ],
       f1099Divs: [
         {
           payer: 'Fidelity',
-          ordinaryDividends: 5000,
+          dividends: 5000,
           qualifiedDividends: 4000
         }
       ]
@@ -480,8 +549,10 @@ describe('Multiple Form Validation', () => {
           occupation: 'Executive'
         }
       ],
-      f1099Ints: [{ payer: 'Bank', amount: 5000 }],
-      f1099Divs: [{ payer: 'Broker', ordinaryDividends: 10000, qualifiedDividends: 8000 }],
+      f1099Ints: [{ payer: 'Bank', income: 5000 }],
+      f1099Divs: [
+        { payer: 'Broker', dividends: 10000, qualifiedDividends: 8000 }
+      ],
       f1099Bs: [
         {
           payer: 'Brokerage',
@@ -516,9 +587,11 @@ describe('Multiple Form Validation', () => {
 
         // Validate main form
         const form1040Result = await validator.validate(xml, 'Form1040')
-        expect(form1040Result.errors.filter(e =>
-          e.code === 'UNBALANCED_TAG' || e.code === 'UNCLOSED_TAGS'
-        )).toHaveLength(0)
+        expect(
+          form1040Result.errors.filter(
+            (e) => e.code === 'UNBALANCED_TAG' || e.code === 'UNCLOSED_TAGS'
+          )
+        ).toHaveLength(0)
 
         // Should contain multiple schedules
         expect(xml).toContain('IRS1040ScheduleB')
@@ -541,7 +614,11 @@ describe('Validation Error Messages', () => {
   })
 
   it('should provide helpful SSN error message', () => {
-    const error = validator.validateFieldValue('12345678A', 'SSNType', 'Form1040')
+    const error = validator.validateFieldValue(
+      '12345678A',
+      'SSNType',
+      'Form1040'
+    )
     expect(error).not.toBeNull()
     expect(error?.message).toContain('pattern')
   })
@@ -555,7 +632,11 @@ describe('Validation Error Messages', () => {
 
   it('should provide helpful length error message', () => {
     const longName = 'A'.repeat(40)
-    const error = validator.validateFieldValue(longName, 'PersonNameType', 'Form1040')
+    const error = validator.validateFieldValue(
+      longName,
+      'PersonNameType',
+      'Form1040'
+    )
     expect(error).not.toBeNull()
     expect(error?.expected).toContain('Maximum length')
   })

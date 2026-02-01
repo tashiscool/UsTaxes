@@ -9,6 +9,8 @@
  * - "What if I contribute to HSA?"
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { ReactElement, useState, useMemo } from 'react'
 import {
   Box,

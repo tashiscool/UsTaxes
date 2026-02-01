@@ -238,7 +238,8 @@ export function FormLineHelp({
                 {/* Excerpt */}
                 {explanation.legalBasis.primaryIrcSection?.excerpt && (
                   <Typography className={classes.excerpt}>
-                    &quot;{explanation.legalBasis.primaryIrcSection.excerpt}&quot;
+                    &quot;{explanation.legalBasis.primaryIrcSection.excerpt}
+                    &quot;
                   </Typography>
                 )}
 

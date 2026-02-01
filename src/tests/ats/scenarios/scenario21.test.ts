@@ -110,7 +110,7 @@ const childcareExpenses = {
 
 // Form 2441 - Child and Dependent Care Expenses
 const form2441 = {
-  qualifyingPersons: dependents.filter(d => d.isUnder13),
+  qualifyingPersons: dependents.filter((d) => d.isUnder13),
 
   // Expense limits
   get expenseLimit() {
@@ -120,12 +120,17 @@ const form2441 = {
 
   // Dependent Care Benefits (FSA) reduce eligible expenses
   get dependentCareBenefits() {
-    return w2Jennifer.box10DependentCareBenefits + w2Kevin.box10DependentCareBenefits
+    return (
+      w2Jennifer.box10DependentCareBenefits + w2Kevin.box10DependentCareBenefits
+    )
   },
 
   // Expenses after FSA exclusion
   get expensesAfterFSA() {
-    return Math.max(0, childcareExpenses.totalExpenses - this.dependentCareBenefits)
+    return Math.max(
+      0,
+      childcareExpenses.totalExpenses - this.dependentCareBenefits
+    )
   },
 
   // Eligible expenses (lesser of actual expenses or limit)
@@ -167,8 +172,8 @@ const form2441 = {
 // Child Tax Credit
 const childTaxCredit = {
   creditPerChild: 2000, // 2025 CTC amount
-  qualifyingChildren: dependents.filter(d =>
-    d.monthsLivedWithTaxpayer >= 6 && d.isUnder13
+  qualifyingChildren: dependents.filter(
+    (d) => d.monthsLivedWithTaxpayer >= 6 && d.isUnder13
   ),
 
   get totalCredit() {
@@ -224,13 +229,13 @@ describe('ATS Scenario 21 - Jennifer & Kevin Kim (Childcare Credit)', () => {
     })
 
     it('should have both children under 13', () => {
-      dependents.forEach(d => {
+      dependents.forEach((d) => {
         expect(d.isUnder13).toBe(true)
       })
     })
 
     it('should have children living with taxpayers full year', () => {
-      dependents.forEach(d => {
+      dependents.forEach((d) => {
         expect(d.monthsLivedWithTaxpayer).toBe(12)
       })
     })
@@ -327,12 +332,16 @@ describe('ATS Scenario 21 - Jennifer & Kevin Kim (Childcare Credit)', () => {
 
   describe('Dependent Care FSA', () => {
     it('should have FSA contribution on W-2 Box 10', () => {
-      const totalFSA = w2Jennifer.box10DependentCareBenefits + w2Kevin.box10DependentCareBenefits
+      const totalFSA =
+        w2Jennifer.box10DependentCareBenefits +
+        w2Kevin.box10DependentCareBenefits
       expect(totalFSA).toBe(5000)
     })
 
     it('should not exceed $5,000 annual limit for MFJ', () => {
-      const totalFSA = w2Jennifer.box10DependentCareBenefits + w2Kevin.box10DependentCareBenefits
+      const totalFSA =
+        w2Jennifer.box10DependentCareBenefits +
+        w2Kevin.box10DependentCareBenefits
       expect(totalFSA).toBeLessThanOrEqual(5000)
     })
 
@@ -359,7 +368,8 @@ describe('ATS Scenario 21 - Jennifer & Kevin Kim (Childcare Credit)', () => {
     })
 
     it('should apply both CTC and care credit', () => {
-      const totalCredits = childTaxCredit.totalCredit + form2441.getCredit(totals.agi)
+      const totalCredits =
+        childTaxCredit.totalCredit + form2441.getCredit(totals.agi)
       expect(totalCredits).toBe(5200) // $4,000 + $1,200
     })
   })

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
 import F1040Attachment from './F1040Attachment'
 import { FilingStatus } from 'ustaxes/core/data'
 import { FormTag } from 'ustaxes/core/irsForms/Form'

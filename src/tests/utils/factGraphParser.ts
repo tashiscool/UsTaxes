@@ -12,6 +12,8 @@
  * - MoneyWrapper: { value: number } (in cents or dollars)
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 import {
   Information,
   TaxPayer,
@@ -34,9 +36,7 @@ import {
   HealthSavingsAccount,
   EstimatedTaxPayments,
   F1098e,
-  ItemizedDeductions,
-  Ira,
-  IraPlanType
+  ItemizedDeductions
 } from 'ustaxes/core/data'
 
 // =============================================================================

@@ -1,7 +1,6 @@
 import F1040Attachment from './F1040Attachment'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
-import { sumFields } from 'ustaxes/core/irsForms/util'
 
 /**
  * Form 8621 - Information Return by a Shareholder of a Passive Foreign Investment Company

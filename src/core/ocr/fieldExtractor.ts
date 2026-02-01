@@ -5,6 +5,8 @@
  * Handles common OCR errors and parses various data formats.
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
+
 import { OCRResult, OCRWord, OCRLine } from './ocrEngine'
 
 /**

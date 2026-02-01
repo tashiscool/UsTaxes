@@ -7,6 +7,8 @@
  * - Utility functions for crypto tax calculations
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 /**
  * Types of cryptocurrency transactions
  */
@@ -247,9 +249,12 @@ export function calculateUnrealizedGains(
     byAsset.set(holding.asset, existing)
   }
 
-  for (const [asset, assetHoldings] of byAsset) {
+  for (const [asset, assetHoldings] of Array.from(byAsset)) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/restrict-plus-operands
-    const totalQuantity: number = assetHoldings.reduce((sum: number, h: CryptoHolding) => sum + h.quantity, 0)
+    const totalQuantity: number = assetHoldings.reduce(
+      (sum: number, h: CryptoHolding) => sum + h.quantity,
+      0
+    )
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/restrict-plus-operands
     const totalCostBasis: number = assetHoldings.reduce(
       (sum: number, h: CryptoHolding) => sum + h.totalCostBasis,

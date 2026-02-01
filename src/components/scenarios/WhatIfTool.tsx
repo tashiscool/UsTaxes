@@ -8,6 +8,8 @@
  * - "Current" baseline always shown
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { ReactElement, useState, useCallback, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet'
 import {
@@ -53,6 +55,7 @@ import { Alert } from '@material-ui/lab'
 import { useSelector } from 'react-redux'
 import { YearsTaxesState } from 'ustaxes/redux'
 import { Information, TaxYear, Asset } from 'ustaxes/core/data'
+
 import {
   Scenario,
   TaxCalculationResult,

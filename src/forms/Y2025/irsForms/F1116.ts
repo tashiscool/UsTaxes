@@ -1,6 +1,5 @@
 import F1040Attachment from './F1040Attachment'
 import F1040 from './F1040'
-import { FilingStatus } from 'ustaxes/core/data'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { sumFields } from 'ustaxes/core/irsForms/util'
 import { Field } from 'ustaxes/core/pdfFiller'

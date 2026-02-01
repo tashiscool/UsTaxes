@@ -15,6 +15,8 @@
  * Tax Year: 2025
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { FilingStatus } from 'ustaxes/core/data'
 
 // =============================================================================
@@ -178,7 +180,7 @@ const passiveActivityRules = {
     } else if (this.magi >= this.phaseoutComplete) {
       return 0
     } else {
-      const phaseoutAmount = ((this.magi - this.magiThreshold) / 2)
+      const phaseoutAmount = (this.magi - this.magiThreshold) / 2
       return Math.max(0, this.maxAllowance - phaseoutAmount)
     }
   }
@@ -274,7 +276,9 @@ describe('ATS Scenario 18 - Michael Thompson (Rental Property Owner)', () => {
     })
 
     it('should be below phaseout threshold', () => {
-      expect(passiveActivityRules.magi).toBeLessThan(passiveActivityRules.magiThreshold)
+      expect(passiveActivityRules.magi).toBeLessThan(
+        passiveActivityRules.magiThreshold
+      )
     })
 
     it('should allow full $25,000 loss deduction', () => {
@@ -293,8 +297,10 @@ describe('ATS Scenario 18 - Michael Thompson (Rental Property Owner)', () => {
       expect(rentalProperty1.landValue).toBe(80000)
       expect(rentalProperty2.landValue).toBe(40000)
       // Depreciation based only on building basis
-      const totalBasis = rentalProperty1.buildingBasis + rentalProperty2.buildingBasis
-      const totalWithLand = totalBasis + rentalProperty1.landValue + rentalProperty2.landValue
+      const totalBasis =
+        rentalProperty1.buildingBasis + rentalProperty2.buildingBasis
+      const totalWithLand =
+        totalBasis + rentalProperty1.landValue + rentalProperty2.landValue
       expect(totalBasis).toBeLessThan(totalWithLand)
     })
 

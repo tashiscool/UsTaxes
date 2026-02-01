@@ -6,13 +6,17 @@
  */
 
 import { create1040 } from 'ustaxes/forms/Y2025/irsForms/Main'
-import { Asset, FilingStatus, PersonRole, State, PlanType1099 } from 'ustaxes/core/data'
+import {
+  FilingStatus,
+  PersonRole,
+  State,
+  PlanType1099
+} from 'ustaxes/core/data'
 import { run } from 'ustaxes/core/util'
 import {
   atsScenarioToInformation,
   ATSScenarioInput,
-  ATSExpectedOutput,
-  compareResults
+  ATSExpectedOutput
 } from '../utils/scenarioToInformation'
 
 // =============================================================================

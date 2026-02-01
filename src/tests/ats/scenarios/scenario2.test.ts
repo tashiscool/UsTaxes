@@ -20,6 +20,8 @@
  * Tax Year: 2025
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { FilingStatus } from 'ustaxes/core/data'
 
 // =============================================================================
@@ -568,7 +570,9 @@ describe('ATS Scenario 2 - John and Judy Jones (MFJ with Deceased Spouse)', () =
     })
 
     it('should flow W-2 withholding to Form 1040 correctly', () => {
-      expect(form1040Data.line25aW2Withholding).toBe(w2Totals.federalWithholding)
+      expect(form1040Data.line25aW2Withholding).toBe(
+        w2Totals.federalWithholding
+      )
     })
 
     it('should flow Form 8283 to Schedule A correctly', () => {

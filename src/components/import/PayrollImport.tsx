@@ -13,6 +13,8 @@
  * - Validation and import to tax data
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { ReactElement, useState, useMemo } from 'react'
 import {
   Button,
@@ -47,6 +49,7 @@ import { makeStyles, createStyles, Theme } from '@material-ui/core/styles'
 import { useDispatch } from 'ustaxes/redux'
 import * as actions from 'ustaxes/redux/actions'
 import { LoadRaw } from 'ustaxes/redux/fs/Load'
+
 import {
   PayrollProvider,
   PayrollParseResult,

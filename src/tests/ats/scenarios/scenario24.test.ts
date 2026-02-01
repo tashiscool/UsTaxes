@@ -126,7 +126,9 @@ const ministerialIncome1099 = {
   counseling: 1500, // Pastoral counseling fees
 
   get totalMinisterialIncome() {
-    return this.weddings + this.funerals + this.speakingEngagements + this.counseling
+    return (
+      this.weddings + this.funerals + this.speakingEngagements + this.counseling
+    )
   }
 }
 
@@ -153,7 +155,10 @@ const scheduleSE = {
   socialSecurityWageBase: 176100,
 
   get socialSecurityTax() {
-    const taxableAmount = Math.min(this.netEarningsForSE, this.socialSecurityWageBase)
+    const taxableAmount = Math.min(
+      this.netEarningsForSE,
+      this.socialSecurityWageBase
+    )
     return taxableAmount * this.socialSecurityRate
   },
 
@@ -208,7 +213,11 @@ const totals = {
     return scheduleC.netProfit
   },
   get grossIncome() {
-    return this.totalWages + this.totalMinisterialIncome + housingAllowance.taxableExcess
+    return (
+      this.totalWages +
+      this.totalMinisterialIncome +
+      housingAllowance.taxableExcess
+    )
   },
   get agi() {
     return this.grossIncome - scheduleSE.deductibleHalf
@@ -309,7 +318,9 @@ describe('ATS Scenario 24 - Pastor Marcus Davis (Clergy)', () => {
 
   describe('Schedule C - Ministerial Expenses', () => {
     it('should have gross receipts matching 1099 income', () => {
-      expect(scheduleC.grossReceipts).toBe(ministerialIncome1099.totalMinisterialIncome)
+      expect(scheduleC.grossReceipts).toBe(
+        ministerialIncome1099.totalMinisterialIncome
+      )
     })
 
     it('should calculate total business expenses', () => {
@@ -323,7 +334,9 @@ describe('ATS Scenario 24 - Pastor Marcus Davis (Clergy)', () => {
 
   describe('Schedule SE - Dual-Status Self-Employment', () => {
     it('should include salary in SE income', () => {
-      expect(scheduleSE.netMinisterialEarnings).toBeGreaterThanOrEqual(w2Pastor.box1Wages)
+      expect(scheduleSE.netMinisterialEarnings).toBeGreaterThanOrEqual(
+        w2Pastor.box1Wages
+      )
     })
 
     it('should include housing allowance in SE income', () => {
@@ -390,7 +403,8 @@ describe('ATS Scenario 24 - Pastor Marcus Davis (Clergy)', () => {
     })
 
     it('should calculate gross income including taxable excess', () => {
-      const expected = totals.totalWages + scheduleC.netProfit + housingAllowance.taxableExcess
+      const expected =
+        totals.totalWages + scheduleC.netProfit + housingAllowance.taxableExcess
       expect(totals.grossIncome).toBe(expected)
     })
 
@@ -427,9 +441,13 @@ describe('ATS Scenario 24 - Pastor Marcus Davis (Clergy)', () => {
 
     it('should include housing allowance in SE but not income tax', () => {
       // Housing allowance affects SE calculation
-      expect(scheduleSE.netMinisterialEarnings).toBeGreaterThan(w2Pastor.box1Wages)
+      expect(scheduleSE.netMinisterialEarnings).toBeGreaterThan(
+        w2Pastor.box1Wages
+      )
       // But only excess is taxable for income tax
-      expect(housingAllowance.taxableExcess).toBeLessThan(housingAllowance.designatedAmount)
+      expect(housingAllowance.taxableExcess).toBeLessThan(
+        housingAllowance.designatedAmount
+      )
     })
   })
 })

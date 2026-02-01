@@ -5,6 +5,8 @@
  * Handles the complete workflow from form preparation to submission and acknowledgment.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-non-null-assertion */
+
 import {
   MeFConfig,
   Submission,
@@ -161,8 +163,8 @@ export interface AcknowledgmentResult {
 export interface EFileResult {
   /** Overall success status */
   success: boolean
-  /** The prepared return */
-  prepared: PreparedReturn
+  /** The prepared return (may be undefined if error occurred before preparation) */
+  prepared?: PreparedReturn
   /** The signed return */
   signed?: SignedReturn
   /** Submission result */

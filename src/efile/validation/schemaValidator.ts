@@ -5,6 +5,8 @@
  * Provides detailed error locations and user-friendly error messages.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-unnecessary-condition */
+
 // ============================================================================
 // Types and Interfaces
 // ============================================================================

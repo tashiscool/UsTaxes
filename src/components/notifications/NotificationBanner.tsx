@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ReactElement, useState, useCallback } from 'react'
 import {
   Box,

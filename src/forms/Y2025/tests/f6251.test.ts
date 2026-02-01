@@ -1,4 +1,5 @@
 /* eslint @typescript-eslint/no-empty-function: "off" */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 import { FilingStatus, PersonRole } from 'ustaxes/core/data'
 import F1040 from '../irsForms/F1040'

@@ -20,6 +20,8 @@
  * Tax Year: 2025
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { FilingStatus } from 'ustaxes/core/data'
 
 // =============================================================================
@@ -359,7 +361,8 @@ const form1040Data = (() => {
   // Deduction
   const standardDeductionHoh2025 = 22500
   const blindAdditionalDeduction = 1950 // Additional for blind
-  const totalStandardDeduction = standardDeductionHoh2025 + blindAdditionalDeduction // $24,450
+  const totalStandardDeduction =
+    standardDeductionHoh2025 + blindAdditionalDeduction // $24,450
 
   // Taxable income
   const taxableIncome = Math.max(0, agi - totalStandardDeduction) // $14,050
@@ -551,7 +554,8 @@ describe('ATS Scenario 5 - Bobby Barker (HOH with Blind, EIC, CTC)', () => {
     })
 
     it('should calculate child care credit correctly', () => {
-      const expected = form2441.line8QualifyingExpenses * form2441.line10Percentage
+      const expected =
+        form2441.line8QualifyingExpenses * form2441.line10Percentage
       expect(form2441.line11Credit).toBe(expected)
       expect(form2441.line11Credit).toBe(364)
     })
@@ -601,7 +605,8 @@ describe('ATS Scenario 5 - Bobby Barker (HOH with Blind, EIC, CTC)', () => {
     })
 
     it('should calculate total CTC correctly', () => {
-      const expected = schedule8812.numberOfQualifyingChildren * schedule8812.ctcPerChild2025
+      const expected =
+        schedule8812.numberOfQualifyingChildren * schedule8812.ctcPerChild2025
       expect(schedule8812.line1CtcAmount).toBe(expected)
       expect(schedule8812.line3Total).toBe(4000)
     })

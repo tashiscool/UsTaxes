@@ -1,5 +1,3 @@
-import { FilingStatus } from 'ustaxes/core/data'
-
 /**
  * Indiana 2025 Tax Parameters
  * Indiana uses a flat income tax rate of 3.05%

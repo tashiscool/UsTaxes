@@ -1,5 +1,3 @@
-import { FilingStatus } from 'ustaxes/core/data'
-
 /**
  * Michigan 2025 Tax Parameters
  * Michigan uses a flat income tax rate of 4.25%

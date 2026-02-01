@@ -204,7 +204,8 @@ describe('ATS Scenario 7 - Charlie Boone (Form 4868 Extension)', () => {
     })
 
     it('should calculate balance due correctly', () => {
-      const expected = form4868.line4EstimatedTotalTax - form4868.line5TotalPayments
+      const expected =
+        form4868.line4EstimatedTotalTax - form4868.line5TotalPayments
       expect(form4868.line6BalanceDue).toBe(expected)
     })
 
@@ -231,7 +232,9 @@ describe('ATS Scenario 7 - Charlie Boone (Form 4868 Extension)', () => {
   describe('Electronic Funds Withdrawal', () => {
     it('should have valid routing number format', () => {
       expect(electronicFundsWithdrawal.routingTransitNumber).toHaveLength(9)
-      expect(/^\d{9}$/.test(electronicFundsWithdrawal.routingTransitNumber)).toBe(true)
+      expect(
+        /^\d{9}$/.test(electronicFundsWithdrawal.routingTransitNumber)
+      ).toBe(true)
     })
 
     it('should use checking account', () => {
@@ -239,7 +242,9 @@ describe('ATS Scenario 7 - Charlie Boone (Form 4868 Extension)', () => {
     })
 
     it('should withdraw correct amount', () => {
-      expect(electronicFundsWithdrawal.withdrawalAmount).toBe(form4868.line7AmountPaying)
+      expect(electronicFundsWithdrawal.withdrawalAmount).toBe(
+        form4868.line7AmountPaying
+      )
       expect(electronicFundsWithdrawal.withdrawalAmount).toBe(2500)
     })
 
@@ -356,7 +361,9 @@ describe('ATS Scenario 7 - Charlie Boone (Form 4868 Extension)', () => {
     })
 
     it('should not pay more than balance due', () => {
-      expect(form4868.line7AmountPaying).toBeLessThanOrEqual(form4868.line6BalanceDue)
+      expect(form4868.line7AmountPaying).toBeLessThanOrEqual(
+        form4868.line6BalanceDue
+      )
     })
 
     it('should have valid year for extension', () => {
@@ -371,3 +378,5 @@ describe('ATS Scenario 7 - Charlie Boone (Form 4868 Extension)', () => {
     })
   })
 })
+
+export {}

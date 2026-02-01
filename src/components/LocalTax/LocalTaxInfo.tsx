@@ -21,6 +21,8 @@ import { Alert } from '@material-ui/lab'
 import { LocationCity, Work, Home } from '@material-ui/icons'
 import { setLocalTaxInfo } from 'ustaxes/redux/actions'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
+
 /**
  * User input interface for local tax information
  */

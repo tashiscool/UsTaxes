@@ -2,7 +2,6 @@ import { BusinessForm } from './BusinessForm'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { Form720Data, BusinessEntity, ExciseTaxItem } from 'ustaxes/core/data'
-import { sumFields } from 'ustaxes/core/irsForms/util'
 
 /**
  * Form 720 - Quarterly Federal Excise Tax Return

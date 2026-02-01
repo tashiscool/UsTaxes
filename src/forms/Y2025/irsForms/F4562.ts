@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import F1040Attachment from './F1040Attachment'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { sumFields } from 'ustaxes/core/irsForms/util'
@@ -164,7 +165,8 @@ export default class F4562 extends F1040Attachment {
       (schedC.l27a() ?? 0)
     // Skip l30 (home office) to avoid F8829 circular call
 
-    const schedCIncome = grossIncome - expensesExcludingDepreciationAndHomeOffice
+    const schedCIncome =
+      grossIncome - expensesExcludingDepreciationAndHomeOffice
     const scheduleFIncome = 0 // Add if Schedule F exists
     return Math.max(0, schedCIncome + scheduleFIncome)
   }

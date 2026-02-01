@@ -5,6 +5,8 @@
  * Supports multiple languages and returns text with position data.
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
+
 import Tesseract, {
   Worker,
   createWorker,

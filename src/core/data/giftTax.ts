@@ -5,6 +5,8 @@
  * Based on IRS Form 709 specifications.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { State, Address, PersonRole } from './index'
 
 // =============================================================================

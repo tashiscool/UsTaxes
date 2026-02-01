@@ -24,6 +24,8 @@ import { useSelector } from 'react-redux'
 import { YearsTaxesState } from 'ustaxes/redux'
 import { Information, TaxYear } from 'ustaxes/core/data'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     dialog: {
@@ -288,7 +290,9 @@ export const PrintPreview = ({
                 </Typography>
                 {info.f1099s.map((f1099, idx) => (
                   <div key={idx} className={classes.formLine}>
-                    <span>{f1099.ppiCode || `1099 Form ${idx + 1}`}</span>
+                    <span>
+                      {`1099-${f1099.type}` || `1099 Form ${idx + 1}`}
+                    </span>
                     <span>Various amounts</span>
                   </div>
                 ))}

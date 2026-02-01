@@ -47,27 +47,39 @@ describe('ATS Partnership Scenarios (Form 1065)', () => {
 
     it('should calculate gross profit correctly', () => {
       const grossProfit =
-        income.grossReceipts - income.returnsAndAllowances - income.costOfGoodsSold
+        income.grossReceipts -
+        income.returnsAndAllowances -
+        income.costOfGoodsSold
       expect(grossProfit).toBe(500000)
     })
 
     it('should calculate total income correctly', () => {
       const grossProfit =
-        income.grossReceipts - income.returnsAndAllowances - income.costOfGoodsSold
+        income.grossReceipts -
+        income.returnsAndAllowances -
+        income.costOfGoodsSold
       const totalIncome = grossProfit + income.otherIncome
       expect(totalIncome).toBe(505000)
     })
 
     it('should calculate total deductions correctly', () => {
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       expect(totalDeductions).toBe(360000)
     })
 
     it('should calculate ordinary business income correctly', () => {
       const grossProfit =
-        income.grossReceipts - income.returnsAndAllowances - income.costOfGoodsSold
+        income.grossReceipts -
+        income.returnsAndAllowances -
+        income.costOfGoodsSold
       const totalIncome = grossProfit + income.otherIncome
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       const ordinaryIncome = totalIncome - totalDeductions
       expect(ordinaryIncome).toBe(145000)
     })
@@ -105,7 +117,10 @@ describe('ATS Partnership Scenarios (Form 1065)', () => {
     }
 
     it('should calculate total deductions correctly', () => {
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       expect(totalDeductions).toBe(300000)
     })
 
@@ -176,7 +191,10 @@ describe('ATS Partnership Scenarios (Form 1065)', () => {
     })
 
     it('should calculate total deductions correctly', () => {
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       expect(totalDeductions).toBe(700000)
     })
 
@@ -185,7 +203,10 @@ describe('ATS Partnership Scenarios (Form 1065)', () => {
       const grossProfit = netReceipts - income.costOfGoodsSold
       const totalIncome =
         grossProfit + income.netGainFromSaleOfAssets + income.otherIncome
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       const ordinaryIncome = totalIncome - totalDeductions
       expect(ordinaryIncome).toBe(63000)
     })
@@ -234,7 +255,8 @@ describe('Partnership Schedule K Allocations', () => {
 
     it('should allocate capital gains 50/50', () => {
       const totalCapitalGains =
-        scheduleKTotals.shortTermCapitalGain + scheduleKTotals.longTermCapitalGain
+        scheduleKTotals.shortTermCapitalGain +
+        scheduleKTotals.longTermCapitalGain
       const partner1Share = (totalCapitalGains * partners[0].profitShare) / 100
       expect(partner1Share).toBe(5000)
     })
@@ -279,3 +301,5 @@ describe('Partnership Schedule K Allocations', () => {
     })
   })
 })
+
+export {}

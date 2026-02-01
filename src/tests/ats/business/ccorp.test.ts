@@ -78,7 +78,10 @@ describe('ATS C-Corporation Scenarios (Form 1120)', () => {
     })
 
     it('should calculate total deductions', () => {
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       expect(totalDeductions).toBe(2400000)
     })
 
@@ -92,7 +95,10 @@ describe('ATS C-Corporation Scenarios (Form 1120)', () => {
         income.netCapitalGain +
         income.netGainFromSaleOfAssets +
         income.otherIncome
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
 
       // Note: taxable income can be negative (loss)
       const taxableIncome = totalIncome - totalDeductions
@@ -143,7 +149,10 @@ describe('ATS C-Corporation Scenarios (Form 1120)', () => {
     })
 
     it('should calculate total deductions', () => {
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       expect(totalDeductions).toBe(1300000)
     })
 
@@ -241,13 +250,19 @@ describe('Schedule M-1 Book-Tax Reconciliation', () => {
   })
 
   it('should calculate subtractions from book income', () => {
-    const totalSubtractions = Object.values(subtractions).reduce((a, b) => a + b, 0)
+    const totalSubtractions = Object.values(subtractions).reduce(
+      (a, b) => a + b,
+      0
+    )
     expect(totalSubtractions).toBe(40000)
   })
 
   it('should reconcile to taxable income', () => {
     const totalAdditions = Object.values(additions).reduce((a, b) => a + b, 0)
-    const totalSubtractions = Object.values(subtractions).reduce((a, b) => a + b, 0)
+    const totalSubtractions = Object.values(subtractions).reduce(
+      (a, b) => a + b,
+      0
+    )
     const taxableIncome =
       bookIncome.netIncomePerBooks + totalAdditions - totalSubtractions
     expect(taxableIncome).toBe(635000)
@@ -353,3 +368,5 @@ describe('Accumulated Earnings Tax', () => {
     expect(scenario.exemptionAmount).toBe(250000)
   })
 })
+
+export {}

@@ -230,7 +230,10 @@ export function calculateTaxableSocialSecurity(
   } else if (provisionalIncome <= additionalAmount) {
     return Math.min(halfBenefits, (provisionalIncome - baseAmount) * 0.5)
   } else {
-    const amount1 = Math.min(halfBenefits, (additionalAmount - baseAmount) * 0.5)
+    const amount1 = Math.min(
+      halfBenefits,
+      (additionalAmount - baseAmount) * 0.5
+    )
     const amount2 = (provisionalIncome - additionalAmount) * 0.85
     return Math.min(totalBenefits * 0.85, amount1 + amount2)
   }

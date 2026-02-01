@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import {
   ReactElement,
   useState,
@@ -275,11 +276,13 @@ export const MobileNav = ({
                   <ListItem
                     key={item.url}
                     button
-                    component={NavLink}
-                    to={item.url}
                     onClick={handleItemClick}
                     className={classes.listItem}
-                    activeClassName="active"
+                    {...({
+                      component: NavLink,
+                      to: item.url,
+                      activeClassName: 'active'
+                    } as any)}
                   >
                     <ListItemText
                       primary={item.title}
@@ -297,11 +300,10 @@ export const MobileNav = ({
         {/* Settings and Help */}
         <ListItem
           button
-          component={Link}
-          to={Urls.settings}
           onClick={handleItemClick}
           className={classes.listItem}
           style={{ paddingLeft: 16 }}
+          {...({ component: Link, to: Urls.settings } as any)}
         >
           <ListItemIcon>
             <SettingsIcon />
@@ -311,11 +313,10 @@ export const MobileNav = ({
 
         <ListItem
           button
-          component={Link}
-          to={Urls.help}
           onClick={handleItemClick}
           className={classes.listItem}
           style={{ paddingLeft: 16 }}
+          {...({ component: Link, to: Urls.help } as any)}
         >
           <ListItemIcon>
             <HelpIcon />

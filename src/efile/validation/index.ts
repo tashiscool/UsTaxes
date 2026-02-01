@@ -7,6 +7,8 @@
  * @module efile/validation
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-unnecessary-condition */
+
 // ============================================================================
 // Exports from Schema Validator
 // ============================================================================

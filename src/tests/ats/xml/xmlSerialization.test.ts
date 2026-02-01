@@ -5,7 +5,7 @@
  * to IRS MeF-compliant XML format.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
 
 import { create1040 } from 'ustaxes/forms/Y2025/irsForms/Main'
 import { FilingStatus, PersonRole, State } from 'ustaxes/core/data'
@@ -346,13 +346,10 @@ describe('ATS Scenario XML Serialization', () => {
           throw new Error(`Form creation failed: ${errors.join(', ')}`)
         },
         ([f1040]) => {
-          const serializer = new Form1040Serializer(
-            f1040 as any,
-            {
-              ...defaultSerializerConfig,
-              spousePIN: '54321'
-            }
-          )
+          const serializer = new Form1040Serializer(f1040 as any, {
+            ...defaultSerializerConfig,
+            spousePIN: '54321'
+          })
           const xml = serializer.serialize()
 
           expect(xml).toContain('<PrimarySSN>400011021</PrimarySSN>')
@@ -435,13 +432,13 @@ describe('ATS Scenario XML Serialization', () => {
       f1099Ints: [
         {
           payer: 'First National Bank',
-          amount: 1500
+          income: 1500
         }
       ],
       f1099Divs: [
         {
           payer: 'Vanguard',
-          ordinaryDividends: 3000,
+          dividends: 3000,
           qualifiedDividends: 2500
         }
       ]

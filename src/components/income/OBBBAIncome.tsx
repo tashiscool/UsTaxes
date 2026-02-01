@@ -9,6 +9,8 @@
  * Source: docs/obbba/new-provisions/
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
+
 import { ReactElement, useState } from 'react'
 import { Helmet } from 'react-helmet'
 import { useForm, FormProvider } from 'react-hook-form'

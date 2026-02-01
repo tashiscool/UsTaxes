@@ -14,6 +14,8 @@ import {
   TaxContext
 } from './types'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 const DEFAULT_CONFIG: TaxExplainerConfig = {
   baseUrl: 'http://localhost:8000',
   taxYear: 2024

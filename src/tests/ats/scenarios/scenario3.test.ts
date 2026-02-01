@@ -534,7 +534,9 @@ describe('ATS Scenario 3 - Lynette Heather (Farm Income and Retirement)', () => 
 
     it('should calculate 92.35% correctly', () => {
       // Verify the value is approximately 92.35% of line4bTotal
-      const percentOf4b = scheduleSE.regularMethod.line4c9235Percent / scheduleSE.regularMethod.line4bTotal
+      const percentOf4b =
+        scheduleSE.regularMethod.line4c9235Percent /
+        scheduleSE.regularMethod.line4bTotal
       expect(percentOf4b).toBeCloseTo(0.9235, 2)
     })
 
@@ -590,7 +592,8 @@ describe('ATS Scenario 3 - Lynette Heather (Farm Income and Retirement)', () => 
 
     it('should calculate net farm rental income correctly', () => {
       const expected =
-        form4835.income.line7GrossFarmRentalIncome - form4835.line31TotalExpenses
+        form4835.income.line7GrossFarmRentalIncome -
+        form4835.line31TotalExpenses
       expect(form4835.line32NetIncome).toBe(expected)
       expect(form4835.line32NetIncome).toBe(11905)
     })
@@ -614,8 +617,7 @@ describe('ATS Scenario 3 - Lynette Heather (Farm Income and Retirement)', () => 
     })
 
     it('should calculate AGI correctly', () => {
-      const expected =
-        form1040Data.totalIncome - form1040Data.line10Adjustments
+      const expected = form1040Data.totalIncome - form1040Data.line10Adjustments
       expect(form1040Data.agi).toBe(expected)
     })
 

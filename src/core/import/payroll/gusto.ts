@@ -8,7 +8,7 @@
  * matching the W-2 box numbers.
  */
 
-import { IncomeW2, State } from 'ustaxes/core/data'
+import { IncomeW2, PersonRole, State } from 'ustaxes/core/data'
 import {
   PayrollParseResult,
   PayrollParser,
@@ -468,14 +468,14 @@ export class GustoParser implements PayrollParser {
           zip: undefined
         }
       },
-      personRole: 'PRIMARY',
+      personRole: PersonRole.PRIMARY,
       occupation: '',
       income: data.wages,
+      medicareIncome: data.medicareWages ?? 0,
       fedWithholding: data.federalWithholding,
-      ssWages: data.ssWages,
-      ssWithholding: data.ssTax,
-      medicareWages: data.medicareWages,
-      medicareWithholding: data.medicareTax,
+      ssWages: data.ssWages ?? 0,
+      ssWithholding: data.ssTax ?? 0,
+      medicareWithholding: data.medicareTax ?? 0,
       state: data.stateCode,
       stateWages: data.stateWages,
       stateWithholding: data.stateTax

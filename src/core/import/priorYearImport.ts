@@ -17,6 +17,8 @@ import {
 } from 'ustaxes/core/data'
 import * as validators from 'ustaxes/core/data/validate'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
+
 /**
  * Represents the result of validating prior year data
  */
@@ -392,7 +394,7 @@ export const parsePriorYearJson = (
       }
     }
 
-    return { data: data  as InformationDateString, error: null }
+    return { data: data as InformationDateString, error: null }
   } catch (e) {
     return {
       data: null,

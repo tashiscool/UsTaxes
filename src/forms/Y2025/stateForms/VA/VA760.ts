@@ -6,6 +6,8 @@ import { AccountType, FilingStatus, State } from 'ustaxes/core/data'
 import parameters from './Parameters'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 /**
  * Virginia Form 760 - Resident Individual Income Tax Return
  *
@@ -53,8 +55,7 @@ export class VA760 extends Form {
   address = (): string | undefined =>
     this.info.taxPayer.primaryPerson.address.address
 
-  city = (): string | undefined =>
-    this.info.taxPayer.primaryPerson.address.city
+  city = (): string | undefined => this.info.taxPayer.primaryPerson.address.city
 
   stateField = (): string | undefined =>
     this.info.taxPayer.primaryPerson.address.state

@@ -11,6 +11,8 @@
  * 6. Confirmation or error handling
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
+
 import { ReactElement, useState, useCallback, useEffect } from 'react'
 import { Helmet } from 'react-helmet'
 import { useSelector } from 'react-redux'
@@ -25,7 +27,6 @@ import {
   Button,
   Grid,
   Divider,
-  Alert,
   CircularProgress,
   Dialog,
   DialogTitle,
@@ -33,14 +34,15 @@ import {
   DialogContentText,
   DialogActions
 } from '@material-ui/core'
+import { Alert } from '@material-ui/lab'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
 import NavigateNextIcon from '@material-ui/icons/NavigateNext'
 import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore'
 import SendIcon from '@material-ui/icons/Send'
 import WarningIcon from '@material-ui/icons/Warning'
 
-import { TaxesState } from 'ustaxes/redux'
-import { Refund } from 'ustaxes/core/data'
+import { YearsTaxesState } from 'ustaxes/redux/data'
+import { Information, Refund } from 'ustaxes/core/data'
 import {
   IdentityVerification,
   IdentityVerificationData
@@ -172,11 +174,12 @@ export function EFileWizard(): ReactElement {
   const classes = useStyles()
 
   // Redux state
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
-  const taxYear: string = useSelector((state: TaxesState) => state.activeYear)
-  const information = useSelector((state: TaxesState) => state.information)
+  const taxYear = useSelector((state: YearsTaxesState) => state.activeYear)
+  const information = useSelector(
+    (state: YearsTaxesState) => state[state.activeYear]
+  )
   const refundInfo = useSelector(
-    (state: TaxesState) => state.information.refund
+    (state: YearsTaxesState) => state[state.activeYear].refund
   )
 
   // Local state
@@ -806,7 +809,7 @@ export function EFileWizard(): ReactElement {
         onClose={() => setShowConfirmDialog(false)}
       >
         <DialogTitle>
-          <Box display="flex" alignItems="center" gap={1}>
+          <Box display="flex" alignItems="center" style={{ gap: 8 }}>
             <WarningIcon color="primary" />
             Confirm Submission
           </Box>

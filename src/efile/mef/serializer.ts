@@ -5,6 +5,8 @@
  * Follows IRS Modernized e-File (MeF) specifications.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import type F1040 from 'ustaxes/forms/Y2024/irsForms/F1040'
 import type Schedule1 from 'ustaxes/forms/Y2024/irsForms/Schedule1'
 import type ScheduleA from 'ustaxes/forms/Y2024/irsForms/ScheduleA'
@@ -1264,7 +1266,9 @@ ${returnData}
         'EmployeeNm',
         w2.personRole === PersonRole.PRIMARY
           ? `${this.f1040.info.taxPayer.primaryPerson.firstName} ${this.f1040.info.taxPayer.primaryPerson.lastName}`
-          : `${this.f1040.info.taxPayer.spouse?.firstName ?? ''} ${this.f1040.info.taxPayer.spouse?.lastName ?? ''}`
+          : `${this.f1040.info.taxPayer.spouse?.firstName ?? ''} ${
+              this.f1040.info.taxPayer.spouse?.lastName ?? ''
+            }`
       ),
 
       // Employer information

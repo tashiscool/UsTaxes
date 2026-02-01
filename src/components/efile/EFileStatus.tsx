@@ -6,6 +6,8 @@
  * and provides links for next steps.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { ReactElement } from 'react'
 import {
   Grid,

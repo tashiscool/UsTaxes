@@ -6,6 +6,8 @@
  * what-if scenario analysis.
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
+
 import {
   Information,
   TaxYear,

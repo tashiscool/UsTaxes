@@ -36,6 +36,9 @@ import { useDispatch } from 'ustaxes/redux'
 import { TaxYear, TaxYears } from 'ustaxes/core/data'
 import { LoadRaw } from 'ustaxes/redux/fs/Load'
 import * as actions from 'ustaxes/redux/actions'
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import {
   validatePriorYearData,
   parsePriorYearJson,

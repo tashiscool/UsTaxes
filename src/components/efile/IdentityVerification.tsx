@@ -18,12 +18,12 @@ import {
   Divider,
   FormControlLabel,
   Checkbox,
-  Alert,
   Collapse,
   Link,
   Tooltip,
   IconButton
 } from '@material-ui/core'
+import { Alert } from '@material-ui/lab'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'

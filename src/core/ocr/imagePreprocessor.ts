@@ -8,6 +8,8 @@
  * - Grayscale conversion
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 /**
  * Configuration options for image preprocessing
  */

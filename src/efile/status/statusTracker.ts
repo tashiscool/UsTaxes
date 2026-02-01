@@ -169,7 +169,8 @@ class IndexedDBAdapter implements StorageAdapter {
 
       request.onerror = () => reject(request.error)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      request.onsuccess = () => resolve((request.result as string | null) || null)
+      request.onsuccess = () =>
+        resolve((request.result as string | null) || null)
     })
   }
 
@@ -398,7 +399,9 @@ export class StatusTracker {
       timestamp: now,
       details:
         processed.status === 'Accepted'
-          ? `Accepted with confirmation: ${processed.confirmationNumber ?? 'N/A'}`
+          ? `Accepted with confirmation: ${
+              processed.confirmationNumber ?? 'N/A'
+            }`
           : `Rejected with ${processed.errors.length} error(s)`
     })
 

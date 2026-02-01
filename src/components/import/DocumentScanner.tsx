@@ -6,6 +6,8 @@
  * extract data using Tesseract.js OCR.
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unused-vars */
+
 import { ReactElement, useState, useRef, useCallback, useEffect } from 'react'
 import {
   Box,
@@ -418,7 +420,7 @@ export default function DocumentScanner(): ReactElement {
     try {
       switch (type) {
         case 'W-2': {
-          const w2Data = result.w2Data 
+          const w2Data = result.w2Data
 
           // Apply edited fields
           editedFields.forEach((value, fieldId) => {
@@ -565,7 +567,9 @@ export default function DocumentScanner(): ReactElement {
 
         default: {
           const _exhaustiveCheck: never = type
-          setError(`Import not yet supported for ${String(_exhaustiveCheck)} documents`)
+          setError(
+            `Import not yet supported for ${String(_exhaustiveCheck)} documents`
+          )
           return
         }
       }

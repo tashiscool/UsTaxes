@@ -318,9 +318,8 @@ export function combineW2s(w2s: W2ImportData[]): W2ImportData[] {
   // For employers with multiple entries, check if they're multi-state
   const result: W2ImportData[] = []
 
-  for (const [, employerW2s] of byEmployer.entries()) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const w2List: W2ImportData[] = employerW2s as W2ImportData[]
+  for (const [, employerW2s] of Array.from(byEmployer.entries())) {
+    const w2List = employerW2s
     if (w2List.length === 1) {
       result.push(w2List[0])
     } else {

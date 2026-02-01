@@ -86,7 +86,8 @@ const aotc = {
   // AOTC calculation: 100% of first $2,000 + 25% of next $2,000
   get creditAmount() {
     const first2000 = Math.min(this.qualifiedExpenses, 2000) * 1.0
-    const next2000 = Math.min(Math.max(0, this.qualifiedExpenses - 2000), 2000) * 0.25
+    const next2000 =
+      Math.min(Math.max(0, this.qualifiedExpenses - 2000), 2000) * 0.25
     return first2000 + next2000
   }, // Maximum $2,500
 
@@ -202,7 +203,9 @@ describe('ATS Scenario 16 - Emily Johnson (College Student)', () => {
     })
 
     it('should not exceed maximum deduction', () => {
-      expect(studentLoanInterestDeduction.deductibleAmount).toBeLessThanOrEqual(2500)
+      expect(studentLoanInterestDeduction.deductibleAmount).toBeLessThanOrEqual(
+        2500
+      )
     })
   })
 
@@ -220,7 +223,8 @@ describe('ATS Scenario 16 - Emily Johnson (College Student)', () => {
     })
 
     it('should have zero taxable income when deduction exceeds AGI', () => {
-      const agi = w2CampusJob.box1Wages - studentLoanInterestDeduction.deductibleAmount
+      const agi =
+        w2CampusJob.box1Wages - studentLoanInterestDeduction.deductibleAmount
       const standardDeduction = 15000
       const taxableIncome = Math.max(0, agi - standardDeduction)
       expect(taxableIncome).toBe(0)
@@ -233,7 +237,8 @@ describe('ATS Scenario 16 - Emily Johnson (College Student)', () => {
 
     it('should calculate total refund', () => {
       // Withholding + refundable AOTC
-      const expectedRefund = w2CampusJob.box2FederalWithholding + aotc.refundablePortion
+      const expectedRefund =
+        w2CampusJob.box2FederalWithholding + aotc.refundablePortion
       expect(expectedRefund).toBe(1625)
     })
   })

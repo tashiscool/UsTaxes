@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { FilingStatus, EstimatedTaxPayments } from 'ustaxes/core/data'
 import { EstimatedTaxPaymentRecord } from 'ustaxes/redux/notificationSlice'
 import {

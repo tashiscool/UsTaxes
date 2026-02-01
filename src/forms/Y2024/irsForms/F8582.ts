@@ -4,6 +4,8 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FilingStatus } from 'ustaxes/core/data'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 /**
  * Form 8582 - Passive Activity Loss Limitations
  *

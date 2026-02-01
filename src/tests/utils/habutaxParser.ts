@@ -14,6 +14,8 @@
  * - [schedule-c:N] - Business income
  */
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 import {
   Information,
   TaxPayer,
@@ -217,7 +219,7 @@ function isValidState(state: string | undefined): state is State {
 function normalizeState(state: string | undefined): State | undefined {
   if (!state) return undefined
   const upper = state.toUpperCase()
-  return isValidState(upper) ? (upper ) : undefined
+  return isValidState(upper) ? upper : undefined
 }
 
 // =============================================================================

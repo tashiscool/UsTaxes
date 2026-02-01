@@ -55,13 +55,17 @@ describe('ATS S-Corporation Scenarios (Form 1120-S)', () => {
 
     it('should calculate gross profit correctly', () => {
       const grossProfit =
-        income.grossReceipts - income.returnsAndAllowances - income.costOfGoodsSold
+        income.grossReceipts -
+        income.returnsAndAllowances -
+        income.costOfGoodsSold
       expect(grossProfit).toBe(400000) // No COGS for service business
     })
 
     it('should calculate total income correctly', () => {
       const grossProfit =
-        income.grossReceipts - income.returnsAndAllowances - income.costOfGoodsSold
+        income.grossReceipts -
+        income.returnsAndAllowances -
+        income.costOfGoodsSold
       const totalIncome = grossProfit + income.otherIncome
       expect(totalIncome).toBe(402000)
     })
@@ -71,15 +75,23 @@ describe('ATS S-Corporation Scenarios (Form 1120-S)', () => {
     })
 
     it('should calculate total deductions correctly', () => {
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       expect(totalDeductions).toBe(300000)
     })
 
     it('should calculate ordinary business income correctly', () => {
       const grossProfit =
-        income.grossReceipts - income.returnsAndAllowances - income.costOfGoodsSold
+        income.grossReceipts -
+        income.returnsAndAllowances -
+        income.costOfGoodsSold
       const totalIncome = grossProfit + income.otherIncome
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       const ordinaryIncome = totalIncome - totalDeductions
       expect(ordinaryIncome).toBe(102000)
     })
@@ -158,7 +170,10 @@ describe('ATS S-Corporation Scenarios (Form 1120-S)', () => {
     })
 
     it('should calculate total deductions correctly', () => {
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       expect(totalDeductions).toBe(1600000)
     })
 
@@ -167,7 +182,10 @@ describe('ATS S-Corporation Scenarios (Form 1120-S)', () => {
       const grossProfit = netReceipts - income.costOfGoodsSold
       const totalIncome =
         grossProfit + income.netGainFromSaleOfAssets + income.otherIncome
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       const ordinaryIncome = totalIncome - totalDeductions
       expect(ordinaryIncome).toBe(390000)
     })
@@ -256,7 +274,10 @@ describe('ATS S-Corporation Scenarios (Form 1120-S)', () => {
     })
 
     it('should calculate total deductions correctly', () => {
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       expect(totalDeductions).toBe(1350000)
     })
 
@@ -265,7 +286,10 @@ describe('ATS S-Corporation Scenarios (Form 1120-S)', () => {
       const grossProfit = netReceipts - income.costOfGoodsSold
       const totalIncome =
         grossProfit + income.netGainFromSaleOfAssets + income.otherIncome
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       const ordinaryIncome = totalIncome - totalDeductions
       expect(ordinaryIncome).toBe(265000)
     })
@@ -324,7 +348,10 @@ describe('ATS S-Corporation Scenarios (Form 1120-S)', () => {
     })
 
     it('should calculate total deductions correctly', () => {
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       expect(totalDeductions).toBe(500000)
     })
 
@@ -332,7 +359,10 @@ describe('ATS S-Corporation Scenarios (Form 1120-S)', () => {
       const netReceipts = income.grossReceipts - income.returnsAndAllowances
       const grossProfit = netReceipts - income.costOfGoodsSold
       const totalIncome = grossProfit + income.otherIncome
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       const ordinaryIncome = totalIncome - totalDeductions
       expect(ordinaryIncome).toBe(-404000)
     })
@@ -346,7 +376,10 @@ describe('ATS S-Corporation Scenarios (Form 1120-S)', () => {
       const netReceipts = income.grossReceipts - income.returnsAndAllowances
       const grossProfit = netReceipts - income.costOfGoodsSold
       const totalIncome = grossProfit + income.otherIncome
-      const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0)
+      const totalDeductions = Object.values(deductions).reduce(
+        (a, b) => a + b,
+        0
+      )
       const scheduleKOrdinaryIncome = totalIncome - totalDeductions
       expect(scheduleKOrdinaryIncome).toBe(-404000)
     })
@@ -380,10 +413,12 @@ describe('S-Corp Schedule K-1 Allocations', () => {
 
     it('should allocate ordinary income by stock percentage', () => {
       const majorShare =
-        (scheduleKTotals.ordinaryBusinessIncome * shareholders[0].percentageOfStock) /
+        (scheduleKTotals.ordinaryBusinessIncome *
+          shareholders[0].percentageOfStock) /
         100
       const minorShare =
-        (scheduleKTotals.ordinaryBusinessIncome * shareholders[1].percentageOfStock) /
+        (scheduleKTotals.ordinaryBusinessIncome *
+          shareholders[1].percentageOfStock) /
         100
       expect(majorShare).toBe(60000)
       expect(minorShare).toBe(40000)
@@ -391,38 +426,47 @@ describe('S-Corp Schedule K-1 Allocations', () => {
 
     it('should allocate interest income by stock percentage', () => {
       const majorShare =
-        (scheduleKTotals.interestIncome * shareholders[0].percentageOfStock) / 100
+        (scheduleKTotals.interestIncome * shareholders[0].percentageOfStock) /
+        100
       expect(majorShare).toBe(6000)
     })
 
     it('should allocate dividend income by stock percentage', () => {
       const majorShare =
-        (scheduleKTotals.dividendIncome * shareholders[0].percentageOfStock) / 100
+        (scheduleKTotals.dividendIncome * shareholders[0].percentageOfStock) /
+        100
       expect(majorShare).toBe(3000)
     })
 
     it('should allocate qualified dividends by stock percentage', () => {
       const majorShare =
-        (scheduleKTotals.qualifiedDividends * shareholders[0].percentageOfStock) / 100
+        (scheduleKTotals.qualifiedDividends *
+          shareholders[0].percentageOfStock) /
+        100
       expect(majorShare).toBe(2400)
     })
 
     it('should allocate short-term capital gains', () => {
       const majorShare =
-        (scheduleKTotals.shortTermCapitalGain * shareholders[0].percentageOfStock) /
+        (scheduleKTotals.shortTermCapitalGain *
+          shareholders[0].percentageOfStock) /
         100
       expect(majorShare).toBe(1200)
     })
 
     it('should allocate long-term capital gains', () => {
       const majorShare =
-        (scheduleKTotals.longTermCapitalGain * shareholders[0].percentageOfStock) / 100
+        (scheduleKTotals.longTermCapitalGain *
+          shareholders[0].percentageOfStock) /
+        100
       expect(majorShare).toBe(9000)
     })
 
     it('should allocate Section 179 deduction', () => {
       const majorShare =
-        (scheduleKTotals.section179Deduction * shareholders[0].percentageOfStock) / 100
+        (scheduleKTotals.section179Deduction *
+          shareholders[0].percentageOfStock) /
+        100
       expect(majorShare).toBe(12000)
     })
 
@@ -436,20 +480,25 @@ describe('S-Corp Schedule K-1 Allocations', () => {
 
     it('should allocate tax-exempt interest', () => {
       const majorShare =
-        (scheduleKTotals.taxExemptInterest * shareholders[0].percentageOfStock) / 100
+        (scheduleKTotals.taxExemptInterest *
+          shareholders[0].percentageOfStock) /
+        100
       expect(majorShare).toBe(1200)
     })
 
     it('should allocate non-deductible expenses', () => {
       const majorShare =
-        (scheduleKTotals.nondeductibleExpenses * shareholders[0].percentageOfStock) /
+        (scheduleKTotals.nondeductibleExpenses *
+          shareholders[0].percentageOfStock) /
         100
       expect(majorShare).toBe(300)
     })
 
     it('should allocate cash distributions', () => {
       const majorShare =
-        (scheduleKTotals.cashDistributions * shareholders[0].percentageOfStock) / 100
+        (scheduleKTotals.cashDistributions *
+          shareholders[0].percentageOfStock) /
+        100
       expect(majorShare).toBe(30000)
     })
 
@@ -460,3 +509,5 @@ describe('S-Corp Schedule K-1 Allocations', () => {
     })
   })
 })
+
+export {}

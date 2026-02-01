@@ -6,6 +6,8 @@ import { AccountType, FilingStatus, State } from 'ustaxes/core/data'
 import parameters from './Parameters'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 /**
  * Illinois Form IL-1040 - Individual Income Tax Return
  *
@@ -50,8 +52,7 @@ export class IL1040 extends Form {
   address = (): string | undefined =>
     this.info.taxPayer.primaryPerson.address.address
 
-  city = (): string | undefined =>
-    this.info.taxPayer.primaryPerson.address.city
+  city = (): string | undefined => this.info.taxPayer.primaryPerson.address.city
 
   stateField = (): string | undefined =>
     this.info.taxPayer.primaryPerson.address.state

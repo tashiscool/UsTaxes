@@ -41,6 +41,8 @@ import { generateId } from 'ustaxes/core/investments/costBasis'
 import { wouldTriggerWashSale } from 'ustaxes/core/investments/washSale'
 import { intentionallyFloat } from 'ustaxes/core/util'
 
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {

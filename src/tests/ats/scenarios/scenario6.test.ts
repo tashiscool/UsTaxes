@@ -302,7 +302,8 @@ describe('ATS Scenario 6 - Juan Torres (Form 1040-SS Puerto Rico)', () => {
     })
 
     it('should calculate net earnings at 92.35%', () => {
-      const expected = scheduleSE.line2CombinedProfit * scheduleSE.line3NetEarningsRate
+      const expected =
+        scheduleSE.line2CombinedProfit * scheduleSE.line3NetEarningsRate
       expect(scheduleSE.line3NetEarnings).toBeCloseTo(expected, 2)
     })
 
@@ -312,7 +313,8 @@ describe('ATS Scenario 6 - Juan Torres (Form 1040-SS Puerto Rico)', () => {
     })
 
     it('should calculate Medicare tax correctly (2.9%)', () => {
-      const expected = scheduleSE.line3NetEarnings * scheduleSE.line9MedicareRate
+      const expected =
+        scheduleSE.line3NetEarnings * scheduleSE.line9MedicareRate
       expect(scheduleSE.line9MedicareTax).toBeCloseTo(expected, 2)
     })
 
@@ -438,3 +440,5 @@ describe('ATS Scenario 6 - Juan Torres (Form 1040-SS Puerto Rico)', () => {
     })
   })
 })
+
+export {}

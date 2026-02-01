@@ -65,7 +65,8 @@ const ssa1099Patricia = {
   box6VoluntaryWithholding: 0
 }
 
-const totalSocialSecurity = ssa1099Robert.box5NetBenefits + ssa1099Patricia.box5NetBenefits // $50,400
+const totalSocialSecurity =
+  ssa1099Robert.box5NetBenefits + ssa1099Patricia.box5NetBenefits // $50,400
 
 // 1099-R - Pension Distribution (Robert's company pension)
 const f1099RPension = {
@@ -99,7 +100,7 @@ const taxCalculation = {
 
   // Social Security taxation calculation (MFJ thresholds)
   get provisionalIncome() {
-    return this.otherIncome + (totalSocialSecurity / 2)
+    return this.otherIncome + totalSocialSecurity / 2
   },
 
   // MFJ: $32,000 base, $44,000 additional
@@ -113,7 +114,10 @@ const taxCalculation = {
     } else if (this.provisionalIncome <= additionalAmount) {
       return Math.min(halfBenefits, (this.provisionalIncome - baseAmount) * 0.5)
     } else {
-      const amount1 = Math.min(halfBenefits, (additionalAmount - baseAmount) * 0.5)
+      const amount1 = Math.min(
+        halfBenefits,
+        (additionalAmount - baseAmount) * 0.5
+      )
       const amount2 = (this.provisionalIncome - additionalAmount) * 0.85
       return Math.min(totalSocialSecurity * 0.85, amount1 + amount2)
     }
@@ -181,7 +185,9 @@ describe('ATS Scenario 15 - Robert & Patricia Wilson (Retired Couple)', () => {
     })
 
     it('should have Robert as primary SS recipient', () => {
-      expect(ssa1099Robert.box5NetBenefits).toBeGreaterThan(ssa1099Patricia.box5NetBenefits)
+      expect(ssa1099Robert.box5NetBenefits).toBeGreaterThan(
+        ssa1099Patricia.box5NetBenefits
+      )
     })
   })
 
@@ -191,7 +197,9 @@ describe('ATS Scenario 15 - Robert & Patricia Wilson (Retired Couple)', () => {
     })
 
     it('should be fully taxable', () => {
-      expect(f1099RPension.box2aTaxableAmount).toBe(f1099RPension.box1GrossDistribution)
+      expect(f1099RPension.box2aTaxableAmount).toBe(
+        f1099RPension.box1GrossDistribution
+      )
     })
 
     it('should have federal withholding', () => {
@@ -211,13 +219,14 @@ describe('ATS Scenario 15 - Robert & Patricia Wilson (Retired Couple)', () => {
 
   describe('Social Security Taxation Calculation', () => {
     it('should calculate other income correctly', () => {
-      const expected = f1099RPension.box2aTaxableAmount + f1099Int.box1InterestIncome
+      const expected =
+        f1099RPension.box2aTaxableAmount + f1099Int.box1InterestIncome
       expect(taxCalculation.otherIncome).toBe(expected)
       expect(taxCalculation.otherIncome).toBe(38400)
     })
 
     it('should calculate provisional income correctly', () => {
-      const expected = taxCalculation.otherIncome + (totalSocialSecurity / 2)
+      const expected = taxCalculation.otherIncome + totalSocialSecurity / 2
       expect(taxCalculation.provisionalIncome).toBe(expected)
       expect(taxCalculation.provisionalIncome).toBe(63600)
     })
@@ -226,7 +235,9 @@ describe('ATS Scenario 15 - Robert & Patricia Wilson (Retired Couple)', () => {
       // Provisional income ($63,600) exceeds $44,000 threshold
       // So up to 85% of benefits may be taxable
       expect(taxCalculation.taxableSocialSecurity).toBeGreaterThan(0)
-      expect(taxCalculation.taxableSocialSecurity).toBeLessThanOrEqual(totalSocialSecurity * 0.85)
+      expect(taxCalculation.taxableSocialSecurity).toBeLessThanOrEqual(
+        totalSocialSecurity * 0.85
+      )
     })
   })
 
@@ -234,7 +245,7 @@ describe('ATS Scenario 15 - Robert & Patricia Wilson (Retired Couple)', () => {
     it('should include additional deduction for both being 65+', () => {
       const baseDeduction = 30000
       const additionalPerPerson = 1550
-      const expected = baseDeduction + (additionalPerPerson * 2)
+      const expected = baseDeduction + additionalPerPerson * 2
       expect(taxCalculation.standardDeduction).toBe(expected)
       expect(taxCalculation.standardDeduction).toBe(33100)
     })
@@ -250,7 +261,10 @@ describe('ATS Scenario 15 - Robert & Patricia Wilson (Retired Couple)', () => {
     })
 
     it('should calculate taxable income correctly', () => {
-      const expected = Math.max(0, taxCalculation.agi - taxCalculation.standardDeduction)
+      const expected = Math.max(
+        0,
+        taxCalculation.agi - taxCalculation.standardDeduction
+      )
       expect(taxCalculation.taxableIncome).toBe(expected)
     })
 

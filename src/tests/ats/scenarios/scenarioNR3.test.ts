@@ -215,7 +215,8 @@ const form1040NRData = (() => {
   } else if (line15TaxableIncome <= 47150) {
     line16Tax = 11600 * 0.1 + (line15TaxableIncome - 11600) * 0.12
   } else if (line15TaxableIncome <= 100525) {
-    line16Tax = 11600 * 0.1 + 35550 * 0.12 + (line15TaxableIncome - 47150) * 0.22
+    line16Tax =
+      11600 * 0.1 + 35550 * 0.12 + (line15TaxableIncome - 47150) * 0.22
   } else {
     line16Tax =
       11600 * 0.1 +
@@ -474,7 +475,8 @@ describe('ATS Scenario NR-3 - Jace Alfaro (Form 1040-NR Itemized)', () => {
     })
 
     it('should calculate taxable income correctly', () => {
-      const expected = form1040NRData.line11aAgi - form1040NRData.line14TotalDeductions
+      const expected =
+        form1040NRData.line11aAgi - form1040NRData.line14TotalDeductions
       expect(form1040NRData.line15TaxableIncome).toBe(expected)
       expect(form1040NRData.line15TaxableIncome).toBe(48237)
     })
