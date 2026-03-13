@@ -116,7 +116,10 @@ export default class F8995A extends F8995 {
     getF8995PhaseOutIncome(this.f1040.info.taxPayer.filingStatus)
   l22 = (): number => this.l20() - this.l21()
   l23 = (): number =>
-    this.f1040.info.taxPayer.filingStatus === FilingStatus.MFJ ? 100000 : 50000
+    this.f1040.info.taxPayer.filingStatus === FilingStatus.MFJ ||
+    this.f1040.info.taxPayer.filingStatus === FilingStatus.W
+      ? 100000
+      : 50000
   l24 = (): number => Math.round((this.l22() / this.l23()) * 10000) / 10000 // We want xx.xx%
 
   l25a = (): number | undefined =>

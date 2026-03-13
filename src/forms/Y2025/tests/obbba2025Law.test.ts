@@ -245,8 +245,47 @@ describe('2025 federal law updates', () => {
     expect(qbid.maxRate).toBe(0.2)
     expect(getF8995PhaseOutIncome(FilingStatus.S)).toBe(197300)
     expect(getF8995PhaseOutIncome(FilingStatus.MFJ)).toBe(394600)
+    expect(getF8995PhaseOutIncome(FilingStatus.W)).toBe(394600)
     expect(qbid.phaseOutStart(FilingStatus.S)).toBe(197300)
     expect(qbid.phaseOutStart(FilingStatus.MFJ)).toBe(394600)
+    expect(qbid.phaseOutStart(FilingStatus.W)).toBe(394600)
     expect(f1040.f8995?.l5()).toBe(20000)
+  })
+
+  it('treats qualified disaster losses differently from other casualty losses in 2025', () => {
+    const information = cloneDeep(baseInformation)
+    information.casualtyEvents = [
+      {
+        description: 'Qualified wildfire loss',
+        propertyDescription: 'Primary residence contents',
+        dateOfEvent: new Date('2025-08-01'),
+        federallyDeclaredDisaster: true,
+        femaDisasterNumber: 'DR-1234',
+        qualifiedDisasterLoss: true,
+        costBasis: 1000,
+        insuranceReimbursement: 0,
+        fairMarketValueBefore: 1000,
+        fairMarketValueAfter: 0
+      },
+      {
+        description: 'Ordinary federal disaster loss',
+        propertyDescription: 'Garage contents',
+        dateOfEvent: new Date('2025-09-01'),
+        federallyDeclaredDisaster: true,
+        femaDisasterNumber: 'DR-5678',
+        qualifiedDisasterLoss: false,
+        costBasis: 1000,
+        insuranceReimbursement: 0,
+        fairMarketValueBefore: 1000,
+        fairMarketValueAfter: 0
+      }
+    ] as never
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.f4684?.l11()).toBe(600)
+    expect(f1040.f4684?.l12()).toBe(1400)
+    expect(f1040.f4684?.l15()).toBe(10000)
+    expect(f1040.f4684?.personalCasualtyLossDeduction()).toBe(500)
   })
 })

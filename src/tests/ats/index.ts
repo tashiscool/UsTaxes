@@ -132,33 +132,42 @@ export interface ATSForm1040NRData extends ATSForm1040Data {
 // Tax Year 2025 Constants
 export const TAX_YEAR_2025 = {
   standardDeduction: {
-    single: 15000,
-    mfj: 30000,
-    mfs: 15000,
-    hoh: 22500,
-    qss: 30000
+    single: 15750,
+    mfj: 31500,
+    mfs: 15750,
+    hoh: 23625,
+    qss: 31500
   },
   additionalDeduction: {
-    blindOrOver65Single: 1950,
-    blindOrOver65Married: 1550
+    blindOrOver65Single: 2000,
+    blindOrOver65Married: 1600
   },
   taxBrackets: {
     singleMfs: [
-      { threshold: 11600, rate: 0.1 },
-      { threshold: 47150, rate: 0.12 },
-      { threshold: 100525, rate: 0.22 },
-      { threshold: 191950, rate: 0.24 },
-      { threshold: 243725, rate: 0.32 },
-      { threshold: 609350, rate: 0.35 },
+      { threshold: 11925, rate: 0.1 },
+      { threshold: 48475, rate: 0.12 },
+      { threshold: 103350, rate: 0.22 },
+      { threshold: 197300, rate: 0.24 },
+      { threshold: 250525, rate: 0.32 },
+      { threshold: 626350, rate: 0.35 },
+      { threshold: Infinity, rate: 0.37 }
+    ],
+    mfjQss: [
+      { threshold: 23850, rate: 0.1 },
+      { threshold: 96950, rate: 0.12 },
+      { threshold: 206700, rate: 0.22 },
+      { threshold: 394600, rate: 0.24 },
+      { threshold: 501050, rate: 0.32 },
+      { threshold: 751600, rate: 0.35 },
       { threshold: Infinity, rate: 0.37 }
     ],
     hoh: [
-      { threshold: 16550, rate: 0.1 },
-      { threshold: 63100, rate: 0.12 },
-      { threshold: 100500, rate: 0.22 },
-      { threshold: 191950, rate: 0.24 },
-      { threshold: 243725, rate: 0.32 },
-      { threshold: 609350, rate: 0.35 },
+      { threshold: 17000, rate: 0.1 },
+      { threshold: 64850, rate: 0.12 },
+      { threshold: 103350, rate: 0.22 },
+      { threshold: 197300, rate: 0.24 },
+      { threshold: 250500, rate: 0.32 },
+      { threshold: 626350, rate: 0.35 },
       { threshold: Infinity, rate: 0.37 }
     ]
   },
@@ -188,6 +197,8 @@ export function calculateTax(
   const brackets =
     filingStatus === 'hoh'
       ? TAX_YEAR_2025.taxBrackets.hoh
+      : filingStatus === 'mfj' || filingStatus === 'qss'
+      ? TAX_YEAR_2025.taxBrackets.mfjQss
       : TAX_YEAR_2025.taxBrackets.singleMfs
 
   let tax = 0

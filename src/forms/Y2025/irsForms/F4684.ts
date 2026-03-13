@@ -20,16 +20,21 @@ export type PropertyType = 'personal' | 'business' | 'incomeProducing'
 export interface CasualtyEvent {
   description: string
   dateOfEvent: Date
+  federallyDeclaredDisaster?: boolean
+  femaDisasterNumber?: string
+  qualifiedDisasterLoss?: boolean
   disasterDesignation?: string // FEMA disaster number if applicable
-  propertyType: PropertyType
-  casualtyType: CasualtyType
+  propertyType?: PropertyType
+  casualtyType?: CasualtyType
 
   // Property details
   costBasis: number
-  fmvBefore: number
-  fmvAfter: number
+  fmvBefore?: number
+  fmvAfter?: number
+  fairMarketValueBefore?: number
+  fairMarketValueAfter?: number
   insuranceReimbursement: number
-  repairCosts: number
+  repairCosts?: number
 }
 
 export default class F4684 extends F1040Attachment {
@@ -49,26 +54,70 @@ export default class F4684 extends F1040Attachment {
   }
 
   personalEvents = (): CasualtyEvent[] => {
-    return this.events().filter((e) => e.propertyType === 'personal')
+    return this.events().filter(
+      (e) => (e.propertyType ?? 'personal') === 'personal'
+    )
   }
 
   businessEvents = (): CasualtyEvent[] => {
-    return this.events().filter((e) => e.propertyType !== 'personal')
+    return this.events().filter(
+      (e) => (e.propertyType ?? 'personal') !== 'personal'
+    )
   }
 
   isFederallyDeclaredDisaster = (event: CasualtyEvent): boolean => {
     return (
-      event.casualtyType === 'disaster' &&
-      event.disasterDesignation !== undefined
+      event.federallyDeclaredDisaster === true ||
+      (event.casualtyType === 'disaster' &&
+        (event.disasterDesignation !== undefined ||
+          event.femaDisasterNumber !== undefined))
     )
   }
+
+  isQualifiedDisasterLoss = (event: CasualtyEvent): boolean => {
+    return (
+      this.isFederallyDeclaredDisaster(event) &&
+      event.qualifiedDisasterLoss === true
+    )
+  }
+
+  private eventFmvBefore = (event: CasualtyEvent): number =>
+    event.fairMarketValueBefore ?? event.fmvBefore ?? 0
+
+  private eventFmvAfter = (event: CasualtyEvent): number =>
+    event.fairMarketValueAfter ?? event.fmvAfter ?? 0
+
+  private eventDisasterNumber = (event: CasualtyEvent): string | undefined =>
+    event.femaDisasterNumber ?? event.disasterDesignation
+
+  private perEventFloor = (event: CasualtyEvent): number =>
+    this.isQualifiedDisasterLoss(event) ? 500 : 100
+
+  private lossAfterPerEventFloor = (event: CasualtyEvent): number =>
+    Math.max(0, this.calculateLoss(event) - this.perEventFloor(event))
+
+  private federallyDeclaredPersonalEvents = (): CasualtyEvent[] =>
+    this.personalEvents().filter((e) => this.isFederallyDeclaredDisaster(e))
+
+  private qualifiedPersonalLossAfterFloors = (): number =>
+    this.federallyDeclaredPersonalEvents()
+      .filter((event) => this.isQualifiedDisasterLoss(event))
+      .reduce((sum, event) => sum + this.lossAfterPerEventFloor(event), 0)
+
+  private ordinaryPersonalLossAfterFloors = (): number =>
+    this.federallyDeclaredPersonalEvents()
+      .filter((event) => !this.isQualifiedDisasterLoss(event))
+      .reduce((sum, event) => sum + this.lossAfterPerEventFloor(event), 0)
 
   // Section A - Personal Use Property (disasters only under TCJA)
 
   // Calculate loss per event
   calculateLoss = (event: CasualtyEvent): number => {
     // Loss = Lesser of (cost basis) or (FMV decline) - insurance
-    const fmvDecline = Math.max(0, event.fmvBefore - event.fmvAfter)
+    const fmvDecline = Math.max(
+      0,
+      this.eventFmvBefore(event) - this.eventFmvAfter(event)
+    )
     const deductibleLoss = Math.min(event.costBasis, fmvDecline)
     return Math.max(0, deductibleLoss - event.insuranceReimbursement)
   }
@@ -91,12 +140,14 @@ export default class F4684 extends F1040Attachment {
 
   // Line 5: FMV before
   l5 = (eventIndex: number): number => {
-    return this.personalEvents()[eventIndex]?.fmvBefore ?? 0
+    const event = this.personalEvents()[eventIndex]
+    return event === undefined ? 0 : this.eventFmvBefore(event)
   }
 
   // Line 6: FMV after
   l6 = (eventIndex: number): number => {
-    return this.personalEvents()[eventIndex]?.fmvAfter ?? 0
+    const event = this.personalEvents()[eventIndex]
+    return event === undefined ? 0 : this.eventFmvAfter(event)
   }
 
   // Line 7: Subtract line 6 from line 5
@@ -116,21 +167,26 @@ export default class F4684 extends F1040Attachment {
 
   // Line 10: Total personal casualty losses
   l10 = (): number => {
-    return this.personalEvents()
-      .filter((e) => this.isFederallyDeclaredDisaster(e))
-      .reduce((sum, _, i) => sum + this.l9(i), 0)
+    return this.federallyDeclaredPersonalEvents().reduce(
+      (sum, event) => sum + this.calculateLoss(event),
+      0
+    )
   }
 
   // Line 11: $100 floor per casualty event
   l11 = (): number => {
-    const disasterEvents = this.personalEvents().filter((e) =>
-      this.isFederallyDeclaredDisaster(e)
+    return this.federallyDeclaredPersonalEvents().reduce(
+      (sum, event) => sum + this.perEventFloor(event),
+      0
     )
-    return disasterEvents.length * 100
   }
 
   // Line 12: Subtract line 11 from line 10
-  l12 = (): number => Math.max(0, this.l10() - this.l11())
+  l12 = (): number =>
+    this.federallyDeclaredPersonalEvents().reduce(
+      (sum, event) => sum + this.lossAfterPerEventFloor(event),
+      0
+    )
 
   // Line 13: Total personal casualty gains
   l13 = (): number => {
@@ -149,7 +205,23 @@ export default class F4684 extends F1040Attachment {
   l15 = (): number => Math.round(this.f1040.l11() * 0.1)
 
   // Line 16: Subtract line 15 from line 14 (deductible personal loss)
-  l16 = (): number => Math.max(0, this.l14() - this.l15())
+  l16 = (): number => {
+    const totalGains = this.l13()
+    const ordinaryLosses = this.ordinaryPersonalLossAfterFloors()
+    const qualifiedLosses = this.qualifiedPersonalLossAfterFloors()
+
+    const ordinaryLossesAfterGains = Math.max(0, ordinaryLosses - totalGains)
+    const remainingGains = Math.max(0, totalGains - ordinaryLosses)
+    const qualifiedLossesAfterGains = Math.max(
+      0,
+      qualifiedLosses - remainingGains
+    )
+
+    return (
+      qualifiedLossesAfterGains +
+      Math.max(0, ordinaryLossesAfterGains - this.l15())
+    )
+  }
 
   // Section B - Business and Income-Producing Property
 
@@ -193,9 +265,9 @@ export default class F4684 extends F1040Attachment {
     for (let i = 0; i < 4; i++) {
       const event = this.personalEvents()[i]
       fields.push(
-        event.description ?? '',
-        event.dateOfEvent.toLocaleDateString() ?? '',
-        event.disasterDesignation ?? '',
+        event?.description ?? '',
+        event?.dateOfEvent?.toLocaleDateString() ?? '',
+        this.eventDisasterNumber(event ?? ({} as CasualtyEvent)) ?? '',
         this.l2(i),
         this.l3(i),
         this.l4(i),

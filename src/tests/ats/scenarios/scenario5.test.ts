@@ -292,16 +292,16 @@ const schedule8812 = {
   ],
 
   numberOfQualifyingChildren: 2,
-  ctcPerChild2025: 2000,
+  ctcPerChild2025: 2200,
 
-  // Line 1 - Number of qualifying children x $2,000
-  line1CtcAmount: 4000, // 2 * $2,000
+  // Line 1 - Number of qualifying children x $2,200
+  line1CtcAmount: 4400, // 2 * $2,200
 
   // Line 2 - Other dependents x $500 (N/A)
   line2OdcAmount: 0,
 
   // Line 3 - Total
-  line3Total: 4000,
+  line3Total: 4400,
 
   // Line 4 - AGI
   line4Agi: 38500,
@@ -316,7 +316,7 @@ const schedule8812 = {
   line7Reduction: 0,
 
   // Line 8 - Credit allowed
-  line8CreditAllowed: 4000,
+  line8CreditAllowed: 4400,
 
   // Part II-A - Additional Child Tax Credit
   line12EarnedIncome: 38500,
@@ -325,7 +325,7 @@ const schedule8812 = {
   line15ActcAmount: 5400, // 36000 * 0.15
 
   // Line 19 - Nonrefundable CTC
-  line19NonrefundableCtc: 4000,
+  line19NonrefundableCtc: 4400,
 
   // Line 28 - ACTC (depends on tax calculation)
   line28Actc: 0
@@ -359,22 +359,22 @@ const form1040Data = (() => {
   const agi = totalIncome // No adjustments
 
   // Deduction
-  const standardDeductionHoh2025 = 22500
-  const blindAdditionalDeduction = 1950 // Additional for blind
+  const standardDeductionHoh2025 = 23625
+  const blindAdditionalDeduction = 2000 // Additional for blind
   const totalStandardDeduction =
-    standardDeductionHoh2025 + blindAdditionalDeduction // $24,450
+    standardDeductionHoh2025 + blindAdditionalDeduction // $25,625
 
   // Taxable income
-  const taxableIncome = Math.max(0, agi - totalStandardDeduction) // $14,050
+  const taxableIncome = Math.max(0, agi - totalStandardDeduction) // $12,875
 
   // Tax calculation (2025 HOH brackets)
-  // $0 - $16,550: 10%
-  // Taxable income: $14,050 (all in 10% bracket)
-  const calculatedTax = Math.round(taxableIncome * 0.1) // $1,405
+  // $0 - $17,000: 10%
+  // Taxable income: $12,875 (all in 10% bracket)
+  const calculatedTax = Math.round(taxableIncome * 0.1) // $1,288
 
   // Child Tax Credit (nonrefundable - limited to tax liability)
-  const ctcAvailable = schedule8812.line8CreditAllowed // $4,000
-  const nonrefundableCtc = Math.min(calculatedTax, ctcAvailable) // $1,405
+  const ctcAvailable = schedule8812.line8CreditAllowed // $4,400
+  const nonrefundableCtc = Math.min(calculatedTax, ctcAvailable) // $1,288
 
   // Tax after CTC
   const taxAfterCtc = calculatedTax - nonrefundableCtc // $0
@@ -389,16 +389,16 @@ const form1040Data = (() => {
   const totalTax = taxAfterCredits // $0
 
   // ACTC (refundable portion of CTC)
-  const ctcUsed = nonrefundableCtc // $1,405
-  const ctcRemaining = ctcAvailable - ctcUsed // $2,595
+  const ctcUsed = nonrefundableCtc // $1,288
+  const ctcRemaining = ctcAvailable - ctcUsed // $3,112
   const actcLimit = (totalWages - 2500) * 0.15 // $5,400
-  const actc = Math.min(ctcRemaining, actcLimit) // $2,595
+  const actc = Math.min(ctcRemaining, actcLimit) // $3,112
 
   // Payments
   const federalWithholding = w2Data.box2FederalWithholding // $3,850
   const eic = scheduleEIC.calculatedEic // $3,961
 
-  const totalPayments = federalWithholding + actc + eic // $10,024
+  const totalPayments = federalWithholding + actc + eic // $10,923
 
   // Refund
   const refund = totalPayments > totalTax ? totalPayments - totalTax : 0
@@ -600,15 +600,15 @@ describe('ATS Scenario 5 - Bobby Barker (HOH with Blind, EIC, CTC)', () => {
       expect(schedule8812.numberOfQualifyingChildren).toBe(2)
     })
 
-    it('should have CTC of $2,000 per child for 2025', () => {
-      expect(schedule8812.ctcPerChild2025).toBe(2000)
+    it('should have CTC of $2,200 per child for 2025', () => {
+      expect(schedule8812.ctcPerChild2025).toBe(2200)
     })
 
     it('should calculate total CTC correctly', () => {
       const expected =
         schedule8812.numberOfQualifyingChildren * schedule8812.ctcPerChild2025
       expect(schedule8812.line1CtcAmount).toBe(expected)
-      expect(schedule8812.line3Total).toBe(4000)
+      expect(schedule8812.line3Total).toBe(4400)
     })
 
     it('should have no phaseout under $200,000 for HOH', () => {
@@ -617,7 +617,7 @@ describe('ATS Scenario 5 - Bobby Barker (HOH with Blind, EIC, CTC)', () => {
     })
 
     it('should allow full credit', () => {
-      expect(schedule8812.line8CreditAllowed).toBe(4000)
+      expect(schedule8812.line8CreditAllowed).toBe(4400)
     })
   })
 
@@ -627,10 +627,10 @@ describe('ATS Scenario 5 - Bobby Barker (HOH with Blind, EIC, CTC)', () => {
     })
 
     it('should include blind additional deduction', () => {
-      // HOH standard deduction: $22,500
-      // Blind additional: $1,950
-      // Total: $24,450
-      const expected = 22500 + 1950
+      // HOH standard deduction: $23,625
+      // Blind additional: $2,000
+      // Total: $25,625
+      const expected = 23625 + 2000
       expect(form1040Data.deduction).toBe(expected)
     })
 

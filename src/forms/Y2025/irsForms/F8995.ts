@@ -6,7 +6,7 @@ import { qbid } from '../data/federal'
 
 export function getF8995PhaseOutIncome(filingStatus: FilingStatus): number {
   let formAMinAmount = 197300
-  if (filingStatus === FilingStatus.MFJ) {
+  if (filingStatus === FilingStatus.MFJ || filingStatus === FilingStatus.W) {
     formAMinAmount = 394600
   }
   return formAMinAmount
