@@ -3,6 +3,7 @@ import F1040Attachment from './F1040Attachment'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { sumFields } from 'ustaxes/core/irsForms/util'
+import { computeOrdinaryTax } from './TaxTable'
 
 /**
  * Form 1040-NR - U.S. Nonresident Alien Income Tax Return
@@ -195,9 +196,16 @@ export default class F1040NR extends F1040Attachment {
 
   // FDAP tax (30% flat rate, or treaty rate)
   fdapTaxRate = (): number => {
-    if (this.claimsTaxTreaty() && this.treatyBenefitAmount() > 0) {
+    if (
+      this.claimsTaxTreaty() &&
+      this.treatyBenefitAmount() > 0 &&
+      this.totalFDAPIncome() > 0
+    ) {
       // Treaty may reduce rate
-      return 0.3 - this.treatyBenefitAmount() / this.totalFDAPIncome()
+      return Math.max(
+        0,
+        0.3 - this.treatyBenefitAmount() / this.totalFDAPIncome()
+      )
     }
     return 0.3
   }
@@ -220,11 +228,25 @@ export default class F1040NR extends F1040Attachment {
     ])
   }
 
+  taxableIncome = (): number =>
+    Math.max(0, this.totalEffectivelyConnectedIncome() - this.totalItemizedDeductions())
+
+  eciTax = (): number =>
+    Math.round(
+      computeOrdinaryTax(this.f1040.info.taxPayer.filingStatus, this.taxableIncome())
+    )
+
+  totalTax = (): number => this.eciTax() + this.fdapTax()
+
   // Payments
   taxWithheld = (): number => this.f1040NRInfo()?.taxWithheld ?? 0
   estimatedTaxPayments = (): number =>
     this.f1040NRInfo()?.estimatedTaxPayments ?? 0
   totalPayments = (): number => this.taxWithheld() + this.estimatedTaxPayments()
+
+  refund = (): number => Math.max(0, this.totalPayments() - this.totalTax())
+
+  amountOwed = (): number => Math.max(0, this.totalTax() - this.totalPayments())
 
   fields = (): Field[] => {
     const info = this.nonresidentInfo()
