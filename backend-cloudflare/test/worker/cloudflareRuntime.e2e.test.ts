@@ -1228,4 +1228,171 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       )
     ).toBe(false)
   })
+
+  it('derives spouse, unemployment, and investment facts from TaxFlow entities', async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sub: 'taxflow-user-derived-facts',
+        email: 'derived-facts@example.com',
+        displayName: 'Derived Facts User'
+      })
+    })
+    expect(response.status).toBe(201)
+    const sessionCookie = extractCookieHeader(response)
+
+    response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionCookie
+      },
+      body: JSON.stringify({
+        taxYear: 2025,
+        filingStatus: 'mfj',
+        formType: '1040',
+        screenData: {
+          '/taxpayer-profile': {
+            firstName: 'Jordan',
+            lastName: 'Example',
+            ssn: '400-01-5555',
+            filingStatus: 'mfj',
+            address: {
+              line1: '45 Example St',
+              city: 'Boston',
+              state: 'MA',
+              zip: '02110'
+            }
+          },
+          '/efile-wizard': {
+            signatureText: 'Jordan Example'
+          }
+        }
+      })
+    })
+    expect(response.status).toBe(201)
+    const created = await parseJsonResponse<JsonObject>(response)
+    const filingSessionId = String((created.filingSession as JsonObject).id)
+
+    const payloads = [
+      {
+        entityType: 'spouse',
+        entityId: 'spouse-primary',
+        label: 'Taylor Example',
+        data: {
+          filingStatus: 'mfj',
+          firstName: 'Taylor',
+          lastName: 'Example',
+          ssn: '400-01-7777',
+          dob: '1987-04-11',
+          occupation: 'Teacher',
+          nonresident: false,
+          spouseDeceased: false
+        }
+      },
+      {
+        entityType: 'unemployment_record',
+        entityId: 'unemployment-primary',
+        label: 'Unemployment compensation',
+        data: {
+          amount: 6400,
+          federalWithheld: 640,
+          repaidAmount: 0
+        }
+      },
+      {
+        entityType: 'ssa_record',
+        entityId: 'ssa-primary',
+        label: 'Social Security benefits',
+        data: {
+          grossAmount: 18000,
+          federalWithheld: 0,
+          otherIncome: 42000,
+          filingStatus: 'mfj',
+          taxableEstimate: 9000
+        }
+      },
+      {
+        entityType: 'crypto_account',
+        entityId: 'coinbase',
+        label: 'Coinbase',
+        data: {
+          name: 'Coinbase',
+          status: 'connected',
+          txCount: 27,
+          source: 'crypto_console'
+        }
+      },
+      {
+        entityType: 'tax_lot',
+        entityId: 'crypto-1',
+        label: 'BTC',
+        data: {
+          source: 'crypto_console',
+          security: 'BTC',
+          securityType: 'crypto',
+          transactionType: 'sell',
+          acquisitionDate: '2023-03-01',
+          saleDate: '2024-06-01',
+          proceeds: 12500,
+          costBasis: 9100,
+          gain: 3400,
+          term: 'long'
+        }
+      }
+    ] as const
+
+    for (const payload of payloads) {
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/${payload.entityType}/${payload.entityId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            status: 'complete',
+            label: payload.label,
+            data: payload.data
+          })
+        }
+      )
+      expect(response.status).toBe(200)
+    }
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+      {
+        method: 'POST',
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const syncResult = await parseJsonResponse<JsonObject>(response)
+    const facts = syncResult.facts as JsonObject
+    expect((facts.spouse as JsonObject).firstName).toBe('Taylor')
+    expect((facts.incomeSummary as JsonObject).totalUnemployment).toBe(6400)
+    expect((facts.incomeSummary as JsonObject).totalSocialSecurityGross).toBe(18000)
+    expect((facts.investmentSummary as JsonObject).cryptoAccountCount).toBe(1)
+    expect((facts.investmentSummary as JsonObject).taxLotCount).toBe(1)
+    expect((facts.investmentSummary as JsonObject).netCapitalGain).toBe(3400)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const checklist = await parseJsonResponse<JsonObject>(response)
+    const checklistItems = (checklist.checklist as JsonObject).items as Record<
+      string,
+      JsonObject
+    >
+    expect(checklistItems.spouse.status).toBe('complete')
+    expect(checklistItems['unemployment-ss'].status).toBe('complete')
+    expect(checklistItems.investments.status).toBe('complete')
+  })
 })

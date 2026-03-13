@@ -57,12 +57,12 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
     r2Artifacts: ['filing-sessions/<id>/snapshot.json', 'filing-sessions/<id>/entities/spouse/<id>.json'],
-    orchestration: 'generic entity persistence only',
+    orchestration: 'spouse CRUD -> facts -> checklist/review',
     atsCoverage: 'S2|S4|S5|S33',
     directFileCoverage: 'partial',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'Stored and recoverable, but spouse-specific fact mapping and validation are still thin.'
+      'SpouseFlow now round-trips spouse entities through /app/v1 and backend facts/checklist/review include spouse data with worker runtime coverage.'
   },
   {
     family: 'dependents_and_household',
@@ -113,12 +113,12 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
     r2Artifacts: ['filing-sessions/<id>/entities/tax_lot/<id>.json', 'filing-sessions/<id>/entities/crypto_account/<id>.json'],
-    orchestration: 'generic entity persistence only',
+    orchestration: 'investment/crypto CRUD -> facts -> checklist/review',
     atsCoverage: 'S10|S11|S12|S27|S32',
     directFileCoverage: 'partial',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'Advanced investment UX exists in TaxFlow, but backend integration stops at persisted screen/entity data.'
+      'InvestmentsConsole and CryptoConsole now round-trip tax lots and crypto accounts through /app/v1, and backend facts/checklist/review derive investment summaries with worker runtime coverage.'
   },
   {
     family: 'business_and_k1',
@@ -169,12 +169,12 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
     r2Artifacts: ['filing-sessions/<id>/entities/unemployment_record/<id>.json', 'filing-sessions/<id>/entities/ssa_record/<id>.json'],
-    orchestration: 'generic entity persistence only',
+    orchestration: 'unemployment/SSA CRUD -> facts -> checklist/review',
     atsCoverage: 'S24|S30',
     directFileCoverage: 'partial',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'Backend has generic storage, but no dedicated facts mapper for these income families yet.'
+      'UnemploymentSSHub now round-trips unemployment and SSA entities through /app/v1, and backend facts/checklist/review derive their income summaries with worker runtime coverage.'
   },
   {
     family: 'foreign_income_and_nonresident',

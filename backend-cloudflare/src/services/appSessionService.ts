@@ -307,6 +307,20 @@ const buildStatusFromCollection = (
   return 'in_progress'
 }
 
+const mergeCollectionById = <T extends { id: string }>(
+  screenItems: T[],
+  entityItems: T[]
+): T[] => {
+  const merged = new Map<string, T>()
+  for (const item of screenItems) {
+    merged.set(item.id, item)
+  }
+  for (const item of entityItems) {
+    merged.set(item.id, item)
+  }
+  return Array.from(merged.values())
+}
+
 const getW2Records = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
@@ -343,7 +357,7 @@ const getW2Records = (
       isComplete: Boolean(entity.data.employerName && entity.data.ein && entity.data.box1Wages)
     }))
 
-  return [...screenW2, ...entityW2]
+  return mergeCollectionById(screenW2, entityW2)
 }
 
 const get1099Records = (
@@ -379,7 +393,7 @@ const get1099Records = (
       )
     }))
 
-  return [...screen1099, ...entity1099]
+  return mergeCollectionById(screen1099, entity1099)
 }
 
 const getDependents = (
@@ -418,7 +432,218 @@ const getDependents = (
       )
     }))
 
-  return [...screenDependents, ...entityDependents]
+  return mergeCollectionById(screenDependents, entityDependents)
+}
+
+const getSpouse = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const spouseScreen = requireScreen(snapshot, '/spouse')
+  const spouseEntity = entities.find((entity) => entity.entityType === 'spouse')
+  const spouseData = spouseEntity?.data ?? spouseScreen
+  const hasSpouse =
+    spouseScreen.hasSpouse === true ||
+    Boolean(spouseEntity) ||
+    ['mfj', 'mfs'].includes(toText(spouseScreen.filingStatus).toLowerCase())
+
+  if (!hasSpouse) {
+    return null
+  }
+
+  return {
+    id: spouseEntity?.id ?? 'spouse-primary',
+    firstName: toText(spouseData.firstName),
+    lastName: toText(spouseData.lastName),
+    ssn: toText(spouseData.ssn),
+    dob: toText(spouseData.dob),
+    occupation: toText(spouseData.occupation),
+    filingStatus: toText(spouseData.filingStatus ?? spouseScreen.filingStatus),
+    nonresident: Boolean(spouseData.nonresident),
+    spouseDeceased: Boolean(
+      spouseData.spouseDeceased ?? spouseData.deceased ?? spouseScreen.spouseDeceased
+    ),
+    isComplete: Boolean(
+      spouseData.firstName &&
+        spouseData.lastName &&
+        spouseData.dob &&
+        (spouseData.spouseDeceased || spouseData.deceased || spouseData.ssn)
+    )
+  }
+}
+
+const getUnemploymentRecords = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const screen = requireScreen(snapshot, '/unemployment-ss')
+  const form = asRecord(screen.form)
+  const screenRecords =
+    screen.hasUnemployment === true || form.unemploymentAmount || form.unemploymentWithheld
+      ? [
+          {
+            id: 'unemployment-primary',
+            amount: toMoney(form.unemploymentAmount),
+            federalWithheld: toMoney(form.unemploymentWithheld),
+            repaidAmount: toMoney(form.repaidAmount),
+            isComplete: Boolean(form.unemploymentAmount)
+          }
+        ]
+      : []
+
+  const entityRecords = entities
+    .filter((entity) => entity.entityType === 'unemployment_record')
+    .map((entity) => ({
+      id: entity.id,
+      amount: toMoney(entity.data.amount ?? entity.data.unemploymentAmount),
+      federalWithheld: toMoney(
+        entity.data.federalWithheld ?? entity.data.unemploymentWithheld
+      ),
+      repaidAmount: toMoney(entity.data.repaidAmount),
+      isComplete: Boolean(entity.data.amount ?? entity.data.unemploymentAmount)
+    }))
+
+  return mergeCollectionById(screenRecords, entityRecords)
+}
+
+const getSocialSecurityRecords = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const screen = requireScreen(snapshot, '/unemployment-ss')
+  const form = asRecord(screen.form)
+  const screenRecords =
+    screen.hasSS === true || form.ssGrossAmount || form.ssWithheld
+      ? [
+          {
+            id: 'ssa-primary',
+            grossAmount: toMoney(form.ssGrossAmount),
+            federalWithheld: toMoney(form.ssWithheld),
+            otherIncome: toMoney(form.otherIncome),
+            filingStatus: toText(form.filingStatus || snapshot.filingStatus),
+            taxableEstimate: toMoney(form.ssTaxableAmount),
+            isComplete: Boolean(form.ssGrossAmount)
+          }
+        ]
+      : []
+
+  const entityRecords = entities
+    .filter((entity) => entity.entityType === 'ssa_record')
+    .map((entity) => ({
+      id: entity.id,
+      grossAmount: toMoney(entity.data.grossAmount ?? entity.data.ssGrossAmount),
+      federalWithheld: toMoney(entity.data.federalWithheld ?? entity.data.ssWithheld),
+      otherIncome: toMoney(entity.data.otherIncome),
+      filingStatus: toText(entity.data.filingStatus),
+      taxableEstimate: toMoney(
+        entity.data.taxableEstimate ?? entity.data.ssTaxableAmount
+      ),
+      isComplete: Boolean(entity.data.grossAmount ?? entity.data.ssGrossAmount)
+    }))
+
+  return mergeCollectionById(screenRecords, entityRecords)
+}
+
+const getTaxLots = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const screenLots = asArray<Record<string, unknown>>(
+    requireScreen(snapshot, '/investments').trades
+  ).map((record) => ({
+    id: toText(record.id) || crypto.randomUUID(),
+    asset: toText(record.asset),
+    securityType: toText(record.type),
+    acquisitionDate: toText(record.acquired),
+    saleDate: toText(record.sold),
+    proceeds: toMoney(record.proceeds),
+    costBasis: toMoney(record.basis),
+    source: 'investments_screen',
+    isComplete: Boolean(
+      record.asset && record.type && record.acquired && record.sold && record.proceeds
+    )
+  }))
+
+  const entityLots = entities
+    .filter((entity) => entity.entityType === 'tax_lot')
+    .map((entity) => ({
+      id: entity.id,
+      asset: toText(entity.data.security ?? entity.data.asset),
+      securityType: toText(entity.data.securityType ?? entity.data.type),
+      acquisitionDate: toText(entity.data.acquisitionDate ?? entity.data.acquired),
+      saleDate: toText(entity.data.saleDate ?? entity.data.sold),
+      proceeds: toMoney(entity.data.proceeds),
+      costBasis: toMoney(entity.data.costBasis ?? entity.data.basis),
+      source: toText(entity.data.source ?? 'entity'),
+      isComplete: Boolean(
+        (entity.data.security ?? entity.data.asset) &&
+          (entity.data.proceeds ?? entity.data.costBasis)
+      )
+    }))
+
+  return mergeCollectionById(screenLots, entityLots)
+}
+
+const getCryptoAccounts = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const screenAccounts = asArray<Record<string, unknown>>(
+    requireScreen(snapshot, '/crypto').exchanges
+  )
+    .filter((record) => record.name || record.status || record.txCount)
+    .map((record) => ({
+      id: toText(record.id) || crypto.randomUUID(),
+      name: toText(record.name),
+      status: toText(record.status) || 'none',
+      txCount: Number(record.txCount ?? 0),
+      source: 'crypto_screen',
+      isComplete: Boolean(record.name)
+    }))
+
+  const entityAccounts = entities
+    .filter((entity) => entity.entityType === 'crypto_account')
+    .map((entity) => ({
+      id: entity.id,
+      name: toText(entity.data.name),
+      status: toText(entity.data.status || 'none'),
+      txCount: Number(entity.data.txCount ?? 0),
+      source: toText(entity.data.source ?? 'entity'),
+      isComplete: Boolean(entity.data.name)
+    }))
+
+  return mergeCollectionById(screenAccounts, entityAccounts)
+}
+
+const getInvestmentSummary = (
+  taxLots: ReturnType<typeof getTaxLots>,
+  cryptoAccounts: ReturnType<typeof getCryptoAccounts>
+) => {
+  const realizedGains = taxLots.reduce((sum, lot) => {
+    const gain = lot.proceeds - lot.costBasis
+    return gain > 0 ? sum + gain : sum
+  }, 0)
+  const realizedLosses = taxLots.reduce((sum, lot) => {
+    const gain = lot.proceeds - lot.costBasis
+    return gain < 0 ? sum + gain : sum
+  }, 0)
+
+  return {
+    taxLotCount: taxLots.length,
+    taxLotCompleteCount: countCompleted(taxLots),
+    cryptoAccountCount: cryptoAccounts.length,
+    cryptoAccountCompleteCount: countCompleted(cryptoAccounts),
+    realizedGains,
+    realizedLosses: Math.abs(realizedLosses),
+    netCapitalGain: realizedGains + realizedLosses,
+    longTermCount: taxLots.filter((lot) => {
+      if (!lot.acquisitionDate || !lot.saleDate) return false
+      return (
+        new Date(lot.saleDate).getTime() - new Date(lot.acquisitionDate).getTime() >
+        365 * 24 * 60 * 60 * 1000
+      )
+    }).length
+  }
 }
 
 const getCreditSummary = (
@@ -466,7 +691,9 @@ const getCreditSummary = (
 
 const getIncomeSummary = (
   w2Records: ReturnType<typeof getW2Records>,
-  form1099Records: ReturnType<typeof get1099Records>
+  form1099Records: ReturnType<typeof get1099Records>,
+  unemploymentRecords: ReturnType<typeof getUnemploymentRecords>,
+  socialSecurityRecords: ReturnType<typeof getSocialSecurityRecords>
 ) => {
   const totalsByType = form1099Records.reduce<Record<string, number>>((acc, record) => {
     acc[record.type] = (acc[record.type] ?? 0) + record.amount
@@ -486,6 +713,26 @@ const getIncomeSummary = (
     total1099Amount: form1099Records.reduce((sum, record) => sum + record.amount, 0),
     total1099FederalWithholding: form1099Records.reduce(
       (sum, record) => sum + record.federalWithheld,
+      0
+    ),
+    unemploymentCount: unemploymentRecords.length,
+    unemploymentCompleteCount: countCompleted(unemploymentRecords),
+    totalUnemployment: unemploymentRecords.reduce(
+      (sum, record) => sum + record.amount,
+      0
+    ),
+    totalUnemploymentWithholding: unemploymentRecords.reduce(
+      (sum, record) => sum + record.federalWithheld,
+      0
+    ),
+    socialSecurityCount: socialSecurityRecords.length,
+    socialSecurityCompleteCount: countCompleted(socialSecurityRecords),
+    totalSocialSecurityGross: socialSecurityRecords.reduce(
+      (sum, record) => sum + record.grossAmount,
+      0
+    ),
+    totalSocialSecurityTaxableEstimate: socialSecurityRecords.reduce(
+      (sum, record) => sum + record.taxableEstimate,
       0
     ),
     totalsByType
@@ -521,17 +768,34 @@ const toFacts = (
   const w2Records = getW2Records(snapshot, entities)
   const form1099Records = get1099Records(snapshot, entities)
   const dependents = getDependents(snapshot, entities)
+  const spouse = getSpouse(snapshot, entities)
+  const unemploymentRecords = getUnemploymentRecords(snapshot, entities)
+  const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
+  const taxLots = getTaxLots(snapshot, entities)
+  const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const creditSummary = getCreditSummary(snapshot, dependents)
-  const incomeSummary = getIncomeSummary(w2Records, form1099Records)
+  const incomeSummary = getIncomeSummary(
+    w2Records,
+    form1099Records,
+    unemploymentRecords,
+    socialSecurityRecords
+  )
+  const investmentSummary = getInvestmentSummary(taxLots, cryptoAccounts)
 
   return {
     primaryTIN: primaryTin,
     taxflowSessionId: row.id,
     filingStatus: status,
+    spouse,
     w2Records,
     form1099Records,
+    unemploymentRecords,
+    socialSecurityRecords,
+    taxLots,
+    cryptoAccounts,
     dependents,
     incomeSummary,
+    investmentSummary,
     creditSummary: creditSummary.summary,
     '/taxYear': {
       $type: 'gov.irs.factgraph.persisters.IntWrapper',
@@ -600,8 +864,10 @@ const toSubmissionPayload = (
     taxpayer.filingStatus ?? snapshot.filingStatus ?? row.filing_status
   )
   const incomeSummary = asRecord(facts.incomeSummary)
+  const investmentSummary = asRecord(facts.investmentSummary)
   const creditSummary = asRecord(facts.creditSummary)
   const dependents = asArray<Record<string, unknown>>(facts.dependents)
+  const spouse = asRecord(facts.spouse)
 
   const refund = Number(review.totalRefund ?? snapshot.estimatedRefund ?? 0)
   const federalRefund = Number(review.federalRefund ?? refund)
@@ -625,6 +891,14 @@ const toSubmissionPayload = (
     forms: {
       w2s: facts.w2Records,
       forms1099: facts.form1099Records,
+      unemployment: facts.unemploymentRecords,
+      socialSecurity: facts.socialSecurityRecords,
+      spouse,
+      investments: {
+        taxLots: facts.taxLots,
+        cryptoAccounts: facts.cryptoAccounts,
+        summary: investmentSummary
+      },
       dependents,
       credits: creditSummary
     },
@@ -637,8 +911,12 @@ const toSubmissionPayload = (
       signerName: efile.signatureText ?? undefined,
       bankLast4: String(efile.account ?? '').slice(-4) || undefined,
       incomeSummary,
+      investmentSummary,
       creditSummary,
-      dependentCount: dependents.length
+      dependentCount: dependents.length,
+      spouse,
+      unemploymentCount: asArray(facts.unemploymentRecords).length,
+      socialSecurityCount: asArray(facts.socialSecurityRecords).length
     }
   }
 }
@@ -651,6 +929,11 @@ const buildChecklist = (
   const w2Records = getW2Records(snapshot, entities)
   const form1099Records = get1099Records(snapshot, entities)
   const dependents = getDependents(snapshot, entities)
+  const spouse = getSpouse(snapshot, entities)
+  const unemploymentRecords = getUnemploymentRecords(snapshot, entities)
+  const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
+  const taxLots = getTaxLots(snapshot, entities)
+  const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const creditSummary = getCreditSummary(snapshot, dependents)
 
   const itemFromScreen = (
@@ -672,7 +955,15 @@ const buildChecklist = (
   return {
     items: {
       'taxpayer-profile': itemFromScreen('taxpayer-profile', '/taxpayer-profile', 'Taxpayer profile saved'),
-      spouse: itemFromScreen('spouse', '/spouse', 'Spouse information saved', { optional: true }),
+      spouse: {
+        status: spouse ? (spouse.isComplete ? 'complete' : 'in_progress') : 'skipped',
+        sublabel: spouse
+          ? `${spouse.firstName} ${spouse.lastName}`.trim() || 'Spouse information started'
+          : undefined,
+        warnings: findings
+          .filter((finding) => finding.code === 'SPOUSE-INCOMPLETE')
+          .map((finding) => ({ message: finding.message, level: finding.severity }))
+      },
       household: {
         status: buildStatusFromCollection(dependents, true),
         sublabel:
@@ -704,10 +995,45 @@ const buildChecklist = (
           .filter((finding) => finding.code === '1099-INCOMPLETE')
           .map((finding) => ({ message: finding.message, level: finding.severity }))
       },
-      investments: itemFromScreen('investments', '/tax-lots', 'Investment activity reviewed', { optional: true }),
+      investments: {
+        status:
+          taxLots.length > 0 || cryptoAccounts.length > 0
+            ? taxLots.every((item) => item.isComplete) &&
+              cryptoAccounts.every((item) => item.isComplete)
+              ? 'complete'
+              : 'in_progress'
+            : 'skipped',
+        sublabel:
+          taxLots.length > 0 || cryptoAccounts.length > 0
+            ? `${taxLots.length} sales, ${cryptoAccounts.length} crypto accounts`
+            : undefined,
+        warnings: findings
+          .filter((finding) => finding.code === 'INVESTMENT-INCOMPLETE')
+          .map((finding) => ({ message: finding.message, level: finding.severity }))
+      },
       rental: itemFromScreen('rental', '/rental', 'Rental property reviewed', { optional: true }),
       business: itemFromScreen('business', '/business-k1', 'Business income reviewed', { optional: true }),
       retirement: itemFromScreen('retirement', '/ira-retirement', 'Retirement income reviewed', { optional: true }),
+      'unemployment-ss': {
+        status:
+          unemploymentRecords.length > 0 || socialSecurityRecords.length > 0
+            ? unemploymentRecords.every((item) => item.isComplete) &&
+              socialSecurityRecords.every((item) => item.isComplete)
+              ? 'complete'
+              : 'in_progress'
+            : 'skipped',
+        sublabel:
+          unemploymentRecords.length > 0 || socialSecurityRecords.length > 0
+            ? `${unemploymentRecords.length} unemployment, ${socialSecurityRecords.length} SSA`
+            : undefined,
+        warnings: findings
+          .filter(
+            (finding) =>
+              finding.code === 'UNEMPLOYMENT-INCOMPLETE' ||
+              finding.code === 'SSA-INCOMPLETE'
+          )
+          .map((finding) => ({ message: finding.message, level: finding.severity }))
+      },
       'foreign-income': itemFromScreen('foreign-income', '/foreign-income', 'Foreign income reviewed', { optional: true }),
       hsa: itemFromScreen('hsa', '/hsa', 'HSA reviewed', { optional: true }),
       ctc: {
@@ -749,6 +1075,15 @@ const buildChecklist = (
       creditEntities: {
         total: creditSummary.creditEntities.length,
         complete: countCompleted(creditSummary.creditEntities)
+      },
+      investments: {
+        total: taxLots.length + cryptoAccounts.length,
+        complete: countCompleted(taxLots) + countCompleted(cryptoAccounts)
+      },
+      unemploymentAndSs: {
+        total: unemploymentRecords.length + socialSecurityRecords.length,
+        complete:
+          countCompleted(unemploymentRecords) + countCompleted(socialSecurityRecords)
       }
     },
     ui: {
@@ -771,7 +1106,13 @@ const buildReview = (
   const w2Records = getW2Records(snapshot, entities)
   const form1099Records = get1099Records(snapshot, entities)
   const dependents = getDependents(snapshot, entities)
+  const spouse = getSpouse(snapshot, entities)
+  const unemploymentRecords = getUnemploymentRecords(snapshot, entities)
+  const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
+  const taxLots = getTaxLots(snapshot, entities)
+  const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const creditSummary = getCreditSummary(snapshot, dependents)
+  const investmentSummary = getInvestmentSummary(taxLots, cryptoAccounts)
   const sections = [
     {
       id: 'filing-info',
@@ -796,6 +1137,15 @@ const buildReview = (
           editPath: '/taxpayer-profile',
           editLabel: 'Edit',
           hasWarning: !taxpayer.priorYearAgi
+        },
+        {
+          label: 'Spouse',
+          value: spouse
+            ? `${spouse.firstName} ${spouse.lastName}`.trim() || 'Spouse started'
+            : 'No spouse entered',
+          editPath: '/spouse',
+          editLabel: 'Edit',
+          hasWarning: Boolean(spouse && !spouse.isComplete)
         }
       ],
       warnings: findings.map((finding) => ({
@@ -836,15 +1186,72 @@ const buildReview = (
           value: `$${form1099Records.reduce((sum, record) => sum + record.amount, 0).toLocaleString()}`,
           editPath: '/1099',
           editLabel: 'Edit'
+        },
+        {
+          label: 'Unemployment compensation',
+          value: `$${unemploymentRecords.reduce((sum, record) => sum + record.amount, 0).toLocaleString()}`,
+          editPath: '/unemployment-ss',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'Social Security benefits',
+          value: `$${socialSecurityRecords.reduce((sum, record) => sum + record.grossAmount, 0).toLocaleString()}`,
+          editPath: '/unemployment-ss',
+          editLabel: 'Edit'
         }
       ],
       warnings: findings
-        .filter((finding) => finding.code === 'W2-INCOMPLETE' || finding.code === '1099-INCOMPLETE')
+        .filter(
+          (finding) =>
+            finding.code === 'W2-INCOMPLETE' ||
+            finding.code === '1099-INCOMPLETE' ||
+            finding.code === 'UNEMPLOYMENT-INCOMPLETE' ||
+            finding.code === 'SSA-INCOMPLETE'
+        )
         .map((finding) => ({
           id: finding.id,
           level: finding.severity,
           message: finding.message,
           editPath: finding.fix_path ?? '/income',
+          editLabel: finding.fix_label ?? 'Review'
+        }))
+    },
+    {
+      id: 'investments',
+      title: 'Investments and crypto',
+      rows: [
+        {
+          label: 'Investment sales',
+          value:
+            taxLots.length > 0
+              ? `${countCompleted(taxLots)}/${taxLots.length} complete`
+              : 'No sales entered',
+          editPath: '/investments',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'Connected crypto accounts',
+          value:
+            cryptoAccounts.length > 0
+              ? `${countCompleted(cryptoAccounts)}/${cryptoAccounts.length} complete`
+              : 'No crypto accounts entered',
+          editPath: '/crypto',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'Net capital gain/loss',
+          value: `$${investmentSummary.netCapitalGain.toLocaleString()}`,
+          editPath: '/investments',
+          editLabel: 'Review'
+        }
+      ],
+      warnings: findings
+        .filter((finding) => finding.code === 'INVESTMENT-INCOMPLETE')
+        .map((finding) => ({
+          id: finding.id,
+          level: finding.severity,
+          message: finding.message,
+          editPath: finding.fix_path ?? '/investments',
           editLabel: finding.fix_label ?? 'Review'
         }))
     },
@@ -934,6 +1341,11 @@ const toFindingRows = (
   const w2Records = getW2Records(snapshot, entities)
   const form1099Records = get1099Records(snapshot, entities)
   const dependents = getDependents(snapshot, entities)
+  const spouse = getSpouse(snapshot, entities)
+  const unemploymentRecords = getUnemploymentRecords(snapshot, entities)
+  const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
+  const taxLots = getTaxLots(snapshot, entities)
+  const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const creditSummary = getCreditSummary(snapshot, dependents)
   const now = nowIso()
   const findings: ReviewFindingRow[] = []
@@ -966,6 +1378,23 @@ const toFindingRows = (
         'Prior-year AGI is recommended for e-file identity verification. Enter $0 if you did not file last year.',
       fix_path: '/efile-wizard?step=identity&field=prior_year_agi',
       fix_label: 'Add prior-year AGI',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (spouse && !spouse.isComplete) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'SPOUSE-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish spouse details',
+      message: 'Your spouse record is missing a name, date of birth, or identifying information.',
+      fix_path: '/spouse',
+      fix_label: 'Complete spouse info',
       acknowledged: 0,
       metadata_key: null,
       created_at: now,
@@ -1017,6 +1446,57 @@ const toFindingRows = (
       message: 'One or more 1099 forms are missing a payer or amount.',
       fix_path: '/1099',
       fix_label: 'Complete 1099 details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (unemploymentRecords.some((record) => !record.isComplete)) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'UNEMPLOYMENT-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish unemployment details',
+      message: 'Your unemployment record is missing the benefit amount.',
+      fix_path: '/unemployment-ss',
+      fix_label: 'Complete unemployment details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (socialSecurityRecords.some((record) => !record.isComplete)) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'SSA-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish Social Security details',
+      message: 'Your Social Security record is missing the gross benefit amount.',
+      fix_path: '/unemployment-ss',
+      fix_label: 'Complete Social Security details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (taxLots.some((record) => !record.isComplete) || cryptoAccounts.some((record) => !record.isComplete)) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'INVESTMENT-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish investment or crypto details',
+      message: 'An investment sale or crypto account is missing required details.',
+      fix_path: '/investments',
+      fix_label: 'Complete investment details',
       acknowledged: 0,
       metadata_key: null,
       created_at: now,
