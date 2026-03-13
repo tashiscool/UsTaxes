@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-03-12T20:26:03.052Z",
+  "source_paths": {
+    "scala_ats_dir": "/Users/tkhan/IdeaProjects/taxes/direct-file-easy-webui/direct-file/backend/src/test/resources/ats-scenarios",
+    "ustaxes_node_ats_dir": "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/scenarios",
+    "backend_ats_dir": "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/ats",
+    "backend_matrix_fixture": "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/fixtures/atsScenarioMatrix.json"
+  },
+  "totals": {
+    "unique_scenarios_union": 36,
+    "scala_ats_scenarios": 36,
+    "ustaxes_node_ats_scenarios": 26,
+    "backend_cloudflare_scenarios_tested": 36,
+    "backend_covered_scala_scenarios": 36,
+    "backend_covered_node_scenarios": 26,
+    "backend_covered_union_scenarios": 36
+  },
+  "coverage_percent": {
+    "backend_vs_scala": 100,
+    "backend_vs_node": 100,
+    "backend_vs_union": 100
+  },
+  "missing_in_backend": [],
+  "differences": {
+    "only_in_scala": [
+      "S25",
+      "S26",
+      "S27",
+      "S28",
+      "S29",
+      "S30",
+      "S31",
+      "S32",
+      "S33",
+      "NR5"
+    ],
+    "only_in_node": []
+  },
+  "fully_covered": true
+}

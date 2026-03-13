@@ -1,0 +1,34 @@
+name = "ustaxes-backend"
+main = "src/index.ts"
+compatibility_date = "2026-03-12"
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "USTAXES_DB"
+database_name = "ustaxes-backend-local"
+database_id = "0f0f5e74-7055-4f2a-8cd3-dfbf8e8cf001"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "ARTIFACTS_BUCKET"
+bucket_name = "ustaxes-artifacts"
+preview_bucket_name = "ustaxes-artifacts-preview"
+
+[[queues.producers]]
+binding = "SUBMISSION_QUEUE"
+queue = "ustaxes-submissions"
+
+[[queues.consumers]]
+queue = "ustaxes-submissions"
+max_batch_size = 20
+max_batch_timeout = 5
+
+[[durable_objects.bindings]]
+name = "SUBMISSION_ORCHESTRATOR"
+class_name = "SubmissionOrchestrator"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SubmissionOrchestrator"]

@@ -1,0 +1,1 @@
+-- Seed intentionally empty: used as extension point for local demo data.

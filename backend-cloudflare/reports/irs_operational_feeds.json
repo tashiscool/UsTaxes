@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-03-12T20:26:02.724Z",
+  "sources": {
+    "known_issues_page": {
+      "url": "https://www.irs.gov/e-file-providers/known-issues-and-solutions",
+      "status": 200,
+      "ok": true,
+      "fetched_at": "2026-03-12T20:26:02.696Z"
+    },
+    "mef_status_page": {
+      "url": "https://www.irs.gov/e-file-providers/modernized-e-file-mef-status",
+      "status": 200,
+      "ok": true,
+      "fetched_at": "2026-03-12T20:26:02.695Z"
+    },
+    "schema_ty2025_page": {
+      "url": "https://www.irs.gov/e-file-providers/tax-year-2025-modernized-e-file-mef-schemas-and-business-rules-for-individual-tax-returns-and-extensions",
+      "status": 404,
+      "ok": false,
+      "fetched_at": "2026-03-12T20:26:02.723Z"
+    }
+  },
+  "known_issues": {
+    "workbookLinkCount": 17,
+    "workbookLinks": [
+      "https://www.irs.gov/pub/irs-schema/ty2025-known-issues-and-solutions.xlsx",
+      "https://www.irs.gov/pub/irs-schema/ty2024-known-issues-and-solutions.xlsx",
+      "https://www.irs.gov/pub/irs-efile/ty2023-known-issues-and-solutions.xlsx",
+      "https://www.irs.gov/pub/irs-schema/ty2022-known-issues-and-solutions.xlsx",
+      "https://www.irs.gov/pub/irs-schema/ty2021-known-issues-and-solutions.xlsx",
+      "https://www.irs.gov/pub/irs-schema/ty2020_known_issues_and_solutions.xlsx",
+      "https://www.irs.gov/pub/irs-schema/ty2019_known_issues_and_solutions.xlsx",
+      "https://www.irs.gov/pub/irs-schema/ty2018-known-issues-and-solutions.xlsx",
+      "https://www.irs.gov/pub/irs-schema/ty2017_known_issues_and_solutions.xlsx",
+      "https://www.irs.gov/pub/irs-schema/py2017_known_issues_and_solutions_ty2016.xlsx",
+      "https://www.irs.gov/pub/irs-schema/py2016_known_issues_and_solutions_ty2015.xlsx",
+      "https://www.irs.gov/pub/irs-schema/py2015_known_issues_and_solutions_ty2014.xls",
+      "https://www.irs.gov/pub/irs-schema/py2014_known_issues_and_solutions_ty2013.xls",
+      "https://www.irs.gov/pub/irs-schema/TY2011_known_issues_and_solutions_as%20of%2006202012_post100412.xls",
+      "https://www.irs.gov/pub/irs-schema/ty2010_known_issues_and_solutions_update_09132011.xls",
+      "https://www.irs.gov/pub/irs-schema/ty2009_updated_known_issues_and_solutions_post_11-19-2010.xls",
+      "https://www.irs.gov/pub/irs-schema/ty2008_known_issues_solutions_post_09-03-10.xls"
+    ],
+    "yearlyFiles": [
+      {
+        "taxYear": 2025,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2025-known-issues-and-solutions.xlsx"
+      },
+      {
+        "taxYear": 2024,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2024-known-issues-and-solutions.xlsx"
+      },
+      {
+        "taxYear": 2023,
+        "url": "https://www.irs.gov/pub/irs-efile/ty2023-known-issues-and-solutions.xlsx"
+      },
+      {
+        "taxYear": 2022,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2022-known-issues-and-solutions.xlsx"
+      },
+      {
+        "taxYear": 2021,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2021-known-issues-and-solutions.xlsx"
+      },
+      {
+        "taxYear": 2020,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2020_known_issues_and_solutions.xlsx"
+      },
+      {
+        "taxYear": 2019,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2019_known_issues_and_solutions.xlsx"
+      },
+      {
+        "taxYear": 2018,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2018-known-issues-and-solutions.xlsx"
+      },
+      {
+        "taxYear": 2017,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2017_known_issues_and_solutions.xlsx"
+      },
+      {
+        "taxYear": 2016,
+        "url": "https://www.irs.gov/pub/irs-schema/py2017_known_issues_and_solutions_ty2016.xlsx"
+      },
+      {
+        "taxYear": 2015,
+        "url": "https://www.irs.gov/pub/irs-schema/py2016_known_issues_and_solutions_ty2015.xlsx"
+      },
+      {
+        "taxYear": 2014,
+        "url": "https://www.irs.gov/pub/irs-schema/py2015_known_issues_and_solutions_ty2014.xls"
+      },
+      {
+        "taxYear": 2013,
+        "url": "https://www.irs.gov/pub/irs-schema/py2014_known_issues_and_solutions_ty2013.xls"
+      },
+      {
+        "taxYear": 2011,
+        "url": "https://www.irs.gov/pub/irs-schema/TY2011_known_issues_and_solutions_as%20of%2006202012_post100412.xls"
+      },
+      {
+        "taxYear": 2010,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2010_known_issues_and_solutions_update_09132011.xls"
+      },
+      {
+        "taxYear": 2009,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2009_updated_known_issues_and_solutions_post_11-19-2010.xls"
+      },
+      {
+        "taxYear": 2008,
+        "url": "https://www.irs.gov/pub/irs-schema/ty2008_known_issues_solutions_post_09-03-10.xls"
+      }
+    ],
+    "ty2025WorkbookUrl": "https://www.irs.gov/pub/irs-schema/ty2025-known-issues-and-solutions.xlsx"
+  },
+  "mef_status": {
+    "productionCallLogCount": 2,
+    "productionCallLogs": [
+      "https://www.irs.gov/pub/irs-schema/mef-production-call-log-01282026.pdf",
+      "https://www.irs.gov/pub/irs-schema/mef-production-call-log-01292026.pdf"
+    ],
+    "resiliencyFaqUrl": "https://www.irs.gov/pub/irs-wi/MeF_Resiliency_FAQs.pdf",
+    "hasResiliencyLanguage": true,
+    "hasGetAckUnavailableLanguage": true,
+    "hasSha256RequirementLanguage": true
+  },
+  "schema_ty2025": {
+    "releaseMemoCount": 0,
+    "releaseMemos": [],
+    "scenarioPdfCount": 0,
+    "scenarioPdfs": []
+  }
+}

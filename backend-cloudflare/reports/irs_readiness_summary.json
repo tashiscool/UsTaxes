@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-03-12T20:26:03.209Z",
+  "source_paths": {
+    "matrix_fixture": "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/fixtures/atsScenarioMatrix.json",
+    "mef_compliance_service": "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/mefComplianceService.ts",
+    "mef_compliance_tests": "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/mefComplianceService.test.ts",
+    "submission_orchestration_service": "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/submissionOrchestrationService.ts",
+    "orchestration_behavior_tests": "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/orchestration.behavior.test.ts",
+    "cloudflare_e2e_tests": "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts"
+  },
+  "official_ats_scenarios": 15,
+  "official_ats_covered_in_backend": 15,
+  "official_ats_missing_in_backend": [],
+  "official_ats_tin_non_compliant": [],
+  "has_operations_feed_snapshot": true,
+  "requirements_total": 8,
+  "requirement_status_counts": {
+    "PASS": 8
+  }
+}
