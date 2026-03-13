@@ -7,6 +7,7 @@
     "dev": "wrangler dev --local --persist-to .wrangler/state",
     "test": "vitest run",
     "test:runtime": "vitest run test/worker/cloudflareRuntime.e2e.test.ts",
+    "test:taxflow:e2e": "bash ./scripts/run-taxflow-local-e2e.sh",
     "test:coverage": "vitest run --coverage",
     "test:all": "npm run check && npm run test",
     "test:watch": "vitest",

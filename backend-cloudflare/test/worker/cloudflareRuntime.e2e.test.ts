@@ -1483,4 +1483,267 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(updatedPrintMail.packetStatus).toBe('mailed')
     expect((updatedPrintMail.returnSummary as JsonObject).amountOwed).toBe(600)
   })
+
+  it('derives business, rental, and foreign/nonresident facts from advanced TaxFlow data', async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sub: 'taxflow-user-advanced-facts',
+        email: 'advanced-facts@example.com',
+        displayName: 'Advanced Facts User'
+      })
+    })
+    expect(response.status).toBe(201)
+    const sessionCookie = extractCookieHeader(response)
+
+    response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionCookie
+      },
+      body: JSON.stringify({
+        taxYear: 2025,
+        filingStatus: 'single',
+        formType: '1040',
+        screenData: {
+          '/taxpayer-profile': {
+            firstName: 'Riley',
+            lastName: 'Example',
+            ssn: '400-01-8888',
+            filingStatus: 'single',
+            address: {
+              line1: '12 Harbor St',
+              city: 'Portland',
+              state: 'OR',
+              zip: '97201'
+            }
+          },
+          '/qbi-worksheet': {
+            filingStatus: 'single',
+            entities: [
+              {
+                id: 'qbi-1',
+                name: 'Consulting LLC',
+                type: 'sole_prop',
+                netIncome: 98000,
+                w2Wages: 0,
+                ubia: 0,
+                isSSTB: false,
+                qbiAmount: 98000,
+                w2Limitation: 0,
+                finalDeduction: 18000,
+                status: 'complete',
+                warnings: []
+              }
+            ]
+          },
+          '/nonresident': {
+            visaType: 'F-1',
+            countryOfCitizenship: 'Germany',
+            daysInUS2024: '20',
+            daysInUS2023: '40',
+            daysInUS2022: '30',
+            hasTreaty: true,
+            treatyCountry: 'Germany',
+            treatyArticle: 'Article 15',
+            treatyBenefit: 'Employment income treaty benefit',
+            hasITIN: true,
+            itin: '900123456',
+            hasForeignAccounts: true,
+            foreignAccountMax: '18000'
+          },
+          '/intl-advanced/feie': {
+            qualMethod: 'physical',
+            ppDays: '330',
+            foreignEarned: '140000',
+            housingCosts: '28000'
+          },
+          '/intl-advanced/schedule-nec': {
+            items: [
+              {
+                id: 'nec-1',
+                incomeType: 'US dividends',
+                grossAmount: 4200,
+                netTax: 630
+              }
+            ]
+          }
+        }
+      })
+    })
+    expect(response.status).toBe(201)
+    const created = await parseJsonResponse<JsonObject>(response)
+    const filingSessionId = String((created.filingSession as JsonObject).id)
+
+    const entityPayloads = [
+      {
+        entityType: 'schedule_c',
+        entityId: 'biz-1',
+        label: 'Consulting LLC',
+        data: {
+          businessType: 'schedule-c',
+          name: 'Consulting LLC',
+          ein: '123456789',
+          naicsCode: '541611',
+          grossIncome: 120000,
+          cogs: 15000,
+          expenses: {
+            insurance: 2000,
+            rent: 4000,
+            other: 1000
+          },
+          homeOffice: true,
+          homeOfficeSqFt: 200,
+          homeSqFt: 1000,
+          qbiEligible: true
+        }
+      },
+      {
+        entityType: 'k1_entity',
+        entityId: 'k1-1',
+        label: 'Maple Partners',
+        data: {
+          businessType: 'k1-partnership',
+          name: 'Maple Partners',
+          ein: '987654321',
+          ordinaryIncome: 18000,
+          rentalIncome: 2000,
+          guaranteedPayments: 3000,
+          qbiEligible: true,
+          qbiWages: 10000,
+          qbiProperty: 50000
+        }
+      },
+      {
+        entityType: 'rental_property',
+        entityId: 'rental-1',
+        label: 'Beach rental',
+        data: {
+          address: '55 Coast Hwy, Newport OR',
+          type: 'vacation',
+          daysRented: 300,
+          daysPersonal: 20,
+          grossRents: 24000,
+          expenses: {
+            mortgage: 6000,
+            taxes: 2500,
+            repairs: 1000,
+            management: 1800,
+            utilities: 900,
+            advertising: 300
+          },
+          purchasePrice: 275000,
+          purchaseYear: 2020
+        }
+      },
+      {
+        entityType: 'foreign_income_record',
+        entityId: 'foreign-income-1',
+        label: 'Germany salary',
+        data: {
+          foreignCountry: 'Germany',
+          foreignEarnedIncome: 140000,
+          exclusionMethod: 'physical',
+          daysAbroad: 330,
+          foreignTaxPaid: 8400,
+          foreignTaxCountry: 'Germany'
+        }
+      },
+      {
+        entityType: 'foreign_account',
+        entityId: 'foreign-account-1',
+        label: 'Deutsche Bank',
+        data: {
+          country: 'Germany',
+          institution: 'Deutsche Bank',
+          accountType: 'bank',
+          maxBalanceUSD: 18000,
+          currency: 'EUR',
+          fbarRequired: true
+        }
+      },
+      {
+        entityType: 'treaty_claim',
+        entityId: 'treaty-1',
+        label: 'Germany treaty',
+        data: {
+          country: 'Germany',
+          articleNumber: 'Article 15',
+          incomeType: 'Employment income',
+          exemptAmount: 0,
+          confirmed: true
+        }
+      }
+    ] as const
+
+    for (const entity of entityPayloads) {
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/${entity.entityType}/${entity.entityId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            status: 'complete',
+            label: entity.label,
+            data: entity.data
+          })
+        }
+      )
+      expect(response.status).toBe(200)
+    }
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+      {
+        method: 'POST',
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const syncResult = await parseJsonResponse<JsonObject>(response)
+    const facts = syncResult.facts as JsonObject
+    expect((facts.businessSummary as JsonObject).recordCount).toBe(2)
+    expect((facts.businessSummary as JsonObject).finalQBIDeduction).toBe(18000)
+    expect((facts.rentalSummary as JsonObject).propertyCount).toBe(1)
+    expect((facts.rentalSummary as JsonObject).grossRentsTotal).toBe(24000)
+    expect((facts.foreignSummary as JsonObject).totalForeignEarnedIncome).toBe(140000)
+    expect((facts.foreignSummary as JsonObject).feieExclusionEstimate).toBe(130000)
+    expect((facts.foreignSummary as JsonObject).fbarRequired).toBe(true)
+    expect((facts.foreignSummary as JsonObject).requires1040NR).toBe(true)
+    expect((facts.foreignSummary as JsonObject).scheduleNecTaxTotal).toBe(630)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const checklist = await parseJsonResponse<JsonObject>(response)
+    const checklistItems = (checklist.checklist as JsonObject).items as Record<
+      string,
+      JsonObject
+    >
+    expect(checklistItems.business.status).toBe('complete')
+    expect(checklistItems.rental.status).toBe('complete')
+    expect(checklistItems['foreign-income'].status).toBe('complete')
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const review = await parseJsonResponse<JsonObject>(response)
+    const sections = (review.review as JsonObject).sections as JsonObject[]
+    expect(sections.some((section) => section.id === 'business')).toBe(true)
+    expect(sections.some((section) => section.id === 'rental')).toBe(true)
+    expect(sections.some((section) => section.id === 'international')).toBe(true)
+  })
 })

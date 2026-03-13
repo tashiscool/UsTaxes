@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-13T12:44:34.551Z",
+  "generatedAt": "2026-03-13T13:18:32.584Z",
   "rows": [
     {
       "family": "auth_and_sessions",
@@ -270,7 +270,7 @@
       "atsCoverage": "S6|S28|S29|S34|S36",
       "directFileCoverage": "partial",
       "status": "implemented_tested",
-      "notes": "BusinessK1 now round-trips Schedule C and K-1 entities through /app/v1 with worker runtime coverage, while deeper QBI and basis return-model mapping remains a backend follow-up."
+      "notes": "BusinessK1 now round-trips Schedule C and K-1 entities through /app/v1, and backend facts/checklist/review derive business, SE tax, and QBI summary data with worker plus local TaxFlow end-to-end coverage."
     },
     {
       "family": "rental_property",
@@ -300,7 +300,7 @@
       "atsCoverage": "S7",
       "directFileCoverage": "partial",
       "status": "implemented_tested",
-      "notes": "RentalWorkspace now persists and restores rental_property entities through /app/v1 with worker runtime coverage, while Schedule E fact derivation is still a backend gap."
+      "notes": "RentalWorkspace now persists and restores rental_property entities through /app/v1, and backend facts/checklist/review derive Schedule E-oriented rent, expense, depreciation, and passive-loss summaries with worker plus local TaxFlow end-to-end coverage."
     },
     {
       "family": "retirement_and_hsa",
@@ -402,7 +402,7 @@
       "atsCoverage": "S18|S19|S20|NR1|NR2|NR3|NR4|NR5|NR12",
       "directFileCoverage": "yes",
       "status": "implemented_tested",
-      "notes": "ForeignIncome now persists foreign income, foreign account, and treaty-claim entities through /app/v1 with worker runtime coverage, though deeper nonresident tax mapping remains partial."
+      "notes": "ForeignIncome and NonresidentFlow now persist foreign income, foreign accounts, treaty claims, and residency data through /app/v1, and backend facts/checklist/review derive FEIE, FBAR, treaty, and 1040-NR path summaries with worker plus local TaxFlow end-to-end coverage."
     },
     {
       "family": "credits_and_supporting_entities",

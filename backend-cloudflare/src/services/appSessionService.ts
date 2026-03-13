@@ -326,6 +326,27 @@ const FORM_1099_TYPES = new Set([
   '1099_ssa'
 ])
 
+const FEIE_LIMITS: Record<number, number> = {
+  2024: 126500,
+  2025: 130000
+}
+
+const FBAR_THRESHOLD = 10000
+const FATCA_SINGLE_THRESHOLD = 50000
+
+const qbiThresholdForStatus = (filingStatus: string): number => {
+  const normalized = filingStatus.toLowerCase()
+  if (
+    normalized === 'mfj' ||
+    normalized === 'married_filing_jointly' ||
+    normalized === 'qss' ||
+    normalized === 'qualifying_surviving_spouse'
+  ) {
+    return 394600
+  }
+  return 197300
+}
+
 const asRecord = (value: unknown): Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -372,6 +393,543 @@ const mergeCollectionById = <T extends { id: string }>(
     merged.set(item.id, item)
   }
   return Array.from(merged.values())
+}
+
+const sumRecordValues = (record: Record<string, unknown>): number =>
+  Object.values(record).reduce<number>((sum, value) => sum + toMoney(value), 0)
+
+const getQBIWorksheetEntities = (snapshot: FilingSessionSnapshot) =>
+  asArray<Record<string, unknown>>(requireScreen(snapshot, '/qbi-worksheet').entities).map(
+    (entity) => ({
+      id: toText(entity.id) || crypto.randomUUID(),
+      name: toText(entity.name),
+      type: toText(entity.type),
+      netIncome: toMoney(entity.netIncome),
+      w2Wages: toMoney(entity.w2Wages),
+      ubia: toMoney(entity.ubia),
+      isSSTB: Boolean(entity.isSSTB),
+      qbiAmount: toMoney(entity.qbiAmount),
+      w2Limitation: toMoney(entity.w2Limitation),
+      finalDeduction: toMoney(entity.finalDeduction),
+      status: toText(entity.status) || 'not_started',
+      warnings: asArray<string>(entity.warnings),
+      isComplete: toText(entity.status) === 'complete'
+    })
+  )
+
+const getBusinessRecords = (
+  entities: SessionEntitySnapshot[]
+) =>
+  entities
+    .filter(
+      (entity) => entity.entityType === 'schedule_c' || entity.entityType === 'k1_entity'
+    )
+    .map((entity) => {
+      const data = asRecord(entity.data)
+      const expenses = asRecord(data.expenses)
+      const totalExpenses = sumRecordValues(expenses)
+      const homeOffice = Boolean(data.homeOffice)
+      const homeOfficeSqFt = toMoney(data.homeOfficeSqFt)
+      const homeSqFt = toMoney(data.homeSqFt)
+      const homeOfficePct =
+        homeOffice && homeOfficeSqFt > 0 && homeSqFt > 0
+          ? Math.min(1, homeOfficeSqFt / homeSqFt)
+          : 0
+      const grossReceipts = toMoney(data.grossIncome ?? data.grossReceipts)
+      const ordinaryIncome = toMoney(data.k1Box1 ?? data.ordinaryIncome)
+      const rentalIncome = toMoney(data.k1Box2 ?? data.rentalIncome)
+      const interestIncome = toMoney(data.k1Box3 ?? data.interestIncome)
+      const guaranteedPayments = toMoney(data.guaranteedPayments)
+      const qbiWages = toMoney(data.qbiWages ?? data.w2Wages)
+      const qbiProperty = toMoney(data.qbiProperty ?? data.ubia)
+      const netBusinessIncome =
+        entity.entityType === 'schedule_c'
+          ? grossReceipts - toMoney(data.cogs) - totalExpenses
+          : ordinaryIncome + rentalIncome + guaranteedPayments
+      const qbiBaseIncome =
+        entity.entityType === 'schedule_c'
+          ? Math.max(0, netBusinessIncome)
+          : Boolean(data.qbiEligible ?? true)
+            ? Math.max(0, ordinaryIncome)
+            : 0
+
+      return {
+        id: entity.id,
+        entityType: entity.entityType,
+        businessType: toText(data.businessType || entity.entityType),
+        name: toText(data.name ?? data.entityName ?? entity.label),
+        ein: toText(data.ein),
+        naicsCode: toText(data.naicsCode),
+        grossReceipts,
+        cogs: toMoney(data.cogs),
+        totalExpenses,
+        expenses,
+        ordinaryIncome,
+        rentalIncome,
+        interestIncome,
+        dividendIncome: toMoney(data.dividendIncome),
+        capitalGainLoss: toMoney(data.capitalGainLoss),
+        guaranteedPayments,
+        section179: toMoney(data.section179),
+        qbiEligible: Boolean(data.qbiEligible ?? true),
+        qbiWages,
+        qbiProperty,
+        homeOffice,
+        homeOfficePct,
+        netBusinessIncome,
+        selfEmploymentIncome:
+          entity.entityType === 'schedule_c'
+            ? Math.max(0, netBusinessIncome)
+            : Math.max(0, guaranteedPayments),
+        qbiBaseIncome,
+        passiveLoss: toMoney(data.passiveLoss),
+        atRiskBasis: toMoney(data.atRiskBasis),
+        isComplete: Boolean(
+          (data.name ?? data.entityName ?? entity.label) &&
+            (grossReceipts ||
+              ordinaryIncome ||
+              rentalIncome ||
+              guaranteedPayments ||
+              totalExpenses)
+        )
+      }
+    })
+
+const getBusinessSummary = (
+  snapshot: FilingSessionSnapshot,
+  businessRecords: ReturnType<typeof getBusinessRecords>,
+  qbiWorksheetEntities: ReturnType<typeof getQBIWorksheetEntities>
+) => {
+  const filingStatus = toText(snapshot.filingStatus || 'single')
+  const threshold = qbiThresholdForStatus(filingStatus)
+  const qbiWorksheetDeduction = qbiWorksheetEntities.reduce(
+    (sum, entity) => sum + entity.finalDeduction,
+    0
+  )
+  const qbiBaseIncome = businessRecords.reduce(
+    (sum, record) => sum + record.qbiBaseIncome,
+    0
+  )
+  const tentativeQBIDeduction = qbiBaseIncome * 0.2
+  const estimatedSETax = businessRecords.reduce(
+    (sum, record) => sum + record.selfEmploymentIncome * 0.9235 * 0.153,
+    0
+  )
+
+  return {
+    recordCount: businessRecords.length,
+    completeCount: countCompleted(businessRecords),
+    scheduleCCount: businessRecords.filter((record) => record.entityType === 'schedule_c')
+      .length,
+    k1Count: businessRecords.filter((record) => record.entityType === 'k1_entity').length,
+    grossReceiptsTotal: businessRecords.reduce(
+      (sum, record) => sum + record.grossReceipts,
+      0
+    ),
+    totalExpenses: businessRecords.reduce(
+      (sum, record) => sum + record.totalExpenses,
+      0
+    ),
+    netBusinessIncome: businessRecords.reduce(
+      (sum, record) => sum + record.netBusinessIncome,
+      0
+    ),
+    selfEmploymentIncome: businessRecords.reduce(
+      (sum, record) => sum + record.selfEmploymentIncome,
+      0
+    ),
+    estimatedSETax,
+    estimatedSEDeduction: estimatedSETax / 2,
+    qbiEligibleCount: businessRecords.filter((record) => record.qbiEligible).length,
+    qbiThreshold: threshold,
+    qbiBaseIncome,
+    qbiTentativeDeduction: tentativeQBIDeduction,
+    qbiWorksheetCount: qbiWorksheetEntities.length,
+    qbiWorksheetDeduction,
+    finalQBIDeduction:
+      qbiWorksheetEntities.length > 0 ? qbiWorksheetDeduction : tentativeQBIDeduction,
+    sstbCount: qbiWorksheetEntities.filter((entity) => entity.isSSTB).length,
+    wageLimitedCount: qbiWorksheetEntities.filter((entity) => entity.w2Limitation > 0)
+      .length,
+    homeOfficeCount: businessRecords.filter((record) => record.homeOffice).length,
+    section179Total: businessRecords.reduce(
+      (sum, record) => sum + record.section179,
+      0
+    ),
+    passiveLossTotal: businessRecords.reduce(
+      (sum, record) => sum + record.passiveLoss,
+      0
+    )
+  }
+}
+
+const getRentalProperties = (entities: SessionEntitySnapshot[]) =>
+  entities
+    .filter((entity) => entity.entityType === 'rental_property')
+    .map((entity) => {
+      const data = asRecord(entity.data)
+      const expenses = asRecord(data.expenses)
+      const expenseTotal = sumRecordValues(expenses)
+      const grossRents = toMoney(data.grossRents)
+      const daysRented = toMoney(data.daysRented)
+      const daysPersonalUse = toMoney(data.daysPersonal ?? data.daysPersonalUse)
+      const purchasePrice = toMoney(data.purchasePrice)
+      const explicitDepreciation = toMoney(data.depreciation)
+      const estimatedDepreciation =
+        explicitDepreciation ||
+        (purchasePrice > 0 ? Math.max(0, purchasePrice * 0.8) / 27.5 : 0)
+      const vacationHome =
+        daysPersonalUse > 14 && daysRented > 0 && daysPersonalUse > daysRented * 0.1
+      const rentalUseRatio =
+        daysRented + daysPersonalUse > 0
+          ? daysRented / (daysRented + daysPersonalUse)
+          : 1
+      const deductibleExpenses = vacationHome
+        ? Math.min(grossRents, (expenseTotal + estimatedDepreciation) * rentalUseRatio)
+        : expenseTotal + estimatedDepreciation
+      const netIncomeLoss = grossRents - deductibleExpenses
+
+      return {
+        id: entity.id,
+        address: toText(data.address ?? entity.label),
+        propertyType: toText(data.type ?? data.propertyType),
+        grossRents,
+        expenses,
+        expenseTotal,
+        depreciation: estimatedDepreciation,
+        purchasePrice,
+        purchaseYear: toText(data.purchaseYear),
+        priorDepreciation: toMoney(data.priorDepreciation),
+        daysRented,
+        daysPersonalUse,
+        rentalUseRatio,
+        vacationHome,
+        deductibleExpenses,
+        netIncomeLoss,
+        isPassive: Boolean(data.isPassive ?? true),
+        passiveLossCarryover: toMoney(data.passiveLossCarryover),
+        isComplete: Boolean(
+          (data.address ?? entity.label) &&
+            (grossRents || expenseTotal || daysRented || daysPersonalUse)
+        )
+      }
+    })
+
+const getRentalSummary = (
+  rentalProperties: ReturnType<typeof getRentalProperties>
+) => ({
+  propertyCount: rentalProperties.length,
+  completeCount: countCompleted(rentalProperties),
+  grossRentsTotal: rentalProperties.reduce(
+    (sum, property) => sum + property.grossRents,
+    0
+  ),
+  expenseTotal: rentalProperties.reduce(
+    (sum, property) => sum + property.expenseTotal,
+    0
+  ),
+  depreciationTotal: rentalProperties.reduce(
+    (sum, property) => sum + property.depreciation,
+    0
+  ),
+  deductibleExpensesTotal: rentalProperties.reduce(
+    (sum, property) => sum + property.deductibleExpenses,
+    0
+  ),
+  scheduleENetIncome: rentalProperties.reduce(
+    (sum, property) => sum + property.netIncomeLoss,
+    0
+  ),
+  vacationHomeCount: rentalProperties.filter((property) => property.vacationHome).length,
+  passivePropertyCount: rentalProperties.filter((property) => property.isPassive).length,
+  passiveLossCarryoverTotal: rentalProperties.reduce(
+    (sum, property) => sum + property.passiveLossCarryover,
+    0
+  )
+})
+
+const getForeignIncomeRecords = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const screen = requireScreen(snapshot, '/foreign-income')
+  const form = asRecord(screen.form)
+  const screenRecords =
+    screen.hasForeignIncome === true ||
+    form.foreignCountry ||
+    form.foreignEarnedIncome ||
+    form.foreignTaxPaid
+      ? [
+          {
+            id: 'foreign-income-primary',
+            country: toText(form.foreignCountry),
+            foreignEarnedIncome: toMoney(form.foreignEarnedIncome),
+            exclusionMethod: toText(form.exclusionMethod || 'bona-fide'),
+            daysAbroad: toMoney(form.daysAbroad),
+            foreignTaxPaid: toMoney(form.foreignTaxPaid),
+            foreignTaxCountry: toText(form.foreignTaxCountry),
+            isComplete: Boolean(form.foreignCountry && form.foreignEarnedIncome)
+          }
+        ]
+      : []
+
+  const entityRecords = entities
+    .filter((entity) => entity.entityType === 'foreign_income_record')
+    .map((entity) => ({
+      id: entity.id,
+      country: toText(entity.data.foreignCountry ?? entity.data.country ?? entity.label),
+      foreignEarnedIncome: toMoney(
+        entity.data.foreignEarnedIncome ?? entity.data.amount
+      ),
+      exclusionMethod: toText(entity.data.exclusionMethod || 'bona-fide'),
+      daysAbroad: toMoney(entity.data.daysAbroad),
+      foreignTaxPaid: toMoney(entity.data.foreignTaxPaid),
+      foreignTaxCountry: toText(entity.data.foreignTaxCountry),
+      isComplete: Boolean(
+        (entity.data.foreignCountry ?? entity.data.country ?? entity.label) &&
+          (entity.data.foreignEarnedIncome ?? entity.data.amount ?? entity.data.foreignTaxPaid)
+      )
+    }))
+
+  return mergeCollectionById(screenRecords, entityRecords)
+}
+
+const getForeignAccounts = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const screen = requireScreen(snapshot, '/foreign-income')
+  const form = asRecord(screen.form)
+  const screenAccounts =
+    screen.hasForeignAccounts === true || form.foreignAccountBalance
+      ? [
+          {
+            id: 'foreign-account-primary',
+            country: toText(form.foreignCountry),
+            institution: 'Foreign account',
+            accountType: 'bank',
+            maxBalanceUSD: toMoney(form.foreignAccountBalance),
+            currency: 'USD',
+            fbarRequired: toMoney(form.foreignAccountBalance) > FBAR_THRESHOLD,
+            fatcaRequired: toMoney(form.foreignAccountBalance) > FATCA_SINGLE_THRESHOLD,
+            isComplete: Boolean(form.foreignCountry && form.foreignAccountBalance)
+          }
+        ]
+      : []
+
+  const entityAccounts = entities
+    .filter((entity) => entity.entityType === 'foreign_account')
+    .map((entity) => ({
+      id: entity.id,
+      country: toText(entity.data.country ?? entity.data.foreignCountry),
+      institution: toText(entity.data.institution ?? entity.label),
+      accountType: toText(entity.data.accountType || 'bank'),
+      maxBalanceUSD: toMoney(
+        entity.data.maxBalanceUSD ?? entity.data.foreignAccountBalance
+      ),
+      currency: toText(entity.data.currency || 'USD'),
+      fbarRequired: Boolean(
+        entity.data.fbarRequired ??
+          toMoney(entity.data.maxBalanceUSD ?? entity.data.foreignAccountBalance) >
+            FBAR_THRESHOLD
+      ),
+      fatcaRequired: Boolean(entity.data.fatcaRequired),
+      isComplete: Boolean(
+        (entity.data.country ?? entity.data.foreignCountry) &&
+          (entity.data.maxBalanceUSD ?? entity.data.foreignAccountBalance)
+      )
+    }))
+
+  return mergeCollectionById(screenAccounts, entityAccounts)
+}
+
+const getTreatyClaims = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const foreignIncome = asRecord(requireScreen(snapshot, '/foreign-income').form)
+  const nonresident = requireScreen(snapshot, '/nonresident')
+  const screenClaims =
+    foreignIncome.treatyCountry || (nonresident.hasTreaty === true && nonresident.treatyCountry)
+      ? [
+          {
+            id: 'treaty-claim-primary',
+            country: toText(nonresident.treatyCountry || foreignIncome.treatyCountry),
+            articleNumber: toText(nonresident.treatyArticle),
+            incomeType: toText(nonresident.treatyBenefit || 'Treaty benefit'),
+            exemptAmount: 0,
+            confirmed: true,
+            isComplete: Boolean(nonresident.treatyCountry || foreignIncome.treatyCountry)
+          }
+        ]
+      : []
+
+  const entityClaims = entities
+    .filter((entity) => entity.entityType === 'treaty_claim')
+    .map((entity) => ({
+      id: entity.id,
+      country: toText(entity.data.country ?? entity.data.treatyCountry ?? entity.label),
+      articleNumber: toText(entity.data.articleNumber ?? entity.data.treatyArticle),
+      incomeType: toText(entity.data.incomeType ?? entity.data.treatyBenefit),
+      exemptAmount: toMoney(entity.data.exemptAmount),
+      confirmed: Boolean(entity.data.confirmed ?? true),
+      isComplete: Boolean(
+        (entity.data.country ?? entity.data.treatyCountry ?? entity.label) &&
+          (entity.data.articleNumber ?? entity.data.treatyArticle ?? entity.data.treatyBenefit)
+      )
+    }))
+
+  return mergeCollectionById(screenClaims, entityClaims)
+}
+
+const getNonresidentProfile = (snapshot: FilingSessionSnapshot) => {
+  const data = requireScreen(snapshot, '/nonresident')
+  const daysInUS2024 = toMoney(data.daysInUS2024)
+  const daysInUS2023 = toMoney(data.daysInUS2023)
+  const daysInUS2022 = toMoney(data.daysInUS2022)
+  const sptScore = daysInUS2024 + Math.floor(daysInUS2023 / 3) + Math.floor(daysInUS2022 / 6)
+  const passedSPT = daysInUS2024 >= 31 && sptScore >= 183
+  const hasData = Object.keys(data).length > 0
+
+  return {
+    hasData,
+    visaType: toText(data.visaType),
+    countryOfCitizenship: toText(data.countryOfCitizenship),
+    daysInUS2024,
+    daysInUS2023,
+    daysInUS2022,
+    sptScore,
+    passedSPT,
+    isDualStatus: Boolean(data.isDualStatus),
+    dualStatusDate: toText(data.dualStatusDate),
+    hasTreaty: data.hasTreaty === true,
+    treatyCountry: toText(data.treatyCountry),
+    treatyArticle: toText(data.treatyArticle),
+    treatyBenefit: toText(data.treatyBenefit),
+    hasITIN: data.hasITIN === true,
+    itin: toText(data.itin),
+    hasForeignAccounts: data.hasForeignAccounts === true,
+    foreignAccountMax: toMoney(data.foreignAccountMax),
+    requires1040NR: hasData && !passedSPT,
+    isComplete: hasData
+      ? Boolean(
+          data.visaType &&
+            data.countryOfCitizenship &&
+            (daysInUS2024 || daysInUS2023 || daysInUS2022)
+        )
+      : false
+  }
+}
+
+const getIntlAdvancedData = (snapshot: FilingSessionSnapshot) => ({
+  feie: requireScreen(snapshot, '/intl-advanced/feie'),
+  ftc: requireScreen(snapshot, '/intl-advanced/ftc'),
+  scheduleNec: requireScreen(snapshot, '/intl-advanced/schedule-nec'),
+  scheduleOi: requireScreen(snapshot, '/intl-advanced/schedule-oi')
+})
+
+const getForeignSummary = (
+  snapshot: FilingSessionSnapshot,
+  foreignIncomeRecords: ReturnType<typeof getForeignIncomeRecords>,
+  foreignAccounts: ReturnType<typeof getForeignAccounts>,
+  treatyClaims: ReturnType<typeof getTreatyClaims>,
+  nonresidentProfile: ReturnType<typeof getNonresidentProfile>,
+  intlAdvancedData: ReturnType<typeof getIntlAdvancedData>
+) => {
+  const totalForeignEarnedIncome = foreignIncomeRecords.reduce(
+    (sum, record) => sum + record.foreignEarnedIncome,
+    0
+  )
+  const totalForeignTaxPaid = foreignIncomeRecords.reduce(
+    (sum, record) => sum + record.foreignTaxPaid,
+    0
+  )
+  const totalForeignAccountBalance = foreignAccounts.reduce(
+    (sum, account) => sum + account.maxBalanceUSD,
+    0
+  )
+  const feieLimit = FEIE_LIMITS[snapshot.taxYear] ?? FEIE_LIMITS[2025]
+  const feieState = asRecord(intlAdvancedData.feie)
+  const ftcState = asRecord(intlAdvancedData.ftc)
+  const scheduleNecItems = asArray<Record<string, unknown>>(
+    asRecord(intlAdvancedData.scheduleNec).items
+  )
+  const scheduleOiState = asRecord(intlAdvancedData.scheduleOi)
+  const feieMethod =
+    toText(feieState.qualMethod) ||
+    foreignIncomeRecords[0]?.exclusionMethod ||
+    'bona-fide'
+  const physicalPresenceDays = Math.max(
+    toMoney(feieState.ppDays),
+    ...foreignIncomeRecords.map((record) => record.daysAbroad),
+    0
+  )
+  const housingCosts = toMoney(feieState.housingCosts)
+  const baseHousingAmount = feieLimit * 0.16
+  const maxHousingAmount = feieLimit * 0.3
+  const housingExclusionEstimate = Math.max(
+    0,
+    Math.min(housingCosts, maxHousingAmount) - baseHousingAmount
+  )
+  const feieQualified =
+    feieMethod === 'physical'
+      ? physicalPresenceDays >= 330
+      : totalForeignEarnedIncome > 0 || feieState.qualMethod === 'bona-fide'
+  const mfjLike =
+    toText(snapshot.filingStatus).toLowerCase() === 'mfj' ||
+    toText(snapshot.filingStatus).toLowerCase() === 'married_filing_jointly'
+  const form1116Threshold = mfjLike ? 600 : 300
+
+  return {
+    foreignIncomeCount: foreignIncomeRecords.length,
+    foreignIncomeCompleteCount: countCompleted(foreignIncomeRecords),
+    totalForeignEarnedIncome,
+    totalForeignTaxPaid,
+    foreignAccountCount: foreignAccounts.length,
+    foreignAccountCompleteCount: countCompleted(foreignAccounts),
+    totalForeignAccountBalance,
+    treatyClaimCount: treatyClaims.length,
+    treatyClaimCompleteCount: countCompleted(treatyClaims),
+    fbarRequired:
+      totalForeignAccountBalance > FBAR_THRESHOLD ||
+      foreignAccounts.some((account) => account.fbarRequired) ||
+      nonresidentProfile.foreignAccountMax > FBAR_THRESHOLD,
+    fatcaRequired:
+      totalForeignAccountBalance > FATCA_SINGLE_THRESHOLD ||
+      foreignAccounts.some((account) => account.fatcaRequired),
+    feieMethod,
+    feieQualified,
+    feieLimit,
+    feieExclusionEstimate: feieQualified
+      ? Math.min(totalForeignEarnedIncome, feieLimit)
+      : 0,
+    housingExclusionEstimate,
+    physicalPresenceDays,
+    directForeignTaxCreditEligible:
+      totalForeignTaxPaid > 0 && totalForeignTaxPaid <= form1116Threshold,
+    requiresForm1116:
+      totalForeignTaxPaid > form1116Threshold ||
+      asArray<Record<string, unknown>>(ftcState.categories).length > 0,
+    requires1040NR: nonresidentProfile.requires1040NR,
+    dualStatus: nonresidentProfile.isDualStatus,
+    scheduleNecIncomeTotal: scheduleNecItems.reduce(
+      (sum, item) => sum + toMoney(item.grossAmount),
+      0
+    ),
+    scheduleNecTaxTotal: scheduleNecItems.reduce(
+      (sum, item) => sum + toMoney(item.netTax),
+      0
+    ),
+    scheduleOiRequired:
+      nonresidentProfile.hasData ||
+      treatyClaims.length > 0 ||
+      Object.keys(scheduleOiState).length > 0,
+    hasActivity:
+      foreignIncomeRecords.length > 0 ||
+      foreignAccounts.length > 0 ||
+      treatyClaims.length > 0 ||
+      nonresidentProfile.hasData
+  }
 }
 
 const getW2Records = (
@@ -826,6 +1384,24 @@ const toFacts = (
   const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
   const taxLots = getTaxLots(snapshot, entities)
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
+  const businessRecords = getBusinessRecords(entities)
+  const qbiWorksheetEntities = getQBIWorksheetEntities(snapshot)
+  const businessSummary = getBusinessSummary(snapshot, businessRecords, qbiWorksheetEntities)
+  const rentalProperties = getRentalProperties(entities)
+  const rentalSummary = getRentalSummary(rentalProperties)
+  const foreignIncomeRecords = getForeignIncomeRecords(snapshot, entities)
+  const foreignAccounts = getForeignAccounts(snapshot, entities)
+  const treatyClaims = getTreatyClaims(snapshot, entities)
+  const nonresidentProfile = getNonresidentProfile(snapshot)
+  const intlAdvancedData = getIntlAdvancedData(snapshot)
+  const foreignSummary = getForeignSummary(
+    snapshot,
+    foreignIncomeRecords,
+    foreignAccounts,
+    treatyClaims,
+    nonresidentProfile,
+    intlAdvancedData
+  )
   const creditSummary = getCreditSummary(snapshot, dependents)
   const incomeSummary = getIncomeSummary(
     w2Records,
@@ -846,9 +1422,19 @@ const toFacts = (
     socialSecurityRecords,
     taxLots,
     cryptoAccounts,
+    businessRecords,
+    qbiWorksheetEntities,
+    rentalProperties,
+    foreignIncomeRecords,
+    foreignAccounts,
+    treatyClaims,
+    nonresidentProfile,
     dependents,
     incomeSummary,
     investmentSummary,
+    businessSummary,
+    rentalSummary,
+    foreignSummary,
     creditSummary: creditSummary.summary,
     '/taxYear': {
       $type: 'gov.irs.factgraph.persisters.IntWrapper',
@@ -918,6 +1504,9 @@ const toSubmissionPayload = (
   )
   const incomeSummary = asRecord(facts.incomeSummary)
   const investmentSummary = asRecord(facts.investmentSummary)
+  const businessSummary = asRecord(facts.businessSummary)
+  const rentalSummary = asRecord(facts.rentalSummary)
+  const foreignSummary = asRecord(facts.foreignSummary)
   const creditSummary = asRecord(facts.creditSummary)
   const dependents = asArray<Record<string, unknown>>(facts.dependents)
   const spouse = asRecord(facts.spouse)
@@ -952,6 +1541,22 @@ const toSubmissionPayload = (
         cryptoAccounts: facts.cryptoAccounts,
         summary: investmentSummary
       },
+      business: {
+        records: facts.businessRecords,
+        qbiWorksheet: facts.qbiWorksheetEntities,
+        summary: businessSummary
+      },
+      rental: {
+        properties: facts.rentalProperties,
+        summary: rentalSummary
+      },
+      international: {
+        foreignIncomeRecords: facts.foreignIncomeRecords,
+        foreignAccounts: facts.foreignAccounts,
+        treatyClaims: facts.treatyClaims,
+        nonresidentProfile: facts.nonresidentProfile,
+        summary: foreignSummary
+      },
       dependents,
       credits: creditSummary
     },
@@ -965,11 +1570,18 @@ const toSubmissionPayload = (
       bankLast4: String(efile.account ?? '').slice(-4) || undefined,
       incomeSummary,
       investmentSummary,
+      businessSummary,
+      rentalSummary,
+      foreignSummary,
       creditSummary,
       dependentCount: dependents.length,
       spouse,
       unemploymentCount: asArray(facts.unemploymentRecords).length,
-      socialSecurityCount: asArray(facts.socialSecurityRecords).length
+      socialSecurityCount: asArray(facts.socialSecurityRecords).length,
+      businessCount: asArray(facts.businessRecords).length,
+      rentalPropertyCount: asArray(facts.rentalProperties).length,
+      foreignIncomeCount: asArray(facts.foreignIncomeRecords).length,
+      foreignAccountCount: asArray(facts.foreignAccounts).length
     }
   }
 }
@@ -987,6 +1599,13 @@ const buildChecklist = (
   const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
   const taxLots = getTaxLots(snapshot, entities)
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
+  const businessRecords = getBusinessRecords(entities)
+  const qbiWorksheetEntities = getQBIWorksheetEntities(snapshot)
+  const rentalProperties = getRentalProperties(entities)
+  const foreignIncomeRecords = getForeignIncomeRecords(snapshot, entities)
+  const foreignAccounts = getForeignAccounts(snapshot, entities)
+  const treatyClaims = getTreatyClaims(snapshot, entities)
+  const nonresidentProfile = getNonresidentProfile(snapshot)
   const creditSummary = getCreditSummary(snapshot, dependents)
 
   const itemFromScreen = (
@@ -1064,8 +1683,29 @@ const buildChecklist = (
           .filter((finding) => finding.code === 'INVESTMENT-INCOMPLETE')
           .map((finding) => ({ message: finding.message, level: finding.severity }))
       },
-      rental: itemFromScreen('rental', '/rental', 'Rental property reviewed', { optional: true }),
-      business: itemFromScreen('business', '/business-k1', 'Business income reviewed', { optional: true }),
+      rental: {
+        status: buildStatusFromCollection(rentalProperties, true),
+        sublabel:
+          rentalProperties.length > 0
+            ? `${countCompleted(rentalProperties)}/${rentalProperties.length} rental properties complete`
+            : undefined,
+        warnings: findings
+          .filter((finding) => finding.code === 'RENTAL-INCOMPLETE')
+          .map((finding) => ({ message: finding.message, level: finding.severity }))
+      },
+      business: {
+        status: buildStatusFromCollection(businessRecords, true),
+        sublabel:
+          businessRecords.length > 0
+            ? `${countCompleted(businessRecords)}/${businessRecords.length} businesses complete`
+            : undefined,
+        warnings: findings
+          .filter(
+            (finding) =>
+              finding.code === 'BUSINESS-INCOMPLETE' || finding.code === 'QBI-REVIEW'
+          )
+          .map((finding) => ({ message: finding.message, level: finding.severity }))
+      },
       retirement: itemFromScreen('retirement', '/ira-retirement', 'Retirement income reviewed', { optional: true }),
       'unemployment-ss': {
         status:
@@ -1087,7 +1727,34 @@ const buildChecklist = (
           )
           .map((finding) => ({ message: finding.message, level: finding.severity }))
       },
-      'foreign-income': itemFromScreen('foreign-income', '/foreign-income', 'Foreign income reviewed', { optional: true }),
+      'foreign-income': {
+        status:
+          foreignIncomeRecords.length > 0 ||
+          foreignAccounts.length > 0 ||
+          treatyClaims.length > 0 ||
+          nonresidentProfile.hasData
+            ? foreignIncomeRecords.every((item) => item.isComplete) &&
+              foreignAccounts.every((item) => item.isComplete) &&
+              treatyClaims.every((item) => item.isComplete) &&
+              (!nonresidentProfile.hasData || nonresidentProfile.isComplete)
+              ? 'complete'
+              : 'in_progress'
+            : 'skipped',
+        sublabel:
+          foreignIncomeRecords.length > 0 ||
+          foreignAccounts.length > 0 ||
+          treatyClaims.length > 0 ||
+          nonresidentProfile.hasData
+            ? `${foreignIncomeRecords.length} income records, ${foreignAccounts.length} accounts`
+            : undefined,
+        warnings: findings
+          .filter(
+            (finding) =>
+              finding.code === 'FOREIGN-INCOMPLETE' ||
+              finding.code === 'NONRESIDENT-INCOMPLETE'
+          )
+          .map((finding) => ({ message: finding.message, level: finding.severity }))
+      },
       hsa: itemFromScreen('hsa', '/hsa', 'HSA reviewed', { optional: true }),
       ctc: {
         status:
@@ -1133,6 +1800,26 @@ const buildChecklist = (
         total: taxLots.length + cryptoAccounts.length,
         complete: countCompleted(taxLots) + countCompleted(cryptoAccounts)
       },
+      business: {
+        total: businessRecords.length + qbiWorksheetEntities.length,
+        complete: countCompleted(businessRecords) + countCompleted(qbiWorksheetEntities)
+      },
+      rentalProperties: {
+        total: rentalProperties.length,
+        complete: countCompleted(rentalProperties)
+      },
+      international: {
+        total:
+          foreignIncomeRecords.length +
+          foreignAccounts.length +
+          treatyClaims.length +
+          (nonresidentProfile.hasData ? 1 : 0),
+        complete:
+          countCompleted(foreignIncomeRecords) +
+          countCompleted(foreignAccounts) +
+          countCompleted(treatyClaims) +
+          (nonresidentProfile.isComplete ? 1 : 0)
+      },
       unemploymentAndSs: {
         total: unemploymentRecords.length + socialSecurityRecords.length,
         complete:
@@ -1164,6 +1851,24 @@ const buildReview = (
   const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
   const taxLots = getTaxLots(snapshot, entities)
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
+  const businessRecords = getBusinessRecords(entities)
+  const qbiWorksheetEntities = getQBIWorksheetEntities(snapshot)
+  const businessSummary = getBusinessSummary(snapshot, businessRecords, qbiWorksheetEntities)
+  const rentalProperties = getRentalProperties(entities)
+  const rentalSummary = getRentalSummary(rentalProperties)
+  const foreignIncomeRecords = getForeignIncomeRecords(snapshot, entities)
+  const foreignAccounts = getForeignAccounts(snapshot, entities)
+  const treatyClaims = getTreatyClaims(snapshot, entities)
+  const nonresidentProfile = getNonresidentProfile(snapshot)
+  const intlAdvancedData = getIntlAdvancedData(snapshot)
+  const foreignSummary = getForeignSummary(
+    snapshot,
+    foreignIncomeRecords,
+    foreignAccounts,
+    treatyClaims,
+    nonresidentProfile,
+    intlAdvancedData
+  )
   const creditSummary = getCreditSummary(snapshot, dependents)
   const investmentSummary = getInvestmentSummary(taxLots, cryptoAccounts)
   const sections = [
@@ -1309,6 +2014,143 @@ const buildReview = (
         }))
     },
     {
+      id: 'business',
+      title: 'Business income and QBI',
+      rows: [
+        {
+          label: 'Businesses / K-1s',
+          value:
+            businessRecords.length > 0
+              ? `${countCompleted(businessRecords)}/${businessRecords.length} complete`
+              : 'No businesses entered',
+          editPath: '/business-k1',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'Net business income',
+          value: `$${businessSummary.netBusinessIncome.toLocaleString()}`,
+          editPath: '/business-k1',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'Estimated SE tax',
+          value: `$${businessSummary.estimatedSETax.toLocaleString()}`,
+          editPath: '/business-k1',
+          editLabel: 'Review'
+        },
+        {
+          label: 'QBI deduction',
+          value: `$${businessSummary.finalQBIDeduction.toLocaleString()}`,
+          editPath: '/qbi-worksheet',
+          editLabel: 'Review'
+        }
+      ],
+      warnings: findings
+        .filter(
+          (finding) =>
+            finding.code === 'BUSINESS-INCOMPLETE' || finding.code === 'QBI-REVIEW'
+        )
+        .map((finding) => ({
+          id: finding.id,
+          level: finding.severity,
+          message: finding.message,
+          editPath: finding.fix_path ?? '/business-k1',
+          editLabel: finding.fix_label ?? 'Review'
+        }))
+    },
+    {
+      id: 'rental',
+      title: 'Rental properties',
+      rows: [
+        {
+          label: 'Rental properties',
+          value:
+            rentalProperties.length > 0
+              ? `${countCompleted(rentalProperties)}/${rentalProperties.length} complete`
+              : 'No rentals entered',
+          editPath: '/rental',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'Gross rents',
+          value: `$${rentalSummary.grossRentsTotal.toLocaleString()}`,
+          editPath: '/rental',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'Deductible expenses',
+          value: `$${rentalSummary.deductibleExpensesTotal.toLocaleString()}`,
+          editPath: '/rental',
+          editLabel: 'Review'
+        },
+        {
+          label: 'Schedule E net',
+          value: `$${rentalSummary.scheduleENetIncome.toLocaleString()}`,
+          editPath: '/rental',
+          editLabel: 'Review'
+        }
+      ],
+      warnings: findings
+        .filter((finding) => finding.code === 'RENTAL-INCOMPLETE')
+        .map((finding) => ({
+          id: finding.id,
+          level: finding.severity,
+          message: finding.message,
+          editPath: finding.fix_path ?? '/rental',
+          editLabel: finding.fix_label ?? 'Review'
+        }))
+    },
+    {
+      id: 'international',
+      title: 'International and nonresident',
+      rows: [
+        {
+          label: 'Foreign earned income',
+          value: `$${foreignSummary.totalForeignEarnedIncome.toLocaleString()}`,
+          editPath: '/foreign-income',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'FEIE exclusion estimate',
+          value: `$${foreignSummary.feieExclusionEstimate.toLocaleString()}`,
+          editPath: '/intl-advanced',
+          editLabel: 'Review'
+        },
+        {
+          label: 'Foreign tax paid',
+          value: `$${foreignSummary.totalForeignTaxPaid.toLocaleString()}`,
+          editPath: '/foreign-income',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'International filing path',
+          value: foreignSummary.requires1040NR
+            ? '1040-NR'
+            : foreignSummary.dualStatus
+              ? 'Dual-status'
+              : foreignSummary.hasActivity
+                ? '1040 with foreign schedules'
+                : 'No international activity',
+          editPath: '/nonresident',
+          editLabel: 'Review'
+        }
+      ],
+      warnings: findings
+        .filter(
+          (finding) =>
+            finding.code === 'FOREIGN-INCOMPLETE' ||
+            finding.code === 'NONRESIDENT-INCOMPLETE' ||
+            finding.code === 'FBAR-REMINDER'
+        )
+        .map((finding) => ({
+          id: finding.id,
+          level: finding.severity,
+          message: finding.message,
+          editPath: finding.fix_path ?? '/foreign-income',
+          editLabel: finding.fix_label ?? 'Review'
+        }))
+    },
+    {
       id: 'household-credits',
       title: 'Dependents and credits',
       rows: [
@@ -1399,6 +2241,23 @@ const toFindingRows = (
   const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
   const taxLots = getTaxLots(snapshot, entities)
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
+  const businessRecords = getBusinessRecords(entities)
+  const qbiWorksheetEntities = getQBIWorksheetEntities(snapshot)
+  const businessSummary = getBusinessSummary(snapshot, businessRecords, qbiWorksheetEntities)
+  const rentalProperties = getRentalProperties(entities)
+  const foreignIncomeRecords = getForeignIncomeRecords(snapshot, entities)
+  const foreignAccounts = getForeignAccounts(snapshot, entities)
+  const treatyClaims = getTreatyClaims(snapshot, entities)
+  const nonresidentProfile = getNonresidentProfile(snapshot)
+  const intlAdvancedData = getIntlAdvancedData(snapshot)
+  const foreignSummary = getForeignSummary(
+    snapshot,
+    foreignIncomeRecords,
+    foreignAccounts,
+    treatyClaims,
+    nonresidentProfile,
+    intlAdvancedData
+  )
   const creditSummary = getCreditSummary(snapshot, dependents)
   const now = nowIso()
   const findings: ReviewFindingRow[] = []
@@ -1550,6 +2409,112 @@ const toFindingRows = (
       message: 'An investment sale or crypto account is missing required details.',
       fix_path: '/investments',
       fix_label: 'Complete investment details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (businessRecords.some((record) => !record.isComplete)) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'BUSINESS-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish business income details',
+      message: 'A Schedule C or K-1 record is missing business name or income details.',
+      fix_path: '/business-k1',
+      fix_label: 'Complete business details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (businessSummary.recordCount > 0 && businessSummary.qbiEligibleCount > 0 && qbiWorksheetEntities.length === 0) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'QBI-REVIEW',
+      severity: 'warning',
+      title: 'Review the QBI deduction',
+      message: 'Your business income may qualify for the Section 199A deduction. Review the QBI worksheet before filing.',
+      fix_path: '/qbi-worksheet',
+      fix_label: 'Review QBI worksheet',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (rentalProperties.some((property) => !property.isComplete)) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'RENTAL-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish rental property details',
+      message: 'A rental property is missing an address, rent amount, or expense details.',
+      fix_path: '/rental',
+      fix_label: 'Complete rental details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (
+    foreignIncomeRecords.some((record) => !record.isComplete) ||
+    foreignAccounts.some((account) => !account.isComplete) ||
+    treatyClaims.some((claim) => !claim.isComplete)
+  ) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'FOREIGN-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish international details',
+      message: 'Foreign income, account, or treaty data is missing country, amount, or classification details.',
+      fix_path: '/foreign-income',
+      fix_label: 'Complete foreign details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (nonresidentProfile.hasData && !nonresidentProfile.isComplete) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'NONRESIDENT-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish nonresident residency details',
+      message: 'Your nonresident profile is missing visa, citizenship, or day-count details needed to determine the filing path.',
+      fix_path: '/nonresident',
+      fix_label: 'Complete nonresident details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (foreignSummary.fbarRequired) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'FBAR-REMINDER',
+      severity: 'warning',
+      title: 'Separate FBAR filing may be required',
+      message: 'Your foreign account balances indicate that FinCEN Form 114 may need to be filed separately from your tax return.',
+      fix_path: '/foreign-income',
+      fix_label: 'Review FBAR requirements',
       acknowledged: 0,
       metadata_key: null,
       created_at: now,

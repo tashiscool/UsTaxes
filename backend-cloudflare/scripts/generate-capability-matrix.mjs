@@ -132,7 +132,7 @@ const rows = [
     directFileCoverage: 'partial',
     status: 'implemented_tested',
     notes:
-      'BusinessK1 now round-trips Schedule C and K-1 entities through /app/v1 with worker runtime coverage, while deeper QBI and basis return-model mapping remains a backend follow-up.'
+      'BusinessK1 now round-trips Schedule C and K-1 entities through /app/v1, and backend facts/checklist/review derive business, SE tax, and QBI summary data with worker plus local TaxFlow end-to-end coverage.'
   },
   {
     family: 'rental_property',
@@ -146,7 +146,7 @@ const rows = [
     directFileCoverage: 'partial',
     status: 'implemented_tested',
     notes:
-      'RentalWorkspace now persists and restores rental_property entities through /app/v1 with worker runtime coverage, while Schedule E fact derivation is still a backend gap.'
+      'RentalWorkspace now persists and restores rental_property entities through /app/v1, and backend facts/checklist/review derive Schedule E-oriented rent, expense, depreciation, and passive-loss summaries with worker plus local TaxFlow end-to-end coverage.'
   },
   {
     family: 'retirement_and_hsa',
@@ -188,7 +188,7 @@ const rows = [
     directFileCoverage: 'yes',
     status: 'implemented_tested',
     notes:
-      'ForeignIncome now persists foreign income, foreign account, and treaty-claim entities through /app/v1 with worker runtime coverage, though deeper nonresident tax mapping remains partial.'
+      'ForeignIncome and NonresidentFlow now persist foreign income, foreign accounts, treaty claims, and residency data through /app/v1, and backend facts/checklist/review derive FEIE, FBAR, treaty, and 1040-NR path summaries with worker plus local TaxFlow end-to-end coverage.'
   },
   {
     family: 'credits_and_supporting_entities',
