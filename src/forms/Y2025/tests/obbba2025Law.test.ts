@@ -15,6 +15,7 @@ import {
   qbid
 } from '../data/federal'
 import { getF8995PhaseOutIncome } from '../irsForms/F8995'
+import F8995A from '../irsForms/F8995A'
 
 const baseInformation: ValidatedInformation = {
   f1099s: [],
@@ -275,6 +276,66 @@ describe('2025 federal law updates', () => {
     expect(f1040.f8995?.l5()).toBe(20000)
   })
 
+  it('flows Schedule C profit into Schedule 1, Schedule SE, and Form 8995', () => {
+    const information = cloneDeep(baseInformation)
+    information.w2s = []
+    information.businesses = [
+      {
+        name: 'Taylor Consulting Services',
+        principalBusinessCode: '541611',
+        businessDescription: 'Management Consulting',
+        accountingMethod: 'cash',
+        materialParticipation: true,
+        startedOrAcquired: false,
+        madePaymentsRequiring1099: false,
+        filed1099s: false,
+        personRole: PersonRole.PRIMARY,
+        income: {
+          grossReceipts: 140000,
+          returns: 0,
+          otherIncome: 0
+        },
+        expenses: {
+          advertising: 2500,
+          carAndTruck: 0,
+          commissions: 0,
+          contractLabor: 0,
+          depletion: 0,
+          depreciation: 0,
+          employeeBenefits: 0,
+          insurance: 3600,
+          interestMortgage: 0,
+          interestOther: 0,
+          legal: 4000,
+          office: 3000,
+          pensionPlans: 0,
+          rentVehicles: 0,
+          rentOther: 0,
+          repairs: 0,
+          supplies: 1500,
+          taxes: 0,
+          travel: 8000,
+          deductibleMeals: 2000,
+          utilities: 0,
+          wages: 0,
+          otherExpenses: 2400
+        }
+      }
+    ] as never
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.scheduleC?.netProfit()).toBe(113000)
+    expect(f1040.schedule1.l3()).toBe(113000)
+    expect(f1040.schedule1.to1040Line8()).toBe(113000)
+    expect(f1040.scheduleSE.isNeeded()).toBe(true)
+    expect(f1040.scheduleSE.l2()).toBe(113000)
+    expect(f1040.totalQbi()).toBe(113000)
+    expect(f1040.f8995).toBeDefined()
+    expect(f1040.f8995?.l2()).toBe(113000)
+    expect(f1040.f8995?.l5()).toBe(22600)
+  })
+
   it('uses taxable income before QBI after Schedule 1-A deductions', () => {
     const information = cloneDeep(baseInformation)
     information.w2s[0].income = 150000
@@ -296,6 +357,45 @@ describe('2025 federal law updates', () => {
       Math.max(0, f1040.l11() - f1040.l12() - f1040.l13b())
     )
     expect(f1040.f8995?.l11()).toBe(f1040.taxableIncomeBeforeQBIDeduction())
+  })
+
+  it('keeps Form 8995-A wage and UBIA limits separated by business entry', () => {
+    const f1040 = new F1040(cloneDeep(baseInformation), [])
+    const f8995A = new F8995A(f1040)
+
+    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+      {
+        name: 'Alpha Consulting',
+        ein: '111111111',
+        qbi: 100000,
+        w2Wages: 10000,
+        ubia: 40000
+      },
+      {
+        name: 'Bravo Services',
+        ein: '222222222',
+        qbi: 80000,
+        w2Wages: 30000,
+        ubia: 120000
+      },
+      {
+        name: 'Charlie Rentals',
+        ein: '333333333',
+        qbi: 60000,
+        w2Wages: 50000,
+        ubia: 200000
+      }
+    ])
+
+    expect(f8995A.l5a()).toBe(5000)
+    expect(f8995A.l5b()).toBe(15000)
+    expect(f8995A.l5c()).toBe(25000)
+    expect(f8995A.l8a()).toBe(1000)
+    expect(f8995A.l8b()).toBe(3000)
+    expect(f8995A.l8c()).toBe(5000)
+    expect(f8995A.l9a()).toBe(3500)
+    expect(f8995A.l9b()).toBe(10500)
+    expect(f8995A.l9c()).toBe(17500)
   })
 
   it('treats qualified disaster losses differently from other casualty losses in 2025', () => {

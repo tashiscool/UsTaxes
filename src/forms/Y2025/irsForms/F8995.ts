@@ -3,6 +3,15 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { FilingStatus } from 'ustaxes/core/data'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { qbid } from '../data/federal'
+import { BusinessInfo } from './ScheduleC'
+
+type QBIEntry = {
+  name: string
+  ein?: string
+  qbi: number
+  w2Wages: number
+  ubia: number
+}
 
 export function getF8995PhaseOutIncome(filingStatus: FilingStatus): number {
   let formAMinAmount = 197300
@@ -23,8 +32,71 @@ export default class F8995 extends F1040Attachment {
   tag: FormTag = 'f8995'
   sequenceIndex = 55
 
-  applicableK1s = () =>
-    this.f1040.info.scheduleK1Form1065s.filter((k1) => k1.section199AQBI > 0)
+  scheduleCQBIBusinesses = (): QBIEntry[] =>
+    (((this.f1040.info.businesses as BusinessInfo[] | undefined) ?? [])
+      .map((business) => {
+        const expenses = business.expenses
+        const totalExpenses =
+          expenses.advertising +
+          expenses.carAndTruck +
+          expenses.commissions +
+          expenses.contractLabor +
+          expenses.depletion +
+          expenses.depreciation +
+          expenses.employeeBenefits +
+          expenses.insurance +
+          expenses.interestMortgage +
+          expenses.interestOther +
+          expenses.legal +
+          expenses.office +
+          expenses.pensionPlans +
+          expenses.rentVehicles +
+          expenses.rentOther +
+          expenses.repairs +
+          expenses.supplies +
+          expenses.taxes +
+          expenses.travel +
+          expenses.deductibleMeals +
+          expenses.utilities +
+          expenses.wages +
+          expenses.otherExpenses
+        const cogs =
+          (business.costOfGoodsSold?.beginningInventory ?? 0) +
+          (business.costOfGoodsSold?.purchases ?? 0) +
+          (business.costOfGoodsSold?.laborCost ?? 0) +
+          (business.costOfGoodsSold?.materials ?? 0) +
+          (business.costOfGoodsSold?.otherCosts ?? 0) -
+          (business.costOfGoodsSold?.endingInventory ?? 0)
+        const grossIncome =
+          Math.max(0, business.income.grossReceipts - business.income.returns) +
+          business.income.otherIncome
+        const netProfit =
+          grossIncome - cogs - totalExpenses - (business.homeOfficeDeduction ?? 0)
+        return {
+          name: business.name,
+          ein: business.ein,
+          qbi: netProfit,
+          w2Wages: 0,
+          ubia: 0
+        }
+      })
+      .filter((business) => business.qbi > 0)) as QBIEntry[]
+
+  applicableK1s = (): QBIEntry[] =>
+    this.f1040.info.scheduleK1Form1065s
+      .filter((k1) => k1.section199AQBI > 0)
+      .map((k1) => ({
+        name: k1.partnershipName,
+        ein: k1.partnershipEin,
+        qbi: k1.section199AQBI,
+        w2Wages: 0,
+        ubia: 0
+      }))
+
+  qbiEntries = (): QBIEntry[] => [
+    ...this.scheduleCQBIBusinesses(),
+    ...this.applicableK1s()
+  ]
 
   netCapitalGains = (): number => {
     let rtn = this.f1040.l3a() ?? 0
@@ -40,8 +112,8 @@ export default class F8995 extends F1040Attachment {
   }
 
   l2 = (): number | undefined =>
-    this.applicableK1s()
-      .map((k1) => k1.section199AQBI)
+    this.qbiEntries()
+      .map((entry) => entry.qbi)
       .reduce((c, a) => c + a, 0)
   l3 = (): number | undefined => undefined
   l4 = (): number | undefined =>
@@ -71,21 +143,21 @@ export default class F8995 extends F1040Attachment {
   fields = (): Field[] => [
     this.f1040.namesString(),
     this.f1040.info.taxPayer.primaryPerson.ssid,
-    this.applicableK1s()[0]?.partnershipName,
-    this.applicableK1s()[0]?.partnershipEin,
-    this.applicableK1s()[0]?.section199AQBI,
-    this.applicableK1s()[1]?.partnershipName,
-    this.applicableK1s()[1]?.partnershipEin,
-    this.applicableK1s()[1]?.section199AQBI,
-    this.applicableK1s()[2]?.partnershipName,
-    this.applicableK1s()[2]?.partnershipEin,
-    this.applicableK1s()[2]?.section199AQBI,
-    this.applicableK1s()[3]?.partnershipName,
-    this.applicableK1s()[3]?.partnershipEin,
-    this.applicableK1s()[3]?.section199AQBI,
-    this.applicableK1s()[4]?.partnershipName,
-    this.applicableK1s()[4]?.partnershipEin,
-    this.applicableK1s()[4]?.section199AQBI,
+    this.qbiEntries()[0]?.name,
+    this.qbiEntries()[0]?.ein,
+    this.qbiEntries()[0]?.qbi,
+    this.qbiEntries()[1]?.name,
+    this.qbiEntries()[1]?.ein,
+    this.qbiEntries()[1]?.qbi,
+    this.qbiEntries()[2]?.name,
+    this.qbiEntries()[2]?.ein,
+    this.qbiEntries()[2]?.qbi,
+    this.qbiEntries()[3]?.name,
+    this.qbiEntries()[3]?.ein,
+    this.qbiEntries()[3]?.qbi,
+    this.qbiEntries()[4]?.name,
+    this.qbiEntries()[4]?.ein,
+    this.qbiEntries()[4]?.qbi,
     this.l2(),
     this.l3(),
     this.l4(),

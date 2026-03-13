@@ -17,9 +17,9 @@ export default class F8995A extends F8995 {
   tag: FormTag = 'f8995a'
   sequenceIndex = 55.5
 
-  l2a = (): number | undefined => this.applicableK1s()[0]?.section199AQBI
-  l2b = (): number | undefined => this.applicableK1s()[1]?.section199AQBI
-  l2c = (): number | undefined => this.applicableK1s()[2]?.section199AQBI
+  l2a = (): number | undefined => this.qbiEntries()[0]?.qbi
+  l2b = (): number | undefined => this.qbiEntries()[1]?.qbi
+  l2c = (): number | undefined => this.qbiEntries()[2]?.qbi
 
   l3a = (): number | undefined =>
     ifNumber(this.l2a(), (num) => num * qbid.maxRate)
@@ -28,34 +28,32 @@ export default class F8995A extends F8995 {
   l3c = (): number | undefined =>
     ifNumber(this.l2c(), (num) => num * qbid.maxRate)
 
-  // TODO: Allow W2 income with QBI
-  l4a = (): number | undefined => ifNumber(this.l2a(), () => 0)
-  l4b = (): number | undefined => ifNumber(this.l2a(), () => 0)
-  l4c = (): number | undefined => ifNumber(this.l2a(), () => 0)
+  l4a = (): number | undefined => ifNumber(this.l2a(), () => this.qbiEntries()[0]?.w2Wages ?? 0)
+  l4b = (): number | undefined => ifNumber(this.l2b(), () => this.qbiEntries()[1]?.w2Wages ?? 0)
+  l4c = (): number | undefined => ifNumber(this.l2c(), () => this.qbiEntries()[2]?.w2Wages ?? 0)
 
   l5a = (): number | undefined => ifNumber(this.l4a(), (num) => num * 0.5)
-  l5b = (): number | undefined => ifNumber(this.l4a(), (num) => num * 0.5)
-  l5c = (): number | undefined => ifNumber(this.l4a(), (num) => num * 0.5)
+  l5b = (): number | undefined => ifNumber(this.l4b(), (num) => num * 0.5)
+  l5c = (): number | undefined => ifNumber(this.l4c(), (num) => num * 0.5)
 
   l6a = (): number | undefined => ifNumber(this.l4a(), (num) => num * 0.25)
-  l6b = (): number | undefined => ifNumber(this.l4a(), (num) => num * 0.25)
-  l6c = (): number | undefined => ifNumber(this.l4a(), (num) => num * 0.25)
+  l6b = (): number | undefined => ifNumber(this.l4b(), (num) => num * 0.25)
+  l6c = (): number | undefined => ifNumber(this.l4c(), (num) => num * 0.25)
 
-  // TODO: Allow UBIA
-  l7a = (): number | undefined => ifNumber(this.l2a(), () => 0)
-  l7b = (): number | undefined => ifNumber(this.l2a(), () => 0)
-  l7c = (): number | undefined => ifNumber(this.l2a(), () => 0)
+  l7a = (): number | undefined => ifNumber(this.l2a(), () => this.qbiEntries()[0]?.ubia ?? 0)
+  l7b = (): number | undefined => ifNumber(this.l2b(), () => this.qbiEntries()[1]?.ubia ?? 0)
+  l7c = (): number | undefined => ifNumber(this.l2c(), () => this.qbiEntries()[2]?.ubia ?? 0)
 
-  l8a = (): number | undefined => ifNumber(this.l7a(), (num) => num * 0.25)
-  l8b = (): number | undefined => ifNumber(this.l7a(), (num) => num * 0.25)
-  l8c = (): number | undefined => ifNumber(this.l7a(), (num) => num * 0.25)
+  l8a = (): number | undefined => ifNumber(this.l7a(), (num) => num * 0.025)
+  l8b = (): number | undefined => ifNumber(this.l7b(), (num) => num * 0.025)
+  l8c = (): number | undefined => ifNumber(this.l7c(), (num) => num * 0.025)
 
   l9a = (): number | undefined =>
     ifNumber(this.l6a(), (num) => num + (this.l8a() ?? 0))
   l9b = (): number | undefined =>
-    ifNumber(this.l6a(), (num) => num + (this.l8b() ?? 0))
+    ifNumber(this.l6b(), (num) => num + (this.l8b() ?? 0))
   l9c = (): number | undefined =>
-    ifNumber(this.l6a(), (num) => num + (this.l8c() ?? 0))
+    ifNumber(this.l6c(), (num) => num + (this.l8c() ?? 0))
 
   l10a = (): number | undefined =>
     ifNumber(this.l5a(), (num) => Math.max(num, this.l9a() ?? 0))
@@ -84,8 +82,8 @@ export default class F8995A extends F8995 {
 
   // TODO: Patron reduction
   l14a = (): number | undefined => ifNumber(this.l2a(), () => 0)
-  l14b = (): number | undefined => ifNumber(this.l2a(), () => 0)
-  l14c = (): number | undefined => ifNumber(this.l2a(), () => 0)
+  l14b = (): number | undefined => ifNumber(this.l2b(), () => 0)
+  l14c = (): number | undefined => ifNumber(this.l2c(), () => 0)
 
   l15a = (): number | undefined =>
     ifNumber(this.l13a(), (num) => num - (this.l14a() ?? 0))
@@ -162,20 +160,20 @@ export default class F8995A extends F8995 {
   fields = (): Field[] => [
     this.f1040.namesString(),
     this.f1040.info.taxPayer.primaryPerson.ssid,
-    this.applicableK1s()[0]?.partnershipName,
+    this.qbiEntries()[0]?.name,
     false, // 1Ab
     false, // 1Ac
-    this.applicableK1s()[0]?.partnershipEin,
+    this.qbiEntries()[0]?.ein,
     false, // 1Ae
-    this.applicableK1s()[1]?.partnershipName,
+    this.qbiEntries()[1]?.name,
     false, // 1Bb
     false, // 1Bc
-    this.applicableK1s()[1]?.partnershipEin,
+    this.qbiEntries()[1]?.ein,
     false, // 1Be
-    this.applicableK1s()[2]?.partnershipName,
+    this.qbiEntries()[2]?.name,
     false, // 1Cb
     false, // 1Cc
-    this.applicableK1s()[2]?.partnershipEin,
+    this.qbiEntries()[2]?.ein,
     false, // 1Ce
     this.l2a(),
     this.l2b(),

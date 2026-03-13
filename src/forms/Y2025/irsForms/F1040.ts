@@ -49,7 +49,7 @@ import F8962 from './F8962'
 import F4136 from './F4136'
 import F2439 from './F2439'
 import F2441 from './F2441'
-import ScheduleC from './ScheduleC'
+import ScheduleC, { BusinessInfo } from './ScheduleC'
 import F8949 from './F8949'
 import F6251 from './F6251'
 import F4137 from './F4137'
@@ -764,7 +764,50 @@ export default class F1040 extends F1040Base {
   totalQbi = () =>
     this.info.scheduleK1Form1065s
       .map((k1) => k1.section199AQBI)
-      .reduce((c, a) => c + a, 0)
+      .reduce((c, a) => c + a, 0) +
+    (((this.info.businesses as BusinessInfo[] | undefined) ?? [])
+      .map((business) => {
+        const expenses = business.expenses
+        const totalExpenses =
+          expenses.advertising +
+          expenses.carAndTruck +
+          expenses.commissions +
+          expenses.contractLabor +
+          expenses.depletion +
+          expenses.depreciation +
+          expenses.employeeBenefits +
+          expenses.insurance +
+          expenses.interestMortgage +
+          expenses.interestOther +
+          expenses.legal +
+          expenses.office +
+          expenses.pensionPlans +
+          expenses.rentVehicles +
+          expenses.rentOther +
+          expenses.repairs +
+          expenses.supplies +
+          expenses.taxes +
+          expenses.travel +
+          expenses.deductibleMeals +
+          expenses.utilities +
+          expenses.wages +
+          expenses.otherExpenses
+        const cogs =
+          (business.costOfGoodsSold?.beginningInventory ?? 0) +
+          (business.costOfGoodsSold?.purchases ?? 0) +
+          (business.costOfGoodsSold?.laborCost ?? 0) +
+          (business.costOfGoodsSold?.materials ?? 0) +
+          (business.costOfGoodsSold?.otherCosts ?? 0) -
+          (business.costOfGoodsSold?.endingInventory ?? 0)
+        const grossIncome =
+          Math.max(0, business.income.grossReceipts - business.income.returns) +
+          business.income.otherIncome
+        return Math.max(
+          0,
+          grossIncome - cogs - totalExpenses - (business.homeOfficeDeduction ?? 0)
+        )
+      })
+      .reduce((c, a) => c + a, 0))
 
   toString = (): string => `
     Form 1040 generated from information:
