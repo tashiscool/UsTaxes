@@ -84,4 +84,57 @@ describe('Schedule E parity improvements', () => {
     expect(f1040.scheduleE.l40()).toBe(400)
     expect(f1040.scheduleE.l41()).toBe(1150)
   })
+
+  it('includes passive and nonpassive K-1 rental, royalty, and guaranteed payment totals', () => {
+    const information = cloneDeep(baseInformation)
+    information.scheduleK1Form1065s = [
+      {
+        partnershipName: 'Passive Property LP',
+        partnershipEin: '111111111',
+        partnerOrSCorp: 'P',
+        isForeign: false,
+        isPassive: true,
+        ordinaryBusinessIncome: 100,
+        netRentalRealEstateIncome: 800,
+        otherNetRentalIncome: -100,
+        royalties: 50,
+        interestIncome: 0,
+        guaranteedPaymentsForServices: 200,
+        guaranteedPaymentsForCapital: 0,
+        selfEmploymentEarningsA: 0,
+        selfEmploymentEarningsB: 0,
+        selfEmploymentEarningsC: 0,
+        distributionsCodeAAmount: 0,
+        section199AQBI: 0
+      } as never,
+      {
+        partnershipName: 'Active Operations LLC',
+        partnershipEin: '222222222',
+        partnerOrSCorp: 'P',
+        isForeign: false,
+        isPassive: false,
+        ordinaryBusinessIncome: -300,
+        netRentalRealEstateIncome: 0,
+        otherNetRentalIncome: 900,
+        royalties: 40,
+        interestIncome: 0,
+        guaranteedPaymentsForServices: 60,
+        guaranteedPaymentsForCapital: 0,
+        selfEmploymentEarningsA: 0,
+        selfEmploymentEarningsB: 0,
+        selfEmploymentEarningsC: 0,
+        distributionsCodeAAmount: 0,
+        section199AQBI: 0
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.scheduleE.l29ah()).toBe(1050)
+    expect(f1040.scheduleE.l29ak()).toBe(700)
+    expect(f1040.scheduleE.l29bg()).toBe(0)
+    expect(f1040.scheduleE.l29bi()).toBe(0)
+    expect(f1040.scheduleE.l32()).toBe(1750)
+    expect(f1040.scheduleE.l41()).toBe(1750)
+  })
 })

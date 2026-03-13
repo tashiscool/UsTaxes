@@ -81,6 +81,7 @@ export interface BusinessInfo {
   homeOfficeDeduction?: number
   qbiW2Wages?: number
   qbiUbia?: number
+  qbiPatronReduction?: number
   isSpecifiedServiceTradeOrBusiness?: boolean
   personRole: PersonRole
 }

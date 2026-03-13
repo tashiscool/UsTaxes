@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { cloneDeep } from 'lodash'
-import { FilingStatus, PersonRole } from 'ustaxes/core/data'
+import { FilingStatus, Income1099Type, PersonRole } from 'ustaxes/core/data'
 import { evaluatePiecewise } from 'ustaxes/core/util'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 import F1040 from '../irsForms/F1040'
@@ -473,12 +473,14 @@ describe('2025 federal law updates', () => {
     expect(entries?.[0]).toMatchObject({
       name: 'Taylor Consulting Services',
       w2Wages: 18000,
-      ubia: 95000
+      ubia: 95000,
+      patronReduction: 0
     })
     expect(entries?.[1]).toMatchObject({
       name: 'Northwind Partners',
       w2Wages: 12000,
-      ubia: 60000
+      ubia: 60000,
+      patronReduction: 0
     })
   })
 
@@ -492,28 +494,32 @@ describe('2025 federal law updates', () => {
         ein: '111111111',
         qbi: 100000,
         w2Wages: 100000,
-        ubia: 0
+        ubia: 0,
+        patronReduction: 0
       },
       {
         name: 'Bravo Services',
         ein: '222222222',
         qbi: 80000,
         w2Wages: 80000,
-        ubia: 0
+        ubia: 0,
+        patronReduction: 0
       },
       {
         name: 'Charlie Rentals',
         ein: '333333333',
         qbi: 60000,
         w2Wages: 60000,
-        ubia: 0
+        ubia: 0,
+        patronReduction: 0
       },
       {
         name: 'Delta Holdings',
         ein: '444444444',
         qbi: 40000,
         w2Wages: 40000,
-        ubia: 0
+        ubia: 0,
+        patronReduction: 0
       }
     ])
     jest.spyOn(f8995A, 'l20').mockReturnValue(f8995A.l21())
@@ -521,6 +527,101 @@ describe('2025 federal law updates', () => {
 
     expect(f8995A.l16()).toBe(56000)
     expect(f8995A.l27()).toBe(56000)
+  })
+
+  it('subtracts patron reductions from the detailed QBI component', () => {
+    const f1040 = new F1040(cloneDeep(baseInformation), [])
+    const f8995A = new F8995A(f1040)
+
+    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+      {
+        name: 'Coop Alpha',
+        ein: '111111111',
+        qbi: 100000,
+        w2Wages: 100000,
+        ubia: 0,
+        patronReduction: 1500
+      },
+      {
+        name: 'Coop Bravo',
+        ein: '222222222',
+        qbi: 50000,
+        w2Wages: 50000,
+        ubia: 0,
+        patronReduction: 500
+      }
+    ])
+    jest.spyOn(f8995A, 'l20').mockReturnValue(f8995A.l21())
+    jest.spyOn(f8995A, 'l34').mockReturnValue(0)
+
+    expect(f8995A.l13a()).toBe(20000)
+    expect(f8995A.l14a()).toBe(1500)
+    expect(f8995A.l15a()).toBe(18500)
+    expect(f8995A.l13b()).toBe(10000)
+    expect(f8995A.l14b()).toBe(500)
+    expect(f8995A.l15b()).toBe(9500)
+    expect(f8995A.l16()).toBe(28000)
+    expect(f8995A.l27()).toBe(28000)
+  })
+
+  it('applies prior-year QBI loss carryforwards and REIT/PTP components', () => {
+    const information = cloneDeep(baseInformation)
+    information.f1099s = [
+      {
+        payer: 'Northwind REIT Fund',
+        type: Income1099Type.DIV,
+        personRole: PersonRole.PRIMARY,
+        form: {
+          dividends: 1200,
+          qualifiedDividends: 600,
+          totalCapitalGainsDistributions: 0,
+          section199ADividends: 1500
+        }
+      } as never
+    ]
+    information.qbiDeductionData = {
+      priorYearQualifiedBusinessLossCarryforward: 5000,
+      ptpIncome: 2000,
+      ptpLossCarryforward: 500,
+      dpadReduction: 300
+    }
+    information.scheduleK1Form1065s = [
+      {
+        partnershipName: 'Public Partnership LP',
+        partnershipEin: '555555555',
+        partnerOrSCorp: 'P',
+        isForeign: false,
+        isPassive: false,
+        ordinaryBusinessIncome: 0,
+        interestIncome: 0,
+        guaranteedPaymentsForServices: 0,
+        guaranteedPaymentsForCapital: 0,
+        selfEmploymentEarningsA: 0,
+        selfEmploymentEarningsB: 0,
+        selfEmploymentEarningsC: 0,
+        distributionsCodeAAmount: 0,
+        section199AQBI: 0,
+        isPubliclyTradedPartnership: true,
+        ptpSection199AIncome: 3000,
+        ptpSection199ALossCarryforward: 200
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+    const f8995 = f1040.f8995
+
+    expect(f8995).toBeDefined()
+    expect(f8995?.l3()).toBe(-5000)
+    expect(f8995?.l6()).toBe(1500)
+    expect(f8995?.l7()).toBe(4300)
+    expect(f8995?.l8()).toBe(5800)
+    expect(f8995?.l9()).toBe(1160)
+
+    const f8995a = new F8995A(f1040)
+    expect(f8995a.l28()).toBe(6500)
+    expect(f8995a.l29()).toBe(-700)
+    expect(f8995a.l31()).toBe(1160)
+    expect(f8995a.l38()).toBe(300)
   })
 
   it('treats qualified disaster losses differently from other casualty losses in 2025', () => {

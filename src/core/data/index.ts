@@ -143,6 +143,7 @@ export interface F1099DivData {
   dividends: number
   qualifiedDividends: number
   totalCapitalGainsDistributions: number
+  section199ADividends?: number
 }
 /*
  TODO: Add in logic for various different distributions
@@ -526,6 +527,18 @@ export interface ScheduleK1Form1065 {
   section199AQBI: number // Form 8995 or 8995-A
   section199AW2Wages?: number // Form 8995-A wage limitation support
   section199AUbia?: number // Form 8995-A UBIA limitation support
+  section199APatronReduction?: number // Form 8995-A line 14 patron reduction
+  isPubliclyTradedPartnership?: boolean
+  ptpSection199AIncome?: number
+  ptpSection199ALossCarryforward?: number
+}
+
+export interface QbiDeductionData {
+  priorYearQualifiedBusinessLossCarryforward?: number
+  reitDividends?: number
+  ptpIncome?: number
+  ptpLossCarryforward?: number
+  dpadReduction?: number
 }
 
 export interface ItemizedDeductions {
@@ -2744,6 +2757,7 @@ export interface Information<D = Date> {
   householdTaxDeposits?: number // Schedule H
   // Schedule C - Business Income
   businesses?: Record<string, unknown>[] // Schedule C (cast in form)
+  qbiDeductionData?: QbiDeductionData
   // Schedule E supplemental entries not captured elsewhere
   scheduleEPage2?: ScheduleEPage2Data
   // Form 2441 - Child Care

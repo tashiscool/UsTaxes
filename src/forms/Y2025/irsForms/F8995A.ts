@@ -32,10 +32,14 @@ export default class F8995A extends F8995 {
     return Math.max(line26, line11)
   }
 
+  deductionAfterPatronReduction = (
+    entry: ReturnType<F8995['qbiEntries']>[number]
+  ): number => Math.max(0, this.deductionForEntry(entry) - entry.patronReduction)
+
   allQualifiedBusinessDeductions = (): number[] =>
     this.qbiEntries()
       .filter((entry) => entry.qbi > 0)
-      .map((entry) => this.deductionForEntry(entry))
+      .map((entry) => this.deductionAfterPatronReduction(entry))
 
   l2a = (): number | undefined => this.qbiEntries()[0]?.qbi
   l2b = (): number | undefined => this.qbiEntries()[1]?.qbi
@@ -100,17 +104,19 @@ export default class F8995A extends F8995 {
   l13c = (): number | undefined =>
     ifNumber(this.l12c(), (num) => Math.max(num, this.l11c() ?? 0))
 
-  // TODO: Patron reduction
-  l14a = (): number | undefined => ifNumber(this.l2a(), () => 0)
-  l14b = (): number | undefined => ifNumber(this.l2b(), () => 0)
-  l14c = (): number | undefined => ifNumber(this.l2c(), () => 0)
+  l14a = (): number | undefined =>
+    ifNumber(this.l2a(), () => this.qbiEntries()[0]?.patronReduction ?? 0)
+  l14b = (): number | undefined =>
+    ifNumber(this.l2b(), () => this.qbiEntries()[1]?.patronReduction ?? 0)
+  l14c = (): number | undefined =>
+    ifNumber(this.l2c(), () => this.qbiEntries()[2]?.patronReduction ?? 0)
 
   l15a = (): number | undefined =>
-    ifNumber(this.l13a(), (num) => num - (this.l14a() ?? 0))
+    ifNumber(this.l13a(), (num) => Math.max(0, num - (this.l14a() ?? 0)))
   l15b = (): number | undefined =>
-    ifNumber(this.l13b(), (num) => num - (this.l14b() ?? 0))
+    ifNumber(this.l13b(), (num) => Math.max(0, num - (this.l14b() ?? 0)))
   l15c = (): number | undefined =>
-    ifNumber(this.l13c(), (num) => num - (this.l14c() ?? 0))
+    ifNumber(this.l13c(), (num) => Math.max(0, num - (this.l14c() ?? 0)))
 
   l16 = (): number => sumFields(this.allQualifiedBusinessDeductions())
 
@@ -156,9 +162,8 @@ export default class F8995A extends F8995 {
 
   l27 = (): number => this.l16()
 
-  // TODO: REIT
-  l28 = (): number => 0
-  l29 = (): number => 0
+  l28 = (): number => this.reitDividends() + this.currentYearPtpIncome()
+  l29 = (): number => -this.ptpLossCarryforward()
 
   l30 = (): number => Math.max(0, this.l28() + this.l29())
   l31 = (): number => this.l30() * qbid.maxRate
@@ -170,8 +175,7 @@ export default class F8995A extends F8995 {
   l36 = (): number => this.l35() * qbid.maxRate
   l37 = (): number => Math.min(this.l32(), this.l36())
 
-  // TODO: DPAD
-  l38 = (): number => 0
+  l38 = (): number => this.f1040.info.qbiDeductionData?.dpadReduction ?? 0
 
   l39 = (): number => this.l37() - this.l38()
   deductions = (): number => this.l39()

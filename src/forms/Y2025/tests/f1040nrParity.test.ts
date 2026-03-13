@@ -144,4 +144,56 @@ describe('Form 1040-NR parity', () => {
     expect(f1040nr.fdapTaxRate()).toBe(0)
     expect(f1040nr.fdapTax()).toBe(0)
   })
+
+  it('uses explicit treaty rates and excludes treaty-exempt scholarship from ECI', () => {
+    const information = cloneDeep(baseInformation)
+    information.nonresidentAlienReturn = {
+      nonresidentInfo: {
+        countryOfCitizenship: 'CN',
+        countryOfResidence: 'CN',
+        visaType: 'F1',
+        dateEnteredUS: new Date('2025-01-15'),
+        daysInUSThisYear: 120,
+        claimsTaxTreaty: true,
+        treatyCountry: 'CN',
+        treatyArticle: '20',
+        reducedTreatyRate: 0.1,
+        hasEffectivelyConnectedIncome: true,
+        hasFDAPIncome: true,
+        fdapIncome: {
+          dividends: 1000,
+          interest: 500,
+          rents: 0,
+          royalties: 0,
+          gambling: 0,
+          socialSecurity: 0,
+          capitalGains: 0,
+          otherIncome: 0
+        }
+      },
+      effectivelyConnectedIncome: {
+        wages: 0,
+        businessIncome: 0,
+        scholarshipIncome: 5000,
+        treatyExemptScholarship: 5000,
+        capitalGains: 0,
+        rentalIncome: 0,
+        partnershipIncome: 0,
+        otherIncome: 24000
+      },
+      taxWithheld: 0,
+      estimatedTaxPayments: 0
+    }
+
+    const f1040 = new F1040(information, [])
+    const f1040nr = f1040.f1040nr
+
+    expect(f1040nr.eciScholarshipIncome()).toBe(5000)
+    expect(f1040nr.treatyExemptScholarship()).toBe(5000)
+    expect(f1040nr.taxableScholarshipIncome()).toBe(0)
+    expect(f1040nr.totalEffectivelyConnectedIncome()).toBe(24000)
+    expect(f1040nr.eciTax()).toBe(2645)
+    expect(f1040nr.fdapTaxRate()).toBe(0.1)
+    expect(f1040nr.fdapTax()).toBe(150)
+  })
 })

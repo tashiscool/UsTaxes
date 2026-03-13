@@ -523,7 +523,7 @@ export default class F1040 extends F1040Base {
       )
     }
 
-    if (this.totalQbi() > 0) {
+    if (this.hasQualifiedBusinessIncomeDeductionSource()) {
       const formAMinAmount = getF8995PhaseOutIncome(
         this.info.taxPayer.filingStatus
       )
@@ -808,6 +808,31 @@ export default class F1040 extends F1040Base {
         )
       })
       .reduce((c, a) => c + a, 0))
+
+  totalQualifiedReitPtpIncome = (): number =>
+    this.f1099Divs().reduce(
+      (total, f1099Div) => total + (f1099Div.form.section199ADividends ?? 0),
+      0
+    ) +
+    this.info.scheduleK1Form1065s.reduce((total, k1) => {
+      if (k1.ptpSection199AIncome !== undefined) {
+        return total + k1.ptpSection199AIncome
+      }
+      if (k1.isPubliclyTradedPartnership) {
+        return total + k1.section199AQBI
+      }
+      return total
+    }, 0) +
+    (this.info.qbiDeductionData?.reitDividends ?? 0) +
+    (this.info.qbiDeductionData?.ptpIncome ?? 0) -
+    (this.info.qbiDeductionData?.ptpLossCarryforward ?? 0) -
+    this.info.scheduleK1Form1065s.reduce(
+      (total, k1) => total + (k1.ptpSection199ALossCarryforward ?? 0),
+      0
+    )
+
+  hasQualifiedBusinessIncomeDeductionSource = (): boolean =>
+    this.totalQbi() > 0 || this.totalQualifiedReitPtpIncome() > 0
 
   toString = (): string => `
     Form 1040 generated from information:

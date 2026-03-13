@@ -202,26 +202,37 @@ export default class ScheduleE extends F1040Attachment {
 
   l26 = (): number => sumFields([this.l24(), this.l25()])
 
-  // TODO: required from Pub 596
+  k1ScheduleEAmount = (
+    k1: (typeof this.f1040.info.scheduleK1Form1065s)[number]
+  ): number =>
+    sumFields([
+      k1.ordinaryBusinessIncome,
+      k1.netRentalRealEstateIncome,
+      k1.otherNetRentalIncome,
+      k1.royalties,
+      k1.guaranteedPaymentsForServices,
+      k1.guaranteedPaymentsForCapital
+    ])
+
   l29ah = (): number | undefined =>
     this.f1040.info.scheduleK1Form1065s.reduce(
-      (t, k1) => t + Math.max(0, k1.isPassive ? k1.ordinaryBusinessIncome : 0),
+      (t, k1) => t + Math.max(0, k1.isPassive ? this.k1ScheduleEAmount(k1) : 0),
       0
     )
   l29ak = (): number | undefined =>
     this.f1040.info.scheduleK1Form1065s.reduce(
-      (t, k1) => t + Math.max(0, k1.isPassive ? 0 : k1.ordinaryBusinessIncome),
+      (t, k1) => t + Math.max(0, k1.isPassive ? 0 : this.k1ScheduleEAmount(k1)),
       0
     )
 
   l29bg = (): number | undefined =>
     this.f1040.info.scheduleK1Form1065s.reduce(
-      (t, k1) => t + Math.min(0, k1.isPassive ? k1.ordinaryBusinessIncome : 0),
+      (t, k1) => t + Math.min(0, k1.isPassive ? this.k1ScheduleEAmount(k1) : 0),
       0
     )
   l29bi = (): number | undefined =>
     this.f1040.info.scheduleK1Form1065s.reduce(
-      (t, k1) => t + Math.min(0, k1.isPassive ? 0 : k1.ordinaryBusinessIncome),
+      (t, k1) => t + Math.min(0, k1.isPassive ? 0 : this.k1ScheduleEAmount(k1)),
       0
     )
   l29bj = (): number | undefined => undefined
@@ -279,17 +290,18 @@ export default class ScheduleE extends F1040Attachment {
     )
     l28Fields.push(
       ...k1s.slice(0, 4).flatMap((k1) => {
+        const amount = this.k1ScheduleEAmount(k1)
         if (k1.isPassive) {
-          if (k1.ordinaryBusinessIncome < 0) {
-            return [k1.ordinaryBusinessIncome, 0, 0, 0, 0]
+          if (amount < 0) {
+            return [amount, 0, 0, 0, 0]
           } else {
-            return [0, k1.ordinaryBusinessIncome, 0, 0, 0]
+            return [0, amount, 0, 0, 0]
           }
         } else {
-          if (k1.ordinaryBusinessIncome < 0) {
-            return [0, 0, k1.ordinaryBusinessIncome, 0, 0]
+          if (amount < 0) {
+            return [0, 0, amount, 0, 0]
           } else {
-            return [0, 0, 0, 0, k1.ordinaryBusinessIncome]
+            return [0, 0, 0, 0, amount]
           }
         }
       })

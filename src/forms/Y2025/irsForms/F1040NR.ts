@@ -52,6 +52,7 @@ export interface NonresidentAlienInfo {
   treatyCountry?: string
   treatyArticle?: string
   treatyBenefitAmount?: number
+  reducedTreatyRate?: number
   // Income types
   hasEffectivelyConnectedIncome: boolean
   hasFDAPIncome: boolean
@@ -71,6 +72,8 @@ export interface NonresidentAlienInfo {
 export interface EffectivelyConnectedIncome {
   wages: number
   businessIncome: number
+  scholarshipIncome?: number
+  treatyExemptScholarship?: number
   capitalGains: number
   rentalIncome: number
   partnershipIncome: number
@@ -154,6 +157,11 @@ export default class F1040NR extends F1040Attachment {
 
   eciWages = (): number => this.eci()?.wages ?? 0
   eciBusinessIncome = (): number => this.eci()?.businessIncome ?? 0
+  eciScholarshipIncome = (): number => this.eci()?.scholarshipIncome ?? 0
+  treatyExemptScholarship = (): number =>
+    this.eci()?.treatyExemptScholarship ?? 0
+  taxableScholarshipIncome = (): number =>
+    Math.max(0, this.eciScholarshipIncome() - this.treatyExemptScholarship())
   eciCapitalGains = (): number => this.eci()?.capitalGains ?? 0
   eciRentalIncome = (): number => this.eci()?.rentalIncome ?? 0
   eciPartnershipIncome = (): number => this.eci()?.partnershipIncome ?? 0
@@ -163,6 +171,7 @@ export default class F1040NR extends F1040Attachment {
     return sumFields([
       this.eciWages(),
       this.eciBusinessIncome(),
+      this.taxableScholarshipIncome(),
       this.eciCapitalGains(),
       this.eciRentalIncome(),
       this.eciPartnershipIncome(),
@@ -196,6 +205,14 @@ export default class F1040NR extends F1040Attachment {
 
   // FDAP tax (30% flat rate, or treaty rate)
   fdapTaxRate = (): number => {
+    const explicitTreatyRate = this.nonresidentInfo()?.reducedTreatyRate
+    if (
+      this.claimsTaxTreaty() &&
+      explicitTreatyRate !== undefined &&
+      this.totalFDAPIncome() > 0
+    ) {
+      return Math.max(0, Math.min(0.3, explicitTreatyRate))
+    }
     if (
       this.claimsTaxTreaty() &&
       this.treatyBenefitAmount() > 0 &&
@@ -273,6 +290,9 @@ export default class F1040NR extends F1040Attachment {
       // Effectively Connected Income
       this.eciWages(),
       this.eciBusinessIncome(),
+      this.eciScholarshipIncome(),
+      this.treatyExemptScholarship(),
+      this.taxableScholarshipIncome(),
       this.eciCapitalGains(),
       this.eciRentalIncome(),
       this.eciPartnershipIncome(),

@@ -1,6 +1,6 @@
 import F1040Attachment from './F1040Attachment'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
-import { FilingStatus } from 'ustaxes/core/data'
+import { FilingStatus, Income1099Type, F1099DivData } from 'ustaxes/core/data'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { qbid } from '../data/federal'
 import { BusinessInfo } from './ScheduleC'
@@ -11,6 +11,7 @@ type QBIEntry = {
   qbi: number
   w2Wages: number
   ubia: number
+  patronReduction: number
 }
 
 export function getF8995PhaseOutIncome(filingStatus: FilingStatus): number {
@@ -77,7 +78,8 @@ export default class F8995 extends F1040Attachment {
           ein: business.ein,
           qbi: netProfit,
           w2Wages: business.qbiW2Wages ?? business.expenses.wages,
-          ubia: business.qbiUbia ?? 0
+          ubia: business.qbiUbia ?? 0,
+          patronReduction: business.qbiPatronReduction ?? 0
         }
       })
       .filter((business) => business.qbi > 0)) as QBIEntry[]
@@ -90,13 +92,48 @@ export default class F8995 extends F1040Attachment {
         ein: k1.partnershipEin,
         qbi: k1.section199AQBI,
         w2Wages: k1.section199AW2Wages ?? 0,
-        ubia: k1.section199AUbia ?? 0
+        ubia: k1.section199AUbia ?? 0,
+        patronReduction: k1.section199APatronReduction ?? 0
       }))
 
   qbiEntries = (): QBIEntry[] => [
     ...this.scheduleCQBIBusinesses(),
     ...this.applicableK1s()
   ]
+
+  priorYearQualifiedBusinessLossCarryforward = (): number =>
+    Math.abs(
+      this.f1040.info.qbiDeductionData?.priorYearQualifiedBusinessLossCarryforward ??
+        0
+    )
+
+  reitDividends = (): number =>
+    this.f1040.f1099Divs().reduce((total, form) => {
+      if (form.type !== Income1099Type.DIV) {
+        return total
+      }
+      return total + ((form.form as F1099DivData).section199ADividends ?? 0)
+    }, 0) + (this.f1040.info.qbiDeductionData?.reitDividends ?? 0)
+
+  currentYearPtpIncome = (): number =>
+    this.f1040.info.scheduleK1Form1065s.reduce((total, k1) => {
+      if (k1.ptpSection199AIncome !== undefined) {
+        return total + k1.ptpSection199AIncome
+      }
+      if (k1.isPubliclyTradedPartnership) {
+        return total + k1.section199AQBI
+      }
+      return total
+    }, 0) + (this.f1040.info.qbiDeductionData?.ptpIncome ?? 0)
+
+  ptpLossCarryforward = (): number =>
+    this.f1040.info.scheduleK1Form1065s.reduce(
+      (total, k1) => total + (k1.ptpSection199ALossCarryforward ?? 0),
+      0
+    ) + (this.f1040.info.qbiDeductionData?.ptpLossCarryforward ?? 0)
+
+  netPtpIncome = (): number =>
+    this.currentYearPtpIncome() - this.ptpLossCarryforward()
 
   netCapitalGains = (): number => {
     let rtn = this.f1040.l3a() ?? 0
@@ -115,15 +152,17 @@ export default class F8995 extends F1040Attachment {
     this.qbiEntries()
       .map((entry) => entry.qbi)
       .reduce((c, a) => c + a, 0)
-  l3 = (): number | undefined => undefined
+  l3 = (): number | undefined => {
+    const carryforward = this.priorYearQualifiedBusinessLossCarryforward()
+    return carryforward > 0 ? -carryforward : undefined
+  }
   l4 = (): number | undefined =>
     ifNumber(this.l2(), (num) => num + (this.l3() ?? 0))
   l5 = (): number | undefined =>
     ifNumber(this.l4(), (num) => num * qbid.maxRate)
 
-  // TODO: REIT
-  l6 = (): number => 0
-  l7 = (): number => 0
+  l6 = (): number => this.reitDividends()
+  l7 = (): number => this.netPtpIncome()
   l8 = (): number | undefined => ifNumber(this.l6(), (num) => num + this.l7())
   l9 = (): number | undefined =>
     ifNumber(this.l8(), (num) => num * qbid.maxRate)
