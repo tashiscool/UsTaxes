@@ -232,7 +232,271 @@ const requireScreen = (
   screenPath: string
 ): Record<string, unknown> => snapshot.screenData[screenPath] ?? {}
 
-const toFacts = (row: FilingSessionRow, snapshot: FilingSessionSnapshot): Record<string, unknown> => {
+interface SessionEntitySnapshot {
+  id: string
+  entityType: string
+  entityKey: string
+  status: string
+  label: string | null
+  data: Record<string, unknown>
+  createdAt: string
+  updatedAt: string
+}
+
+interface RejectionRepairError {
+  code: string
+  category:
+    | 'identity'
+    | 'schema_xml'
+    | 'dependent_conflict'
+    | 'agi_mismatch'
+    | 'ip_pin'
+    | 'math'
+    | 'technical'
+  priority: 1 | 2 | 3
+  title: string
+  description: string
+  fixPath: string
+  fixLabel: string
+  canEfile: boolean
+}
+
+const FORM_1099_TYPES = new Set([
+  '1099_int',
+  '1099_div',
+  '1099_misc',
+  '1099_r',
+  '1099_b',
+  '1099_nec',
+  '1099_k',
+  '1099_g',
+  '1099_ssa'
+])
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+
+const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : [])
+
+const toText = (value: unknown): string =>
+  typeof value === 'string' ? value : value === undefined || value === null ? '' : String(value)
+
+const toMoney = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value
+  }
+  const parsed = Number(String(value ?? '').replace(/[^0-9.-]/g, ''))
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const countCompleted = (items: Array<{ isComplete: boolean }>): number =>
+  items.filter((item) => item.isComplete).length
+
+const buildStatusFromCollection = (
+  items: Array<{ isComplete: boolean }>,
+  optional = true
+): 'not_started' | 'in_progress' | 'complete' | 'skipped' => {
+  if (items.length === 0) {
+    return optional ? 'skipped' : 'not_started'
+  }
+  if (items.every((item) => item.isComplete)) {
+    return 'complete'
+  }
+  return 'in_progress'
+}
+
+const getW2Records = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const screenW2 = asArray<Record<string, unknown>>(requireScreen(snapshot, '/w2').w2s).map(
+    (record) => ({
+      id: toText(record.id) || crypto.randomUUID(),
+      employerName: toText(record.employerName),
+      ein: toText(record.ein),
+      box1Wages: toMoney(record.box1),
+      box2FederalWithheld: toMoney(record.box2),
+      box12Code: toText(record.box12aCode),
+      box12Amount: toMoney(record.box12a),
+      stateWages: toMoney(record.box16),
+      stateWithheld: toMoney(record.box17),
+      owner: toText(record.owner) || 'taxpayer',
+      isComplete: Boolean(record.employerName && record.ein && record.box1)
+    })
+  )
+
+  const entityW2 = entities
+    .filter((entity) => entity.entityType === 'w2')
+    .map((entity) => ({
+      id: entity.id,
+      employerName: toText(entity.data.employerName),
+      ein: toText(entity.data.ein),
+      box1Wages: toMoney(entity.data.box1Wages),
+      box2FederalWithheld: toMoney(entity.data.box2FederalWithheld),
+      box12Code: '',
+      box12Amount: 0,
+      stateWages: toMoney(entity.data.stateWages),
+      stateWithheld: toMoney(entity.data.stateWithheld),
+      owner: toText(entity.data.owner) || 'taxpayer',
+      isComplete: Boolean(entity.data.employerName && entity.data.ein && entity.data.box1Wages)
+    }))
+
+  return [...screenW2, ...entityW2]
+}
+
+const get1099Records = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const screen1099 = asArray<Record<string, unknown>>(requireScreen(snapshot, '/1099').records).map(
+    (record) => ({
+      id: toText(record.id) || crypto.randomUUID(),
+      type: toText(record.type),
+      payer: toText(record.payer),
+      amount: toMoney(record.amount),
+      federalWithheld: toMoney(record.federalWithheld),
+      stateWithheld: toMoney(record.stateWithheld),
+      notes: toText(record.notes),
+      isComplete: Boolean(record.type && record.payer && record.amount)
+    })
+  )
+
+  const entity1099 = entities
+    .filter((entity) => FORM_1099_TYPES.has(entity.entityType))
+    .map((entity) => ({
+      id: entity.id,
+      type: entity.entityType.replace('_', '-').toUpperCase(),
+      payer: toText(entity.data.payerName ?? entity.data.payer),
+      amount: toMoney(asRecord(entity.data.amounts).amount ?? entity.data.amount),
+      federalWithheld: toMoney(entity.data.federalWithheld),
+      stateWithheld: toMoney(entity.data.stateWithheld),
+      notes: toText(entity.data.notes),
+      isComplete: Boolean(
+        (entity.data.payerName ?? entity.data.payer) &&
+          (asRecord(entity.data.amounts).amount ?? entity.data.amount ?? entity.data.federalWithheld)
+      )
+    }))
+
+  return [...screen1099, ...entity1099]
+}
+
+const getDependents = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const screenDependents = asArray<Record<string, unknown>>(
+    requireScreen(snapshot, '/household').dependents
+  ).map((dependent) => ({
+    id: toText(dependent.id) || crypto.randomUUID(),
+    name: toText(dependent.name),
+    dob: toText(dependent.dob),
+    relationship: toText(dependent.relationship),
+    ssn: toText(dependent.ssn),
+    months: toText(dependent.months),
+    isComplete: Boolean(
+      dependent.name && dependent.dob && dependent.relationship && dependent.ssn
+    )
+  }))
+
+  const entityDependents = entities
+    .filter((entity) => entity.entityType === 'dependent')
+    .map((entity) => ({
+      id: entity.id,
+      name: `${toText(entity.data.firstName)} ${toText(entity.data.lastName)}`.trim(),
+      dob: toText(entity.data.dob),
+      relationship: toText(entity.data.relationship),
+      ssn: toText(entity.data.ssn),
+      months: toText(entity.data.monthsLivedWithYou),
+      isComplete: Boolean(
+        entity.data.firstName &&
+          entity.data.lastName &&
+          entity.data.dob &&
+          entity.data.relationship &&
+          entity.data.ssn
+      )
+    }))
+
+  return [...screenDependents, ...entityDependents]
+}
+
+const getCreditSummary = (
+  snapshot: FilingSessionSnapshot,
+  dependents: ReturnType<typeof getDependents>
+) => {
+  const creditsState = requireScreen(snapshot, '/credits-v2')
+  const credits = asArray<Record<string, unknown>>(creditsState.credits)
+  const entities = credits.flatMap((credit) =>
+    asArray<Record<string, unknown>>(credit.entities).map((entity) => ({
+      creditId: toText(credit.id),
+      creditTitle: toText(credit.title ?? credit.shortName),
+      status: toText(entity.status),
+      name:
+        toText(entity.name) ||
+        toText(entity.studentName) ||
+        toText(entity.providerName) ||
+        toText(entity.vehicleMake),
+      isComplete:
+        toText(entity.status) === 'complete' ||
+        toText(entity.status) === 'eligible'
+    }))
+  )
+
+  const eligibleCredits = credits.filter((credit) => toText(credit.status) === 'eligible')
+  const maybeCredits = credits.filter((credit) => toText(credit.status) === 'maybe')
+  const blockedCredits = credits.filter((credit) => toText(credit.status) === 'blocked')
+  const estimatedTotal = credits.reduce(
+    (sum, credit) => sum + toMoney(credit.estimatedAmount),
+    0
+  )
+
+  return {
+    credits,
+    creditEntities: entities,
+    summary: {
+      eligibleCount: eligibleCredits.length,
+      maybeCount: maybeCredits.length,
+      blockedCount: blockedCredits.length,
+      estimatedTotal,
+      dependentCount: dependents.length
+    }
+  }
+}
+
+const getIncomeSummary = (
+  w2Records: ReturnType<typeof getW2Records>,
+  form1099Records: ReturnType<typeof get1099Records>
+) => {
+  const totalsByType = form1099Records.reduce<Record<string, number>>((acc, record) => {
+    acc[record.type] = (acc[record.type] ?? 0) + record.amount
+    return acc
+  }, {})
+
+  return {
+    w2Count: w2Records.length,
+    w2CompleteCount: countCompleted(w2Records),
+    totalW2Wages: w2Records.reduce((sum, record) => sum + record.box1Wages, 0),
+    totalW2Withholding: w2Records.reduce(
+      (sum, record) => sum + record.box2FederalWithheld,
+      0
+    ),
+    form1099Count: form1099Records.length,
+    form1099CompleteCount: countCompleted(form1099Records),
+    total1099Amount: form1099Records.reduce((sum, record) => sum + record.amount, 0),
+    total1099FederalWithholding: form1099Records.reduce(
+      (sum, record) => sum + record.federalWithheld,
+      0
+    ),
+    totalsByType
+  }
+}
+
+const toFacts = (
+  row: FilingSessionRow,
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): Record<string, unknown> => {
   const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
   const residency = requireScreen(snapshot, '/residency')
   const w2 = requireScreen(snapshot, '/w2')
@@ -254,10 +518,21 @@ const toFacts = (row: FilingSessionRow, snapshot: FilingSessionSnapshot): Record
       'CA'
   ).toLowerCase()
 
+  const w2Records = getW2Records(snapshot, entities)
+  const form1099Records = get1099Records(snapshot, entities)
+  const dependents = getDependents(snapshot, entities)
+  const creditSummary = getCreditSummary(snapshot, dependents)
+  const incomeSummary = getIncomeSummary(w2Records, form1099Records)
+
   return {
     primaryTIN: primaryTin,
     taxflowSessionId: row.id,
     filingStatus: status,
+    w2Records,
+    form1099Records,
+    dependents,
+    incomeSummary,
+    creditSummary: creditSummary.summary,
     '/taxYear': {
       $type: 'gov.irs.factgraph.persisters.IntWrapper',
       item: snapshot.taxYear
@@ -324,6 +599,9 @@ const toSubmissionPayload = (
   const filingStatus = String(
     taxpayer.filingStatus ?? snapshot.filingStatus ?? row.filing_status
   )
+  const incomeSummary = asRecord(facts.incomeSummary)
+  const creditSummary = asRecord(facts.creditSummary)
+  const dependents = asArray<Record<string, unknown>>(facts.dependents)
 
   const refund = Number(review.totalRefund ?? snapshot.estimatedRefund ?? 0)
   const federalRefund = Number(review.federalRefund ?? refund)
@@ -344,6 +622,12 @@ const toSubmissionPayload = (
       refund: amountOwed > 0 ? 0 : Math.max(0, refund),
       amountOwed
     },
+    forms: {
+      w2s: facts.w2Records,
+      forms1099: facts.form1099Records,
+      dependents,
+      credits: creditSummary
+    },
     metadata: {
       source: 'taxflow-app-v1',
       filingSessionId: row.id,
@@ -351,12 +635,24 @@ const toSubmissionPayload = (
       priorYearAgi: taxpayer.priorYearAgi,
       ipPin: taxpayer.ipPin ?? efile.ipPin,
       signerName: efile.signatureText ?? undefined,
-      bankLast4: String(efile.account ?? '').slice(-4) || undefined
+      bankLast4: String(efile.account ?? '').slice(-4) || undefined,
+      incomeSummary,
+      creditSummary,
+      dependentCount: dependents.length
     }
   }
 }
 
-const buildChecklist = (snapshot: FilingSessionSnapshot) => {
+const buildChecklist = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[],
+  findings: ReviewFindingRow[]
+) => {
+  const w2Records = getW2Records(snapshot, entities)
+  const form1099Records = get1099Records(snapshot, entities)
+  const dependents = getDependents(snapshot, entities)
+  const creditSummary = getCreditSummary(snapshot, dependents)
+
   const itemFromScreen = (
     id: string,
     screenPath: string,
@@ -377,23 +673,84 @@ const buildChecklist = (snapshot: FilingSessionSnapshot) => {
     items: {
       'taxpayer-profile': itemFromScreen('taxpayer-profile', '/taxpayer-profile', 'Taxpayer profile saved'),
       spouse: itemFromScreen('spouse', '/spouse', 'Spouse information saved', { optional: true }),
-      household: itemFromScreen('household', '/household', 'Dependents reviewed', { optional: true }),
+      household: {
+        status: buildStatusFromCollection(dependents, true),
+        sublabel:
+          dependents.length > 0
+            ? `${countCompleted(dependents)}/${dependents.length} dependents complete`
+            : undefined,
+        warnings: findings
+          .filter((finding) => finding.code.startsWith('DEPENDENT'))
+          .map((finding) => ({ message: finding.message, level: finding.severity }))
+      },
       residency: itemFromScreen('residency', '/residency', 'Residency information saved'),
-      w2s: itemFromScreen('w2s', '/w2', 'W-2 information saved', { optional: true }),
-      '1099s': itemFromScreen('1099s', '/1099', '1099 information saved', { optional: true }),
+      w2s: {
+        status: buildStatusFromCollection(w2Records, true),
+        sublabel:
+          w2Records.length > 0
+            ? `${countCompleted(w2Records)}/${w2Records.length} W-2 records complete`
+            : undefined,
+        warnings: findings
+          .filter((finding) => finding.code === 'W2-INCOMPLETE')
+          .map((finding) => ({ message: finding.message, level: finding.severity }))
+      },
+      '1099s': {
+        status: buildStatusFromCollection(form1099Records, true),
+        sublabel:
+          form1099Records.length > 0
+            ? `${countCompleted(form1099Records)}/${form1099Records.length} 1099 records complete`
+            : undefined,
+        warnings: findings
+          .filter((finding) => finding.code === '1099-INCOMPLETE')
+          .map((finding) => ({ message: finding.message, level: finding.severity }))
+      },
       investments: itemFromScreen('investments', '/tax-lots', 'Investment activity reviewed', { optional: true }),
       rental: itemFromScreen('rental', '/rental', 'Rental property reviewed', { optional: true }),
       business: itemFromScreen('business', '/business-k1', 'Business income reviewed', { optional: true }),
       retirement: itemFromScreen('retirement', '/ira-retirement', 'Retirement income reviewed', { optional: true }),
       'foreign-income': itemFromScreen('foreign-income', '/foreign-income', 'Foreign income reviewed', { optional: true }),
       hsa: itemFromScreen('hsa', '/hsa', 'HSA reviewed', { optional: true }),
-      ctc: itemFromScreen('ctc', '/credits-v2', 'Credits reviewed', { optional: true }),
+      ctc: {
+        status:
+          creditSummary.summary.eligibleCount > 0 ||
+          creditSummary.summary.maybeCount > 0 ||
+          creditSummary.summary.blockedCount > 0
+            ? 'complete'
+            : itemFromScreen('ctc', '/credits-v2', 'Credits reviewed', { optional: true })
+                .status,
+        sublabel:
+          creditSummary.summary.eligibleCount > 0 ||
+          creditSummary.summary.maybeCount > 0 ||
+          creditSummary.summary.blockedCount > 0
+            ? `${creditSummary.summary.eligibleCount} eligible, ${creditSummary.summary.maybeCount} maybe, ${creditSummary.summary.blockedCount} blocked`
+            : undefined,
+        warnings: findings
+          .filter((finding) => finding.code.startsWith('CREDIT'))
+          .map((finding) => ({ message: finding.message, level: finding.severity }))
+      },
       'your-taxes': itemFromScreen('your-taxes', '/your-taxes', 'Tax details reviewed', { optional: true }),
       'state-tax': itemFromScreen('state-tax', '/state-tax', 'State filing reviewed', { optional: true }),
       'review-confirm': itemFromScreen('review-confirm', '/review-confirm', 'Review confirmed'),
       'efile-wizard': itemFromScreen('efile-wizard', '/efile-wizard', 'E-file steps completed', { optional: true })
     },
-    collections: {},
+    collections: {
+      w2s: {
+        total: w2Records.length,
+        complete: countCompleted(w2Records)
+      },
+      forms1099: {
+        total: form1099Records.length,
+        complete: countCompleted(form1099Records)
+      },
+      dependents: {
+        total: dependents.length,
+        complete: countCompleted(dependents)
+      },
+      creditEntities: {
+        total: creditSummary.creditEntities.length,
+        complete: countCompleted(creditSummary.creditEntities)
+      }
+    },
     ui: {
       filingPathTreeCollapsed:
         Boolean(
@@ -404,9 +761,17 @@ const buildChecklist = (snapshot: FilingSessionSnapshot) => {
   }
 }
 
-const buildReview = (snapshot: FilingSessionSnapshot, findings: ReviewFindingRow[]) => {
+const buildReview = (
+  snapshot: FilingSessionSnapshot,
+  findings: ReviewFindingRow[],
+  entities: SessionEntitySnapshot[]
+) => {
   const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
   const efile = requireScreen(snapshot, '/efile-wizard')
+  const w2Records = getW2Records(snapshot, entities)
+  const form1099Records = get1099Records(snapshot, entities)
+  const dependents = getDependents(snapshot, entities)
+  const creditSummary = getCreditSummary(snapshot, dependents)
   const sections = [
     {
       id: 'filing-info',
@@ -440,6 +805,84 @@ const buildReview = (snapshot: FilingSessionSnapshot, findings: ReviewFindingRow
         editPath: finding.fix_path ?? '/checklist',
         editLabel: finding.fix_label ?? 'Review'
       }))
+    },
+    {
+      id: 'income',
+      title: 'Income summary',
+      rows: [
+        {
+          label: 'W-2 records',
+          value: w2Records.length > 0 ? `${countCompleted(w2Records)}/${w2Records.length} complete` : 'None entered',
+          editPath: '/w2',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'W-2 wages',
+          value: `$${w2Records.reduce((sum, record) => sum + record.box1Wages, 0).toLocaleString()}`,
+          editPath: '/w2',
+          editLabel: 'Edit'
+        },
+        {
+          label: '1099 records',
+          value:
+            form1099Records.length > 0
+              ? `${countCompleted(form1099Records)}/${form1099Records.length} complete`
+              : 'None entered',
+          editPath: '/1099',
+          editLabel: 'Edit'
+        },
+        {
+          label: '1099 income total',
+          value: `$${form1099Records.reduce((sum, record) => sum + record.amount, 0).toLocaleString()}`,
+          editPath: '/1099',
+          editLabel: 'Edit'
+        }
+      ],
+      warnings: findings
+        .filter((finding) => finding.code === 'W2-INCOMPLETE' || finding.code === '1099-INCOMPLETE')
+        .map((finding) => ({
+          id: finding.id,
+          level: finding.severity,
+          message: finding.message,
+          editPath: finding.fix_path ?? '/income',
+          editLabel: finding.fix_label ?? 'Review'
+        }))
+    },
+    {
+      id: 'household-credits',
+      title: 'Dependents and credits',
+      rows: [
+        {
+          label: 'Dependents',
+          value:
+            dependents.length > 0
+              ? `${countCompleted(dependents)}/${dependents.length} complete`
+              : 'No dependents entered',
+          editPath: '/household',
+          editLabel: 'Edit'
+        },
+        {
+          label: 'Eligible credits',
+          value: String(creditSummary.summary.eligibleCount),
+          editPath: '/credits-v2',
+          editLabel: 'Review'
+        },
+        {
+          label: 'Estimated credit total',
+          value: `$${creditSummary.summary.estimatedTotal.toLocaleString()}`,
+          editPath: '/credits-v2',
+          editLabel: 'Review'
+        }
+      ],
+      warnings: findings
+        .filter((finding) => finding.code.startsWith('DEPENDENT') || finding.code.startsWith('CREDIT'))
+        .map((finding) => ({
+          id: finding.id,
+          level: finding.severity,
+          message: finding.message,
+          editPath: finding.fix_path ?? '/credits-v2',
+          editLabel: finding.fix_label ?? 'Review'
+        }))
     },
     {
       id: 'file',
@@ -481,9 +924,17 @@ const buildReview = (snapshot: FilingSessionSnapshot, findings: ReviewFindingRow
   }
 }
 
-const toFindingRows = (sessionId: string, snapshot: FilingSessionSnapshot): ReviewFindingRow[] => {
+const toFindingRows = (
+  sessionId: string,
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): ReviewFindingRow[] => {
   const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
   const efile = requireScreen(snapshot, '/efile-wizard')
+  const w2Records = getW2Records(snapshot, entities)
+  const form1099Records = get1099Records(snapshot, entities)
+  const dependents = getDependents(snapshot, entities)
+  const creditSummary = getCreditSummary(snapshot, dependents)
   const now = nowIso()
   const findings: ReviewFindingRow[] = []
 
@@ -532,6 +983,97 @@ const toFindingRows = (sessionId: string, snapshot: FilingSessionSnapshot): Revi
       message: 'You must sign the return before we can transmit it to the IRS.',
       fix_path: '/efile-wizard',
       fix_label: 'Sign return',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (w2Records.some((record) => !record.isComplete)) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'W2-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish your W-2 entries',
+      message: 'One or more W-2 forms are missing an employer name, EIN, or wages.',
+      fix_path: '/w2',
+      fix_label: 'Complete W-2 details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (form1099Records.some((record) => !record.isComplete)) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: '1099-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish your 1099 entries',
+      message: 'One or more 1099 forms are missing a payer or amount.',
+      fix_path: '/1099',
+      fix_label: 'Complete 1099 details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (dependents.some((dependent) => !dependent.isComplete)) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'DEPENDENT-INCOMPLETE',
+      severity: 'error',
+      title: 'Finish dependent details',
+      message: 'A dependent is missing a name, date of birth, relationship, or SSN.',
+      fix_path: '/household',
+      fix_label: 'Complete dependent info',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (
+    dependents.length > 0 &&
+    creditSummary.summary.eligibleCount === 0 &&
+    creditSummary.summary.maybeCount === 0 &&
+    creditSummary.summary.blockedCount === 0
+  ) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'CREDIT-REVIEW',
+      severity: 'warning',
+      title: 'Review family credits',
+      message:
+        'You added dependents, but no credits have been reviewed yet. Check CTC, EITC, and care credits before filing.',
+      fix_path: '/credits-v2',
+      fix_label: 'Review credits',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (creditSummary.summary.blockedCount > 0) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'CREDIT-BLOCKED',
+      severity: 'warning',
+      title: 'Resolve blocked credits',
+      message: 'At least one credit is marked blocked and needs more information before filing.',
+      fix_path: '/credits-v2',
+      fix_label: 'Resolve credit issues',
       acknowledged: 0,
       metadata_key: null,
       created_at: now,
@@ -692,8 +1234,9 @@ export class AppSessionService {
     }
   }
 
-  async listEntities(sessionId: string, user: AppUserClaims) {
-    await this.requireSession(sessionId, user.sub)
+  private async loadSessionEntities(
+    sessionId: string
+  ): Promise<SessionEntitySnapshot[]> {
     const result = await this.env.USTAXES_DB
       .prepare(
         `SELECT id, filing_session_id, entity_type, entity_key, status, label, data_key, created_at, updated_at
@@ -704,7 +1247,7 @@ export class AppSessionService {
       .bind(sessionId)
       .all<SessionEntityRow>()
 
-    const entities = await Promise.all(
+    return Promise.all(
       (result.results ?? []).map(async (row) => ({
         id: row.id,
         entityType: row.entity_type,
@@ -712,14 +1255,16 @@ export class AppSessionService {
         status: row.status,
         label: row.label,
         data:
-          (await this.artifacts.getJson<Record<string, unknown>>(row.data_key)) ??
-          {},
+          (await this.artifacts.getJson<Record<string, unknown>>(row.data_key)) ?? {},
         createdAt: row.created_at,
         updatedAt: row.updated_at
       }))
     )
+  }
 
-    return { entities }
+  async listEntities(sessionId: string, user: AppUserClaims) {
+    await this.requireSession(sessionId, user.sub)
+    return { entities: await this.loadSessionEntities(sessionId) }
   }
 
   async putEntity(
@@ -903,9 +1448,10 @@ export class AppSessionService {
   async getChecklist(sessionId: string, user: AppUserClaims) {
     const row = await this.requireSession(sessionId, user.sub)
     const snapshot = await this.getSnapshot(row)
-    const findings = await this.syncReviewFindings(row.id, snapshot)
+    const entities = await this.loadSessionEntities(row.id)
+    const findings = await this.syncReviewFindings(row.id, snapshot, entities)
     return {
-      checklist: buildChecklist(snapshot),
+      checklist: buildChecklist(snapshot, entities, findings),
       findings: findings.map((finding) => ({
         id: finding.id,
         severity: finding.severity,
@@ -919,16 +1465,18 @@ export class AppSessionService {
   async getReview(sessionId: string, user: AppUserClaims) {
     const row = await this.requireSession(sessionId, user.sub)
     const snapshot = await this.getSnapshot(row)
-    const findings = await this.syncReviewFindings(row.id, snapshot)
+    const entities = await this.loadSessionEntities(row.id)
+    const findings = await this.syncReviewFindings(row.id, snapshot, entities)
     return {
-      review: buildReview(snapshot, findings)
+      review: buildReview(snapshot, findings, entities)
     }
   }
 
   async syncReturn(sessionId: string, user: AppUserClaims) {
     const row = await this.requireSession(sessionId, user.sub)
     const snapshot = await this.getSnapshot(row)
-    const facts = toFacts(row, snapshot)
+    const entities = await this.loadSessionEntities(row.id)
+    const facts = toFacts(row, snapshot, entities)
     let taxReturnId = row.tax_return_id
     let factsKey = row.facts_key
     if (!taxReturnId) {
@@ -1007,7 +1555,8 @@ export class AppSessionService {
     const syncResult = await this.syncReturn(sessionId, user)
     const refreshed = await this.requireSession(sessionId, user.sub)
     const snapshot = await this.getSnapshot(refreshed)
-    const facts = body.factsOverride ?? toFacts(refreshed, snapshot)
+    const entities = await this.loadSessionEntities(refreshed.id)
+    const facts = body.factsOverride ?? toFacts(refreshed, snapshot, entities)
     const payload = {
       ...toSubmissionPayload(refreshed, snapshot, facts),
       ...(body.payloadOverride ?? {})
@@ -1040,9 +1589,15 @@ export class AppSessionService {
     }
     const submission = await this.apiService.getSubmission(row.latest_submission_id)
     const ack = await this.apiService.getSubmissionAck(row.latest_submission_id)
+    const payload = await this.apiService.getSubmissionPayload(row.latest_submission_id)
+    const rejectionErrors = this.buildRejectionRepairErrors(
+      ack.ack?.rejectionCodes ?? [],
+      payload.payload ?? null
+    )
     const lifecycleStatus = this.toLifecycleStatus(
       submission.submission.status,
-      ack.ack
+      ack.ack,
+      rejectionErrors
     )
 
     await this.env.USTAXES_DB
@@ -1059,8 +1614,33 @@ export class AppSessionService {
         ...submission.submission,
         lifecycleStatus,
         ack: ack.ack,
-        events: submission.events
+        events: submission.events,
+        rejectionErrors,
+        canRetry:
+          submission.submission.status === 'rejected' ||
+          submission.submission.status === 'failed',
+        retryEndpoint: `/app/v1/filing-sessions/${sessionId}/submission/retry`
       }
+    }
+  }
+
+  async retrySubmission(sessionId: string, user: AppUserClaims) {
+    const row = await this.requireSession(sessionId, user.sub)
+    if (!row.latest_submission_id) {
+      throw new HttpError(409, 'No submission is available to retry')
+    }
+    const result = await this.apiService.retrySubmission(row.latest_submission_id)
+    await this.env.USTAXES_DB
+      .prepare(
+        `UPDATE filing_sessions
+         SET lifecycle_status = 'retrying', updated_at = ?1
+         WHERE id = ?2`
+      )
+      .bind(nowIso(), sessionId)
+      .run()
+    return {
+      ...result,
+      lifecycleStatus: 'retrying' as const
     }
   }
 
@@ -1170,9 +1750,10 @@ export class AppSessionService {
 
   private async syncReviewFindings(
     sessionId: string,
-    snapshot: FilingSessionSnapshot
+    snapshot: FilingSessionSnapshot,
+    entities: SessionEntitySnapshot[]
   ): Promise<ReviewFindingRow[]> {
-    const findings = toFindingRows(sessionId, snapshot)
+    const findings = toFindingRows(sessionId, snapshot, entities)
     await this.env.USTAXES_DB
       .prepare(`DELETE FROM review_findings WHERE filing_session_id = ?1`)
       .bind(sessionId)
@@ -1207,7 +1788,8 @@ export class AppSessionService {
 
   private toLifecycleStatus(
     status: string,
-    ack: { rejectionCodes?: string[] } | null
+    ack: { rejectionCodes?: string[] } | null,
+    rejectionErrors: RejectionRepairError[] = []
   ): FilingLifecycleStatus {
     if (status === 'accepted' && ack?.rejectionCodes?.length) {
       return 'accepted_with_alerts'
@@ -1215,8 +1797,140 @@ export class AppSessionService {
     if (status === 'queued') return 'queued'
     if (status === 'processing') return 'processing'
     if (status === 'accepted') return 'accepted'
-    if (status === 'rejected') return 'rejected'
+    if (status === 'rejected') {
+      return rejectionErrors.some((error) => error.canEfile === false)
+        ? 'print_and_mail'
+        : 'rejected'
+    }
     if (status === 'failed') return 'failed'
     return 'pending'
+  }
+
+  private buildRejectionRepairErrors(
+    rejectionCodes: string[],
+    payload: SubmissionPayload | null
+  ): RejectionRepairError[] {
+    const codeMap: Record<string, RejectionRepairError> = {
+      'IND-031': {
+        code: 'IND-031',
+        category: 'identity',
+        priority: 1,
+        title: 'Taxpayer SSN is missing or invalid',
+        description:
+          'The primary taxpayer TIN did not pass identity validation. Confirm the SSN on the taxpayer profile and prior-year identity step.',
+        fixPath: '/taxpayer-profile',
+        fixLabel: 'Fix taxpayer SSN',
+        canEfile: true
+      },
+      'R0000-058': {
+        code: 'R0000-058',
+        category: 'schema_xml',
+        priority: 1,
+        title: 'Filing status is invalid',
+        description:
+          'The filing status in the transmitted return is not valid. Revisit the filing-status decision and taxpayer profile.',
+        fixPath: '/household',
+        fixLabel: 'Review filing status',
+        canEfile: true
+      },
+      'R0000-902': {
+        code: 'R0000-902',
+        category: 'technical',
+        priority: 2,
+        title: 'Submission payload failed processing',
+        description:
+          'The backend payload could not be processed cleanly. Review the filing summary and resubmit after saving.',
+        fixPath: '/review-confirm',
+        fixLabel: 'Review filing summary',
+        canEfile: true
+      },
+      'R0000-905': {
+        code: 'R0000-905',
+        category: 'technical',
+        priority: 2,
+        title: 'IRS transport rejected the submission',
+        description:
+          'The submission was rejected before acceptance. Retry after reviewing the return and fixing any flagged issues.',
+        fixPath: '/efile-wizard',
+        fixLabel: 'Retry submission',
+        canEfile: true
+      },
+      'F1040-PMT-NEG': {
+        code: 'F1040-PMT-NEG',
+        category: 'math',
+        priority: 1,
+        title: 'Payments cannot be negative',
+        description:
+          'The return includes a negative total-payments amount. Review withholding, estimates, and refund/owed entries.',
+        fixPath: '/review-confirm',
+        fixLabel: 'Review totals',
+        canEfile: true
+      },
+      'F1040-TOTALS-MISSING': {
+        code: 'F1040-TOTALS-MISSING',
+        category: 'math',
+        priority: 1,
+        title: 'Form 1040 totals are missing',
+        description:
+          'Total tax and total payments must be present before filing. Open the review summary and confirm the computed totals.',
+        fixPath: '/review-confirm',
+        fixLabel: 'Add totals',
+        canEfile: true
+      },
+      'F1040-RFND-MISMATCH': {
+        code: 'F1040-RFND-MISMATCH',
+        category: 'math',
+        priority: 1,
+        title: 'Refund does not reconcile',
+        description:
+          'The refund amount does not match the submitted tax and payment totals. Review withholding, estimated payments, and refund setup.',
+        fixPath: '/review-confirm',
+        fixLabel: 'Fix refund totals',
+        canEfile: true
+      },
+      'F1040-BAL-DOUBLE': {
+        code: 'F1040-BAL-DOUBLE',
+        category: 'math',
+        priority: 1,
+        title: 'Refund and amount owed both entered',
+        description:
+          'A return cannot show both a positive refund and a positive amount owed. Review the final totals and payment method.',
+        fixPath: '/review-confirm',
+        fixLabel: 'Resolve balance',
+        canEfile: true
+      },
+      'ATS-TAX-MISMATCH': {
+        code: 'ATS-TAX-MISMATCH',
+        category: 'math',
+        priority: 2,
+        title: 'Backend tax totals do not match scenario expectations',
+        description:
+          'The transmitted totals differ from expected ATS values. Review return math and scenario assumptions before retrying.',
+        fixPath: '/review-confirm',
+        fixLabel: 'Review return math',
+        canEfile: true
+      }
+    }
+
+    return rejectionCodes.map((code) => {
+      const known = codeMap[code]
+      if (known) {
+        return known
+      }
+
+      return {
+        code,
+        category: 'technical',
+        priority: 3,
+        title: code,
+        description:
+          typeof payload?.metadata?.signerName === 'string'
+            ? `Submission for ${payload.metadata.signerName} was rejected. Review the return and resubmit.`
+            : 'Submission was rejected. Review the return and resubmit.',
+        fixPath: '/review-confirm',
+        fixLabel: 'Review return',
+        canEfile: true
+      }
+    })
   }
 }

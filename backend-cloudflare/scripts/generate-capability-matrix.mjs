@@ -71,12 +71,12 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities', 'review_findings'],
     r2Artifacts: ['filing-sessions/<id>/entities/dependent/<id>.json'],
-    orchestration: 'generic entity persistence only',
+    orchestration: 'dependent sync -> checklist/review credit readiness findings',
     atsCoverage: 'S2|S4|S5|S13|S17',
     directFileCoverage: 'partial',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'Collection storage exists, but dependent credit/conflict rules are not yet derived from backend entities.'
+      'Dependents now flow into backend facts, checklist/review status, and credit-readiness findings with worker runtime coverage.'
   },
   {
     family: 'w2_wages',
@@ -85,26 +85,26 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities', 'tax_returns'],
     r2Artifacts: ['filing-sessions/<id>/snapshot.json', 'filing-sessions/<id>/entities/w2/<id>.json'],
-    orchestration: 'session sync with coarse fact derivation',
+    orchestration: 'screen/entity sync -> W-2 fact payload -> checklist/review',
     atsCoverage: 'S1|S2|S11|S12',
     directFileCoverage: 'yes',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'TaxFlow route state syncs, but W-2 box-level amounts are not yet deterministically mapped into backend facts.'
+      'Backend facts, review, and submission payloads now deterministically include core W-2 employer, EIN, wage, and withholding data with runtime coverage.'
   },
   {
     family: 'forms_1099',
     entityTypes: ['1099_int', '1099_div', '1099_misc', '1099_r', '1099_b', '1099_nec', '1099_k', '1099_g', '1099_ssa'],
     taxflowRoutes: ['/income', '/1099'],
     backendEndpoints: sharedEntityEndpoints,
-    d1Tables: ['filing_sessions', 'session_entities'],
+    d1Tables: ['filing_sessions', 'session_entities', 'tax_returns'],
     r2Artifacts: ['filing-sessions/<id>/entities/1099_*/<id>.json'],
-    orchestration: 'generic entity persistence only',
+    orchestration: 'screen/entity sync -> 1099 fact payload -> checklist/review',
     atsCoverage: 'S8|S9|S10|S14|S16|S23|S24|S30|S31',
     directFileCoverage: 'partial',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'Entity CRUD exists, but backend facts/review logic does not yet unpack 1099 forms into tax-return payloads.'
+      'Core 1099 payer, amount, and withholding data now map into backend facts, review surfaces, and submission payload metadata with runtime coverage.'
   },
   {
     family: 'investments_and_crypto',
@@ -197,12 +197,12 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities', 'review_findings'],
     r2Artifacts: ['filing-sessions/<id>/entities/education_student/<id>.json', 'filing-sessions/<id>/entities/care_provider/<id>.json', 'filing-sessions/<id>/entities/clean_vehicle_credit/<id>.json'],
-    orchestration: 'generic entity persistence only',
+    orchestration: 'credit screen sync -> derived summary -> checklist/review findings',
     atsCoverage: 'S2|S13|S14|S17|S21|S22|S26|S27|S32',
     directFileCoverage: 'partial',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'Credit entity loops are strong in UI, but backend review and return payloads do not yet derive credit math from them.'
+      'Backend review and return facts now derive core credit eligibility summaries from TaxFlow credit state, while detailed statutory math remains upstream in the tax engine.'
   },
   {
     family: 'state_and_local_tax',
@@ -291,12 +291,12 @@ const rows = [
     ],
     d1Tables: ['filing_sessions', 'submissions', 'submission_events'],
     r2Artifacts: ['submissions/<id>/ack.json'],
-    orchestration: 'low-level retry exists; UI repair still partly generic',
+    orchestration: 'submission lookup -> classified rejection errors -> retry orchestration',
     atsCoverage: 'scenario1.reject-missing-tin|runtime retry',
     directFileCoverage: 'yes',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'Backend retry works, but TaxFlow rejection repair still needs deeper field-level fix orchestration.'
+      'Backend now returns structured rejection repair metadata plus app-level retry, and TaxFlow status flows consume those results end-to-end.'
   },
   {
     family: 'state_transfer',

@@ -593,6 +593,36 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             priorYearAgi: 12345,
             account: '1234567890'
           },
+          '/household': {
+            dependents: [
+              {
+                id: 'dep-1',
+                name: 'Jamie Tester',
+                dob: '2016-04-14',
+                relationship: 'child',
+                ssn: '400-22-4444',
+                months: '12'
+              }
+            ]
+          },
+          '/credits-v2': {
+            credits: [
+              {
+                id: 'ctc',
+                title: 'Child Tax Credit',
+                shortName: 'CTC',
+                status: 'eligible',
+                estimatedAmount: 2000,
+                entities: [
+                  {
+                    id: 'dep-1',
+                    name: 'Jamie Tester',
+                    status: 'eligible'
+                  }
+                ]
+              }
+            ]
+          },
           '/review-confirm': {
             totalRefund: 1825,
             totalTax: 2242,
@@ -621,6 +651,29 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             employerName: 'Acme Inc.',
             ein: '12-3456789',
             box1Wages: 75000
+          }
+        })
+      }
+    )
+    expect(response.status).toBe(200)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/1099_int/1099-interest`,
+      {
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          status: 'complete',
+          label: 'Bank interest',
+          data: {
+            payerName: 'Monroe Savings Bank',
+            amounts: {
+              amount: 215
+            },
+            federalWithheld: 0
           }
         })
       }
@@ -690,6 +743,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const checklist = await parseJsonResponse<JsonObject>(response)
     expect((checklist.checklist as JsonObject).items).toBeTruthy()
     expect((checklist.findings as JsonObject[]).length).toBe(0)
+    const checklistItems = (checklist.checklist as JsonObject).items as Record<string, JsonObject>
+    expect(checklistItems.household.status).toBe('complete')
+    expect(checklistItems.ctc.status).toBe('complete')
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
@@ -711,6 +767,15 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(200)
     const syncResult = await parseJsonResponse<JsonObject>(response)
     const taxReturnId = String(syncResult.taxReturnId)
+    const facts = syncResult.facts as JsonObject
+    expect((facts.incomeSummary as JsonObject).totalW2Wages).toBe(75000)
+    expect((facts.incomeSummary as JsonObject).total1099Amount).toBe(215)
+    expect(Array.isArray(facts.dependents)).toBe(true)
+    expect(((facts.dependents as JsonObject[])[0] as JsonObject).relationship).toBe('child')
+    expect((facts.creditSummary as JsonObject).eligibleCount).toBe(1)
+    expect((facts.creditSummary as JsonObject).estimatedTotal).toBe(2000)
+    expect(Array.isArray(facts.w2Records)).toBe(true)
+    expect(Array.isArray(facts.form1099Records)).toBe(true)
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/sign`,
@@ -798,5 +863,119 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(202)
     const authorization = await parseJsonResponse<JsonObject>(response)
     expect(typeof authorization.authorizationCode).toBe('string')
+  })
+
+  it('supports app-level rejection repair and retry orchestration', async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sub: 'taxflow-user-2',
+        email: 'repair@example.com',
+        displayName: 'Repair User'
+      })
+    })
+    expect(response.status).toBe(201)
+    const sessionCookie = extractCookieHeader(response)
+
+    response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionCookie
+      },
+      body: JSON.stringify({
+        taxYear: 2025,
+        filingStatus: 'single',
+        formType: '1040',
+        currentPhase: 'file',
+        screenData: {
+          '/taxpayer-profile': {
+            firstName: 'Broken',
+            lastName: 'Return',
+            filingStatus: 'single',
+            address: {
+              line1: '12 Repair Lane',
+              city: 'Boston',
+              state: 'MA',
+              zip: '02110'
+            }
+          },
+          '/efile-wizard': {
+            signatureText: 'Broken Return',
+            agreed8879: true
+          },
+          '/review-confirm': {
+            totalRefund: 0,
+            totalTax: 1200,
+            totalPayments: 500
+          }
+        }
+      })
+    })
+    expect(response.status).toBe(201)
+    const created = await parseJsonResponse<JsonObject>(response)
+    const filingSessionId = String((created.filingSession as JsonObject).id)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/submit`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          idempotencyKey: crypto.randomUUID()
+        })
+      }
+    )
+    expect(response.status).toBe(202)
+    const submitted = await parseJsonResponse<JsonObject>(response)
+    const submissionId = String((submitted.submission as JsonObject).id)
+    const taxReturnId = String(submitted.taxReturnId)
+
+    response = await worker.fetch(
+      `${baseUrl}/api/v1/internal/process/${submissionId}`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-internal-token': internalToken
+        },
+        body: JSON.stringify({ taxReturnId })
+      }
+    )
+    expect(response.status).toBe(200)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/submission`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const rejected = await parseJsonResponse<JsonObject>(response)
+    expect((rejected.submission as JsonObject).lifecycleStatus).toBe('rejected')
+    expect(Array.isArray((rejected.submission as JsonObject).rejectionErrors)).toBe(true)
+    expect(
+      ((rejected.submission as JsonObject).rejectionErrors as JsonObject[])[0]?.code
+    ).toBe('IND-031')
+    expect((rejected.submission as JsonObject).canRetry).toBe(true)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/submission/retry`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({})
+      }
+    )
+    expect(response.status).toBe(202)
+    const retryResult = await parseJsonResponse<JsonObject>(response)
+    expect(retryResult.retried).toBe(true)
   })
 })

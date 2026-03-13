@@ -411,6 +411,16 @@ app.get('/app/v1/filing-sessions/:sessionId/submission', async (c) => {
   return c.json(result)
 })
 
+app.post('/app/v1/filing-sessions/:sessionId/submission/retry', async (c) => {
+  const user = await requireAppUser(c)
+  const { appSessionService } = buildServices(c)
+  const result = await appSessionService.retrySubmission(
+    c.req.param('sessionId'),
+    user
+  )
+  return c.json(result, 202)
+})
+
 app.get('/app/v1/filing-sessions/:sessionId/state-transfer', async (c) => {
   const user = await requireAppUser(c)
   const { appSessionService } = buildServices(c)
