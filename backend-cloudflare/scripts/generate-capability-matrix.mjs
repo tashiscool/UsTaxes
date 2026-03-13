@@ -321,15 +321,18 @@ const rows = [
     family: 'print_and_mail',
     entityTypes: ['submission'],
     taxflowRoutes: ['/print-mail'],
-    backendEndpoints: ['GET /app/v1/filing-sessions/:sessionId/submission'],
+    backendEndpoints: [
+      'GET /app/v1/filing-sessions/:sessionId/print-mail',
+      'POST /app/v1/filing-sessions/:sessionId/print-mail'
+    ],
     d1Tables: ['filing_sessions'],
-    r2Artifacts: [],
-    orchestration: 'lifecycle placeholder only',
-    atsCoverage: 'none',
-    directFileCoverage: 'no',
-    status: 'missing_api',
+    r2Artifacts: ['filing-sessions/<id>/print-mail/packet.json'],
+    orchestration: 'print-mail packet generation + mailed-status persistence',
+    atsCoverage: 'runtime e2e',
+    directFileCoverage: 'partial',
+    status: 'implemented_tested',
     notes:
-      'No dedicated print packet, mailing instructions, or backend-generated paper-filing artifacts exist yet.'
+      'Backend now generates mailing packets, checklist guidance, mailing-address lookup, and mailed-state persistence for TaxFlow.'
   }
 ]
 

@@ -1395,4 +1395,92 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(checklistItems['unemployment-ss'].status).toBe('complete')
     expect(checklistItems.investments.status).toBe('complete')
   })
+
+  it('generates and updates a print-and-mail packet for TaxFlow sessions', async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sub: 'taxflow-user-print-mail',
+        email: 'print-mail@example.com',
+        displayName: 'Print Mail User'
+      })
+    })
+    expect(response.status).toBe(201)
+    const sessionCookie = extractCookieHeader(response)
+
+    response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionCookie
+      },
+      body: JSON.stringify({
+        taxYear: 2025,
+        filingStatus: 'mfj',
+        formType: '1040',
+        screenData: {
+          '/taxpayer-profile': {
+            firstName: 'Pat',
+            lastName: 'Paperfiler',
+            ssn: '400-01-6666',
+            address: {
+              line1: '98 Filing Lane',
+              city: 'Portland',
+              state: 'OR',
+              zip: '97201'
+            }
+          },
+          '/review-confirm': {
+            totalTax: 2400,
+            totalPayments: 1800,
+            totalRefund: 0
+          },
+          '/print-mail': {
+            reason: 'no-efile'
+          }
+        }
+      })
+    })
+    expect(response.status).toBe(201)
+    const created = await parseJsonResponse<JsonObject>(response)
+    const filingSessionId = String((created.filingSession as JsonObject).id)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/print-mail`,
+      {
+        method: 'GET',
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const initialPacket = await parseJsonResponse<JsonObject>(response)
+    const initialPrintMail = initialPacket.printMail as JsonObject
+    expect(initialPrintMail.packetStatus).toBe('ready')
+    expect((initialPrintMail.mailingAddress as JsonObject).withPayment).toBe(true)
+    expect(Array.isArray((initialPrintMail.mailingAddress as JsonObject).lines)).toBe(true)
+    expect(Array.isArray(initialPrintMail.checklist)).toBe(true)
+    expect(String(initialPrintMail.packetKey)).toContain('/print-mail/packet.json')
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/print-mail`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          reason: 'prefer-paper',
+          markMailed: true
+        })
+      }
+    )
+    expect(response.status).toBe(200)
+    const updatedPacket = await parseJsonResponse<JsonObject>(response)
+    const updatedPrintMail = updatedPacket.printMail as JsonObject
+    expect(updatedPrintMail.reason).toBe('prefer-paper')
+    expect(updatedPrintMail.packetStatus).toBe('mailed')
+    expect((updatedPrintMail.returnSummary as JsonObject).amountOwed).toBe(600)
+  })
 })

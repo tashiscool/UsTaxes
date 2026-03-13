@@ -421,6 +421,27 @@ app.post('/app/v1/filing-sessions/:sessionId/submission/retry', async (c) => {
   return c.json(result, 202)
 })
 
+app.get('/app/v1/filing-sessions/:sessionId/print-mail', async (c) => {
+  const user = await requireAppUser(c)
+  const { appSessionService } = buildServices(c)
+  const result = await appSessionService.getPrintMailPacket(
+    c.req.param('sessionId'),
+    user
+  )
+  return c.json(result)
+})
+
+app.post('/app/v1/filing-sessions/:sessionId/print-mail', async (c) => {
+  const user = await requireAppUser(c)
+  const { appSessionService } = buildServices(c)
+  const result = await appSessionService.updatePrintMailPacket(
+    c.req.param('sessionId'),
+    await c.req.json().catch(() => ({})),
+    user
+  )
+  return c.json(result)
+})
+
 app.get('/app/v1/filing-sessions/:sessionId/state-transfer', async (c) => {
   const user = await requireAppUser(c)
   const { appSessionService } = buildServices(c)

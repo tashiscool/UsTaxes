@@ -192,6 +192,59 @@ const stateTransferSchema = z.object({
   attested: z.boolean().refine((value) => value === true)
 })
 
+const printMailSchema = z.object({
+  reason: z.string().min(2).optional(),
+  markMailed: z.boolean().optional()
+})
+
+const PRINT_MAIL_ADDRESS_GROUPS: Array<{
+  states: string[]
+  withPayment: string[]
+  withoutPayment: string[]
+}> = [
+  {
+    states: ['CA', 'OR', 'WA', 'AK', 'HI'],
+    withPayment: ['Internal Revenue Service', 'P.O. Box 802501', 'Cincinnati, OH 45280-2501'],
+    withoutPayment: ['Department of the Treasury', 'Internal Revenue Service', 'Fresno, CA 93888-0002']
+  },
+  {
+    states: ['TX', 'OK', 'AR', 'LA', 'MS'],
+    withPayment: ['Internal Revenue Service', 'P.O. Box 1214', 'Charlotte, NC 28201-1214'],
+    withoutPayment: ['Department of the Treasury', 'Internal Revenue Service', 'Austin, TX 73301-0002']
+  },
+  {
+    states: ['NY', 'NJ', 'CT', 'MA', 'NH', 'VT', 'ME', 'RI'],
+    withPayment: ['Internal Revenue Service', 'P.O. Box 37008', 'Hartford, CT 06176-7008'],
+    withoutPayment: ['Department of the Treasury', 'Internal Revenue Service', 'Kansas City, MO 64999-0002']
+  }
+]
+
+const DEFAULT_PRINT_MAIL_ADDRESS = {
+  withPayment: ['Internal Revenue Service', 'P.O. Box 931000', 'Louisville, KY 40293-1000'],
+  withoutPayment: ['Department of the Treasury', 'Internal Revenue Service', 'Kansas City, MO 64999-0002']
+}
+
+const resolvePrintMailAddress = (stateCode: string, withPayment: boolean) => {
+  const normalized = stateCode.toUpperCase()
+  const matched =
+    PRINT_MAIL_ADDRESS_GROUPS.find((group) => group.states.includes(normalized)) ??
+    null
+  const lines = matched
+    ? withPayment
+      ? matched.withPayment
+      : matched.withoutPayment
+    : withPayment
+      ? DEFAULT_PRINT_MAIL_ADDRESS.withPayment
+      : DEFAULT_PRINT_MAIL_ADDRESS.withoutPayment
+
+  return {
+    stateCode: normalized || 'UNKNOWN',
+    withPayment,
+    lines,
+    verificationUrl: 'https://www.irs.gov/filing/where-to-file-paper-tax-returns-with-or-without-a-payment'
+  }
+}
+
 const toSnapshot = (row: FilingSessionRow, snapshot: FilingSessionSnapshot) => ({
   id: row.id,
   userId: row.user_id,
@@ -2122,6 +2175,133 @@ export class AppSessionService {
       ...result,
       lifecycleStatus: 'retrying' as const
     }
+  }
+
+  async getPrintMailPacket(sessionId: string, user: AppUserClaims) {
+    const row = await this.requireSession(sessionId, user.sub)
+    const snapshot = await this.getSnapshot(row)
+    const entities = await this.loadSessionEntities(row.id)
+    const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
+    const spouse = getSpouse(snapshot, entities)
+    const review = requireScreen(snapshot, '/review-confirm')
+    const printMail = requireScreen(snapshot, '/print-mail')
+    const facts = toFacts(row, snapshot, entities)
+    const amountOwed = Math.max(
+      0,
+      Number(review.totalTax ?? 0) - Number(review.totalPayments ?? 0)
+    )
+    const address = resolvePrintMailAddress(
+      toText(asRecord(taxpayer.address).state ?? 'CA'),
+      amountOwed > 0
+    )
+    const attachments = [
+      'Signed Form 1040 (and all included schedules)',
+      'Copy B of each W-2',
+      'Any 1099 showing federal withholding'
+    ]
+    if (amountOwed > 0) {
+      attachments.push(
+        "Check or money order payable to 'United States Treasury' with SSN and tax year noted"
+      )
+    }
+
+    const checklist = [
+      'Print the full return single-sided on plain white paper.',
+      'Sign and date the return.',
+      spouse && snapshot.filingStatus.toLowerCase() === 'mfj'
+        ? 'Make sure both spouses sign the return.'
+        : 'Confirm all required taxpayer signatures are present.',
+      'Attach W-2s and any withholding 1099s to the front of the return.',
+      amountOwed > 0
+        ? 'Include your payment voucher and check or money order.'
+        : 'No payment is required unless your return balance changes before mailing.',
+      'Mail using certified mail or an equivalent tracked delivery service.'
+    ]
+
+    const packet = {
+      filingSessionId: row.id,
+      generatedAt: nowIso(),
+      packetStatus: printMail.mailedAt ? 'mailed' : 'ready',
+      reason: toText(printMail.reason || 'not_specified'),
+      taxYear: snapshot.taxYear,
+      formType: snapshot.formType,
+      filingStatus: snapshot.filingStatus,
+      taxpayer: {
+        firstName: toText(taxpayer.firstName),
+        lastName: toText(taxpayer.lastName),
+        address: asRecord(taxpayer.address)
+      },
+      spouse,
+      returnSummary: {
+        totalTax: Number(review.totalTax ?? 0),
+        totalPayments: Number(review.totalPayments ?? 0),
+        refund: Number(review.totalRefund ?? snapshot.estimatedRefund ?? 0),
+        amountOwed
+      },
+      mailingAddress: address,
+      attachments,
+      checklist,
+      coverLetter: [
+        `Tax year: ${snapshot.taxYear}`,
+        `Filer: ${toText(taxpayer.firstName)} ${toText(taxpayer.lastName)}`.trim(),
+        spouse
+          ? `Spouse: ${spouse.firstName} ${spouse.lastName}`.trim()
+          : 'Spouse: none',
+        `Filing status: ${snapshot.filingStatus.toUpperCase()}`,
+        amountOwed > 0
+          ? `Amount enclosed: $${amountOwed.toLocaleString()}`
+          : 'No payment enclosed.',
+        `Mail to: ${address.lines.join(', ')}`,
+        'Verify the mailing address against the latest IRS where-to-file guidance before sending.'
+      ].join('\n'),
+      factsSummary: {
+        spousePresent: Boolean(spouse),
+        dependentCount: asArray(facts.dependents).length,
+        w2Count: asArray(facts.w2Records).length,
+        form1099Count: asArray(facts.form1099Records).length
+      },
+      verificationUrl: address.verificationUrl
+    }
+
+    const packetKey = `filing-sessions/${sessionId}/print-mail/packet.json`
+    await this.artifacts.putJson(packetKey, packet)
+
+    return {
+      printMail: {
+        ...packet,
+        packetKey
+      }
+    }
+  }
+
+  async updatePrintMailPacket(
+    sessionId: string,
+    rawBody: unknown,
+    user: AppUserClaims
+  ) {
+    const row = await this.requireSession(sessionId, user.sub)
+    const body = printMailSchema.parse(rawBody ?? {})
+    const snapshot = await this.getSnapshot(row)
+    const nextPrintMail = {
+      ...(snapshot.screenData['/print-mail'] ?? {}),
+      ...(body.reason ? { reason: body.reason } : {}),
+      ...(body.markMailed ? { mailedAt: nowIso() } : {})
+    }
+
+    await this.patchFilingSession(
+      sessionId,
+      {
+        lifecycleStatus: 'print_and_mail',
+        lastScreen: '/print-mail',
+        screenData: {
+          ...snapshot.screenData,
+          '/print-mail': nextPrintMail
+        }
+      },
+      user
+    )
+
+    return this.getPrintMailPacket(sessionId, user)
   }
 
   async getStateTransfer(sessionId: string, user: AppUserClaims) {
