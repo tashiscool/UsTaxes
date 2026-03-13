@@ -17,6 +17,28 @@ export default class F8995A extends F8995 {
   tag: FormTag = 'f8995a'
   sequenceIndex = 55.5
 
+  visibleEntries = (): ReturnType<F8995['qbiEntries']> => this.qbiEntries().slice(0, 3)
+
+  overflowEntries = (): ReturnType<F8995['qbiEntries']> => this.qbiEntries().slice(3)
+
+  needsAdditionalStatement = (): boolean => this.overflowEntries().length > 0
+
+  overflowTotals = (): {
+    qbi: number
+    w2Wages: number
+    ubia: number
+    patronReduction: number
+  } =>
+    this.overflowEntries().reduce(
+      (totals, entry) => ({
+        qbi: totals.qbi + entry.qbi,
+        w2Wages: totals.w2Wages + entry.w2Wages,
+        ubia: totals.ubia + entry.ubia,
+        patronReduction: totals.patronReduction + entry.patronReduction
+      }),
+      { qbi: 0, w2Wages: 0, ubia: 0, patronReduction: 0 }
+    )
+
   deductionForEntry = (
     entry: ReturnType<F8995['qbiEntries']>[number]
   ): number => {
@@ -42,9 +64,9 @@ export default class F8995A extends F8995 {
       .filter((entry) => entry.qbi > 0)
       .map((entry) => this.deductionAfterPatronReduction(entry))
 
-  l2a = (): number | undefined => this.qbiEntries()[0]?.qbi
-  l2b = (): number | undefined => this.qbiEntries()[1]?.qbi
-  l2c = (): number | undefined => this.qbiEntries()[2]?.qbi
+  l2a = (): number | undefined => this.visibleEntries()[0]?.qbi
+  l2b = (): number | undefined => this.visibleEntries()[1]?.qbi
+  l2c = (): number | undefined => this.visibleEntries()[2]?.qbi
 
   l3a = (): number | undefined =>
     ifNumber(this.l2a(), (num) => num * qbid.maxRate)
@@ -54,11 +76,11 @@ export default class F8995A extends F8995 {
     ifNumber(this.l2c(), (num) => num * qbid.maxRate)
 
   l4a = (): number | undefined =>
-    ifNumber(this.l2a(), () => this.qbiEntries()[0]?.w2Wages ?? 0)
+    ifNumber(this.l2a(), () => this.visibleEntries()[0]?.w2Wages ?? 0)
   l4b = (): number | undefined =>
-    ifNumber(this.l2b(), () => this.qbiEntries()[1]?.w2Wages ?? 0)
+    ifNumber(this.l2b(), () => this.visibleEntries()[1]?.w2Wages ?? 0)
   l4c = (): number | undefined =>
-    ifNumber(this.l2c(), () => this.qbiEntries()[2]?.w2Wages ?? 0)
+    ifNumber(this.l2c(), () => this.visibleEntries()[2]?.w2Wages ?? 0)
 
   l5a = (): number | undefined => ifNumber(this.l4a(), (num) => num * 0.5)
   l5b = (): number | undefined => ifNumber(this.l4b(), (num) => num * 0.5)
@@ -69,11 +91,11 @@ export default class F8995A extends F8995 {
   l6c = (): number | undefined => ifNumber(this.l4c(), (num) => num * 0.25)
 
   l7a = (): number | undefined =>
-    ifNumber(this.l2a(), () => this.qbiEntries()[0]?.ubia ?? 0)
+    ifNumber(this.l2a(), () => this.visibleEntries()[0]?.ubia ?? 0)
   l7b = (): number | undefined =>
-    ifNumber(this.l2b(), () => this.qbiEntries()[1]?.ubia ?? 0)
+    ifNumber(this.l2b(), () => this.visibleEntries()[1]?.ubia ?? 0)
   l7c = (): number | undefined =>
-    ifNumber(this.l2c(), () => this.qbiEntries()[2]?.ubia ?? 0)
+    ifNumber(this.l2c(), () => this.visibleEntries()[2]?.ubia ?? 0)
 
   l8a = (): number | undefined => ifNumber(this.l7a(), (num) => num * 0.025)
   l8b = (): number | undefined => ifNumber(this.l7b(), (num) => num * 0.025)
@@ -112,11 +134,11 @@ export default class F8995A extends F8995 {
     ifNumber(this.l12c(), (num) => Math.max(num, this.l11c() ?? 0))
 
   l14a = (): number | undefined =>
-    ifNumber(this.l2a(), () => this.qbiEntries()[0]?.patronReduction ?? 0)
+    ifNumber(this.l2a(), () => this.visibleEntries()[0]?.patronReduction ?? 0)
   l14b = (): number | undefined =>
-    ifNumber(this.l2b(), () => this.qbiEntries()[1]?.patronReduction ?? 0)
+    ifNumber(this.l2b(), () => this.visibleEntries()[1]?.patronReduction ?? 0)
   l14c = (): number | undefined =>
-    ifNumber(this.l2c(), () => this.qbiEntries()[2]?.patronReduction ?? 0)
+    ifNumber(this.l2c(), () => this.visibleEntries()[2]?.patronReduction ?? 0)
 
   l15a = (): number | undefined =>
     ifNumber(this.l13a(), (num) => Math.max(0, num - (this.l14a() ?? 0)))
@@ -191,20 +213,20 @@ export default class F8995A extends F8995 {
   fields = (): Field[] => [
     this.f1040.namesString(),
     this.f1040.info.taxPayer.primaryPerson.ssid,
-    this.qbiEntries()[0]?.name,
+    this.visibleEntries()[0]?.name,
     false, // 1Ab
     false, // 1Ac
-    this.qbiEntries()[0]?.ein,
+    this.visibleEntries()[0]?.ein,
     false, // 1Ae
-    this.qbiEntries()[1]?.name,
+    this.visibleEntries()[1]?.name,
     false, // 1Bb
     false, // 1Bc
-    this.qbiEntries()[1]?.ein,
+    this.visibleEntries()[1]?.ein,
     false, // 1Be
-    this.qbiEntries()[2]?.name,
+    this.visibleEntries()[2]?.name,
     false, // 1Cb
     false, // 1Cc
-    this.qbiEntries()[2]?.ein,
+    this.visibleEntries()[2]?.ein,
     false, // 1Ce
     this.l2a(),
     this.l2b(),

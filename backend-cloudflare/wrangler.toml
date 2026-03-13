@@ -47,14 +47,15 @@ name = "ustaxes-backend-staging"
 
 [env.staging.vars]
 ENVIRONMENT = "staging"
-CORS_ORIGIN = "https://staging.taxflow.app"
+CORS_ORIGIN = "https://staging.freetaxflow.com"
+SESSION_SECRET_HMAC_KEY = "staging-secret-change-before-real-use"
 LOCAL_DEV_AUTH_ENABLED = "false"
 LOG_LEVEL = "info"
 
 [[env.staging.d1_databases]]
 binding = "USTAXES_DB"
 database_name = "ustaxes-backend-staging"
-database_id = "00000000-0000-0000-0000-000000000001"
+database_id = "8e1ebd47-8032-44b7-aeb8-f2d71c011e26"
 migrations_dir = "migrations"
 
 [[env.staging.r2_buckets]]
@@ -82,18 +83,19 @@ new_sqlite_classes = ["SubmissionOrchestrator"]
 
 [env.production]
 name = "ustaxes-backend"
-routes = [{ pattern = "api.taxflow.app", custom_domain = true }]
+routes = [{ pattern = "api.freetaxflow.com", custom_domain = true }]
 
 [env.production.vars]
 ENVIRONMENT = "production"
-CORS_ORIGIN = "https://taxflow.app"
+CORS_ORIGIN = "https://freetaxflow.com"
+SESSION_SECRET_HMAC_KEY = "prod-secret-rotate-via-wrangler-secret"
 LOCAL_DEV_AUTH_ENABLED = "false"
 LOG_LEVEL = "warn"
 
 [[env.production.d1_databases]]
 binding = "USTAXES_DB"
 database_name = "ustaxes-backend-production"
-database_id = "00000000-0000-0000-0000-000000000002"
+database_id = "2b4e1d26-d779-4f26-a8e0-3b5d23a1db2f"
 migrations_dir = "migrations"
 
 [[env.production.r2_buckets]]

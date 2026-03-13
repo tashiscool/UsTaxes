@@ -1071,21 +1071,27 @@ const getW2Records = (
 
   const entityW2 = entities
     .filter((entity) => entity.entityType === 'w2')
-    .map((entity) => ({
-      id: entity.id,
-      employerName: toText(entity.data.employerName),
-      ein: toText(entity.data.ein),
-      box1Wages: toMoney(entity.data.box1Wages),
-      box2FederalWithheld: toMoney(entity.data.box2FederalWithheld),
-      box12Code: '',
-      box12Amount: 0,
-      stateWages: toMoney(entity.data.stateWages),
-      stateWithheld: toMoney(entity.data.stateWithheld),
-      owner: toText(entity.data.owner) || 'taxpayer',
-      isComplete: Boolean(
-        entity.data.employerName && entity.data.ein && entity.data.box1Wages
-      )
-    }))
+    .map((entity) => {
+      const d = entity.data
+      const wages = toMoney(d.box1Wages ?? d.box1 ?? d.wages)
+      const fedWithheld = toMoney(d.box2FederalWithheld ?? d.box2 ?? d.federalWithholding)
+      const stWages = toMoney(d.stateWages ?? d.box16 ?? d.stateIncome)
+      const stWithheld = toMoney(d.stateWithheld ?? d.box17 ?? d.stateWithholding)
+      const employer = toText(d.employerName ?? d.employer)
+      return {
+        id: entity.id,
+        employerName: employer,
+        ein: toText(d.ein),
+        box1Wages: wages,
+        box2FederalWithheld: fedWithheld,
+        box12Code: toText(d.box12Code ?? d.box12aCode) || '',
+        box12Amount: toMoney(d.box12Amount ?? d.box12a),
+        stateWages: stWages,
+        stateWithheld: stWithheld,
+        owner: toText(d.owner) || 'taxpayer',
+        isComplete: Boolean(employer && d.ein && wages > 0)
+      }
+    })
 
   return mergeCollectionById(screenW2, entityW2)
 }

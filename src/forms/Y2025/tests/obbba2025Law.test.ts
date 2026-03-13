@@ -529,6 +529,64 @@ describe('2025 federal law updates', () => {
     expect(f8995A.l27()).toBe(56000)
   })
 
+  it('tracks overflow businesses for additional-statement parity', () => {
+    const f1040 = new F1040(cloneDeep(baseInformation), [])
+    const f8995A = new F8995A(f1040)
+
+    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+      {
+        name: 'Alpha Consulting',
+        ein: '111111111',
+        qbi: 100000,
+        w2Wages: 100000,
+        ubia: 10000,
+        patronReduction: 0
+      },
+      {
+        name: 'Bravo Services',
+        ein: '222222222',
+        qbi: 80000,
+        w2Wages: 80000,
+        ubia: 20000,
+        patronReduction: 0
+      },
+      {
+        name: 'Charlie Rentals',
+        ein: '333333333',
+        qbi: 60000,
+        w2Wages: 60000,
+        ubia: 30000,
+        patronReduction: 1000
+      },
+      {
+        name: 'Delta Holdings',
+        ein: '444444444',
+        qbi: 40000,
+        w2Wages: 40000,
+        ubia: 40000,
+        patronReduction: 2000
+      },
+      {
+        name: 'Echo Foods',
+        ein: '555555555',
+        qbi: 30000,
+        w2Wages: 30000,
+        ubia: 50000,
+        patronReduction: 3000
+      }
+    ])
+
+    expect(f8995A.visibleEntries()).toHaveLength(3)
+    expect(f8995A.overflowEntries()).toHaveLength(2)
+    expect(f8995A.needsAdditionalStatement()).toBe(true)
+    expect(f8995A.overflowTotals()).toEqual({
+      qbi: 70000,
+      w2Wages: 70000,
+      ubia: 90000,
+      patronReduction: 5000
+    })
+  })
+
   it('subtracts patron reductions from the detailed QBI component', () => {
     const f1040 = new F1040(cloneDeep(baseInformation), [])
     const f8995A = new F8995A(f1040)
