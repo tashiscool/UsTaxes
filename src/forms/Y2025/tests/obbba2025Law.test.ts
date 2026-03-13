@@ -112,6 +112,29 @@ describe('2025 federal law updates', () => {
     expect(f1040.schedule1A.l5()).toBe(11500)
   })
 
+  it('keeps Schedule 1-A deductions out of AGI and in the deductions section', () => {
+    const baselineInfo = cloneDeep(baseInformation)
+    baselineInfo.w2s[0].income = 160000
+    baselineInfo.w2s[0].medicareIncome = 160000
+    baselineInfo.w2s[0].ssWages = 160000
+    baselineInfo.w2s[0].stateWages = 160000
+
+    const schedule1AInfo = cloneDeep(baselineInfo)
+    schedule1AInfo.overtimeIncome = { amount: 12500 }
+    schedule1AInfo.tipIncome = { amount: 25000 }
+
+    const baseline1040 = new F1040(baselineInfo, [])
+    const schedule1A1040 = new F1040(schedule1AInfo, [])
+
+    expect(schedule1A1040.l11()).toBe(baseline1040.l11())
+    expect(schedule1A1040.l13b()).toBe(
+      schedule1A1040.schedule1A.l5() + schedule1A1040.schedule1A.l8()
+    )
+    expect(schedule1A1040.l14()).toBe(
+      schedule1A1040.l12() + schedule1A1040.l13b() + (schedule1A1040.l13() ?? 0)
+    )
+  })
+
   it('applies the stepped auto-loan phase-out and 2025 cap', () => {
     const information = cloneDeep(baseInformation)
     information.taxPayer.filingStatus = FilingStatus.MFJ
@@ -250,6 +273,29 @@ describe('2025 federal law updates', () => {
     expect(qbid.phaseOutStart(FilingStatus.MFJ)).toBe(394600)
     expect(qbid.phaseOutStart(FilingStatus.W)).toBe(394600)
     expect(f1040.f8995?.l5()).toBe(20000)
+  })
+
+  it('uses taxable income before QBI after Schedule 1-A deductions', () => {
+    const information = cloneDeep(baseInformation)
+    information.w2s[0].income = 150000
+    information.w2s[0].medicareIncome = 150000
+    information.w2s[0].ssWages = 150000
+    information.w2s[0].stateWages = 150000
+    information.overtimeIncome = { amount: 12500 }
+    information.scheduleK1Form1065s = [
+      {
+        partnershipName: 'Northwind Partners',
+        partnershipEin: '123456789',
+        section199AQBI: 100000
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.taxableIncomeBeforeQBIDeduction()).toBe(
+      Math.max(0, f1040.l11() - f1040.l12() - f1040.l13b())
+    )
+    expect(f1040.f8995?.l11()).toBe(f1040.taxableIncomeBeforeQBIDeduction())
   })
 
   it('treats qualified disaster losses differently from other casualty losses in 2025', () => {

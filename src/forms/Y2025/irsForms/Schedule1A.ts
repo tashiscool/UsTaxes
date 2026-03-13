@@ -281,17 +281,17 @@ export default class Schedule1A extends F1040Attachment {
   // Total Additional Deductions
   // =========================================================================
 
-  // Line 17: Total additional deductions (sum of above-the-line parts only)
-  // Note: Senior deduction (l16) is NOT included here - it goes to Line 12
+  // Simplified schedule total used by the current implementation. For 2025 this
+  // entire amount flows into the deductions section of Form 1040/1040-NR.
   l17 = (): number => {
-    return sumFields([this.l5(), this.l8(), this.l14()])
+    return sumFields([this.l5(), this.l8(), this.l14(), this.l16()])
   }
 
-  // Transfer to Form 1040 Line 10 (above-the-line deductions)
-  // Senior deduction goes separately to Line 12
+  // Transfer Schedule 1-A deductions into the deductions section.
   to1040 = (): number => this.l17()
 
-  // Transfer senior deduction to Form 1040 Line 12
+  // Retained for compatibility with older callers; the senior amount is already
+  // included in to1040() for 2025 resident-return calculations.
   seniorDeductionTo1040 = (): number => {
     return this.l16()
   }

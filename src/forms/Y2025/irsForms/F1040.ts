@@ -1155,12 +1155,9 @@ export default class F1040 extends F1040Base {
       this.l8()
     ])
 
-  // OBBBA 2025: Line 10 now includes Schedule 1-A additional deductions
-  l10 = (): number | undefined => {
-    const schedule1Amount = this.schedule1.to1040Line10()
-    const schedule1AAmount = this.schedule1A.to1040()
-    return schedule1Amount + schedule1AAmount
-  }
+  // Schedule 1 adjustments reduce AGI. Schedule 1-A deductions flow later in the
+  // deductions section and do not reduce AGI.
+  l10 = (): number | undefined => this.schedule1.to1040Line10()
 
   l11 = (): number => Math.max(0, this.l9() - (this.l10() ?? 0))
 
@@ -1171,17 +1168,20 @@ export default class F1040 extends F1040Base {
     } else {
       deduction = this.standardDeduction() ?? 0
     }
-
-    // OBBBA 2025: Add senior additional deduction ($6,000 per person 65+)
-    // This is added to standard deduction OR itemized deductions
-    // Source: docs/obbba/form-1040/STANDARD_DEDUCTION.md
-    deduction += this.schedule1A.seniorDeductionTo1040()
-
     return deduction
   }
 
+  l13b = (): number => this.schedule1A.to1040()
   l13 = (): number | undefined => this.f8995?.deductions()
-  l14 = (): number => sumFields([this.l12(), this.l13()])
+
+  deductionsBeforeQBIDeduction = (): number =>
+    sumFields([this.l12(), this.l13b()])
+
+  taxableIncomeBeforeQBIDeduction = (): number =>
+    Math.max(0, this.l11() - this.deductionsBeforeQBIDeduction())
+
+  l14 = (): number =>
+    sumFields([this.deductionsBeforeQBIDeduction(), this.l13()])
 
   l15 = (): number => Math.max(0, this.l11() - this.l14())
 
