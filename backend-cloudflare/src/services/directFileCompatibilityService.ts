@@ -275,7 +275,9 @@ export class DirectFileCompatibilityService {
     void languageCode
     throw new HttpError(
       501,
-      `A rendered ${taxReturn.formType ?? '1040'} PDF is not yet available for Direct File compatibility mode.`
+      `A rendered ${
+        taxReturn.formType ?? '1040'
+      } PDF is not yet available for Direct File compatibility mode.`
     )
   }
 

@@ -99,6 +99,7 @@ export type ReturnTypeCd =
   | '1120S'
   | '1120F'
   | '1065'
+  | '1041'
   | '990'
   | '990EZ'
   | '990PF'

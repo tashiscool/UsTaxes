@@ -23,6 +23,9 @@ import {
   AckError
 } from '../types/mefTypes'
 
+import { XmlSigner, canonicalize, computeDigest, base64Encode } from './signer'
+import type { SignerConfig } from './signer'
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -37,6 +40,22 @@ export interface TransmitterConfig {
   taxYear: string
   /** Whether this is a test submission */
   isTest?: boolean
+  /** Optional signing credentials for XMLDSig (certificate + private key) */
+  signingCredentials?: SigningCredentials
+  /** Optional adapter for real MeF transport operations */
+  transportAdapter?: {
+    login?: () => Promise<void>
+    submitReturn?: (submission: Submission) => Promise<SubmissionResult>
+    getAcknowledgment?: (
+      submissionId: SubmissionId
+    ) => Promise<Acknowledgment | null>
+  }
+  /** Deterministic acknowledgment behavior for local/test usage */
+  simulatedAcknowledgment?: {
+    mode?: 'accept' | 'reject' | 'pending_once_then_accept'
+    errorCode?: string
+    errorMessage?: string
+  }
 }
 
 /**
@@ -103,6 +122,16 @@ export interface ESignature {
   ipAddress?: string
   /** Form 8879 consent acknowledged */
   form8879Consent: boolean
+}
+
+/**
+ * Signing credentials for XMLDSig
+ */
+export interface SigningCredentials {
+  /** X509 certificate in PEM format */
+  certificate: string
+  /** RSA private key in PEM format */
+  privateKey: string
 }
 
 /**
@@ -277,6 +306,7 @@ export class EFileTransmitter {
   private config: TransmitterConfig
   private statusCallback?: EFileStatusCallback
   private sessionToken?: string
+  private simulatedAckPollCounts = new Map<string, number>()
 
   constructor(config: TransmitterConfig) {
     this.config = config
@@ -678,12 +708,17 @@ export class EFileTransmitter {
 
   /**
    * Sign a prepared return with electronic signature
+   *
+   * When signingCredentials are provided in the config, this method
+   * produces a real XMLDSig enveloped signature using RSA-SHA256 via
+   * the Web Crypto API. Without credentials, it falls back to a
+   * SHA-256 content hash (useful for development and testing).
    */
-  signReturn(
+  async signReturn(
     prepared: PreparedReturn,
     identity: IdentityVerification,
     signature: ESignature
-  ): SignedReturn {
+  ): Promise<SignedReturn> {
     this.updateStatus('signing', 'Signing return...', 50)
 
     // Validate signature consent
@@ -748,7 +783,7 @@ export class EFileTransmitter {
     }
 
     // Generate digital signature
-    const digitalSignature = this.generateDigitalSignature(submission)
+    const digitalSignature = await this.generateDigitalSignature(submission)
 
     this.updateStatus('signing', 'Return signed successfully', 60)
 
@@ -775,33 +810,42 @@ export class EFileTransmitter {
   }
 
   /**
-   * Generate digital signature for submission
-   * In production, this would use XMLDSig with the transmitter's certificate
+   * Generate digital signature for submission.
+   *
+   * When signingCredentials are present, produces a real XMLDSig
+   * enveloped signature by:
+   *   1. Canonicalizing the return XML (C14N)
+   *   2. Computing SHA-256 digest
+   *   3. Signing with RSA-SHA256 via Web Crypto API
+   *   4. Embedding the signature in the XML
+   *
+   * Without credentials, falls back to a SHA-256 content hash
+   * for development and testing scenarios.
    */
-  private generateDigitalSignature(submission: Submission): string {
-    // In production, this would:
-    // 1. Canonicalize the XML
-    // 2. Compute SHA-256 hash
-    // 3. Sign with RSA private key
-    // 4. Return base64-encoded signature
+  private async generateDigitalSignature(
+    submission: Submission
+  ): Promise<string> {
+    const creds = this.config.signingCredentials
+    const xml =
+      typeof submission.returnData.content === 'string'
+        ? submission.returnData.content
+        : JSON.stringify(submission.returnData.content)
 
-    // For now, return a placeholder
-    const content = JSON.stringify(submission)
-    const hash = this.simpleHash(content)
-    return `SIGNATURE-${hash}`
-  }
-
-  /**
-   * Simple hash function for demo purposes
-   */
-  private simpleHash(str: string): string {
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i)
-      hash = (hash << 5) - hash + char
-      hash = hash & hash
+    if (creds?.certificate && creds?.privateKey) {
+      // Full XMLDSig signing with real credentials
+      const signerConfig: SignerConfig = {
+        certificate: creds.certificate,
+        privateKey: creds.privateKey
+      }
+      const signer = new XmlSigner(signerConfig)
+      const signedXml = await signer.sign(xml)
+      return signedXml
     }
-    return Math.abs(hash).toString(36).toUpperCase()
+
+    // Fallback: SHA-256 hash for development / test mode
+    const canonicalXml = canonicalize(xml)
+    const digest = await computeDigest(canonicalXml)
+    return `XMLDSIG-SHA256-${base64Encode(digest)}`
   }
 
   // ===========================================================================
@@ -845,6 +889,12 @@ export class EFileTransmitter {
    * Login to MeF system
    */
   private async login(): Promise<void> {
+    if (this.config.transportAdapter?.login) {
+      await this.config.transportAdapter.login()
+      this.sessionToken = this.sessionToken ?? `SESSION-${Date.now()}`
+      return
+    }
+
     const { mefConfig } = this.config
 
     // In production, this would make a SOAP request to the MeF login endpoint
@@ -861,6 +911,10 @@ export class EFileTransmitter {
   private async sendSubmission(
     submission: Submission
   ): Promise<SubmissionResult> {
+    if (this.config.transportAdapter?.submitReturn) {
+      return this.config.transportAdapter.submitReturn(submission)
+    }
+
     const { mefConfig } = this.config
 
     // In production, this would:
@@ -961,40 +1015,41 @@ export class EFileTransmitter {
   private async getAcknowledgment(
     submissionId: SubmissionId
   ): Promise<Acknowledgment | null> {
-    // In production, this would make a SOAP request to the MeF getAck endpoint
-
-    // Simulate network delay
-    await this.delay(500)
-
-    // Simulate acknowledgment (in real implementation, this would parse the SOAP response)
-    // For demo, randomly return accepted/pending
-    const random = Math.random()
-
-    if (random > 0.7) {
-      return {
-        submissionId,
-        status: 'Accepted',
-        acceptanceStatusTxt: 'Your return has been accepted',
-        ackTs: new Date().toISOString(),
-        irsReceiptId: `IRS-${Date.now()}`,
-        taxYr: this.config.taxYear,
-        returnTypeCd: '1040'
-      }
+    if (this.config.transportAdapter?.getAcknowledgment) {
+      return this.config.transportAdapter.getAcknowledgment(submissionId)
     }
 
-    if (random > 0.9) {
+    await this.delay(100)
+
+    const pollCount = (this.simulatedAckPollCounts.get(submissionId) ?? 0) + 1
+    this.simulatedAckPollCounts.set(submissionId, pollCount)
+
+    const mode =
+      this.config.simulatedAcknowledgment?.mode ??
+      (this.config.isTest ? 'accept' : 'pending_once_then_accept')
+
+    if (mode === 'pending_once_then_accept' && pollCount === 1) {
+      return null
+    }
+
+    if (mode === 'reject' || submissionId.toUpperCase().includes('REJECT')) {
       return {
         submissionId,
         status: 'Rejected',
-        acceptanceStatusTxt: 'Your return has been rejected',
+        acceptanceStatusTxt:
+          this.config.simulatedAcknowledgment?.errorMessage ??
+          'Your return has been rejected',
         ackTs: new Date().toISOString(),
         errors: [
           {
-            errorId: 'R0000-507-01',
+            errorId:
+              this.config.simulatedAcknowledgment?.errorCode ?? 'R0000-507-01',
             errorCategoryCd: 'BUSINESS-RULE-ERROR',
             errorMessageTxt:
+              this.config.simulatedAcknowledgment?.errorMessage ??
               'SSN in the return was used as a dependent on another return',
-            ruleNum: 'R0000-507-01',
+            ruleNum:
+              this.config.simulatedAcknowledgment?.errorCode ?? 'R0000-507-01',
             severityCd: 'Reject'
           }
         ],
@@ -1003,8 +1058,15 @@ export class EFileTransmitter {
       }
     }
 
-    // Still pending
-    return null
+    return {
+      submissionId,
+      status: 'Accepted',
+      acceptanceStatusTxt: 'Your return has been accepted',
+      ackTs: new Date().toISOString(),
+      irsReceiptId: `IRS-${Date.now()}`,
+      taxYr: this.config.taxYear,
+      returnTypeCd: '1040'
+    }
   }
 
   // ===========================================================================
@@ -1049,7 +1111,7 @@ export class EFileTransmitter {
       }
 
       // Step 3: Sign
-      signed = this.signReturn(prepared, identity, signature)
+      signed = await this.signReturn(prepared, identity, signature)
       timestamps.signed = new Date()
 
       // Step 4: Submit
@@ -1177,6 +1239,9 @@ export function createTestTransmitter(taxYear: string): EFileTransmitter {
   const testConfig: TransmitterConfig = {
     taxYear,
     isTest: true,
+    simulatedAcknowledgment: {
+      mode: 'accept'
+    },
     mefConfig: {
       environment: 'ATS',
       endpoints: {

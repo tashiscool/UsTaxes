@@ -4,7 +4,12 @@ const FORM_TYPE_ALIASES = new Map<string, ReturnFormType>([
   ['1040', '1040'],
   ['1040nr', '1040-NR'],
   ['1040ss', '1040-SS'],
-  ['4868', '4868']
+  ['4868', '4868'],
+  ['1120', '1120'],
+  ['1120s', '1120-S'],
+  ['1065', '1065'],
+  ['1041', '1041'],
+  ['990', '990']
 ])
 
 export const normalizeReturnFormType = (value: string): string =>

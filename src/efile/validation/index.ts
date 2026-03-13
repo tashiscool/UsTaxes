@@ -35,7 +35,12 @@ export {
   RULES_1040,
   RULES_SCHEDULE_A,
   RULES_SCHEDULE_C,
-  RULES_SCHEDULE_SE
+  RULES_SCHEDULE_SE,
+  // TY2025 expanded rule sets
+  RULES_CREDIT_ELIGIBILITY,
+  RULES_OBBBA,
+  RULES_BUSINESS_ENTITY,
+  RULES_FILING_STATUS_EXTENDED
 } from './businessRules'
 
 // ============================================================================

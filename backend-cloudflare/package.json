@@ -18,7 +18,13 @@
     "irs:readiness:report": "node ./scripts/generate-irs-readiness-report.mjs",
     "d1:migrate:local": "wrangler d1 migrations apply USTAXES_DB --local",
     "d1:seed:local": "wrangler d1 execute USTAXES_DB --local --file scripts/seed.sql",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "d1:migrate:staging": "wrangler d1 migrations apply USTAXES_DB --env staging --remote",
+    "d1:migrate:production": "wrangler d1 migrations apply USTAXES_DB --env production --remote",
+    "tail:staging": "wrangler tail --env staging",
+    "tail:production": "wrangler tail --env production"
   },
   "dependencies": {
     "hono": "^4.6.11",

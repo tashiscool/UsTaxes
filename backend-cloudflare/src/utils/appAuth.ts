@@ -22,8 +22,7 @@ const toBase64Url = (value: string): string =>
 
 const fromBase64Url = (value: string): string => {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
-  const padded =
-    normalized + '='.repeat((4 - (normalized.length % 4 || 4)) % 4)
+  const padded = normalized + '='.repeat((4 - (normalized.length % 4 || 4)) % 4)
   return atob(padded)
 }
 
@@ -54,14 +53,21 @@ const importHmacKey = async (env: Env): Promise<CryptoKey> =>
 
 const sign = async (env: Env, payload: string): Promise<string> => {
   const key = await importHmacKey(env)
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(payload))
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(payload)
+  )
   const bytes = Array.from(new Uint8Array(signature))
     .map((value) => String.fromCharCode(value))
     .join('')
   return toBase64Url(bytes)
 }
 
-const parseCookie = (cookieHeader: string | null | undefined, name: string): string | null => {
+const parseCookie = (
+  cookieHeader: string | null | undefined,
+  name: string
+): string | null => {
   if (!cookieHeader) {
     return null
   }

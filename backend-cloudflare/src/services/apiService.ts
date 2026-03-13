@@ -26,7 +26,7 @@ import { nowIso } from '../utils/time'
 
 const filingStatusSchema = z
   .string()
-  .min(2)
+  .min(1)
   .transform((value) => normalizeFilingStatus(value))
   .refine((value) => isValidFilingStatus(value), {
     message: 'Invalid filing status'

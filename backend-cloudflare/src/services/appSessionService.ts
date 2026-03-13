@@ -3,13 +3,18 @@ import { z } from 'zod'
 import type { ArtifactStore } from '../adapters/artifactStore'
 import type { TaxRepository } from '../adapters/repository'
 import type { Env } from '../domain/env'
-import type {
-  AppUserClaims
-} from '../utils/appAuth'
+import type { AppUserClaims } from '../utils/appAuth'
 import type { ReturnFormType, SubmissionPayload } from '../domain/types'
 import { ApiService } from './apiService'
+import {
+  type BusinessEntityResult,
+  TaxCalculationService,
+  type TaxCalculationResult,
+  isBusinessFormType
+} from './taxCalculationService'
 import { resolveStateProfile } from '../data/stateProfiles'
 import { HttpError } from '../utils/http'
+import { hashPayload } from '../utils/hash'
 import { nowIso } from '../utils/time'
 
 type FilingPhase =
@@ -40,7 +45,7 @@ export interface FilingSessionSnapshot {
   name: string
   taxYear: number
   filingStatus: string
-  formType: ReturnFormType | '1040-SS'
+  formType: ReturnFormType
   currentPhase: FilingPhase
   lastScreen?: string
   completionPct: number
@@ -114,20 +119,35 @@ interface ReviewFindingRow {
   updated_at: string
 }
 
+interface CachedTaxComputation {
+  taxSummary?: Record<string, unknown>
+  taxCalcErrors?: string[]
+}
+
 const filingSessionCreateSchema = z.object({
   localSessionId: z.string().min(1).optional(),
   name: z.string().min(1).optional(),
   taxYear: z.number().int().min(2024).max(2050).default(2025),
   filingStatus: z.string().min(2).default('single'),
-  formType: z.enum(['1040', '1040-NR', '1040-SS', '4868']).default('1040'),
+  formType: z.enum(['1040', '1040-NR', '1040-SS', '4868', '1120', '1120-S', '1065', '1041', '990']).default('1040'),
   currentPhase: z
-    .enum(['my_info', 'income', 'deductions', 'credits', 'state', 'review', 'file'])
+    .enum([
+      'my_info',
+      'income',
+      'deductions',
+      'credits',
+      'state',
+      'review',
+      'file'
+    ])
     .default('my_info'),
   lastScreen: z.string().optional(),
   completionPct: z.number().min(0).max(100).default(0),
   estimatedRefund: z.number().nullable().optional(),
   completedScreens: z.array(z.string()).default([]),
-  screenData: z.record(z.string(), z.record(z.string(), z.unknown())).default({}),
+  screenData: z
+    .record(z.string(), z.record(z.string(), z.unknown()))
+    .default({}),
   checklistState: z.record(z.string(), z.string()).default({}),
   entities: z.record(z.string(), z.unknown()).default({})
 })
@@ -162,10 +182,25 @@ const documentCreateSchema = z.object({
   name: z.string().min(1),
   mimeType: z.string().min(1),
   status: z
-    .enum(['processing', 'extracted', 'ambiguous', 'needs_review', 'ocr_failed', 'confirmed'])
+    .enum([
+      'processing',
+      'extracted',
+      'ambiguous',
+      'needs_review',
+      'ocr_failed',
+      'confirmed'
+    ])
     .default('processing'),
   cluster: z
-    .enum(['w2', '1099', 'investment', 'prior_return', 'irs_notice', 'foreign', 'unknown'])
+    .enum([
+      'w2',
+      '1099',
+      'investment',
+      'prior_return',
+      'irs_notice',
+      'foreign',
+      'unknown'
+    ])
     .default('unknown'),
   clusterConfidence: z.number().min(0).max(1).default(0),
   pages: z.number().int().min(1).default(1),
@@ -204,48 +239,85 @@ const PRINT_MAIL_ADDRESS_GROUPS: Array<{
 }> = [
   {
     states: ['CA', 'OR', 'WA', 'AK', 'HI'],
-    withPayment: ['Internal Revenue Service', 'P.O. Box 802501', 'Cincinnati, OH 45280-2501'],
-    withoutPayment: ['Department of the Treasury', 'Internal Revenue Service', 'Fresno, CA 93888-0002']
+    withPayment: [
+      'Internal Revenue Service',
+      'P.O. Box 802501',
+      'Cincinnati, OH 45280-2501'
+    ],
+    withoutPayment: [
+      'Department of the Treasury',
+      'Internal Revenue Service',
+      'Fresno, CA 93888-0002'
+    ]
   },
   {
     states: ['TX', 'OK', 'AR', 'LA', 'MS'],
-    withPayment: ['Internal Revenue Service', 'P.O. Box 1214', 'Charlotte, NC 28201-1214'],
-    withoutPayment: ['Department of the Treasury', 'Internal Revenue Service', 'Austin, TX 73301-0002']
+    withPayment: [
+      'Internal Revenue Service',
+      'P.O. Box 1214',
+      'Charlotte, NC 28201-1214'
+    ],
+    withoutPayment: [
+      'Department of the Treasury',
+      'Internal Revenue Service',
+      'Austin, TX 73301-0002'
+    ]
   },
   {
     states: ['NY', 'NJ', 'CT', 'MA', 'NH', 'VT', 'ME', 'RI'],
-    withPayment: ['Internal Revenue Service', 'P.O. Box 37008', 'Hartford, CT 06176-7008'],
-    withoutPayment: ['Department of the Treasury', 'Internal Revenue Service', 'Kansas City, MO 64999-0002']
+    withPayment: [
+      'Internal Revenue Service',
+      'P.O. Box 37008',
+      'Hartford, CT 06176-7008'
+    ],
+    withoutPayment: [
+      'Department of the Treasury',
+      'Internal Revenue Service',
+      'Kansas City, MO 64999-0002'
+    ]
   }
 ]
 
 const DEFAULT_PRINT_MAIL_ADDRESS = {
-  withPayment: ['Internal Revenue Service', 'P.O. Box 931000', 'Louisville, KY 40293-1000'],
-  withoutPayment: ['Department of the Treasury', 'Internal Revenue Service', 'Kansas City, MO 64999-0002']
+  withPayment: [
+    'Internal Revenue Service',
+    'P.O. Box 931000',
+    'Louisville, KY 40293-1000'
+  ],
+  withoutPayment: [
+    'Department of the Treasury',
+    'Internal Revenue Service',
+    'Kansas City, MO 64999-0002'
+  ]
 }
 
 const resolvePrintMailAddress = (stateCode: string, withPayment: boolean) => {
   const normalized = stateCode.toUpperCase()
   const matched =
-    PRINT_MAIL_ADDRESS_GROUPS.find((group) => group.states.includes(normalized)) ??
-    null
+    PRINT_MAIL_ADDRESS_GROUPS.find((group) =>
+      group.states.includes(normalized)
+    ) ?? null
   const lines = matched
     ? withPayment
       ? matched.withPayment
       : matched.withoutPayment
     : withPayment
-      ? DEFAULT_PRINT_MAIL_ADDRESS.withPayment
-      : DEFAULT_PRINT_MAIL_ADDRESS.withoutPayment
+    ? DEFAULT_PRINT_MAIL_ADDRESS.withPayment
+    : DEFAULT_PRINT_MAIL_ADDRESS.withoutPayment
 
   return {
     stateCode: normalized || 'UNKNOWN',
     withPayment,
     lines,
-    verificationUrl: 'https://www.irs.gov/filing/where-to-file-paper-tax-returns-with-or-without-a-payment'
+    verificationUrl:
+      'https://www.irs.gov/filing/where-to-file-paper-tax-returns-with-or-without-a-payment'
   }
 }
 
-const toSnapshot = (row: FilingSessionRow, snapshot: FilingSessionSnapshot) => ({
+const toSnapshot = (
+  row: FilingSessionRow,
+  snapshot: FilingSessionSnapshot
+) => ({
   id: row.id,
   userId: row.user_id,
   localSessionId: row.local_session_id ?? undefined,
@@ -265,7 +337,9 @@ const toSnapshot = (row: FilingSessionRow, snapshot: FilingSessionSnapshot) => (
   snapshot
 })
 
-const defaultSnapshot = (input: z.infer<typeof filingSessionCreateSchema>): FilingSessionSnapshot => ({
+const defaultSnapshot = (
+  input: z.infer<typeof filingSessionCreateSchema>
+): FilingSessionSnapshot => ({
   name: input.name ?? `${input.taxYear} Tax Return`,
   taxYear: input.taxYear,
   filingStatus: input.filingStatus,
@@ -352,10 +426,15 @@ const asRecord = (value: unknown): Record<string, unknown> =>
     ? (value as Record<string, unknown>)
     : {}
 
-const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : [])
+const asArray = <T>(value: unknown): T[] =>
+  Array.isArray(value) ? (value as T[]) : []
 
 const toText = (value: unknown): string =>
-  typeof value === 'string' ? value : value === undefined || value === null ? '' : String(value)
+  typeof value === 'string'
+    ? value
+    : value === undefined || value === null
+    ? ''
+    : String(value)
 
 const toMoney = (value: unknown): number => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -399,30 +478,29 @@ const sumRecordValues = (record: Record<string, unknown>): number =>
   Object.values(record).reduce<number>((sum, value) => sum + toMoney(value), 0)
 
 const getQBIWorksheetEntities = (snapshot: FilingSessionSnapshot) =>
-  asArray<Record<string, unknown>>(requireScreen(snapshot, '/qbi-worksheet').entities).map(
-    (entity) => ({
-      id: toText(entity.id) || crypto.randomUUID(),
-      name: toText(entity.name),
-      type: toText(entity.type),
-      netIncome: toMoney(entity.netIncome),
-      w2Wages: toMoney(entity.w2Wages),
-      ubia: toMoney(entity.ubia),
-      isSSTB: Boolean(entity.isSSTB),
-      qbiAmount: toMoney(entity.qbiAmount),
-      w2Limitation: toMoney(entity.w2Limitation),
-      finalDeduction: toMoney(entity.finalDeduction),
-      status: toText(entity.status) || 'not_started',
-      warnings: asArray<string>(entity.warnings),
-      isComplete: toText(entity.status) === 'complete'
-    })
-  )
+  asArray<Record<string, unknown>>(
+    requireScreen(snapshot, '/qbi-worksheet').entities
+  ).map((entity) => ({
+    id: toText(entity.id) || crypto.randomUUID(),
+    name: toText(entity.name),
+    type: toText(entity.type),
+    netIncome: toMoney(entity.netIncome),
+    w2Wages: toMoney(entity.w2Wages),
+    ubia: toMoney(entity.ubia),
+    isSSTB: Boolean(entity.isSSTB),
+    qbiAmount: toMoney(entity.qbiAmount),
+    w2Limitation: toMoney(entity.w2Limitation),
+    finalDeduction: toMoney(entity.finalDeduction),
+    status: toText(entity.status) || 'not_started',
+    warnings: asArray<string>(entity.warnings),
+    isComplete: toText(entity.status) === 'complete'
+  }))
 
-const getBusinessRecords = (
-  entities: SessionEntitySnapshot[]
-) =>
+const getBusinessRecords = (entities: SessionEntitySnapshot[]) =>
   entities
     .filter(
-      (entity) => entity.entityType === 'schedule_c' || entity.entityType === 'k1_entity'
+      (entity) =>
+        entity.entityType === 'schedule_c' || entity.entityType === 'k1_entity'
     )
     .map((entity) => {
       const data = asRecord(entity.data)
@@ -450,8 +528,8 @@ const getBusinessRecords = (
         entity.entityType === 'schedule_c'
           ? Math.max(0, netBusinessIncome)
           : Boolean(data.qbiEligible ?? true)
-            ? Math.max(0, ordinaryIncome)
-            : 0
+          ? Math.max(0, ordinaryIncome)
+          : 0
 
       return {
         id: entity.id,
@@ -519,9 +597,12 @@ const getBusinessSummary = (
   return {
     recordCount: businessRecords.length,
     completeCount: countCompleted(businessRecords),
-    scheduleCCount: businessRecords.filter((record) => record.entityType === 'schedule_c')
-      .length,
-    k1Count: businessRecords.filter((record) => record.entityType === 'k1_entity').length,
+    scheduleCCount: businessRecords.filter(
+      (record) => record.entityType === 'schedule_c'
+    ).length,
+    k1Count: businessRecords.filter(
+      (record) => record.entityType === 'k1_entity'
+    ).length,
     grossReceiptsTotal: businessRecords.reduce(
       (sum, record) => sum + record.grossReceipts,
       0
@@ -540,18 +621,23 @@ const getBusinessSummary = (
     ),
     estimatedSETax,
     estimatedSEDeduction: estimatedSETax / 2,
-    qbiEligibleCount: businessRecords.filter((record) => record.qbiEligible).length,
+    qbiEligibleCount: businessRecords.filter((record) => record.qbiEligible)
+      .length,
     qbiThreshold: threshold,
     qbiBaseIncome,
     qbiTentativeDeduction: tentativeQBIDeduction,
     qbiWorksheetCount: qbiWorksheetEntities.length,
     qbiWorksheetDeduction,
     finalQBIDeduction:
-      qbiWorksheetEntities.length > 0 ? qbiWorksheetDeduction : tentativeQBIDeduction,
+      qbiWorksheetEntities.length > 0
+        ? qbiWorksheetDeduction
+        : tentativeQBIDeduction,
     sstbCount: qbiWorksheetEntities.filter((entity) => entity.isSSTB).length,
-    wageLimitedCount: qbiWorksheetEntities.filter((entity) => entity.w2Limitation > 0)
+    wageLimitedCount: qbiWorksheetEntities.filter(
+      (entity) => entity.w2Limitation > 0
+    ).length,
+    homeOfficeCount: businessRecords.filter((record) => record.homeOffice)
       .length,
-    homeOfficeCount: businessRecords.filter((record) => record.homeOffice).length,
     section179Total: businessRecords.reduce(
       (sum, record) => sum + record.section179,
       0
@@ -579,13 +665,18 @@ const getRentalProperties = (entities: SessionEntitySnapshot[]) =>
         explicitDepreciation ||
         (purchasePrice > 0 ? Math.max(0, purchasePrice * 0.8) / 27.5 : 0)
       const vacationHome =
-        daysPersonalUse > 14 && daysRented > 0 && daysPersonalUse > daysRented * 0.1
+        daysPersonalUse > 14 &&
+        daysRented > 0 &&
+        daysPersonalUse > daysRented * 0.1
       const rentalUseRatio =
         daysRented + daysPersonalUse > 0
           ? daysRented / (daysRented + daysPersonalUse)
           : 1
       const deductibleExpenses = vacationHome
-        ? Math.min(grossRents, (expenseTotal + estimatedDepreciation) * rentalUseRatio)
+        ? Math.min(
+            grossRents,
+            (expenseTotal + estimatedDepreciation) * rentalUseRatio
+          )
         : expenseTotal + estimatedDepreciation
       const netIncomeLoss = grossRents - deductibleExpenses
 
@@ -640,8 +731,12 @@ const getRentalSummary = (
     (sum, property) => sum + property.netIncomeLoss,
     0
   ),
-  vacationHomeCount: rentalProperties.filter((property) => property.vacationHome).length,
-  passivePropertyCount: rentalProperties.filter((property) => property.isPassive).length,
+  vacationHomeCount: rentalProperties.filter(
+    (property) => property.vacationHome
+  ).length,
+  passivePropertyCount: rentalProperties.filter(
+    (property) => property.isPassive
+  ).length,
   passiveLossCarryoverTotal: rentalProperties.reduce(
     (sum, property) => sum + property.passiveLossCarryover,
     0
@@ -677,7 +772,9 @@ const getForeignIncomeRecords = (
     .filter((entity) => entity.entityType === 'foreign_income_record')
     .map((entity) => ({
       id: entity.id,
-      country: toText(entity.data.foreignCountry ?? entity.data.country ?? entity.label),
+      country: toText(
+        entity.data.foreignCountry ?? entity.data.country ?? entity.label
+      ),
       foreignEarnedIncome: toMoney(
         entity.data.foreignEarnedIncome ?? entity.data.amount
       ),
@@ -687,7 +784,9 @@ const getForeignIncomeRecords = (
       foreignTaxCountry: toText(entity.data.foreignTaxCountry),
       isComplete: Boolean(
         (entity.data.foreignCountry ?? entity.data.country ?? entity.label) &&
-          (entity.data.foreignEarnedIncome ?? entity.data.amount ?? entity.data.foreignTaxPaid)
+          (entity.data.foreignEarnedIncome ??
+            entity.data.amount ??
+            entity.data.foreignTaxPaid)
       )
     }))
 
@@ -711,8 +810,11 @@ const getForeignAccounts = (
             maxBalanceUSD: toMoney(form.foreignAccountBalance),
             currency: 'USD',
             fbarRequired: toMoney(form.foreignAccountBalance) > FBAR_THRESHOLD,
-            fatcaRequired: toMoney(form.foreignAccountBalance) > FATCA_SINGLE_THRESHOLD,
-            isComplete: Boolean(form.foreignCountry && form.foreignAccountBalance)
+            fatcaRequired:
+              toMoney(form.foreignAccountBalance) > FATCA_SINGLE_THRESHOLD,
+            isComplete: Boolean(
+              form.foreignCountry && form.foreignAccountBalance
+            )
           }
         ]
       : []
@@ -730,8 +832,9 @@ const getForeignAccounts = (
       currency: toText(entity.data.currency || 'USD'),
       fbarRequired: Boolean(
         entity.data.fbarRequired ??
-          toMoney(entity.data.maxBalanceUSD ?? entity.data.foreignAccountBalance) >
-            FBAR_THRESHOLD
+          toMoney(
+            entity.data.maxBalanceUSD ?? entity.data.foreignAccountBalance
+          ) > FBAR_THRESHOLD
       ),
       fatcaRequired: Boolean(entity.data.fatcaRequired),
       isComplete: Boolean(
@@ -747,19 +850,26 @@ const getTreatyClaims = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
 ) => {
-  const foreignIncome = asRecord(requireScreen(snapshot, '/foreign-income').form)
+  const foreignIncome = asRecord(
+    requireScreen(snapshot, '/foreign-income').form
+  )
   const nonresident = requireScreen(snapshot, '/nonresident')
   const screenClaims =
-    foreignIncome.treatyCountry || (nonresident.hasTreaty === true && nonresident.treatyCountry)
+    foreignIncome.treatyCountry ||
+    (nonresident.hasTreaty === true && nonresident.treatyCountry)
       ? [
           {
             id: 'treaty-claim-primary',
-            country: toText(nonresident.treatyCountry || foreignIncome.treatyCountry),
+            country: toText(
+              nonresident.treatyCountry || foreignIncome.treatyCountry
+            ),
             articleNumber: toText(nonresident.treatyArticle),
             incomeType: toText(nonresident.treatyBenefit || 'Treaty benefit'),
             exemptAmount: 0,
             confirmed: true,
-            isComplete: Boolean(nonresident.treatyCountry || foreignIncome.treatyCountry)
+            isComplete: Boolean(
+              nonresident.treatyCountry || foreignIncome.treatyCountry
+            )
           }
         ]
       : []
@@ -768,14 +878,20 @@ const getTreatyClaims = (
     .filter((entity) => entity.entityType === 'treaty_claim')
     .map((entity) => ({
       id: entity.id,
-      country: toText(entity.data.country ?? entity.data.treatyCountry ?? entity.label),
-      articleNumber: toText(entity.data.articleNumber ?? entity.data.treatyArticle),
+      country: toText(
+        entity.data.country ?? entity.data.treatyCountry ?? entity.label
+      ),
+      articleNumber: toText(
+        entity.data.articleNumber ?? entity.data.treatyArticle
+      ),
       incomeType: toText(entity.data.incomeType ?? entity.data.treatyBenefit),
       exemptAmount: toMoney(entity.data.exemptAmount),
       confirmed: Boolean(entity.data.confirmed ?? true),
       isComplete: Boolean(
         (entity.data.country ?? entity.data.treatyCountry ?? entity.label) &&
-          (entity.data.articleNumber ?? entity.data.treatyArticle ?? entity.data.treatyBenefit)
+          (entity.data.articleNumber ??
+            entity.data.treatyArticle ??
+            entity.data.treatyBenefit)
       )
     }))
 
@@ -787,7 +903,8 @@ const getNonresidentProfile = (snapshot: FilingSessionSnapshot) => {
   const daysInUS2024 = toMoney(data.daysInUS2024)
   const daysInUS2023 = toMoney(data.daysInUS2023)
   const daysInUS2022 = toMoney(data.daysInUS2022)
-  const sptScore = daysInUS2024 + Math.floor(daysInUS2023 / 3) + Math.floor(daysInUS2022 / 6)
+  const sptScore =
+    daysInUS2024 + Math.floor(daysInUS2023 / 3) + Math.floor(daysInUS2022 / 6)
   const passedSPT = daysInUS2024 >= 31 && sptScore >= 183
   const hasData = Object.keys(data).length > 0
 
@@ -936,21 +1053,21 @@ const getW2Records = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
 ) => {
-  const screenW2 = asArray<Record<string, unknown>>(requireScreen(snapshot, '/w2').w2s).map(
-    (record) => ({
-      id: toText(record.id) || crypto.randomUUID(),
-      employerName: toText(record.employerName),
-      ein: toText(record.ein),
-      box1Wages: toMoney(record.box1),
-      box2FederalWithheld: toMoney(record.box2),
-      box12Code: toText(record.box12aCode),
-      box12Amount: toMoney(record.box12a),
-      stateWages: toMoney(record.box16),
-      stateWithheld: toMoney(record.box17),
-      owner: toText(record.owner) || 'taxpayer',
-      isComplete: Boolean(record.employerName && record.ein && record.box1)
-    })
-  )
+  const screenW2 = asArray<Record<string, unknown>>(
+    requireScreen(snapshot, '/w2').w2s
+  ).map((record) => ({
+    id: toText(record.id) || crypto.randomUUID(),
+    employerName: toText(record.employerName),
+    ein: toText(record.ein),
+    box1Wages: toMoney(record.box1),
+    box2FederalWithheld: toMoney(record.box2),
+    box12Code: toText(record.box12aCode),
+    box12Amount: toMoney(record.box12a),
+    stateWages: toMoney(record.box16),
+    stateWithheld: toMoney(record.box17),
+    owner: toText(record.owner) || 'taxpayer',
+    isComplete: Boolean(record.employerName && record.ein && record.box1)
+  }))
 
   const entityW2 = entities
     .filter((entity) => entity.entityType === 'w2')
@@ -965,7 +1082,9 @@ const getW2Records = (
       stateWages: toMoney(entity.data.stateWages),
       stateWithheld: toMoney(entity.data.stateWithheld),
       owner: toText(entity.data.owner) || 'taxpayer',
-      isComplete: Boolean(entity.data.employerName && entity.data.ein && entity.data.box1Wages)
+      isComplete: Boolean(
+        entity.data.employerName && entity.data.ein && entity.data.box1Wages
+      )
     }))
 
   return mergeCollectionById(screenW2, entityW2)
@@ -975,18 +1094,18 @@ const get1099Records = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
 ) => {
-  const screen1099 = asArray<Record<string, unknown>>(requireScreen(snapshot, '/1099').records).map(
-    (record) => ({
-      id: toText(record.id) || crypto.randomUUID(),
-      type: toText(record.type),
-      payer: toText(record.payer),
-      amount: toMoney(record.amount),
-      federalWithheld: toMoney(record.federalWithheld),
-      stateWithheld: toMoney(record.stateWithheld),
-      notes: toText(record.notes),
-      isComplete: Boolean(record.type && record.payer && record.amount)
-    })
-  )
+  const screen1099 = asArray<Record<string, unknown>>(
+    requireScreen(snapshot, '/1099').records
+  ).map((record) => ({
+    id: toText(record.id) || crypto.randomUUID(),
+    type: toText(record.type),
+    payer: toText(record.payer),
+    amount: toMoney(record.amount),
+    federalWithheld: toMoney(record.federalWithheld),
+    stateWithheld: toMoney(record.stateWithheld),
+    notes: toText(record.notes),
+    isComplete: Boolean(record.type && record.payer && record.amount)
+  }))
 
   const entity1099 = entities
     .filter((entity) => FORM_1099_TYPES.has(entity.entityType))
@@ -994,13 +1113,17 @@ const get1099Records = (
       id: entity.id,
       type: entity.entityType.replace('_', '-').toUpperCase(),
       payer: toText(entity.data.payerName ?? entity.data.payer),
-      amount: toMoney(asRecord(entity.data.amounts).amount ?? entity.data.amount),
+      amount: toMoney(
+        asRecord(entity.data.amounts).amount ?? entity.data.amount
+      ),
       federalWithheld: toMoney(entity.data.federalWithheld),
       stateWithheld: toMoney(entity.data.stateWithheld),
       notes: toText(entity.data.notes),
       isComplete: Boolean(
         (entity.data.payerName ?? entity.data.payer) &&
-          (asRecord(entity.data.amounts).amount ?? entity.data.amount ?? entity.data.federalWithheld)
+          (asRecord(entity.data.amounts).amount ??
+            entity.data.amount ??
+            entity.data.federalWithheld)
       )
     }))
 
@@ -1029,7 +1152,9 @@ const getDependents = (
     .filter((entity) => entity.entityType === 'dependent')
     .map((entity) => ({
       id: entity.id,
-      name: `${toText(entity.data.firstName)} ${toText(entity.data.lastName)}`.trim(),
+      name: `${toText(entity.data.firstName)} ${toText(
+        entity.data.lastName
+      )}`.trim(),
       dob: toText(entity.data.dob),
       relationship: toText(entity.data.relationship),
       ssn: toText(entity.data.ssn),
@@ -1072,7 +1197,9 @@ const getSpouse = (
     filingStatus: toText(spouseData.filingStatus ?? spouseScreen.filingStatus),
     nonresident: Boolean(spouseData.nonresident),
     spouseDeceased: Boolean(
-      spouseData.spouseDeceased ?? spouseData.deceased ?? spouseScreen.spouseDeceased
+      spouseData.spouseDeceased ??
+        spouseData.deceased ??
+        spouseScreen.spouseDeceased
     ),
     isComplete: Boolean(
       spouseData.firstName &&
@@ -1090,7 +1217,9 @@ const getUnemploymentRecords = (
   const screen = requireScreen(snapshot, '/unemployment-ss')
   const form = asRecord(screen.form)
   const screenRecords =
-    screen.hasUnemployment === true || form.unemploymentAmount || form.unemploymentWithheld
+    screen.hasUnemployment === true ||
+    form.unemploymentAmount ||
+    form.unemploymentWithheld
       ? [
           {
             id: 'unemployment-primary',
@@ -1142,8 +1271,12 @@ const getSocialSecurityRecords = (
     .filter((entity) => entity.entityType === 'ssa_record')
     .map((entity) => ({
       id: entity.id,
-      grossAmount: toMoney(entity.data.grossAmount ?? entity.data.ssGrossAmount),
-      federalWithheld: toMoney(entity.data.federalWithheld ?? entity.data.ssWithheld),
+      grossAmount: toMoney(
+        entity.data.grossAmount ?? entity.data.ssGrossAmount
+      ),
+      federalWithheld: toMoney(
+        entity.data.federalWithheld ?? entity.data.ssWithheld
+      ),
       otherIncome: toMoney(entity.data.otherIncome),
       filingStatus: toText(entity.data.filingStatus),
       taxableEstimate: toMoney(
@@ -1171,7 +1304,11 @@ const getTaxLots = (
     costBasis: toMoney(record.basis),
     source: 'investments_screen',
     isComplete: Boolean(
-      record.asset && record.type && record.acquired && record.sold && record.proceeds
+      record.asset &&
+        record.type &&
+        record.acquired &&
+        record.sold &&
+        record.proceeds
     )
   }))
 
@@ -1181,7 +1318,9 @@ const getTaxLots = (
       id: entity.id,
       asset: toText(entity.data.security ?? entity.data.asset),
       securityType: toText(entity.data.securityType ?? entity.data.type),
-      acquisitionDate: toText(entity.data.acquisitionDate ?? entity.data.acquired),
+      acquisitionDate: toText(
+        entity.data.acquisitionDate ?? entity.data.acquired
+      ),
       saleDate: toText(entity.data.saleDate ?? entity.data.sold),
       proceeds: toMoney(entity.data.proceeds),
       costBasis: toMoney(entity.data.costBasis ?? entity.data.basis),
@@ -1250,7 +1389,8 @@ const getInvestmentSummary = (
     longTermCount: taxLots.filter((lot) => {
       if (!lot.acquisitionDate || !lot.saleDate) return false
       return (
-        new Date(lot.saleDate).getTime() - new Date(lot.acquisitionDate).getTime() >
+        new Date(lot.saleDate).getTime() -
+          new Date(lot.acquisitionDate).getTime() >
         365 * 24 * 60 * 60 * 1000
       )
     }).length
@@ -1279,9 +1419,15 @@ const getCreditSummary = (
     }))
   )
 
-  const eligibleCredits = credits.filter((credit) => toText(credit.status) === 'eligible')
-  const maybeCredits = credits.filter((credit) => toText(credit.status) === 'maybe')
-  const blockedCredits = credits.filter((credit) => toText(credit.status) === 'blocked')
+  const eligibleCredits = credits.filter(
+    (credit) => toText(credit.status) === 'eligible'
+  )
+  const maybeCredits = credits.filter(
+    (credit) => toText(credit.status) === 'maybe'
+  )
+  const blockedCredits = credits.filter(
+    (credit) => toText(credit.status) === 'blocked'
+  )
   const estimatedTotal = credits.reduce(
     (sum, credit) => sum + toMoney(credit.estimatedAmount),
     0
@@ -1300,16 +1446,168 @@ const getCreditSummary = (
   }
 }
 
+// ── OBBBA 2025 data extraction ──────────────────────────────────────────────
+
+const getObbbaData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  // Extract from the /obbba screen data (set by the OBBBA provisions page)
+  const obbbaScreen = requireScreen(snapshot, '/obbba')
+
+  // Also check /income-workbench for backward compatibility
+  const incomeScreen = requireScreen(snapshot, '/income-workbench')
+
+  // ── Overtime income: screen data + entity records ──────────────────────────
+  const screenOvertimeAmount = toMoney(
+    obbbaScreen.overtimeAmount ?? incomeScreen.overtimeAmount
+  )
+  const screenOvertimeIncome = screenOvertimeAmount > 0
+    ? {
+        amount: screenOvertimeAmount,
+        employerName: toText(
+          obbbaScreen.overtimeEmployerName ?? incomeScreen.overtimeEmployerName
+        )
+      }
+    : undefined
+
+  const entityOvertime = entities.find(
+    (entity) => entity.entityType === 'obbba_overtime'
+  )
+  const entityOvertimeIncome = entityOvertime
+    ? {
+        amount: toMoney(entityOvertime.data.amount ?? entityOvertime.data.overtimeAmount),
+        employerName: toText(entityOvertime.data.employerName)
+      }
+    : undefined
+  // Entity record takes priority when it has a nonzero amount
+  const overtimeIncome =
+    entityOvertimeIncome && entityOvertimeIncome.amount > 0
+      ? entityOvertimeIncome
+      : screenOvertimeIncome
+
+  // ── Tip income: screen data + entity records ───────────────────────────────
+  const screenTipAmount = toMoney(
+    obbbaScreen.tipAmount ?? incomeScreen.tipAmount
+  )
+  const screenTipIncome = screenTipAmount > 0
+    ? {
+        amount: screenTipAmount,
+        employerName: toText(
+          obbbaScreen.tipEmployerName ?? incomeScreen.tipEmployerName
+        )
+      }
+    : undefined
+
+  const entityTip = entities.find(
+    (entity) => entity.entityType === 'obbba_tips'
+  )
+  const entityTipIncome = entityTip
+    ? {
+        amount: toMoney(entityTip.data.amount ?? entityTip.data.tipAmount),
+        employerName: toText(entityTip.data.employerName)
+      }
+    : undefined
+  const tipIncome =
+    entityTipIncome && entityTipIncome.amount > 0
+      ? entityTipIncome
+      : screenTipIncome
+
+  // ── Auto loan interest: screen data + entity records ───────────────────────
+  const screenAutoLoanAmount = toMoney(
+    obbbaScreen.autoLoanInterestAmount ?? obbbaScreen.autoLoanInterest
+  )
+  const screenAutoLoanInterest = screenAutoLoanAmount > 0
+    ? {
+        amount: screenAutoLoanAmount,
+        domesticManufacture: obbbaScreen.autoLoanDomesticManufacture !== false &&
+          obbbaScreen.autoLoanDomesticManufacture !== 'no',
+        lenderName: toText(obbbaScreen.autoLoanLenderName),
+        vehicleMake: toText(obbbaScreen.autoLoanVehicleMake),
+        vehicleModel: toText(obbbaScreen.autoLoanVehicleModel),
+        vehicleYear: toMoney(obbbaScreen.autoLoanVehicleYear) || undefined
+      }
+    : undefined
+
+  const entityAutoLoan = entities.find(
+    (entity) => entity.entityType === 'obbba_auto_loan'
+  )
+  const entityAutoLoanInterest = entityAutoLoan
+    ? {
+        amount: toMoney(entityAutoLoan.data.amount ?? entityAutoLoan.data.interestPaid),
+        domesticManufacture:
+          entityAutoLoan.data.domesticManufacture !== false &&
+          entityAutoLoan.data.domesticManufacture !== 'no',
+        lenderName: toText(entityAutoLoan.data.lenderName),
+        vehicleMake: toText(entityAutoLoan.data.vehicleMake),
+        vehicleModel: toText(entityAutoLoan.data.vehicleModel),
+        vehicleYear: toMoney(entityAutoLoan.data.vehicleYear) || undefined
+      }
+    : undefined
+  const autoLoanInterest =
+    entityAutoLoanInterest && entityAutoLoanInterest.amount > 0
+      ? entityAutoLoanInterest
+      : screenAutoLoanInterest
+
+  // ── Trump Savings Accounts: screen data array + entity records ─────────────
+  const screenAccounts = asArray<Record<string, unknown>>(
+    obbbaScreen.trumpSavingsAccounts
+  ).map((a) => ({
+    id: toText(a.id) || crypto.randomUUID(),
+    beneficiaryName: toText(a.beneficiaryName),
+    beneficiarySSN: toText(a.beneficiarySSN),
+    beneficiaryDateOfBirth: toText(a.beneficiaryDateOfBirth),
+    beneficiaryIsCitizen: a.beneficiaryIsCitizen !== false,
+    contributionAmount: toMoney(a.contributionAmount),
+    accountNumber: toText(a.accountNumber)
+  }))
+
+  const entityAccounts = entities
+    .filter((entity) => entity.entityType === 'trump_savings_account')
+    .map((entity) => ({
+      id: entity.id,
+      beneficiaryName: toText(entity.data.beneficiaryName),
+      beneficiarySSN: toText(entity.data.beneficiarySSN),
+      beneficiaryDateOfBirth: toText(entity.data.beneficiaryDateOfBirth),
+      beneficiaryIsCitizen: entity.data.beneficiaryIsCitizen !== false,
+      contributionAmount: toMoney(entity.data.contributionAmount),
+      accountNumber: toText(entity.data.accountNumber)
+    }))
+
+  const allAccounts = mergeCollectionById(screenAccounts, entityAccounts)
+  const trumpSavingsAccounts = allAccounts.length > 0
+    ? allAccounts.map((a) => ({
+        beneficiaryName: a.beneficiaryName,
+        beneficiarySSN: a.beneficiarySSN,
+        beneficiaryDateOfBirth: a.beneficiaryDateOfBirth,
+        beneficiaryIsCitizen: a.beneficiaryIsCitizen,
+        contributionAmount: a.contributionAmount,
+        accountNumber: a.accountNumber
+      }))
+    : undefined
+
+  return {
+    overtimeIncome,
+    tipIncome,
+    autoLoanInterest,
+    trumpSavingsAccounts
+  }
+}
+
+
 const getIncomeSummary = (
   w2Records: ReturnType<typeof getW2Records>,
   form1099Records: ReturnType<typeof get1099Records>,
   unemploymentRecords: ReturnType<typeof getUnemploymentRecords>,
   socialSecurityRecords: ReturnType<typeof getSocialSecurityRecords>
 ) => {
-  const totalsByType = form1099Records.reduce<Record<string, number>>((acc, record) => {
-    acc[record.type] = (acc[record.type] ?? 0) + record.amount
-    return acc
-  }, {})
+  const totalsByType = form1099Records.reduce<Record<string, number>>(
+    (acc, record) => {
+      acc[record.type] = (acc[record.type] ?? 0) + record.amount
+      return acc
+    },
+    {}
+  )
 
   return {
     w2Count: w2Records.length,
@@ -1321,7 +1619,10 @@ const getIncomeSummary = (
     ),
     form1099Count: form1099Records.length,
     form1099CompleteCount: countCompleted(form1099Records),
-    total1099Amount: form1099Records.reduce((sum, record) => sum + record.amount, 0),
+    total1099Amount: form1099Records.reduce(
+      (sum, record) => sum + record.amount,
+      0
+    ),
     total1099FederalWithholding: form1099Records.reduce(
       (sum, record) => sum + record.federalWithheld,
       0
@@ -1359,7 +1660,10 @@ const toFacts = (
   const residency = requireScreen(snapshot, '/residency')
   const w2 = requireScreen(snapshot, '/w2')
   const status = String(
-    taxpayer.filingStatus ?? snapshot.filingStatus ?? row.filing_status ?? 'single'
+    taxpayer.filingStatus ??
+      snapshot.filingStatus ??
+      row.filing_status ??
+      'single'
   )
 
   const primaryTin = String(
@@ -1367,8 +1671,7 @@ const toFacts = (
       taxpayer.primarySsn ??
       (w2.primaryTIN as string | undefined) ??
       ''
-  )
-    .replace(/\D/g, '')
+  ).replace(/\D/g, '')
 
   const residenceState = String(
     (taxpayer.address as Record<string, unknown> | undefined)?.state ??
@@ -1386,7 +1689,11 @@ const toFacts = (
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const businessRecords = getBusinessRecords(entities)
   const qbiWorksheetEntities = getQBIWorksheetEntities(snapshot)
-  const businessSummary = getBusinessSummary(snapshot, businessRecords, qbiWorksheetEntities)
+  const businessSummary = getBusinessSummary(
+    snapshot,
+    businessRecords,
+    qbiWorksheetEntities
+  )
   const rentalProperties = getRentalProperties(entities)
   const rentalSummary = getRentalSummary(rentalProperties)
   const foreignIncomeRecords = getForeignIncomeRecords(snapshot, entities)
@@ -1411,8 +1718,14 @@ const toFacts = (
   )
   const investmentSummary = getInvestmentSummary(taxLots, cryptoAccounts)
 
+  // OBBBA 2025 provisions
+  const obbbaData = getObbbaData(snapshot, entities)
+
   return {
     primaryTIN: primaryTin,
+    primaryDob: toText(taxpayer.dob),
+    primaryFirstName: toText(taxpayer.firstName),
+    primaryLastName: toText(taxpayer.lastName),
     taxflowSessionId: row.id,
     filingStatus: status,
     spouse,
@@ -1436,6 +1749,11 @@ const toFacts = (
     rentalSummary,
     foreignSummary,
     creditSummary: creditSummary.summary,
+    // OBBBA 2025 fields
+    overtimeIncome: obbbaData.overtimeIncome,
+    tipIncome: obbbaData.tipIncome,
+    autoLoanInterest: obbbaData.autoLoanInterest,
+    trumpSavingsAccounts: obbbaData.trumpSavingsAccounts,
     '/taxYear': {
       $type: 'gov.irs.factgraph.persisters.IntWrapper',
       item: snapshot.taxYear
@@ -1493,12 +1811,17 @@ const toFacts = (
 const toSubmissionPayload = (
   row: FilingSessionRow,
   snapshot: FilingSessionSnapshot,
-  facts: Record<string, unknown>
+  facts: Record<string, unknown>,
+  taxCalcResult?: TaxCalculationResult,
+  bizCalcResult?: BusinessEntityResult
 ): SubmissionPayload => {
   const review = requireScreen(snapshot, '/review-confirm')
   const efile = requireScreen(snapshot, '/efile-wizard')
   const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
-  const primaryTIN = String(facts.primaryTIN ?? taxpayer.ssn ?? '').replace(/\D/g, '')
+  const primaryTIN = String(facts.primaryTIN ?? taxpayer.ssn ?? '').replace(
+    /\D/g,
+    ''
+  )
   const filingStatus = String(
     taxpayer.filingStatus ?? snapshot.filingStatus ?? row.filing_status
   )
@@ -1511,11 +1834,21 @@ const toSubmissionPayload = (
   const dependents = asArray<Record<string, unknown>>(facts.dependents)
   const spouse = asRecord(facts.spouse)
 
-  const refund = Number(review.totalRefund ?? snapshot.estimatedRefund ?? 0)
-  const federalRefund = Number(review.federalRefund ?? refund)
-  const totalTax = Number(review.totalTax ?? 0)
-  const totalPayments = Number(review.totalPayments ?? federalRefund + totalTax)
-  const amountOwed = Math.max(0, totalTax - totalPayments)
+  // Prefer engine-computed values; fall back to frontend-provided values
+  // For business entities, use bizCalcResult; for individuals, use taxCalcResult
+  const totalTax = bizCalcResult?.totalTax
+    ?? taxCalcResult?.totalTax
+    ?? Number(review.totalTax ?? 0)
+  const totalPayments = bizCalcResult?.totalPayments
+    ?? taxCalcResult?.totalPayments
+    ?? Number(review.totalPayments ?? 0)
+  const refund = bizCalcResult
+    ? Math.max(0, bizCalcResult.overpayment)
+    : (taxCalcResult?.refund
+      ?? Number(review.totalRefund ?? snapshot.estimatedRefund ?? 0))
+  const amountOwed = bizCalcResult?.amountOwed
+    ?? taxCalcResult?.amountOwed
+    ?? Math.max(0, totalTax - totalPayments)
 
   return {
     taxYear: snapshot.taxYear,
@@ -1558,7 +1891,19 @@ const toSubmissionPayload = (
         summary: foreignSummary
       },
       dependents,
-      credits: creditSummary
+      credits: creditSummary,
+      ...(bizCalcResult ? {
+        businessEntity: {
+          formType: bizCalcResult.formType,
+          entityName: bizCalcResult.entityName,
+          totalIncome: bizCalcResult.totalIncome,
+          totalDeductions: bizCalcResult.totalDeductions,
+          taxableIncome: bizCalcResult.taxableIncome,
+          effectiveTaxRate: bizCalcResult.effectiveTaxRate,
+          ownerAllocations: bizCalcResult.ownerAllocations,
+          schedules: bizCalcResult.schedules
+        }
+      } : {})
     },
     metadata: {
       source: 'taxflow-app-v1',
@@ -1612,13 +1957,22 @@ const buildChecklist = (
     id: string,
     screenPath: string,
     fallbackLabel: string,
-    opts?: { optional?: boolean; completeWhen?: (data: Record<string, unknown>) => boolean }
+    opts?: {
+      optional?: boolean
+      completeWhen?: (data: Record<string, unknown>) => boolean
+    }
   ) => {
     const data = requireScreen(snapshot, screenPath)
     const hasData = Object.keys(data).length > 0
     const isComplete = opts?.completeWhen ? opts.completeWhen(data) : hasData
     return {
-      status: isComplete ? 'complete' : hasData ? 'in_progress' : opts?.optional ? 'skipped' : 'not_started',
+      status: isComplete
+        ? 'complete'
+        : hasData
+        ? 'in_progress'
+        : opts?.optional
+        ? 'skipped'
+        : 'not_started',
       sublabel: hasData ? fallbackLabel : undefined,
       warnings: [] as Array<Record<string, unknown>>
     }
@@ -1626,46 +1980,77 @@ const buildChecklist = (
 
   return {
     items: {
-      'taxpayer-profile': itemFromScreen('taxpayer-profile', '/taxpayer-profile', 'Taxpayer profile saved'),
+      'taxpayer-profile': itemFromScreen(
+        'taxpayer-profile',
+        '/taxpayer-profile',
+        'Taxpayer profile saved'
+      ),
       spouse: {
-        status: spouse ? (spouse.isComplete ? 'complete' : 'in_progress') : 'skipped',
+        status: spouse
+          ? spouse.isComplete
+            ? 'complete'
+            : 'in_progress'
+          : 'skipped',
         sublabel: spouse
-          ? `${spouse.firstName} ${spouse.lastName}`.trim() || 'Spouse information started'
+          ? `${spouse.firstName} ${spouse.lastName}`.trim() ||
+            'Spouse information started'
           : undefined,
         warnings: findings
           .filter((finding) => finding.code === 'SPOUSE-INCOMPLETE')
-          .map((finding) => ({ message: finding.message, level: finding.severity }))
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
       },
       household: {
         status: buildStatusFromCollection(dependents, true),
         sublabel:
           dependents.length > 0
-            ? `${countCompleted(dependents)}/${dependents.length} dependents complete`
+            ? `${countCompleted(dependents)}/${
+                dependents.length
+              } dependents complete`
             : undefined,
         warnings: findings
           .filter((finding) => finding.code.startsWith('DEPENDENT'))
-          .map((finding) => ({ message: finding.message, level: finding.severity }))
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
       },
-      residency: itemFromScreen('residency', '/residency', 'Residency information saved'),
+      residency: itemFromScreen(
+        'residency',
+        '/residency',
+        'Residency information saved'
+      ),
       w2s: {
         status: buildStatusFromCollection(w2Records, true),
         sublabel:
           w2Records.length > 0
-            ? `${countCompleted(w2Records)}/${w2Records.length} W-2 records complete`
+            ? `${countCompleted(w2Records)}/${
+                w2Records.length
+              } W-2 records complete`
             : undefined,
         warnings: findings
           .filter((finding) => finding.code === 'W2-INCOMPLETE')
-          .map((finding) => ({ message: finding.message, level: finding.severity }))
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
       },
       '1099s': {
         status: buildStatusFromCollection(form1099Records, true),
         sublabel:
           form1099Records.length > 0
-            ? `${countCompleted(form1099Records)}/${form1099Records.length} 1099 records complete`
+            ? `${countCompleted(form1099Records)}/${
+                form1099Records.length
+              } 1099 records complete`
             : undefined,
         warnings: findings
           .filter((finding) => finding.code === '1099-INCOMPLETE')
-          .map((finding) => ({ message: finding.message, level: finding.severity }))
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
       },
       investments: {
         status:
@@ -1681,32 +2066,51 @@ const buildChecklist = (
             : undefined,
         warnings: findings
           .filter((finding) => finding.code === 'INVESTMENT-INCOMPLETE')
-          .map((finding) => ({ message: finding.message, level: finding.severity }))
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
       },
       rental: {
         status: buildStatusFromCollection(rentalProperties, true),
         sublabel:
           rentalProperties.length > 0
-            ? `${countCompleted(rentalProperties)}/${rentalProperties.length} rental properties complete`
+            ? `${countCompleted(rentalProperties)}/${
+                rentalProperties.length
+              } rental properties complete`
             : undefined,
         warnings: findings
           .filter((finding) => finding.code === 'RENTAL-INCOMPLETE')
-          .map((finding) => ({ message: finding.message, level: finding.severity }))
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
       },
       business: {
         status: buildStatusFromCollection(businessRecords, true),
         sublabel:
           businessRecords.length > 0
-            ? `${countCompleted(businessRecords)}/${businessRecords.length} businesses complete`
+            ? `${countCompleted(businessRecords)}/${
+                businessRecords.length
+              } businesses complete`
             : undefined,
         warnings: findings
           .filter(
             (finding) =>
-              finding.code === 'BUSINESS-INCOMPLETE' || finding.code === 'QBI-REVIEW'
+              finding.code === 'BUSINESS-INCOMPLETE' ||
+              finding.code === 'QBI-REVIEW'
           )
-          .map((finding) => ({ message: finding.message, level: finding.severity }))
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
       },
-      retirement: itemFromScreen('retirement', '/ira-retirement', 'Retirement income reviewed', { optional: true }),
+      retirement: itemFromScreen(
+        'retirement',
+        '/ira-retirement',
+        'Retirement income reviewed',
+        { optional: true }
+      ),
       'unemployment-ss': {
         status:
           unemploymentRecords.length > 0 || socialSecurityRecords.length > 0
@@ -1725,7 +2129,10 @@ const buildChecklist = (
               finding.code === 'UNEMPLOYMENT-INCOMPLETE' ||
               finding.code === 'SSA-INCOMPLETE'
           )
-          .map((finding) => ({ message: finding.message, level: finding.severity }))
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
       },
       'foreign-income': {
         status:
@@ -1753,7 +2160,10 @@ const buildChecklist = (
               finding.code === 'FOREIGN-INCOMPLETE' ||
               finding.code === 'NONRESIDENT-INCOMPLETE'
           )
-          .map((finding) => ({ message: finding.message, level: finding.severity }))
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
       },
       hsa: itemFromScreen('hsa', '/hsa', 'HSA reviewed', { optional: true }),
       ctc: {
@@ -1762,8 +2172,9 @@ const buildChecklist = (
           creditSummary.summary.maybeCount > 0 ||
           creditSummary.summary.blockedCount > 0
             ? 'complete'
-            : itemFromScreen('ctc', '/credits-v2', 'Credits reviewed', { optional: true })
-                .status,
+            : itemFromScreen('ctc', '/credits-v2', 'Credits reviewed', {
+                optional: true
+              }).status,
         sublabel:
           creditSummary.summary.eligibleCount > 0 ||
           creditSummary.summary.maybeCount > 0 ||
@@ -1772,12 +2183,34 @@ const buildChecklist = (
             : undefined,
         warnings: findings
           .filter((finding) => finding.code.startsWith('CREDIT'))
-          .map((finding) => ({ message: finding.message, level: finding.severity }))
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
       },
-      'your-taxes': itemFromScreen('your-taxes', '/your-taxes', 'Tax details reviewed', { optional: true }),
-      'state-tax': itemFromScreen('state-tax', '/state-tax', 'State filing reviewed', { optional: true }),
-      'review-confirm': itemFromScreen('review-confirm', '/review-confirm', 'Review confirmed'),
-      'efile-wizard': itemFromScreen('efile-wizard', '/efile-wizard', 'E-file steps completed', { optional: true })
+      'your-taxes': itemFromScreen(
+        'your-taxes',
+        '/your-taxes',
+        'Tax details reviewed',
+        { optional: true }
+      ),
+      'state-tax': itemFromScreen(
+        'state-tax',
+        '/state-tax',
+        'State filing reviewed',
+        { optional: true }
+      ),
+      'review-confirm': itemFromScreen(
+        'review-confirm',
+        '/review-confirm',
+        'Review confirmed'
+      ),
+      'efile-wizard': itemFromScreen(
+        'efile-wizard',
+        '/efile-wizard',
+        'E-file steps completed',
+        { optional: true }
+      )
     },
     collections: {
       w2s: {
@@ -1802,7 +2235,8 @@ const buildChecklist = (
       },
       business: {
         total: businessRecords.length + qbiWorksheetEntities.length,
-        complete: countCompleted(businessRecords) + countCompleted(qbiWorksheetEntities)
+        complete:
+          countCompleted(businessRecords) + countCompleted(qbiWorksheetEntities)
       },
       rentalProperties: {
         total: rentalProperties.length,
@@ -1823,14 +2257,18 @@ const buildChecklist = (
       unemploymentAndSs: {
         total: unemploymentRecords.length + socialSecurityRecords.length,
         complete:
-          countCompleted(unemploymentRecords) + countCompleted(socialSecurityRecords)
+          countCompleted(unemploymentRecords) +
+          countCompleted(socialSecurityRecords)
       }
     },
     ui: {
       filingPathTreeCollapsed:
         Boolean(
-          (requireScreen(snapshot, '/checklist').ui as Record<string, unknown> | undefined)
-            ?.filingPathTreeCollapsed
+          (
+            requireScreen(snapshot, '/checklist').ui as
+              | Record<string, unknown>
+              | undefined
+          )?.filingPathTreeCollapsed
         ) || false
     }
   }
@@ -1853,7 +2291,11 @@ const buildReview = (
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const businessRecords = getBusinessRecords(entities)
   const qbiWorksheetEntities = getQBIWorksheetEntities(snapshot)
-  const businessSummary = getBusinessSummary(snapshot, businessRecords, qbiWorksheetEntities)
+  const businessSummary = getBusinessSummary(
+    snapshot,
+    businessRecords,
+    qbiWorksheetEntities
+  )
   const rentalProperties = getRentalProperties(entities)
   const rentalSummary = getRentalSummary(rentalProperties)
   const foreignIncomeRecords = getForeignIncomeRecords(snapshot, entities)
@@ -1878,20 +2320,27 @@ const buildReview = (
       rows: [
         {
           label: 'Filing status',
-          value: String(taxpayer.filingStatus ?? snapshot.filingStatus).toUpperCase(),
+          value: String(
+            taxpayer.filingStatus ?? snapshot.filingStatus
+          ).toUpperCase(),
           editPath: '/taxpayer-profile',
           editLabel: 'Edit'
         },
         {
           label: 'Taxpayer',
-          value: `${String(taxpayer.firstName ?? '')} ${String(taxpayer.lastName ?? '')}`.trim() || 'Not entered',
+          value:
+            `${String(taxpayer.firstName ?? '')} ${String(
+              taxpayer.lastName ?? ''
+            )}`.trim() || 'Not entered',
           editPath: '/taxpayer-profile',
           editLabel: 'Edit',
           hasError: !taxpayer.firstName || !taxpayer.lastName
         },
         {
           label: 'Prior-year AGI',
-          value: taxpayer.priorYearAgi ? `$${Number(taxpayer.priorYearAgi).toLocaleString()}` : 'Not entered',
+          value: taxpayer.priorYearAgi
+            ? `$${Number(taxpayer.priorYearAgi).toLocaleString()}`
+            : 'Not entered',
           editPath: '/taxpayer-profile',
           editLabel: 'Edit',
           hasWarning: !taxpayer.priorYearAgi
@@ -1899,7 +2348,8 @@ const buildReview = (
         {
           label: 'Spouse',
           value: spouse
-            ? `${spouse.firstName} ${spouse.lastName}`.trim() || 'Spouse started'
+            ? `${spouse.firstName} ${spouse.lastName}`.trim() ||
+              'Spouse started'
             : 'No spouse entered',
           editPath: '/spouse',
           editLabel: 'Edit',
@@ -1920,13 +2370,18 @@ const buildReview = (
       rows: [
         {
           label: 'W-2 records',
-          value: w2Records.length > 0 ? `${countCompleted(w2Records)}/${w2Records.length} complete` : 'None entered',
+          value:
+            w2Records.length > 0
+              ? `${countCompleted(w2Records)}/${w2Records.length} complete`
+              : 'None entered',
           editPath: '/w2',
           editLabel: 'Edit'
         },
         {
           label: 'W-2 wages',
-          value: `$${w2Records.reduce((sum, record) => sum + record.box1Wages, 0).toLocaleString()}`,
+          value: `$${w2Records
+            .reduce((sum, record) => sum + record.box1Wages, 0)
+            .toLocaleString()}`,
           editPath: '/w2',
           editLabel: 'Edit'
         },
@@ -1934,26 +2389,34 @@ const buildReview = (
           label: '1099 records',
           value:
             form1099Records.length > 0
-              ? `${countCompleted(form1099Records)}/${form1099Records.length} complete`
+              ? `${countCompleted(form1099Records)}/${
+                  form1099Records.length
+                } complete`
               : 'None entered',
           editPath: '/1099',
           editLabel: 'Edit'
         },
         {
           label: '1099 income total',
-          value: `$${form1099Records.reduce((sum, record) => sum + record.amount, 0).toLocaleString()}`,
+          value: `$${form1099Records
+            .reduce((sum, record) => sum + record.amount, 0)
+            .toLocaleString()}`,
           editPath: '/1099',
           editLabel: 'Edit'
         },
         {
           label: 'Unemployment compensation',
-          value: `$${unemploymentRecords.reduce((sum, record) => sum + record.amount, 0).toLocaleString()}`,
+          value: `$${unemploymentRecords
+            .reduce((sum, record) => sum + record.amount, 0)
+            .toLocaleString()}`,
           editPath: '/unemployment-ss',
           editLabel: 'Edit'
         },
         {
           label: 'Social Security benefits',
-          value: `$${socialSecurityRecords.reduce((sum, record) => sum + record.grossAmount, 0).toLocaleString()}`,
+          value: `$${socialSecurityRecords
+            .reduce((sum, record) => sum + record.grossAmount, 0)
+            .toLocaleString()}`,
           editPath: '/unemployment-ss',
           editLabel: 'Edit'
         }
@@ -1991,7 +2454,9 @@ const buildReview = (
           label: 'Connected crypto accounts',
           value:
             cryptoAccounts.length > 0
-              ? `${countCompleted(cryptoAccounts)}/${cryptoAccounts.length} complete`
+              ? `${countCompleted(cryptoAccounts)}/${
+                  cryptoAccounts.length
+                } complete`
               : 'No crypto accounts entered',
           editPath: '/crypto',
           editLabel: 'Edit'
@@ -2021,7 +2486,9 @@ const buildReview = (
           label: 'Businesses / K-1s',
           value:
             businessRecords.length > 0
-              ? `${countCompleted(businessRecords)}/${businessRecords.length} complete`
+              ? `${countCompleted(businessRecords)}/${
+                  businessRecords.length
+                } complete`
               : 'No businesses entered',
           editPath: '/business-k1',
           editLabel: 'Edit'
@@ -2048,7 +2515,8 @@ const buildReview = (
       warnings: findings
         .filter(
           (finding) =>
-            finding.code === 'BUSINESS-INCOMPLETE' || finding.code === 'QBI-REVIEW'
+            finding.code === 'BUSINESS-INCOMPLETE' ||
+            finding.code === 'QBI-REVIEW'
         )
         .map((finding) => ({
           id: finding.id,
@@ -2066,7 +2534,9 @@ const buildReview = (
           label: 'Rental properties',
           value:
             rentalProperties.length > 0
-              ? `${countCompleted(rentalProperties)}/${rentalProperties.length} complete`
+              ? `${countCompleted(rentalProperties)}/${
+                  rentalProperties.length
+                } complete`
               : 'No rentals entered',
           editPath: '/rental',
           editLabel: 'Edit'
@@ -2127,10 +2597,10 @@ const buildReview = (
           value: foreignSummary.requires1040NR
             ? '1040-NR'
             : foreignSummary.dualStatus
-              ? 'Dual-status'
-              : foreignSummary.hasActivity
-                ? '1040 with foreign schedules'
-                : 'No international activity',
+            ? 'Dual-status'
+            : foreignSummary.hasActivity
+            ? '1040 with foreign schedules'
+            : 'No international activity',
           editPath: '/nonresident',
           editLabel: 'Review'
         }
@@ -2177,7 +2647,11 @@ const buildReview = (
         }
       ],
       warnings: findings
-        .filter((finding) => finding.code.startsWith('DEPENDENT') || finding.code.startsWith('CREDIT'))
+        .filter(
+          (finding) =>
+            finding.code.startsWith('DEPENDENT') ||
+            finding.code.startsWith('CREDIT')
+        )
         .map((finding) => ({
           id: finding.id,
           level: finding.severity,
@@ -2204,7 +2678,11 @@ const buildReview = (
         },
         {
           label: 'Account number',
-          value: String(efile.account ? `••••${String(efile.account).slice(-4)}` : 'Paper check'),
+          value: String(
+            efile.account
+              ? `••••${String(efile.account).slice(-4)}`
+              : 'Paper check'
+          ),
           editPath: '/efile-wizard',
           editLabel: 'Edit'
         },
@@ -2243,7 +2721,11 @@ const toFindingRows = (
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const businessRecords = getBusinessRecords(entities)
   const qbiWorksheetEntities = getQBIWorksheetEntities(snapshot)
-  const businessSummary = getBusinessSummary(snapshot, businessRecords, qbiWorksheetEntities)
+  const businessSummary = getBusinessSummary(
+    snapshot,
+    businessRecords,
+    qbiWorksheetEntities
+  )
   const rentalProperties = getRentalProperties(entities)
   const foreignIncomeRecords = getForeignIncomeRecords(snapshot, entities)
   const foreignAccounts = getForeignAccounts(snapshot, entities)
@@ -2304,7 +2786,8 @@ const toFindingRows = (
       code: 'SPOUSE-INCOMPLETE',
       severity: 'warning',
       title: 'Finish spouse details',
-      message: 'Your spouse record is missing a name, date of birth, or identifying information.',
+      message:
+        'Your spouse record is missing a name, date of birth, or identifying information.',
       fix_path: '/spouse',
       fix_label: 'Complete spouse info',
       acknowledged: 0,
@@ -2338,7 +2821,8 @@ const toFindingRows = (
       code: 'W2-INCOMPLETE',
       severity: 'warning',
       title: 'Finish your W-2 entries',
-      message: 'One or more W-2 forms are missing an employer name, EIN, or wages.',
+      message:
+        'One or more W-2 forms are missing an employer name, EIN, or wages.',
       fix_path: '/w2',
       fix_label: 'Complete W-2 details',
       acknowledged: 0,
@@ -2389,7 +2873,8 @@ const toFindingRows = (
       code: 'SSA-INCOMPLETE',
       severity: 'warning',
       title: 'Finish Social Security details',
-      message: 'Your Social Security record is missing the gross benefit amount.',
+      message:
+        'Your Social Security record is missing the gross benefit amount.',
       fix_path: '/unemployment-ss',
       fix_label: 'Complete Social Security details',
       acknowledged: 0,
@@ -2399,14 +2884,18 @@ const toFindingRows = (
     })
   }
 
-  if (taxLots.some((record) => !record.isComplete) || cryptoAccounts.some((record) => !record.isComplete)) {
+  if (
+    taxLots.some((record) => !record.isComplete) ||
+    cryptoAccounts.some((record) => !record.isComplete)
+  ) {
     findings.push({
       id: crypto.randomUUID(),
       filing_session_id: sessionId,
       code: 'INVESTMENT-INCOMPLETE',
       severity: 'warning',
       title: 'Finish investment or crypto details',
-      message: 'An investment sale or crypto account is missing required details.',
+      message:
+        'An investment sale or crypto account is missing required details.',
       fix_path: '/investments',
       fix_label: 'Complete investment details',
       acknowledged: 0,
@@ -2423,7 +2912,8 @@ const toFindingRows = (
       code: 'BUSINESS-INCOMPLETE',
       severity: 'warning',
       title: 'Finish business income details',
-      message: 'A Schedule C or K-1 record is missing business name or income details.',
+      message:
+        'A Schedule C or K-1 record is missing business name or income details.',
       fix_path: '/business-k1',
       fix_label: 'Complete business details',
       acknowledged: 0,
@@ -2433,14 +2923,19 @@ const toFindingRows = (
     })
   }
 
-  if (businessSummary.recordCount > 0 && businessSummary.qbiEligibleCount > 0 && qbiWorksheetEntities.length === 0) {
+  if (
+    businessSummary.recordCount > 0 &&
+    businessSummary.qbiEligibleCount > 0 &&
+    qbiWorksheetEntities.length === 0
+  ) {
     findings.push({
       id: crypto.randomUUID(),
       filing_session_id: sessionId,
       code: 'QBI-REVIEW',
       severity: 'warning',
       title: 'Review the QBI deduction',
-      message: 'Your business income may qualify for the Section 199A deduction. Review the QBI worksheet before filing.',
+      message:
+        'Your business income may qualify for the Section 199A deduction. Review the QBI worksheet before filing.',
       fix_path: '/qbi-worksheet',
       fix_label: 'Review QBI worksheet',
       acknowledged: 0,
@@ -2457,7 +2952,8 @@ const toFindingRows = (
       code: 'RENTAL-INCOMPLETE',
       severity: 'warning',
       title: 'Finish rental property details',
-      message: 'A rental property is missing an address, rent amount, or expense details.',
+      message:
+        'A rental property is missing an address, rent amount, or expense details.',
       fix_path: '/rental',
       fix_label: 'Complete rental details',
       acknowledged: 0,
@@ -2478,7 +2974,8 @@ const toFindingRows = (
       code: 'FOREIGN-INCOMPLETE',
       severity: 'warning',
       title: 'Finish international details',
-      message: 'Foreign income, account, or treaty data is missing country, amount, or classification details.',
+      message:
+        'Foreign income, account, or treaty data is missing country, amount, or classification details.',
       fix_path: '/foreign-income',
       fix_label: 'Complete foreign details',
       acknowledged: 0,
@@ -2495,7 +2992,8 @@ const toFindingRows = (
       code: 'NONRESIDENT-INCOMPLETE',
       severity: 'warning',
       title: 'Finish nonresident residency details',
-      message: 'Your nonresident profile is missing visa, citizenship, or day-count details needed to determine the filing path.',
+      message:
+        'Your nonresident profile is missing visa, citizenship, or day-count details needed to determine the filing path.',
       fix_path: '/nonresident',
       fix_label: 'Complete nonresident details',
       acknowledged: 0,
@@ -2512,7 +3010,8 @@ const toFindingRows = (
       code: 'FBAR-REMINDER',
       severity: 'warning',
       title: 'Separate FBAR filing may be required',
-      message: 'Your foreign account balances indicate that FinCEN Form 114 may need to be filed separately from your tax return.',
+      message:
+        'Your foreign account balances indicate that FinCEN Form 114 may need to be filed separately from your tax return.',
       fix_path: '/foreign-income',
       fix_label: 'Review FBAR requirements',
       acknowledged: 0,
@@ -2529,7 +3028,8 @@ const toFindingRows = (
       code: 'DEPENDENT-INCOMPLETE',
       severity: 'error',
       title: 'Finish dependent details',
-      message: 'A dependent is missing a name, date of birth, relationship, or SSN.',
+      message:
+        'A dependent is missing a name, date of birth, relationship, or SSN.',
       fix_path: '/household',
       fix_label: 'Complete dependent info',
       acknowledged: 0,
@@ -2569,7 +3069,8 @@ const toFindingRows = (
       code: 'CREDIT-BLOCKED',
       severity: 'warning',
       title: 'Resolve blocked credits',
-      message: 'At least one credit is marked blocked and needs more information before filing.',
+      message:
+        'At least one credit is marked blocked and needs more information before filing.',
       fix_path: '/credits-v2',
       fix_label: 'Resolve credit issues',
       acknowledged: 0,
@@ -2592,9 +3093,8 @@ export class AppSessionService {
 
   async upsertUser(user: AppUserClaims): Promise<void> {
     const now = nowIso()
-    await this.env.USTAXES_DB
-      .prepare(
-        `INSERT INTO users (id, email, tin, display_name, created_at, updated_at, last_login_at)
+    await this.env.USTAXES_DB.prepare(
+      `INSERT INTO users (id, email, tin, display_name, created_at, updated_at, last_login_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
          ON CONFLICT(id) DO UPDATE SET
            email = excluded.email,
@@ -2602,8 +3102,16 @@ export class AppSessionService {
            display_name = excluded.display_name,
            updated_at = excluded.updated_at,
            last_login_at = excluded.last_login_at`
+    )
+      .bind(
+        user.sub,
+        user.email,
+        user.tin ?? null,
+        user.displayName ?? null,
+        now,
+        now,
+        now
       )
-      .bind(user.sub, user.email, user.tin ?? null, user.displayName ?? null, now, now, now)
       .run()
   }
 
@@ -2626,14 +3134,13 @@ export class AppSessionService {
     const snapshot = defaultSnapshot(body)
     await this.artifacts.putJson(metadataKey, snapshot)
 
-    await this.env.USTAXES_DB
-      .prepare(
-        `INSERT INTO filing_sessions (
+    await this.env.USTAXES_DB.prepare(
+      `INSERT INTO filing_sessions (
           id, user_id, local_session_id, tax_year, filing_status, form_type,
           lifecycle_status, name, current_phase, last_screen, completion_pct,
           estimated_refund, metadata_key, created_at, updated_at
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'draft', ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)`
-      )
+    )
       .bind(
         id,
         user.sub,
@@ -2683,7 +3190,8 @@ export class AppSessionService {
       name: patch.name ?? current.name,
       taxYear: patch.taxYear ?? current.taxYear,
       filingStatus: patch.filingStatus ?? current.filingStatus,
-      formType: (patch.formType ?? current.formType) as FilingSessionSnapshot['formType'],
+      formType: (patch.formType ??
+        current.formType) as FilingSessionSnapshot['formType'],
       currentPhase: (patch.currentPhase ?? current.currentPhase) as FilingPhase,
       lastScreen: patch.lastScreen ?? current.lastScreen,
       completionPct: patch.completionPct ?? current.completionPct,
@@ -2696,9 +3204,8 @@ export class AppSessionService {
     await this.artifacts.putJson(row.metadata_key, snapshot)
     const lifecycle = patch.lifecycleStatus ?? row.lifecycle_status
     const now = nowIso()
-    await this.env.USTAXES_DB
-      .prepare(
-        `UPDATE filing_sessions
+    await this.env.USTAXES_DB.prepare(
+      `UPDATE filing_sessions
          SET tax_year = ?1,
              filing_status = ?2,
              form_type = ?3,
@@ -2710,7 +3217,7 @@ export class AppSessionService {
              estimated_refund = ?9,
              updated_at = ?10
          WHERE id = ?11`
-      )
+    )
       .bind(
         snapshot.taxYear,
         snapshot.filingStatus,
@@ -2735,13 +3242,12 @@ export class AppSessionService {
   private async loadSessionEntities(
     sessionId: string
   ): Promise<SessionEntitySnapshot[]> {
-    const result = await this.env.USTAXES_DB
-      .prepare(
-        `SELECT id, filing_session_id, entity_type, entity_key, status, label, data_key, created_at, updated_at
+    const result = await this.env.USTAXES_DB.prepare(
+      `SELECT id, filing_session_id, entity_type, entity_key, status, label, data_key, created_at, updated_at
          FROM session_entities
          WHERE filing_session_id = ?1
          ORDER BY updated_at DESC`
-      )
+    )
       .bind(sessionId)
       .all<SessionEntityRow>()
 
@@ -2753,7 +3259,9 @@ export class AppSessionService {
         status: row.status,
         label: row.label,
         data:
-          (await this.artifacts.getJson<Record<string, unknown>>(row.data_key)) ?? {},
+          (await this.artifacts.getJson<Record<string, unknown>>(
+            row.data_key
+          )) ?? {},
         createdAt: row.created_at,
         updatedAt: row.updated_at
       }))
@@ -2777,9 +3285,8 @@ export class AppSessionService {
     const now = nowIso()
     const dataKey = `filing-sessions/${sessionId}/entities/${entityType}/${entityId}.json`
     await this.artifacts.putJson(dataKey, body.data)
-    await this.env.USTAXES_DB
-      .prepare(
-        `INSERT INTO session_entities (
+    await this.env.USTAXES_DB.prepare(
+      `INSERT INTO session_entities (
           id, filing_session_id, entity_type, entity_key, status, label, data_key, created_at, updated_at
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
         ON CONFLICT(filing_session_id, entity_type, entity_key) DO UPDATE SET
@@ -2787,8 +3294,18 @@ export class AppSessionService {
           label = excluded.label,
           data_key = excluded.data_key,
           updated_at = excluded.updated_at`
+    )
+      .bind(
+        entityId,
+        sessionId,
+        entityType,
+        entityId,
+        body.status,
+        body.label ?? null,
+        dataKey,
+        now,
+        now
       )
-      .bind(entityId, sessionId, entityType, entityId, body.status, body.label ?? null, dataKey, now, now)
       .run()
 
     return {
@@ -2811,11 +3328,10 @@ export class AppSessionService {
     user: AppUserClaims
   ) {
     await this.requireSession(sessionId, user.sub)
-    await this.env.USTAXES_DB
-      .prepare(
-        `DELETE FROM session_entities
+    await this.env.USTAXES_DB.prepare(
+      `DELETE FROM session_entities
          WHERE filing_session_id = ?1 AND entity_type = ?2 AND entity_key = ?3`
-      )
+    )
       .bind(sessionId, entityType, entityId)
       .run()
     return { deleted: true }
@@ -2841,13 +3357,12 @@ export class AppSessionService {
       })
     }
     await this.artifacts.putJson(metadataKey, body.metadata)
-    await this.env.USTAXES_DB
-      .prepare(
-        `INSERT INTO documents (
+    await this.env.USTAXES_DB.prepare(
+      `INSERT INTO documents (
           id, filing_session_id, name, mime_type, status, cluster, cluster_confidence,
           pages, artifact_key, metadata_key, created_at, updated_at
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)`
-      )
+    )
       .bind(
         id,
         sessionId,
@@ -2867,13 +3382,16 @@ export class AppSessionService {
     return this.getDocument(sessionId, id, user)
   }
 
-  async getDocument(sessionId: string, documentId: string, user: AppUserClaims) {
+  async getDocument(
+    sessionId: string,
+    documentId: string,
+    user: AppUserClaims
+  ) {
     await this.requireSession(sessionId, user.sub)
-    const row = await this.env.USTAXES_DB
-      .prepare(
-        `SELECT id, filing_session_id, name, mime_type, status, cluster, cluster_confidence, pages, artifact_key, metadata_key, created_at, updated_at
+    const row = await this.env.USTAXES_DB.prepare(
+      `SELECT id, filing_session_id, name, mime_type, status, cluster, cluster_confidence, pages, artifact_key, metadata_key, created_at, updated_at
          FROM documents WHERE filing_session_id = ?1 AND id = ?2`
-      )
+    )
       .bind(sessionId, documentId)
       .first<DocumentRow>()
     if (!row) {
@@ -2889,8 +3407,9 @@ export class AppSessionService {
         clusterConfidence: row.cluster_confidence,
         pages: row.pages,
         metadata:
-          (await this.artifacts.getJson<Record<string, unknown>>(row.metadata_key)) ??
-          {},
+          (await this.artifacts.getJson<Record<string, unknown>>(
+            row.metadata_key
+          )) ?? {},
         createdAt: row.created_at,
         updatedAt: row.updated_at
       }
@@ -2910,26 +3429,24 @@ export class AppSessionService {
       ...(current.document.metadata as Record<string, unknown>),
       ...(patch.metadata ?? {})
     }
-    const row = await this.env.USTAXES_DB
-      .prepare(
-        `SELECT metadata_key FROM documents WHERE filing_session_id = ?1 AND id = ?2`
-      )
+    const row = await this.env.USTAXES_DB.prepare(
+      `SELECT metadata_key FROM documents WHERE filing_session_id = ?1 AND id = ?2`
+    )
       .bind(sessionId, documentId)
       .first<{ metadata_key: string }>()
     if (!row) {
       throw new HttpError(404, 'Document not found')
     }
     await this.artifacts.putJson(row.metadata_key, metadata)
-    await this.env.USTAXES_DB
-      .prepare(
-        `UPDATE documents
+    await this.env.USTAXES_DB.prepare(
+      `UPDATE documents
          SET status = COALESCE(?1, status),
              cluster = COALESCE(?2, cluster),
              cluster_confidence = COALESCE(?3, cluster_confidence),
              pages = COALESCE(?4, pages),
              updated_at = ?5
          WHERE filing_session_id = ?6 AND id = ?7`
-      )
+    )
       .bind(
         patch.status ?? null,
         patch.cluster ?? null,
@@ -2965,8 +3482,13 @@ export class AppSessionService {
     const snapshot = await this.getSnapshot(row)
     const entities = await this.loadSessionEntities(row.id)
     const findings = await this.syncReviewFindings(row.id, snapshot, entities)
+    const facts = toFacts(row, snapshot, entities)
+    const computed = await this.computeTaxSummary(sessionId, snapshot, facts)
+
     return {
-      review: buildReview(snapshot, findings, entities)
+      review: buildReview(snapshot, findings, entities),
+      taxSummary: computed.taxSummary,
+      taxCalcErrors: computed.taxCalcErrors
     }
   }
 
@@ -2975,6 +3497,25 @@ export class AppSessionService {
     const snapshot = await this.getSnapshot(row)
     const entities = await this.loadSessionEntities(row.id)
     const facts = toFacts(row, snapshot, entities)
+    const computed = await this.computeTaxSummary(sessionId, snapshot, facts)
+    const taxSummary = computed.taxSummary
+    const taxCalcErrors = computed.taxCalcErrors
+
+    // Update estimated refund on the session
+    if (taxSummary) {
+      const refund = Number(taxSummary.refund ?? taxSummary.overpayment ?? 0)
+      const amountOwed = Number(taxSummary.amountOwed ?? 0)
+      const estimatedRefund =
+        refund > 0
+          ? refund
+          : -amountOwed
+      await this.env.USTAXES_DB.prepare(
+        `UPDATE filing_sessions SET estimated_refund = ?1, updated_at = ?2 WHERE id = ?3`
+      )
+        .bind(estimatedRefund, nowIso(), sessionId)
+        .run()
+    }
+
     let taxReturnId = row.tax_return_id
     let factsKey = row.facts_key
     if (!taxReturnId) {
@@ -2984,7 +3525,8 @@ export class AppSessionService {
         facts,
         ownerId: user.sub,
         ownerTin: String(facts.primaryTIN ?? '') || user.tin,
-        formType: snapshot.formType === '1040-SS' ? '1040-SS' : snapshot.formType
+        formType:
+          snapshot.formType === '1040-SS' ? '1040-SS' : snapshot.formType
       })
       taxReturnId = created.taxReturn.id
       factsKey = created.taxReturn.factsKey
@@ -2998,18 +3540,19 @@ export class AppSessionService {
       await this.repository.updateTaxReturnFactsKey(taxReturnId, newFactsKey)
     }
 
-    await this.env.USTAXES_DB
-      .prepare(
-        `UPDATE filing_sessions
+    await this.env.USTAXES_DB.prepare(
+      `UPDATE filing_sessions
          SET tax_return_id = ?1, facts_key = ?2, updated_at = ?3
          WHERE id = ?4`
-      )
+    )
       .bind(taxReturnId, newFactsKey, nowIso(), sessionId)
       .run()
 
     return {
       taxReturnId,
-      facts
+      facts,
+      taxSummary,
+      taxCalcErrors
     }
   }
 
@@ -3055,20 +3598,30 @@ export class AppSessionService {
     const snapshot = await this.getSnapshot(refreshed)
     const entities = await this.loadSessionEntities(refreshed.id)
     const facts = body.factsOverride ?? toFacts(refreshed, snapshot, entities)
+
+    // Use tax calc result from syncReturn if available
+    // Determine whether the summary came from a 1040 or a business entity calc
+    const isBizForm = isBusinessFormType(snapshot.formType)
+    const taxCalcResult = !isBizForm && syncResult.taxSummary
+      ? (syncResult.taxSummary as unknown as TaxCalculationResult)
+      : undefined
+    const bizCalcResult = isBizForm && syncResult.taxSummary
+      ? (syncResult.taxSummary as unknown as BusinessEntityResult)
+      : undefined
+
     const payload = {
-      ...toSubmissionPayload(refreshed, snapshot, facts),
+      ...toSubmissionPayload(refreshed, snapshot, facts, taxCalcResult, bizCalcResult),
       ...(body.payloadOverride ?? {})
     } as SubmissionPayload
     const result = await this.apiService.submitReturn(syncResult.taxReturnId, {
       idempotencyKey: body.idempotencyKey,
       payload
     })
-    await this.env.USTAXES_DB
-      .prepare(
-        `UPDATE filing_sessions
+    await this.env.USTAXES_DB.prepare(
+      `UPDATE filing_sessions
          SET latest_submission_id = ?1, lifecycle_status = 'queued', updated_at = ?2
          WHERE id = ?3`
-      )
+    )
       .bind(result.submission.id, nowIso(), sessionId)
       .run()
 
@@ -3085,9 +3638,13 @@ export class AppSessionService {
         submission: null
       }
     }
-    const submission = await this.apiService.getSubmission(row.latest_submission_id)
+    const submission = await this.apiService.getSubmission(
+      row.latest_submission_id
+    )
     const ack = await this.apiService.getSubmissionAck(row.latest_submission_id)
-    const payload = await this.apiService.getSubmissionPayload(row.latest_submission_id)
+    const payload = await this.apiService.getSubmissionPayload(
+      row.latest_submission_id
+    )
     const rejectionErrors = this.buildRejectionRepairErrors(
       ack.ack?.rejectionCodes ?? [],
       payload.payload ?? null
@@ -3098,12 +3655,11 @@ export class AppSessionService {
       rejectionErrors
     )
 
-    await this.env.USTAXES_DB
-      .prepare(
-        `UPDATE filing_sessions
+    await this.env.USTAXES_DB.prepare(
+      `UPDATE filing_sessions
          SET lifecycle_status = ?1, updated_at = ?2
          WHERE id = ?3`
-      )
+    )
       .bind(lifecycleStatus, nowIso(), sessionId)
       .run()
 
@@ -3122,18 +3678,79 @@ export class AppSessionService {
     }
   }
 
+  private async computeTaxSummary(
+    sessionId: string,
+    snapshot: FilingSessionSnapshot,
+    facts: Record<string, unknown>
+  ): Promise<CachedTaxComputation> {
+    const factsHash = await hashPayload({
+      formType: snapshot.formType,
+      filingStatus: snapshot.filingStatus,
+      facts
+    })
+    const cacheKey = `filing-sessions/${sessionId}/computed-tax/${factsHash}.json`
+    const cached = await this.artifacts.getJson<CachedTaxComputation>(cacheKey)
+    if (cached) {
+      return cached
+    }
+
+    const taxCalcService = new TaxCalculationService()
+    let computed: CachedTaxComputation
+
+    if (isBusinessFormType(snapshot.formType)) {
+      const bizOutcome = taxCalcService.calculateBusinessEntity(
+        snapshot.formType,
+        facts
+      )
+      computed = bizOutcome.success
+        ? {
+            taxSummary: {
+              taxableIncome: bizOutcome.taxableIncome,
+              totalTax: bizOutcome.totalTax,
+              totalPayments: bizOutcome.totalPayments,
+              amountOwed: bizOutcome.amountOwed,
+              overpayment: bizOutcome.overpayment,
+              effectiveTaxRate: bizOutcome.effectiveTaxRate,
+              schedules: bizOutcome.schedules,
+              ownerAllocations: bizOutcome.ownerAllocations
+            }
+          }
+        : { taxCalcErrors: bizOutcome.errors }
+    } else {
+      const taxCalcOutcome = taxCalcService.calculate(facts)
+      computed = taxCalcOutcome.success
+        ? {
+            taxSummary: {
+              agi: taxCalcOutcome.agi,
+              taxableIncome: taxCalcOutcome.taxableIncome,
+              totalTax: taxCalcOutcome.totalTax,
+              totalPayments: taxCalcOutcome.totalPayments,
+              refund: taxCalcOutcome.refund,
+              amountOwed: taxCalcOutcome.amountOwed,
+              effectiveTaxRate: taxCalcOutcome.effectiveTaxRate,
+              schedules: taxCalcOutcome.schedules
+            }
+          }
+        : { taxCalcErrors: taxCalcOutcome.errors }
+    }
+
+    await this.artifacts.putJson(cacheKey, computed)
+    return computed
+  }
+
   async retrySubmission(sessionId: string, user: AppUserClaims) {
     const row = await this.requireSession(sessionId, user.sub)
     if (!row.latest_submission_id) {
       throw new HttpError(409, 'No submission is available to retry')
     }
-    const result = await this.apiService.retrySubmission(row.latest_submission_id)
-    await this.env.USTAXES_DB
-      .prepare(
-        `UPDATE filing_sessions
+    const result = await this.apiService.retrySubmission(
+      row.latest_submission_id
+    )
+    await this.env.USTAXES_DB.prepare(
+      `UPDATE filing_sessions
          SET lifecycle_status = 'retrying', updated_at = ?1
          WHERE id = ?2`
-      )
+    )
       .bind(nowIso(), sessionId)
       .run()
     return {
@@ -3208,7 +3825,9 @@ export class AppSessionService {
       checklist,
       coverLetter: [
         `Tax year: ${snapshot.taxYear}`,
-        `Filer: ${toText(taxpayer.firstName)} ${toText(taxpayer.lastName)}`.trim(),
+        `Filer: ${toText(taxpayer.firstName)} ${toText(
+          taxpayer.lastName
+        )}`.trim(),
         spouse
           ? `Spouse: ${spouse.firstName} ${spouse.lastName}`.trim()
           : 'Spouse: none',
@@ -3273,9 +3892,13 @@ export class AppSessionService {
     const row = await this.requireSession(sessionId, user.sub)
     const snapshot = await this.getSnapshot(row)
     const stateCode = String(
-      ((snapshot.screenData['/taxpayer-profile']?.address as Record<string, unknown> | undefined)?.state ??
+      (
+        snapshot.screenData['/taxpayer-profile']?.address as
+          | Record<string, unknown>
+          | undefined
+      )?.state ??
         snapshot.screenData['/state-tax']?.stateCode ??
-        'CA')
+        'CA'
     ).toUpperCase()
     const profile = resolveStateProfile(this.env, stateCode)
     return {
@@ -3307,12 +3930,11 @@ export class AppSessionService {
       latestSubmissionId: row.latest_submission_id,
       createdAt: now
     })
-    await this.env.USTAXES_DB
-      .prepare(
-        `INSERT INTO state_transfer_authorizations (
+    await this.env.USTAXES_DB.prepare(
+      `INSERT INTO state_transfer_authorizations (
           id, filing_session_id, state_code, authorization_code, submission_id, status, metadata_key, created_at, updated_at
         ) VALUES (?1, ?2, ?3, ?4, ?5, 'authorized', ?6, ?7, ?8)`
-      )
+    )
       .bind(
         id,
         sessionId,
@@ -3331,22 +3953,27 @@ export class AppSessionService {
     }
   }
 
-  private async getSessionRow(id: string, userId: string): Promise<FilingSessionRow | null> {
+  private async getSessionRow(
+    id: string,
+    userId: string
+  ): Promise<FilingSessionRow | null> {
     return (
-      (await this.env.USTAXES_DB
-        .prepare(
-          `SELECT id, user_id, local_session_id, tax_year, filing_status, form_type, lifecycle_status, name,
+      (await this.env.USTAXES_DB.prepare(
+        `SELECT id, user_id, local_session_id, tax_year, filing_status, form_type, lifecycle_status, name,
                   current_phase, last_screen, completion_pct, estimated_refund, tax_return_id, latest_submission_id,
                   metadata_key, facts_key, created_at, updated_at
            FROM filing_sessions
            WHERE id = ?1 AND user_id = ?2`
-        )
+      )
         .bind(id, userId)
         .first<FilingSessionRow>()) ?? null
     )
   }
 
-  private async requireSession(id: string, userId: string): Promise<FilingSessionRow> {
+  private async requireSession(
+    id: string,
+    userId: string
+  ): Promise<FilingSessionRow> {
     const row = await this.getSessionRow(id, userId)
     if (!row) {
       throw new HttpError(404, 'Filing session not found')
@@ -3354,9 +3981,13 @@ export class AppSessionService {
     return row
   }
 
-  private async getSnapshot(row: FilingSessionRow): Promise<FilingSessionSnapshot> {
+  private async getSnapshot(
+    row: FilingSessionRow
+  ): Promise<FilingSessionSnapshot> {
     return (
-      (await this.artifacts.getJson<FilingSessionSnapshot>(row.metadata_key)) ?? {
+      (await this.artifacts.getJson<FilingSessionSnapshot>(
+        row.metadata_key
+      )) ?? {
         name: row.name,
         taxYear: row.tax_year,
         filingStatus: row.filing_status,
@@ -3379,18 +4010,18 @@ export class AppSessionService {
     entities: SessionEntitySnapshot[]
   ): Promise<ReviewFindingRow[]> {
     const findings = toFindingRows(sessionId, snapshot, entities)
-    await this.env.USTAXES_DB
-      .prepare(`DELETE FROM review_findings WHERE filing_session_id = ?1`)
+    await this.env.USTAXES_DB.prepare(
+      `DELETE FROM review_findings WHERE filing_session_id = ?1`
+    )
       .bind(sessionId)
       .run()
 
     for (const finding of findings) {
-      await this.env.USTAXES_DB
-        .prepare(
-          `INSERT INTO review_findings (
+      await this.env.USTAXES_DB.prepare(
+        `INSERT INTO review_findings (
             id, filing_session_id, code, severity, title, message, fix_path, fix_label, acknowledged, metadata_key, created_at, updated_at
           ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)`
-        )
+      )
         .bind(
           finding.id,
           finding.filing_session_id,

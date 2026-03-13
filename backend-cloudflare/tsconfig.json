@@ -6,10 +6,11 @@
     "strict": true,
     "skipLibCheck": true,
     "types": ["@cloudflare/workers-types", "vitest/globals"],
-    "lib": ["ES2022", "WebWorker"],
+    "lib": ["ES2022", "WebWorker", "DOM"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "ustaxes/*": ["../src/*"]
     }
   },
   "include": ["src", "test"]

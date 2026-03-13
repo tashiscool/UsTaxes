@@ -42,7 +42,10 @@ const rows = [
     taxflowRoutes: ['/taxpayer-profile', '/residency', '/your-taxes'],
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'review_findings', 'tax_returns'],
-    r2Artifacts: ['filing-sessions/<id>/snapshot.json', 'returns/<id>/facts.json'],
+    r2Artifacts: [
+      'filing-sessions/<id>/snapshot.json',
+      'returns/<id>/facts.json'
+    ],
     orchestration: 'session sync -> facts -> review findings',
     atsCoverage: 'S1|S2|S3|S4|S5|NR1|NR2|NR3|NR4|NR5|NR12',
     directFileCoverage: 'yes',
@@ -56,7 +59,10 @@ const rows = [
     taxflowRoutes: ['/spouse'],
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
-    r2Artifacts: ['filing-sessions/<id>/snapshot.json', 'filing-sessions/<id>/entities/spouse/<id>.json'],
+    r2Artifacts: [
+      'filing-sessions/<id>/snapshot.json',
+      'filing-sessions/<id>/entities/spouse/<id>.json'
+    ],
     orchestration: 'spouse CRUD -> facts -> checklist/review',
     atsCoverage: 'S2|S4|S5|S33',
     directFileCoverage: 'partial',
@@ -71,7 +77,8 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities', 'review_findings'],
     r2Artifacts: ['filing-sessions/<id>/entities/dependent/<id>.json'],
-    orchestration: 'dependent sync -> checklist/review credit readiness findings',
+    orchestration:
+      'dependent sync -> checklist/review credit readiness findings',
     atsCoverage: 'S2|S4|S5|S13|S17',
     directFileCoverage: 'partial',
     status: 'implemented_tested',
@@ -84,7 +91,10 @@ const rows = [
     taxflowRoutes: ['/income', '/w2'],
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities', 'tax_returns'],
-    r2Artifacts: ['filing-sessions/<id>/snapshot.json', 'filing-sessions/<id>/entities/w2/<id>.json'],
+    r2Artifacts: [
+      'filing-sessions/<id>/snapshot.json',
+      'filing-sessions/<id>/entities/w2/<id>.json'
+    ],
     orchestration: 'screen/entity sync -> W-2 fact payload -> checklist/review',
     atsCoverage: 'S1|S2|S11|S12',
     directFileCoverage: 'yes',
@@ -94,12 +104,23 @@ const rows = [
   },
   {
     family: 'forms_1099',
-    entityTypes: ['1099_int', '1099_div', '1099_misc', '1099_r', '1099_b', '1099_nec', '1099_k', '1099_g', '1099_ssa'],
+    entityTypes: [
+      '1099_int',
+      '1099_div',
+      '1099_misc',
+      '1099_r',
+      '1099_b',
+      '1099_nec',
+      '1099_k',
+      '1099_g',
+      '1099_ssa'
+    ],
     taxflowRoutes: ['/income', '/1099'],
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities', 'tax_returns'],
     r2Artifacts: ['filing-sessions/<id>/entities/1099_*/<id>.json'],
-    orchestration: 'screen/entity sync -> 1099 fact payload -> checklist/review',
+    orchestration:
+      'screen/entity sync -> 1099 fact payload -> checklist/review',
     atsCoverage: 'S8|S9|S10|S14|S16|S23|S24|S30|S31',
     directFileCoverage: 'partial',
     status: 'implemented_tested',
@@ -112,7 +133,10 @@ const rows = [
     taxflowRoutes: ['/investments', '/tax-lots', '/crypto'],
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
-    r2Artifacts: ['filing-sessions/<id>/entities/tax_lot/<id>.json', 'filing-sessions/<id>/entities/crypto_account/<id>.json'],
+    r2Artifacts: [
+      'filing-sessions/<id>/entities/tax_lot/<id>.json',
+      'filing-sessions/<id>/entities/crypto_account/<id>.json'
+    ],
     orchestration: 'investment/crypto CRUD -> facts -> checklist/review',
     atsCoverage: 'S10|S11|S12|S27|S32',
     directFileCoverage: 'partial',
@@ -123,10 +147,18 @@ const rows = [
   {
     family: 'business_and_k1',
     entityTypes: ['schedule_c', 'k1_entity'],
-    taxflowRoutes: ['/business-k1', '/business-entity', '/qbi-worksheet', '/basis-tracking'],
+    taxflowRoutes: [
+      '/business-k1',
+      '/business-entity',
+      '/qbi-worksheet',
+      '/basis-tracking'
+    ],
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
-    r2Artifacts: ['filing-sessions/<id>/entities/schedule_c/<id>.json', 'filing-sessions/<id>/entities/k1_entity/<id>.json'],
+    r2Artifacts: [
+      'filing-sessions/<id>/entities/schedule_c/<id>.json',
+      'filing-sessions/<id>/entities/k1_entity/<id>.json'
+    ],
     orchestration: 'TaxFlow business CRUD -> worker entity store',
     atsCoverage: 'S6|S28|S29|S34|S36',
     directFileCoverage: 'partial',
@@ -154,7 +186,10 @@ const rows = [
     taxflowRoutes: ['/hsa', '/ira-retirement'],
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
-    r2Artifacts: ['filing-sessions/<id>/entities/hsa_account/<id>.json', 'filing-sessions/<id>/entities/ira_distribution/<id>.json'],
+    r2Artifacts: [
+      'filing-sessions/<id>/entities/hsa_account/<id>.json',
+      'filing-sessions/<id>/entities/ira_distribution/<id>.json'
+    ],
     orchestration: 'TaxFlow HSA/IRA CRUD -> worker entity store',
     atsCoverage: 'S15|S23',
     directFileCoverage: 'partial',
@@ -168,7 +203,10 @@ const rows = [
     taxflowRoutes: ['/unemployment-ss'],
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
-    r2Artifacts: ['filing-sessions/<id>/entities/unemployment_record/<id>.json', 'filing-sessions/<id>/entities/ssa_record/<id>.json'],
+    r2Artifacts: [
+      'filing-sessions/<id>/entities/unemployment_record/<id>.json',
+      'filing-sessions/<id>/entities/ssa_record/<id>.json'
+    ],
     orchestration: 'unemployment/SSA CRUD -> facts -> checklist/review',
     atsCoverage: 'S24|S30',
     directFileCoverage: 'partial',
@@ -179,10 +217,19 @@ const rows = [
   {
     family: 'foreign_income_and_nonresident',
     entityTypes: ['foreign_income_record', 'foreign_account', 'treaty_claim'],
-    taxflowRoutes: ['/foreign-income', '/international', '/nonresident', '/intl-advanced'],
+    taxflowRoutes: [
+      '/foreign-income',
+      '/international',
+      '/nonresident',
+      '/intl-advanced'
+    ],
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
-    r2Artifacts: ['filing-sessions/<id>/entities/foreign_income_record/<id>.json', 'filing-sessions/<id>/entities/foreign_account/<id>.json', 'filing-sessions/<id>/entities/treaty_claim/<id>.json'],
+    r2Artifacts: [
+      'filing-sessions/<id>/entities/foreign_income_record/<id>.json',
+      'filing-sessions/<id>/entities/foreign_account/<id>.json',
+      'filing-sessions/<id>/entities/treaty_claim/<id>.json'
+    ],
     orchestration: 'TaxFlow foreign-entity CRUD -> worker entity store',
     atsCoverage: 'S18|S19|S20|NR1|NR2|NR3|NR4|NR5|NR12',
     directFileCoverage: 'yes',
@@ -192,12 +239,24 @@ const rows = [
   },
   {
     family: 'credits_and_supporting_entities',
-    entityTypes: ['education_student', 'care_provider', 'care_qualifying_person', 'clean_vehicle_credit', 'home_energy_credit', 'adoption_record'],
+    entityTypes: [
+      'education_student',
+      'care_provider',
+      'care_qualifying_person',
+      'clean_vehicle_credit',
+      'home_energy_credit',
+      'adoption_record'
+    ],
     taxflowRoutes: ['/education-care', '/credits', '/credits-hub'],
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities', 'review_findings'],
-    r2Artifacts: ['filing-sessions/<id>/entities/education_student/<id>.json', 'filing-sessions/<id>/entities/care_provider/<id>.json', 'filing-sessions/<id>/entities/clean_vehicle_credit/<id>.json'],
-    orchestration: 'credit screen sync -> derived summary -> checklist/review findings',
+    r2Artifacts: [
+      'filing-sessions/<id>/entities/education_student/<id>.json',
+      'filing-sessions/<id>/entities/care_provider/<id>.json',
+      'filing-sessions/<id>/entities/clean_vehicle_credit/<id>.json'
+    ],
+    orchestration:
+      'credit screen sync -> derived summary -> checklist/review findings',
     atsCoverage: 'S2|S13|S14|S17|S21|S22|S26|S27|S32',
     directFileCoverage: 'partial',
     status: 'implemented_tested',
@@ -215,9 +274,16 @@ const rows = [
       'GET /df/file/api/v1/state-api/state-profile',
       'GET /df/file/api/v1/state-api/state-exported-facts/:submissionId'
     ],
-    d1Tables: ['filing_sessions', 'session_entities', 'state_transfer_authorizations'],
-    r2Artifacts: ['filing-sessions/<id>/state-transfer/<authorizationCode>.json'],
-    orchestration: 'local tax CRUD + state profile lookup + export authorization',
+    d1Tables: [
+      'filing_sessions',
+      'session_entities',
+      'state_transfer_authorizations'
+    ],
+    r2Artifacts: [
+      'filing-sessions/<id>/state-transfer/<authorizationCode>.json'
+    ],
+    orchestration:
+      'local tax CRUD + state profile lookup + export authorization',
     atsCoverage: 'S27|NR4',
     directFileCoverage: 'yes',
     status: 'implemented_tested',
@@ -251,7 +317,10 @@ const rows = [
       'PATCH /app/v1/filing-sessions/:sessionId/documents/:documentId'
     ],
     d1Tables: ['documents'],
-    r2Artifacts: ['filing-sessions/<id>/documents/<id>/metadata.json', 'filing-sessions/<id>/documents/<id>/content.json'],
+    r2Artifacts: [
+      'filing-sessions/<id>/documents/<id>/metadata.json',
+      'filing-sessions/<id>/documents/<id>/content.json'
+    ],
     orchestration: 'metadata upload + provenance-lite status tracking',
     atsCoverage: 'n/a',
     directFileCoverage: 'no',
@@ -271,8 +340,16 @@ const rows = [
       'GET /api/v1/submissions/:submissionId',
       'GET /api/v1/submissions/:submissionId/ack'
     ],
-    d1Tables: ['filing_sessions', 'tax_returns', 'submissions', 'submission_events'],
-    r2Artifacts: ['filing-sessions/<id>/signature/<timestamp>.json', 'submissions/<id>/ack.json'],
+    d1Tables: [
+      'filing_sessions',
+      'tax_returns',
+      'submissions',
+      'submission_events'
+    ],
+    r2Artifacts: [
+      'filing-sessions/<id>/signature/<timestamp>.json',
+      'submissions/<id>/ack.json'
+    ],
     orchestration: 'sign -> submit -> queue/internal process -> ack/status',
     atsCoverage: 'runtime e2e|scenario1.reject-missing-tin',
     directFileCoverage: 'yes',
@@ -291,7 +368,8 @@ const rows = [
     ],
     d1Tables: ['filing_sessions', 'submissions', 'submission_events'],
     r2Artifacts: ['submissions/<id>/ack.json'],
-    orchestration: 'submission lookup -> classified rejection errors -> retry orchestration',
+    orchestration:
+      'submission lookup -> classified rejection errors -> retry orchestration',
     atsCoverage: 'scenario1.reject-missing-tin|runtime retry',
     directFileCoverage: 'yes',
     status: 'implemented_tested',
@@ -309,7 +387,9 @@ const rows = [
       'GET /df/file/api/v1/state-api/state-exported-facts/:submissionId'
     ],
     d1Tables: ['state_transfer_authorizations', 'filing_sessions'],
-    r2Artifacts: ['filing-sessions/<id>/state-transfer/<authorizationCode>.json'],
+    r2Artifacts: [
+      'filing-sessions/<id>/state-transfer/<authorizationCode>.json'
+    ],
     orchestration: 'state profile + export authorization',
     atsCoverage: 'runtime e2e',
     directFileCoverage: 'yes',
@@ -352,7 +432,9 @@ const headers = [
 ]
 
 const escapeCsv = (value) => {
-  const stringValue = Array.isArray(value) ? value.join('|') : String(value ?? '')
+  const stringValue = Array.isArray(value)
+    ? value.join('|')
+    : String(value ?? '')
   if (/[",\n]/.test(stringValue)) {
     return `"${stringValue.replace(/"/g, '""')}"`
   }
@@ -381,10 +463,17 @@ const csv = [
   )
 ].join('\n')
 
-writeFileSync(join(outputDir, 'taxflow_backend_capability_matrix.csv'), `${csv}\n`)
+writeFileSync(
+  join(outputDir, 'taxflow_backend_capability_matrix.csv'),
+  `${csv}\n`
+)
 writeFileSync(
   join(outputDir, 'taxflow_backend_capability_matrix.json'),
-  `${JSON.stringify({ generatedAt: new Date().toISOString(), rows }, null, 2)}\n`
+  `${JSON.stringify(
+    { generatedAt: new Date().toISOString(), rows },
+    null,
+    2
+  )}\n`
 )
 
 console.log(

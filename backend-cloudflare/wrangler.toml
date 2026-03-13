@@ -5,6 +5,13 @@ compatibility_date = "2026-03-12"
 [observability]
 enabled = true
 
+[vars]
+ENVIRONMENT = "development"
+CORS_ORIGIN = "http://localhost:5173"
+SESSION_SECRET_HMAC_KEY = "dev-secret-change-in-production"
+LOCAL_DEV_AUTH_ENABLED = "true"
+LOG_LEVEL = "debug"
+
 [[d1_databases]]
 binding = "USTAXES_DB"
 database_name = "ustaxes-backend-local"
@@ -30,5 +37,82 @@ name = "SUBMISSION_ORCHESTRATOR"
 class_name = "SubmissionOrchestrator"
 
 [[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SubmissionOrchestrator"]
+
+# ─── Staging Environment ──────────────────────────────────────────────────────
+
+[env.staging]
+name = "ustaxes-backend-staging"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+CORS_ORIGIN = "https://staging.taxflow.app"
+LOCAL_DEV_AUTH_ENABLED = "false"
+LOG_LEVEL = "info"
+
+[[env.staging.d1_databases]]
+binding = "USTAXES_DB"
+database_name = "ustaxes-backend-staging"
+database_id = "00000000-0000-0000-0000-000000000001"
+migrations_dir = "migrations"
+
+[[env.staging.r2_buckets]]
+binding = "ARTIFACTS_BUCKET"
+bucket_name = "ustaxes-artifacts-staging"
+
+[[env.staging.queues.producers]]
+binding = "SUBMISSION_QUEUE"
+queue = "ustaxes-submissions-staging"
+
+[[env.staging.queues.consumers]]
+queue = "ustaxes-submissions-staging"
+max_batch_size = 20
+max_batch_timeout = 5
+
+[[env.staging.durable_objects.bindings]]
+name = "SUBMISSION_ORCHESTRATOR"
+class_name = "SubmissionOrchestrator"
+
+[[env.staging.migrations]]
+tag = "v1"
+new_sqlite_classes = ["SubmissionOrchestrator"]
+
+# ─── Production Environment ───────────────────────────────────────────────────
+
+[env.production]
+name = "ustaxes-backend"
+routes = [{ pattern = "api.taxflow.app", custom_domain = true }]
+
+[env.production.vars]
+ENVIRONMENT = "production"
+CORS_ORIGIN = "https://taxflow.app"
+LOCAL_DEV_AUTH_ENABLED = "false"
+LOG_LEVEL = "warn"
+
+[[env.production.d1_databases]]
+binding = "USTAXES_DB"
+database_name = "ustaxes-backend-production"
+database_id = "00000000-0000-0000-0000-000000000002"
+migrations_dir = "migrations"
+
+[[env.production.r2_buckets]]
+binding = "ARTIFACTS_BUCKET"
+bucket_name = "ustaxes-artifacts-production"
+
+[[env.production.queues.producers]]
+binding = "SUBMISSION_QUEUE"
+queue = "ustaxes-submissions-production"
+
+[[env.production.queues.consumers]]
+queue = "ustaxes-submissions-production"
+max_batch_size = 50
+max_batch_timeout = 3
+
+[[env.production.durable_objects.bindings]]
+name = "SUBMISSION_ORCHESTRATOR"
+class_name = "SubmissionOrchestrator"
+
+[[env.production.migrations]]
 tag = "v1"
 new_sqlite_classes = ["SubmissionOrchestrator"]

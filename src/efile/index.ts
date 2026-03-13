@@ -17,6 +17,7 @@ export {
 
 export type {
   TransmitterConfig,
+  SigningCredentials,
   PreparedReturn,
   IdentityVerification,
   ESignature,

@@ -79,7 +79,10 @@ export default class ScheduleE extends F1040Attachment {
   }
 
   royaltyColumnIndex = (): number | undefined => {
-    if (this.totalRoyaltyIncome() === 0 && (this.royaltyExpenses() ?? 0) === 0) {
+    if (
+      this.totalRoyaltyIncome() === 0 &&
+      (this.royaltyExpenses() ?? 0) === 0
+    ) {
       return undefined
     }
     return Math.min(this.f1040.info.realEstate.length, 2)
@@ -99,7 +102,7 @@ export default class ScheduleE extends F1040Attachment {
       if (form.type !== Income1099Type.MISC) {
         return total
       }
-      return total + ((form.form as F1099MISCData).royalties ?? 0)
+      return total + (form.form.royalties ?? 0)
     }, 0)
 
   l4 = (): MatrixRow => {
@@ -157,10 +160,13 @@ export default class ScheduleE extends F1040Attachment {
     const propertyExpenseColumns = [0, 1, 2].map((columnIndex) =>
       sumFields(this.allExpenses().map((row) => row[columnIndex]))
     )
-    const royaltyExpenseColumns = this.royaltyColumn(this.royaltyExpenses() ?? 0)
+    const royaltyExpenseColumns = this.royaltyColumn(
+      this.royaltyExpenses() ?? 0
+    )
     return fill(
       propertyExpenseColumns.map(
-        (value, columnIndex) => value + (royaltyExpenseColumns[columnIndex] ?? 0)
+        (value, columnIndex) =>
+          value + (royaltyExpenseColumns[columnIndex] ?? 0)
       )
     )
   }
@@ -248,12 +254,8 @@ export default class ScheduleE extends F1040Attachment {
   l34be = (): number | undefined => undefined
 
   hasPage2Adjustments = (): boolean =>
-    sumFields([
-      this.royaltyExpenses(),
-      this.l37(),
-      this.l39(),
-      this.l40()
-    ]) !== 0
+    sumFields([this.royaltyExpenses(), this.l37(), this.l39(), this.l40()]) !==
+    0
 
   l37 = (): number | undefined =>
     this.f1040.info.scheduleEPage2?.estateTrustIncomeLoss

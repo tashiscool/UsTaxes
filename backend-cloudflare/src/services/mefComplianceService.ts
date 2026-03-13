@@ -34,14 +34,29 @@ const FILING_STATUS_TO_CODE: Record<string, string> = {
   mfj: '2',
   mfs: '3',
   hoh: '4',
-  qss: '5'
+  qss: '5',
+  w: '5', // Qualifying Surviving Spouse same code as QSS
+  // Business entity filing statuses
+  corporation: 'C',
+  ccorp: 'C',
+  scorp: 'S',
+  partnership: 'P',
+  trust: 'T',
+  estate: 'E',
+  nonprofit: 'N',
+  exemptorganization: 'N'
 }
 
 const FORM_TYPE_TO_RETURN_CODE: Record<ReturnFormType, string> = {
   '1040': '1040',
   '1040-NR': '1040NR',
   '1040-SS': '1040SS',
-  '4868': '4868'
+  '4868': '4868',
+  '1120': '1120',
+  '1120-S': '1120S',
+  '1065': '1065',
+  '1041': '1041',
+  '990': '990'
 }
 
 type MefSchemaTrack = 'ats' | 'production'
@@ -244,6 +259,22 @@ const invalidResult = (
   report
 })
 
+const BUSINESS_ENTITY_FORM_TYPES = new Set<string>([
+  '1120', '1120-S', '1065', '1041', '990'
+])
+
+const FORM_TYPE_TO_XML_ROOT: Record<string, string> = {
+  '1040': 'IRS1040',
+  '1040-NR': 'IRS1040NR',
+  '1040-SS': 'IRS1040SS',
+  '4868': 'IRS4868',
+  '1120': 'IRS1120',
+  '1120-S': 'IRS1120S',
+  '1065': 'IRS1065',
+  '1041': 'IRS1041',
+  '990': 'IRS990'
+}
+
 const buildMefXml = (
   payload: SubmissionPayload,
   formType: ReturnFormType,
@@ -258,21 +289,32 @@ const buildMefXml = (
   const refund = normalizeAmount(form1040.refund)
   const owed = normalizeAmount(form1040.amountOwed)
 
+  const isBusinessEntity = BUSINESS_ENTITY_FORM_TYPES.has(formType)
+  const tinElement = isBusinessEntity ? 'EIN' : 'PrimarySSN'
+  const xmlRootElement = FORM_TYPE_TO_XML_ROOT[formType] ?? 'IRS1040'
+
   const returnHeader = xmlContainer(
     'ReturnHeader',
     [
       xmlNode('ReturnTs', new Date().toISOString()),
       xmlNode('TaxYr', taxYear),
       xmlNode('ReturnTypeCd', FORM_TYPE_TO_RETURN_CODE[formType]),
-      xmlContainer('Filer', [xmlNode('PrimarySSN', normalizedTin)])
+      xmlContainer('Filer', [xmlNode(tinElement, normalizedTin)])
     ],
     'binaryAttachmentCnt="0"'
   )
 
-  const returnData = xmlContainer(
-    'ReturnData',
-    [
-      xmlContainer('IRS1040', [
+  const formChildren = isBusinessEntity
+    ? [
+        xmlNode('TotalIncomeAmt', totalTax),
+        xmlNode('TotalDeductionsAmt', '0'),
+        xmlNode('TaxableIncomeAmt', totalTax),
+        xmlNode('TotalTaxAmt', totalTax),
+        xmlNode('TotalPaymentsAmt', totalPayments),
+        xmlNode('RefundAmt', refund),
+        xmlNode('OwedAmt', owed)
+      ]
+    : [
         xmlNode('FilingStatusCd', filingStatusCode),
         xmlNode('TotalIncomeAmt', totalTax),
         xmlNode('AdjustedGrossIncomeAmt', totalTax),
@@ -283,8 +325,11 @@ const buildMefXml = (
         xmlNode('TotalPaymentsAmt', totalPayments),
         xmlNode('RefundAmt', refund),
         xmlNode('OwedAmt', owed)
-      ])
-    ],
+      ]
+
+  const returnData = xmlContainer(
+    'ReturnData',
+    [xmlContainer(xmlRootElement, formChildren)],
     'documentCnt="1"'
   )
 
@@ -366,7 +411,7 @@ export const validateMefCompliance = async (
     }
   }
 
-  const filingStatusCode = FILING_STATUS_TO_CODE[filingStatus]
+  const filingStatusCode = FILING_STATUS_TO_CODE[filingStatus] ?? '1'
   const xml = buildMefXml(
     payload,
     formType,
@@ -376,18 +421,27 @@ export const validateMefCompliance = async (
   )
   const validator = new SchemaValidator(payload.taxYear)
 
-  const schemaResult = await validator.validate(xml, 'Form1040')
+  const isBusinessEntity = BUSINESS_ENTITY_FORM_TYPES.has(formType)
+  const schemaFormType = isBusinessEntity ? `Form${formType.replace('-', '')}` : 'Form1040'
+  const schemaResult = await validator.validate(xml, schemaFormType)
   if (!schemaResult.valid) {
     report.xmlValidationErrors = xmlErrorsToMessages(schemaResult.errors)
   }
 
+  const tinType = isBusinessEntity ? 'EINType' : 'SSNType'
+  const formContext = isBusinessEntity ? `Form${formType.replace('-', '')}` : 'Form1040'
+
   const fieldErrors = [
-    validator.validateFieldValue(normalizedTin, 'SSNType', 'Form1040'),
-    validator.validateFieldValue(
-      filingStatusCode,
-      'FilingStatusType',
-      'Form1040'
-    ),
+    validator.validateFieldValue(normalizedTin, tinType, formContext),
+    ...(isBusinessEntity
+      ? []
+      : [
+          validator.validateFieldValue(
+            filingStatusCode ?? '1',
+            'FilingStatusType',
+            'Form1040'
+          )
+        ]),
     payload.form1040?.totalTax !== undefined
       ? validator.validateFieldValue(
           String(payload.form1040.totalTax),

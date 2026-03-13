@@ -7,15 +7,15 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type F1040 from 'ustaxes/forms/Y2024/irsForms/F1040'
-import type Schedule1 from 'ustaxes/forms/Y2024/irsForms/Schedule1'
-import type ScheduleA from 'ustaxes/forms/Y2024/irsForms/ScheduleA'
-import type ScheduleB from 'ustaxes/forms/Y2024/irsForms/ScheduleB'
-import type ScheduleC from 'ustaxes/forms/Y2024/irsForms/ScheduleC'
-import type ScheduleD from 'ustaxes/forms/Y2024/irsForms/ScheduleD'
-import type ScheduleE from 'ustaxes/forms/Y2024/irsForms/ScheduleE'
-import type ScheduleSE from 'ustaxes/forms/Y2024/irsForms/ScheduleSE'
-import type F8949 from 'ustaxes/forms/Y2024/irsForms/F8949'
+import type F1040 from 'ustaxes/forms/Y2025/irsForms/F1040'
+import type Schedule1 from 'ustaxes/forms/Y2025/irsForms/Schedule1'
+import type ScheduleA from 'ustaxes/forms/Y2025/irsForms/ScheduleA'
+import type ScheduleB from 'ustaxes/forms/Y2025/irsForms/ScheduleB'
+import type ScheduleC from 'ustaxes/forms/Y2025/irsForms/ScheduleC'
+import type ScheduleD from 'ustaxes/forms/Y2025/irsForms/ScheduleD'
+import type ScheduleE from 'ustaxes/forms/Y2025/irsForms/ScheduleE'
+import type ScheduleSE from 'ustaxes/forms/Y2025/irsForms/ScheduleSE'
+import type F8949 from 'ustaxes/forms/Y2025/irsForms/F8949'
 import {
   FilingStatus,
   IncomeW2,
@@ -66,7 +66,40 @@ export interface SerializerConfig {
  */
 const XML_NAMESPACES = {
   efile: 'http://www.irs.gov/efile',
-  xsi: 'http://www.w3.org/2001/XMLSchema-instance'
+  xsi: 'http://www.w3.org/2001/XMLSchema-instance',
+  common: 'http://www.irs.gov/efile/common'
+}
+
+/**
+ * TY2025 schema version release windows.
+ * The serializer picks the latest effective version for the tax year.
+ */
+const TY2025_SCHEMA_VERSIONS = [
+  { version: '2025v5.0', atsEffective: '2025-11-26', prodEffective: '2026-01-11' },
+  { version: '2025v5.1', atsEffective: '2026-01-25', prodEffective: '2026-02-08' },
+  { version: '2025v5.2', atsEffective: '2026-03-15', prodEffective: '2026-03-29' }
+] as const
+
+/**
+ * Resolve the appropriate schema version for TY2025 based on the current date
+ * and environment track.
+ */
+export function resolveSchemaVersion(
+  taxYear: number,
+  track: 'ats' | 'production' = 'production',
+  asOf: Date = new Date()
+): string {
+  if (taxYear !== 2025) {
+    return `${taxYear}v5.0`
+  }
+  const key = track === 'production' ? 'prodEffective' : 'atsEffective'
+  let selected = TY2025_SCHEMA_VERSIONS[0].version
+  for (const entry of TY2025_SCHEMA_VERSIONS) {
+    if (new Date(entry[key] + 'T00:00:00Z').getTime() <= asOf.getTime()) {
+      selected = entry.version
+    }
+  }
+  return selected
 }
 
 // =============================================================================
@@ -236,9 +269,11 @@ export class Form1040Serializer {
   serialize(): string {
     const header = this.buildReturnHeader()
     const returnData = this.buildReturnData()
+    const schemaTrack = this.config.isTestSubmission ? 'ats' : 'production'
+    const returnVersion = resolveSchemaVersion(this.config.taxYear, schemaTrack)
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Return xmlns="${XML_NAMESPACES.efile}" xmlns:xsi="${XML_NAMESPACES.xsi}" returnVersion="${this.config.taxYear}v5.0">
+<Return xmlns="${XML_NAMESPACES.efile}" xmlns:xsi="${XML_NAMESPACES.xsi}" returnVersion="${returnVersion}">
 ${header}
 ${returnData}
 </Return>`
@@ -352,17 +387,27 @@ ${returnData}
 
   /**
    * Build the main ReturnData element
+   *
+   * Includes all schedules: A, B, C, D, E, SE, 1, 2, 3, 8812, EIC, 8995 (QBI),
+   * plus OBBBA forms Schedule 1-A and Form 4547.
    */
   buildReturnData(): string {
     const elements = [
       this.buildIRS1040(),
       this.serializeSchedule1(),
+      this.serializeSchedule2(),
+      this.serializeSchedule3(),
       this.serializeScheduleA(),
       this.serializeScheduleB(),
       this.serializeScheduleC(),
       this.serializeScheduleD(),
       this.serializeScheduleE(),
       this.serializeScheduleSE(),
+      this.serializeSchedule8812(),
+      this.serializeScheduleEIC(),
+      this.serializeForm8995(),
+      this.serializeSchedule1A(),
+      this.serializeForm4547(),
       ...this.serializeW2s(),
       ...this.serialize1099s(),
       ...this.serializeForm8949s()
@@ -1238,6 +1283,268 @@ ${returnData}
   }
 
   // ===========================================================================
+  // Schedule 2, 3, 8812, EIC, 8995 (QBI) and OBBBA Form Serializers
+  // ===========================================================================
+
+  /**
+   * Serialize Schedule 2 (Additional Taxes)
+   */
+  serializeSchedule2(): string {
+    const schedule2 = this.f1040.schedule2
+    if (!schedule2 || !schedule2.isNeeded()) {
+      return ''
+    }
+
+    const elements = [
+      // Part I - Tax
+      xmlElement('AlternativeMinimumTaxAmt', formatAmount(schedule2.l2())),
+      xmlElement('ExcessPremiumTaxCreditRepayAmt', formatAmount(schedule2.l1a())),
+      xmlElement('TotalSchedule2PartITaxAmt', formatAmount(schedule2.l3())),
+
+      // Part II - Other Taxes
+      xmlElement('SelfEmploymentTaxAmt', formatAmount(schedule2.l4())),
+      xmlElement('UnreportedSocSecAndMedTaxAmt', formatAmount(schedule2.l7())),
+      xmlElement('AdditionalTaxOnIRAsAmt', formatAmount(schedule2.l8())),
+      xmlElement('HouseholdEmploymentTaxAmt', formatAmount(schedule2.l9())),
+      xmlElement('FirstTimeHmByrRepaymentAmt', formatAmount(schedule2.l10())),
+      xmlElement('AdditionalMedicareTaxAmt', formatAmount(schedule2.l11())),
+      xmlElement('NetInvestmentIncomeTaxAmt', formatAmount(schedule2.l12())),
+      xmlElement('OtherTaxesFromFormsAmt', formatAmount(schedule2.l18())),
+      xmlElement('TotalAdditionalTaxesAmt', formatAmount(schedule2.l21()))
+    ]
+
+    return xmlContainer('IRS1040Schedule2', elements, {
+      documentId: 'IRS1040Schedule20001'
+    })
+  }
+
+  /**
+   * Serialize Schedule 3 (Additional Credits and Payments)
+   */
+  serializeSchedule3(): string {
+    const schedule3 = this.f1040.schedule3
+    if (!schedule3 || !schedule3.isNeeded()) {
+      return ''
+    }
+
+    const elements = [
+      // Part I - Nonrefundable Credits
+      xmlElement('ForeignTaxCreditAmt', formatAmount(schedule3.l1())),
+      xmlElement('CrForChildAndDepdCareAmt', formatAmount(schedule3.l2())),
+      xmlElement('EducationCreditsAmt', formatAmount(schedule3.l3())),
+      xmlElement('RetirementSavingsContCrAmt', formatAmount(schedule3.l4())),
+      xmlElement('ResidentialEnergyCreditsAmt', formatAmount(schedule3.l5())),
+      xmlElement('OtherNonrefundableCreditsAmt', formatAmount(schedule3.l6())),
+      xmlElement('TotalNonrefundableCrAmt', formatAmount(schedule3.l8())),
+
+      // Part II - Other Payments and Refundable Credits
+      xmlElement('NetPremiumTaxCreditAmt', formatAmount(schedule3.l9())),
+      xmlElement('AmountPaidWithExtensionAmt', formatAmount(schedule3.l10())),
+      xmlElement('ExcessSSTaxWithheldAmt', formatAmount(schedule3.l11())),
+      xmlElement('CreditFedTaxOnFuelsAmt', formatAmount(schedule3.l12())),
+      xmlElement('OtherPaymentsOrRefCrAmt', formatAmount(schedule3.l13())),
+      xmlElement('TotalOtherPaymentsRfdblCrAmt', formatAmount(schedule3.l15()))
+    ]
+
+    return xmlContainer('IRS1040Schedule3', elements, {
+      documentId: 'IRS1040Schedule30001'
+    })
+  }
+
+  /**
+   * Serialize Schedule 8812 (Credits for Qualifying Children and Other Dependents)
+   */
+  serializeSchedule8812(): string {
+    const schedule8812 = this.f1040.schedule8812
+    if (!schedule8812 || !schedule8812.isNeeded()) {
+      return ''
+    }
+
+    const elements = [
+      xmlElement('QualifyingChildrenCnt', schedule8812.qualifyingChildrenCount()),
+      xmlElement('OtherDependentsCnt', schedule8812.otherDependentsCount()),
+      xmlElement('ModifiedAGIAmt', formatAmount(schedule8812.modifiedAGI())),
+      xmlElement('ChildTaxCreditAmt', formatAmount(schedule8812.childTaxCredit())),
+      xmlElement('OtherDependentCreditAmt', formatAmount(schedule8812.otherDependentCredit())),
+      xmlElement('TotalCreditsAmt', formatAmount(schedule8812.totalCredit())),
+      xmlElement('AdditionalChildTaxCreditAmt', formatAmount(schedule8812.additionalChildTaxCredit()))
+    ]
+
+    return xmlContainer('IRS1040Schedule8812', elements, {
+      documentId: 'IRS1040Schedule88120001'
+    })
+  }
+
+  /**
+   * Serialize Schedule EIC (Earned Income Credit)
+   */
+  serializeScheduleEIC(): string {
+    const scheduleEIC = this.f1040.scheduleEIC
+    if (!scheduleEIC || !scheduleEIC.isNeeded()) {
+      return ''
+    }
+
+    const qualifyingChildren = scheduleEIC.qualifyingChildren()
+    const childElements = qualifyingChildren.map((child: {
+      firstName: string
+      lastName: string
+      ssn: string
+      yearOfBirth: number
+      relationship: string
+      monthsLived: number
+    }, idx: number) =>
+      xmlContainer(
+        'QualifyingChildInformation',
+        [
+          xmlElement('QualifyingChildFirstNm', child.firstName),
+          xmlElement('QualifyingChildLastNm', child.lastName),
+          xmlElement('QualifyingChildSSN', formatSSN(child.ssn)),
+          xmlElement('QualifyingChildBirthYr', child.yearOfBirth),
+          xmlElement('QualifyingChildRelationship', child.relationship),
+          xmlElement('MonthsChildLivedWithYouCnt', child.monthsLived)
+        ],
+        { childNum: String(idx + 1) }
+      )
+    )
+
+    const elements = [
+      ...childElements,
+      xmlElement('EarnedIncomeCreditAmt', formatAmount(scheduleEIC.creditAmount()))
+    ]
+
+    return xmlContainer('IRS1040ScheduleEIC', elements, {
+      documentId: 'IRS1040ScheduleEIC0001'
+    })
+  }
+
+  /**
+   * Serialize Form 8995 (Qualified Business Income Deduction - Simplified Computation)
+   */
+  serializeForm8995(): string {
+    const form8995 = this.f1040.form8995
+    if (!form8995 || !form8995.isNeeded()) {
+      return ''
+    }
+
+    const elements = [
+      xmlElement('QualifiedBusinessIncomeAmt', formatAmount(form8995.qualifiedBusinessIncome())),
+      xmlElement('QBIDeductionBeforeLimitAmt', formatAmount(form8995.deductionBeforeLimit())),
+      xmlElement('TaxableIncomeBeforeQBIAmt', formatAmount(form8995.taxableIncomeBeforeQBI())),
+      xmlElement('NetCapitalGainAmt', formatAmount(form8995.netCapitalGain())),
+      xmlElement('IncomeExceedingCapGainAmt', formatAmount(form8995.incomeExceedingCapGain())),
+      xmlElement('TwentyPercentOfExceedingAmt', formatAmount(form8995.twentyPercentOfExceeding())),
+      xmlElement('QualifiedBusIncDedAmt', formatAmount(form8995.qbiDeduction()))
+    ]
+
+    return xmlContainer('IRS8995', elements, {
+      documentId: 'IRS89950001'
+    })
+  }
+
+  /**
+   * Serialize Schedule 1-A (OBBBA - One Big Beautiful Bill Act provisions)
+   *
+   * Handles overtime deduction, tip income deduction, auto loan interest
+   * deduction, and Trump Account contributions under OBBBA (TY2025+).
+   */
+  serializeSchedule1A(): string {
+    if (this.config.taxYear < 2025) {
+      return ''
+    }
+
+    const schedule1A = (this.f1040 as unknown as { schedule1A?: {
+      isNeeded: () => boolean
+      overtimeHours: () => number
+      overtimeWages: () => number
+      overtimeDeduction: () => number
+      tipIncomeTotal: () => number
+      tipIncomeDeduction: () => number
+      autoLoanInterestPaid: () => number
+      autoLoanInterestDeduction: () => number
+      trumpAccountContributions: () => number
+      trumpAccountDeduction: () => number
+      totalOBBBADeductions: () => number
+    }}).schedule1A
+
+    if (!schedule1A || !schedule1A.isNeeded()) {
+      return ''
+    }
+
+    const elements = [
+      // Part I - Overtime Wage Deduction (OBBBA Section)
+      xmlElement('OvertimeHoursCnt', schedule1A.overtimeHours()),
+      xmlElement('OvertimeWagesAmt', formatAmount(schedule1A.overtimeWages())),
+      xmlElement('OvertimeDeductionAmt', formatAmount(schedule1A.overtimeDeduction())),
+
+      // Part II - Tip Income Deduction
+      xmlElement('TipIncomeTotalAmt', formatAmount(schedule1A.tipIncomeTotal())),
+      xmlElement('TipIncomeDeductionAmt', formatAmount(schedule1A.tipIncomeDeduction())),
+
+      // Part III - Auto Loan Interest Deduction
+      xmlElement('AutoLoanInterestPaidAmt', formatAmount(schedule1A.autoLoanInterestPaid())),
+      xmlElement('AutoLoanInterestDeductionAmt', formatAmount(schedule1A.autoLoanInterestDeduction())),
+
+      // Part IV - Trump Account Contributions
+      xmlElement('TrumpAccountContributionsAmt', formatAmount(schedule1A.trumpAccountContributions())),
+      xmlElement('TrumpAccountDeductionAmt', formatAmount(schedule1A.trumpAccountDeduction())),
+
+      // Total
+      xmlElement('TotalOBBBADeductionsAmt', formatAmount(schedule1A.totalOBBBADeductions()))
+    ]
+
+    return xmlContainer('IRS1040Schedule1A', elements, {
+      documentId: 'IRS1040Schedule1A0001'
+    })
+  }
+
+  /**
+   * Serialize Form 4547 (OBBBA - Trump Account Establishment and Reporting)
+   *
+   * Required when taxpayer has established or contributed to a
+   * Trump Account under OBBBA provisions (TY2025+).
+   */
+  serializeForm4547(): string {
+    if (this.config.taxYear < 2025) {
+      return ''
+    }
+
+    const form4547 = (this.f1040 as unknown as { form4547?: {
+      isNeeded: () => boolean
+      accountHolderName: () => string
+      accountHolderSSN: () => string
+      custodianName: () => string
+      custodianEIN: () => string
+      accountNumber: () => string
+      accountOpenDate: () => string
+      contributionAmount: () => number
+      rolloverAmount: () => number
+      distributionAmount: () => number
+      fairMarketValue: () => number
+    }}).form4547
+
+    if (!form4547 || !form4547.isNeeded()) {
+      return ''
+    }
+
+    const elements = [
+      xmlElement('AccountHolderNm', form4547.accountHolderName()),
+      xmlElement('AccountHolderSSN', formatSSN(form4547.accountHolderSSN())),
+      xmlElement('CustodianNm', form4547.custodianName()),
+      xmlElement('CustodianEIN', formatEIN(form4547.custodianEIN())),
+      xmlElement('AccountNum', form4547.accountNumber()),
+      xmlElement('AccountOpenDt', form4547.accountOpenDate()),
+      xmlElement('ContributionAmt', formatAmount(form4547.contributionAmount())),
+      xmlElement('RolloverAmt', formatAmount(form4547.rolloverAmount())),
+      xmlElement('DistributionAmt', formatAmount(form4547.distributionAmount())),
+      xmlElement('FairMarketValueAmt', formatAmount(form4547.fairMarketValue()))
+    ]
+
+    return xmlContainer('IRS4547', elements, {
+      documentId: 'IRS45470001'
+    })
+  }
+
+  // ===========================================================================
   // Attachment Serializers
   // ===========================================================================
 
@@ -1599,4 +1906,5 @@ export function createSerializer(
   return new Form1040Serializer(f1040, config)
 }
 
+export { resolveSchemaVersion }
 export default Form1040Serializer

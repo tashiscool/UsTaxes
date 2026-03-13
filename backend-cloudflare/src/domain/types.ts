@@ -6,7 +6,16 @@ export type SubmissionStatus =
   | 'rejected'
   | 'failed'
 
-export type ReturnFormType = '1040' | '1040-NR' | '1040-SS' | '4868'
+export type ReturnFormType =
+  | '1040'
+  | '1040-NR'
+  | '1040-SS'
+  | '4868'
+  | '1120'
+  | '1120-S'
+  | '1065'
+  | '1041'
+  | '990'
 
 export interface TaxReturnRecord {
   id: string

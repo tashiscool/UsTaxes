@@ -21,7 +21,7 @@ interface AtsScenarioVector {
   scenarioName: string
   taxYear: number
   filingStatus: string
-  formType: '1040' | '1040-NR' | '1040-SS' | '4868' | null
+  formType: '1040' | '1040-NR' | '1040-SS' | '4868' | '1120' | '1120-S' | '1065' | '1041' | '990' | null
   primaryTIN: string | null
   hasSchedule2: boolean
   hasSchedule3: boolean
@@ -101,7 +101,8 @@ describe('ATS scenario matrix - backend acceptance', () => {
       scenarioMatrix.map((scenario) => scenario.scenarioId)
     )
     expect(scenarioIds.size).toBe(scenarioMatrix.length)
-    expect(scenarioMatrix.length).toBeGreaterThanOrEqual(36)
+    // 36 original + 10 business entity + 5 OBBBA + 5 state + 4 edge cases = 60
+    expect(scenarioMatrix.length).toBeGreaterThanOrEqual(60)
   })
 
   it.each(scenarioMatrix)(

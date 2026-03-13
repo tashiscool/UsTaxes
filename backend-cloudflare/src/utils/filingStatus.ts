@@ -15,7 +15,17 @@ const VALID_FILING_STATUSES = new Set([
   'hoh',
   'headofhousehold',
   'qss',
-  'qualifyingsurvivingspouse'
+  'qualifyingsurvivingspouse',
+  // Business entity filing statuses
+  'corporation',
+  'ccorp',
+  'scorp',
+  'partnership',
+  'trust',
+  'estate',
+  'nonprofit',
+  'exemptorganization',
+  'w'
 ])
 
 export const isValidFilingStatus = (value: string): boolean =>

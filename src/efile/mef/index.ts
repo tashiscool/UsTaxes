@@ -55,6 +55,7 @@ export type { SignerConfig, SignOptions, VerificationResult } from './signer'
 export {
   Form1040Serializer,
   createSerializer,
+  resolveSchemaVersion,
   // Utility functions
   formatAmount,
   formatAmountWithCents,
@@ -65,4 +66,11 @@ export {
   escapeXml
 } from './serializer'
 
+// Business Entity XML Serialization
+export {
+  BusinessEntitySerializer,
+  createBusinessEntitySerializer
+} from './businessEntitySerializer'
+
 export type { SerializerConfig } from './serializer'
+export type { BusinessEntityConfig, BusinessEntityData } from './businessEntitySerializer'

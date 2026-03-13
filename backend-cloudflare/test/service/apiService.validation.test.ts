@@ -56,7 +56,7 @@ describe('ApiService validation', () => {
           taxYear: 2025,
           primaryTIN: '400011032',
           filingStatus: 'single',
-          formType: '1120'
+          formType: '8865'
         }
       })
     ).rejects.toThrow(/Invalid return form type/)

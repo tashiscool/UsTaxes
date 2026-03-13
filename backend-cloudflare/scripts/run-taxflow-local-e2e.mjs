@@ -1,6 +1,7 @@
 const backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:8787'
 const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:3000'
-const internalToken = process.env.INTERNAL_API_TOKEN || 'integration-secret-token'
+const internalToken =
+  process.env.INTERNAL_API_TOKEN || 'integration-secret-token'
 
 function assert(condition, message) {
   if (!condition) {
@@ -45,7 +46,10 @@ async function requestJson(url, options = {}, cookieJar = '') {
 
 async function main() {
   const rootResponse = await fetch(`${frontendUrl}/`)
-  assert(rootResponse.status === 200, 'TaxFlow frontend did not return 200 at root')
+  assert(
+    rootResponse.status === 200,
+    'TaxFlow frontend did not return 200 at root'
+  )
 
   let cookieJar = ''
 
@@ -61,7 +65,10 @@ async function main() {
     },
     cookieJar
   )
-  assert(result.response.status === 201, 'Dev login failed through TaxFlow proxy')
+  assert(
+    result.response.status === 201,
+    'Dev login failed through TaxFlow proxy'
+  )
   cookieJar = result.cookieJar
 
   result = await requestJson(
@@ -151,7 +158,10 @@ async function main() {
     },
     cookieJar
   )
-  assert(result.response.status === 201, 'Failed to create filing session through TaxFlow proxy')
+  assert(
+    result.response.status === 201,
+    'Failed to create filing session through TaxFlow proxy'
+  )
   const filingSessionId = String(result.body.filingSession.id)
 
   const acceptedEntities = [
@@ -261,27 +271,65 @@ async function main() {
       },
       cookieJar
     )
-    assert(result.response.status === 200, `Failed to persist ${entity.entityType}`)
+    assert(
+      result.response.status === 200,
+      `Failed to persist ${entity.entityType}`
+    )
   }
 
-  result = await requestJson(`${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/checklist`, { method: 'GET' }, cookieJar)
+  result = await requestJson(
+    `${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/checklist`,
+    { method: 'GET' },
+    cookieJar
+  )
   assert(result.response.status === 200, 'Checklist request failed')
-  assert(result.body.checklist.items.business.status === 'complete', 'Business checklist did not complete')
-  assert(result.body.checklist.items.rental.status === 'complete', 'Rental checklist did not complete')
-  assert(result.body.checklist.items['foreign-income'].status === 'complete', 'International checklist did not complete')
+  assert(
+    result.body.checklist.items.business.status === 'complete',
+    'Business checklist did not complete'
+  )
+  assert(
+    result.body.checklist.items.rental.status === 'complete',
+    'Rental checklist did not complete'
+  )
+  assert(
+    result.body.checklist.items['foreign-income'].status === 'complete',
+    'International checklist did not complete'
+  )
 
-  result = await requestJson(`${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/review`, { method: 'GET' }, cookieJar)
+  result = await requestJson(
+    `${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/review`,
+    { method: 'GET' },
+    cookieJar
+  )
   assert(result.response.status === 200, 'Review request failed')
-  const reviewSections = result.body.review.sections.map((section) => section.id)
+  const reviewSections = result.body.review.sections.map(
+    (section) => section.id
+  )
   assert(reviewSections.includes('business'), 'Business review section missing')
   assert(reviewSections.includes('rental'), 'Rental review section missing')
-  assert(reviewSections.includes('international'), 'International review section missing')
+  assert(
+    reviewSections.includes('international'),
+    'International review section missing'
+  )
 
-  result = await requestJson(`${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/returns/sync`, { method: 'POST', body: JSON.stringify({}) }, cookieJar)
+  result = await requestJson(
+    `${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+    { method: 'POST', body: JSON.stringify({}) },
+    cookieJar
+  )
   assert(result.response.status === 200, 'Return sync failed')
-  assert(result.body.facts.businessSummary.finalQBIDeduction === 18000, 'QBI deduction summary mismatch')
-  assert(result.body.facts.rentalSummary.propertyCount === 1, 'Rental summary missing property')
-  assert(result.body.facts.foreignSummary.feieExclusionEstimate === 130000, 'FEIE summary mismatch')
+  assert(
+    result.body.facts.businessSummary.finalQBIDeduction === 18000,
+    'QBI deduction summary mismatch'
+  )
+  assert(
+    result.body.facts.rentalSummary.propertyCount === 1,
+    'Rental summary missing property'
+  )
+  assert(
+    result.body.facts.foreignSummary.feieExclusionEstimate === 130000,
+    'FEIE summary mismatch'
+  )
 
   result = await requestJson(
     `${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/sign`,
@@ -310,18 +358,35 @@ async function main() {
   const acceptedSubmissionId = String(result.body.submission.id)
   const acceptedTaxReturnId = String(result.body.taxReturnId)
 
-  let internal = await requestJson(`${backendUrl}/api/v1/internal/process/${acceptedSubmissionId}`, {
-    method: 'POST',
-    headers: { 'x-internal-token': internalToken },
-    body: JSON.stringify({ taxReturnId: acceptedTaxReturnId })
-  })
-  assert(internal.response.status === 200, 'Internal acceptance processing failed')
+  let internal = await requestJson(
+    `${backendUrl}/api/v1/internal/process/${acceptedSubmissionId}`,
+    {
+      method: 'POST',
+      headers: { 'x-internal-token': internalToken },
+      body: JSON.stringify({ taxReturnId: acceptedTaxReturnId })
+    }
+  )
+  assert(
+    internal.response.status === 200,
+    'Internal acceptance processing failed'
+  )
 
-  result = await requestJson(`${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/submission`, { method: 'GET' }, cookieJar)
+  result = await requestJson(
+    `${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/submission`,
+    { method: 'GET' },
+    cookieJar
+  )
   assert(result.response.status === 200, 'Submission status request failed')
-  assert(result.body.submission.lifecycleStatus === 'accepted', 'Accepted submission did not settle')
+  assert(
+    result.body.submission.lifecycleStatus === 'accepted',
+    'Accepted submission did not settle'
+  )
 
-  result = await requestJson(`${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/state-transfer`, { method: 'GET' }, cookieJar)
+  result = await requestJson(
+    `${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/state-transfer`,
+    { method: 'GET' },
+    cookieJar
+  )
   assert(result.response.status === 200, 'State transfer lookup failed')
   result = await requestJson(
     `${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/state-transfer/authorize`,
@@ -333,9 +398,16 @@ async function main() {
   )
   assert(result.response.status === 202, 'State transfer authorize failed')
 
-  result = await requestJson(`${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/print-mail`, { method: 'GET' }, cookieJar)
+  result = await requestJson(
+    `${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/print-mail`,
+    { method: 'GET' },
+    cookieJar
+  )
   assert(result.response.status === 200, 'Print-mail lookup failed')
-  assert(Array.isArray(result.body.printMail.checklist), 'Print-mail checklist missing')
+  assert(
+    Array.isArray(result.body.printMail.checklist),
+    'Print-mail checklist missing'
+  )
   result = await requestJson(
     `${frontendUrl}/api/app/v1/filing-sessions/${filingSessionId}/print-mail`,
     {
@@ -345,7 +417,10 @@ async function main() {
     cookieJar
   )
   assert(result.response.status === 200, 'Print-mail update failed')
-  assert(result.body.printMail.packetStatus === 'mailed', 'Print-mail did not mark mailed')
+  assert(
+    result.body.printMail.packetStatus === 'mailed',
+    'Print-mail did not mark mailed'
+  )
 
   result = await requestJson(
     `${frontendUrl}/api/app/v1/filing-sessions`,
@@ -399,17 +474,33 @@ async function main() {
   const rejectedSubmissionId = String(result.body.submission.id)
   const rejectedTaxReturnId = String(result.body.taxReturnId)
 
-  internal = await requestJson(`${backendUrl}/api/v1/internal/process/${rejectedSubmissionId}`, {
-    method: 'POST',
-    headers: { 'x-internal-token': internalToken },
-    body: JSON.stringify({ taxReturnId: rejectedTaxReturnId })
-  })
-  assert(internal.response.status === 200, 'Internal rejection processing failed')
+  internal = await requestJson(
+    `${backendUrl}/api/v1/internal/process/${rejectedSubmissionId}`,
+    {
+      method: 'POST',
+      headers: { 'x-internal-token': internalToken },
+      body: JSON.stringify({ taxReturnId: rejectedTaxReturnId })
+    }
+  )
+  assert(
+    internal.response.status === 200,
+    'Internal rejection processing failed'
+  )
 
-  result = await requestJson(`${frontendUrl}/api/app/v1/filing-sessions/${rejectedSessionId}/submission`, { method: 'GET' }, cookieJar)
+  result = await requestJson(
+    `${frontendUrl}/api/app/v1/filing-sessions/${rejectedSessionId}/submission`,
+    { method: 'GET' },
+    cookieJar
+  )
   assert(result.response.status === 200, 'Rejected submission lookup failed')
-  assert(result.body.submission.lifecycleStatus === 'rejected', 'Submission did not reject')
-  assert(Array.isArray(result.body.submission.rejectionErrors), 'Rejection metadata missing')
+  assert(
+    result.body.submission.lifecycleStatus === 'rejected',
+    'Submission did not reject'
+  )
+  assert(
+    Array.isArray(result.body.submission.rejectionErrors),
+    'Rejection metadata missing'
+  )
 
   result = await requestJson(
     `${frontendUrl}/api/app/v1/filing-sessions/${rejectedSessionId}/submission/retry`,
@@ -420,10 +511,26 @@ async function main() {
     cookieJar
   )
   assert(result.response.status === 202, 'Retry route failed')
-  assert(result.body.retried === true, 'Retry orchestration did not report success')
+  assert(
+    result.body.retried === true,
+    'Retry orchestration did not report success'
+  )
 
   console.log('Local TaxFlow + Cloudflare E2E passed.')
-  console.log(JSON.stringify({ frontendUrl, backendUrl, acceptedSessionId: filingSessionId, rejectedSessionId, acceptedSubmissionId, rejectedSubmissionId }, null, 2))
+  console.log(
+    JSON.stringify(
+      {
+        frontendUrl,
+        backendUrl,
+        acceptedSessionId: filingSessionId,
+        rejectedSessionId,
+        acceptedSubmissionId,
+        rejectedSubmissionId
+      },
+      null,
+      2
+    )
+  )
 }
 
 main().catch((error) => {

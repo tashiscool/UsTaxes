@@ -246,11 +246,17 @@ export default class F1040NR extends F1040Attachment {
   }
 
   taxableIncome = (): number =>
-    Math.max(0, this.totalEffectivelyConnectedIncome() - this.totalItemizedDeductions())
+    Math.max(
+      0,
+      this.totalEffectivelyConnectedIncome() - this.totalItemizedDeductions()
+    )
 
   eciTax = (): number =>
     Math.round(
-      computeOrdinaryTax(this.f1040.info.taxPayer.filingStatus, this.taxableIncome())
+      computeOrdinaryTax(
+        this.f1040.info.taxPayer.filingStatus,
+        this.taxableIncome()
+      )
     )
 
   totalTax = (): number => this.eciTax() + this.fdapTax()

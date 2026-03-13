@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
 import type { Context } from 'hono'
+import { cors } from 'hono/cors'
+import { secureHeaders } from 'hono/secure-headers'
 import { ZodError } from 'zod'
 import { z } from 'zod'
 
@@ -22,6 +24,28 @@ import { assertInternalAuth } from './utils/auth'
 import { nowIso } from './utils/time'
 
 const app = new Hono<{ Bindings: Env }>()
+
+// ─── Security headers ────────────────────────────────────────────────────────
+app.use('*', secureHeaders())
+
+// ─── CORS ────────────────────────────────────────────────────────────────────
+app.use('*', async (c, next) => {
+  const origin = c.env.CORS_ORIGIN ?? 'http://localhost:5173'
+  return cors({
+    origin,
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-User-Id',
+      'X-User-Email',
+      'X-User-Tin'
+    ],
+    credentials: true,
+    maxAge: 86400
+  })(c, next)
+})
 
 const internalProcessSchema = z.object({
   taxReturnId: z.string().min(2)
@@ -295,34 +319,43 @@ app.patch('/app/v1/filing-sessions/:sessionId', async (c) => {
 app.get('/app/v1/filing-sessions/:sessionId/entities', async (c) => {
   const user = await requireAppUser(c)
   const { appSessionService } = buildServices(c)
-  const result = await appSessionService.listEntities(c.req.param('sessionId'), user)
-  return c.json(result)
-})
-
-app.put('/app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId', async (c) => {
-  const user = await requireAppUser(c)
-  const { appSessionService } = buildServices(c)
-  const result = await appSessionService.putEntity(
+  const result = await appSessionService.listEntities(
     c.req.param('sessionId'),
-    c.req.param('entityType'),
-    c.req.param('entityId'),
-    await c.req.json().catch(() => ({})),
     user
   )
   return c.json(result)
 })
 
-app.delete('/app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId', async (c) => {
-  const user = await requireAppUser(c)
-  const { appSessionService } = buildServices(c)
-  const result = await appSessionService.deleteEntity(
-    c.req.param('sessionId'),
-    c.req.param('entityType'),
-    c.req.param('entityId'),
-    user
-  )
-  return c.json(result)
-})
+app.put(
+  '/app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId',
+  async (c) => {
+    const user = await requireAppUser(c)
+    const { appSessionService } = buildServices(c)
+    const result = await appSessionService.putEntity(
+      c.req.param('sessionId'),
+      c.req.param('entityType'),
+      c.req.param('entityId'),
+      await c.req.json().catch(() => ({})),
+      user
+    )
+    return c.json(result)
+  }
+)
+
+app.delete(
+  '/app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId',
+  async (c) => {
+    const user = await requireAppUser(c)
+    const { appSessionService } = buildServices(c)
+    const result = await appSessionService.deleteEntity(
+      c.req.param('sessionId'),
+      c.req.param('entityType'),
+      c.req.param('entityId'),
+      user
+    )
+    return c.json(result)
+  }
+)
 
 app.post('/app/v1/filing-sessions/:sessionId/documents', async (c) => {
   const user = await requireAppUser(c)
@@ -335,47 +368,62 @@ app.post('/app/v1/filing-sessions/:sessionId/documents', async (c) => {
   return c.json(result, 201)
 })
 
-app.get('/app/v1/filing-sessions/:sessionId/documents/:documentId', async (c) => {
-  const user = await requireAppUser(c)
-  const { appSessionService } = buildServices(c)
-  const result = await appSessionService.getDocument(
-    c.req.param('sessionId'),
-    c.req.param('documentId'),
-    user
-  )
-  return c.json(result)
-})
+app.get(
+  '/app/v1/filing-sessions/:sessionId/documents/:documentId',
+  async (c) => {
+    const user = await requireAppUser(c)
+    const { appSessionService } = buildServices(c)
+    const result = await appSessionService.getDocument(
+      c.req.param('sessionId'),
+      c.req.param('documentId'),
+      user
+    )
+    return c.json(result)
+  }
+)
 
-app.patch('/app/v1/filing-sessions/:sessionId/documents/:documentId', async (c) => {
-  const user = await requireAppUser(c)
-  const { appSessionService } = buildServices(c)
-  const result = await appSessionService.patchDocument(
-    c.req.param('sessionId'),
-    c.req.param('documentId'),
-    await c.req.json().catch(() => ({})),
-    user
-  )
-  return c.json(result)
-})
+app.patch(
+  '/app/v1/filing-sessions/:sessionId/documents/:documentId',
+  async (c) => {
+    const user = await requireAppUser(c)
+    const { appSessionService } = buildServices(c)
+    const result = await appSessionService.patchDocument(
+      c.req.param('sessionId'),
+      c.req.param('documentId'),
+      await c.req.json().catch(() => ({})),
+      user
+    )
+    return c.json(result)
+  }
+)
 
 app.get('/app/v1/filing-sessions/:sessionId/checklist', async (c) => {
   const user = await requireAppUser(c)
   const { appSessionService } = buildServices(c)
-  const result = await appSessionService.getChecklist(c.req.param('sessionId'), user)
+  const result = await appSessionService.getChecklist(
+    c.req.param('sessionId'),
+    user
+  )
   return c.json(result)
 })
 
 app.get('/app/v1/filing-sessions/:sessionId/review', async (c) => {
   const user = await requireAppUser(c)
   const { appSessionService } = buildServices(c)
-  const result = await appSessionService.getReview(c.req.param('sessionId'), user)
+  const result = await appSessionService.getReview(
+    c.req.param('sessionId'),
+    user
+  )
   return c.json(result)
 })
 
 app.post('/app/v1/filing-sessions/:sessionId/returns/sync', async (c) => {
   const user = await requireAppUser(c)
   const { appSessionService } = buildServices(c)
-  const result = await appSessionService.syncReturn(c.req.param('sessionId'), user)
+  const result = await appSessionService.syncReturn(
+    c.req.param('sessionId'),
+    user
+  )
   return c.json(result)
 })
 
@@ -452,16 +500,19 @@ app.get('/app/v1/filing-sessions/:sessionId/state-transfer', async (c) => {
   return c.json(result)
 })
 
-app.post('/app/v1/filing-sessions/:sessionId/state-transfer/authorize', async (c) => {
-  const user = await requireAppUser(c)
-  const { appSessionService } = buildServices(c)
-  const result = await appSessionService.authorizeStateTransfer(
-    c.req.param('sessionId'),
-    await c.req.json().catch(() => ({})),
-    user
-  )
-  return c.json(result, 202)
-})
+app.post(
+  '/app/v1/filing-sessions/:sessionId/state-transfer/authorize',
+  async (c) => {
+    const user = await requireAppUser(c)
+    const { appSessionService } = buildServices(c)
+    const result = await appSessionService.authorizeStateTransfer(
+      c.req.param('sessionId'),
+      await c.req.json().catch(() => ({})),
+      user
+    )
+    return c.json(result, 202)
+  }
+)
 
 registerDirectFileRoute('GET', '/users/me', async (c) => {
   const user = getDirectFileUserContext(c)
@@ -666,7 +717,7 @@ registerDirectFileRoute(
   }
 )
 
-app.onError((err) => {
+app.onError((err, c) => {
   if (err instanceof ZodError) {
     return jsonResponse(
       {
@@ -681,10 +732,14 @@ app.onError((err) => {
     return jsonResponse({ error: err.message }, err.status)
   }
 
+  // In production, don't leak internal error details
+  const isProd = c.env.ENVIRONMENT === 'production'
+  console.error('[ustaxes-backend] Unhandled error:', err.message, err.stack)
+
   return jsonResponse(
     {
       error: 'Internal server error',
-      detail: err.message
+      ...(isProd ? {} : { detail: err.message })
     },
     500
   )

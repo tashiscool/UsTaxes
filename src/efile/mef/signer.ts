@@ -2,10 +2,10 @@
  * XML Digital Signature Module for MeF (Modernized e-File) Submissions
  *
  * Implements XML-DSIG signing with SHA-256 for IRS e-file submissions.
- * Uses Node.js crypto module (compatible with browser polyfills).
+ * Uses Web Crypto API (SubtleCrypto) for Cloudflare Workers compatibility.
+ *
+ * All cryptographic operations are async because SubtleCrypto is promise-based.
  */
-
-import * as crypto from 'crypto'
 
 // ============================================================================
 // Types and Interfaces
@@ -19,7 +19,7 @@ export interface SignerConfig {
   certificate: string
   /** RSA private key in PEM format */
   privateKey: string
-  /** Optional passphrase for encrypted private keys */
+  /** Optional passphrase for encrypted private keys (not supported in Web Crypto) */
   passphrase?: string
 }
 
@@ -61,79 +61,389 @@ const ALGORITHMS = {
 } as const
 
 // ============================================================================
-// Helper Functions
+// Helper Functions - Web Crypto API
 // ============================================================================
 
+const encoder = new TextEncoder()
+const decoder = new TextDecoder()
+
 /**
- * Encode data to Base64
- * @param data - Buffer or string to encode
+ * Encode data to Base64 using Web-compatible APIs
+ * @param data - Uint8Array or string to encode
  * @returns Base64 encoded string
  */
-export const base64Encode = (data: Buffer | string): string => {
-  const buffer = typeof data === 'string' ? Buffer.from(data, 'utf-8') : data
-  return buffer.toString('base64')
+export const base64Encode = (data: Uint8Array | string): string => {
+  const bytes = typeof data === 'string' ? encoder.encode(data) : data
+  // Build binary string from bytes - works in both Workers and browsers
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return btoa(binary)
 }
 
 /**
- * Decode Base64 to Buffer
+ * Decode Base64 to Uint8Array
  * @param data - Base64 encoded string
- * @returns Decoded Buffer
+ * @returns Decoded Uint8Array
  */
-export const base64Decode = (data: string): Buffer => {
-  return Buffer.from(data, 'base64')
+export const base64Decode = (data: string): Uint8Array => {
+  const binary = atob(data)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
 }
 
 /**
- * Compute SHA-256 digest of data
- * @param data - Data to hash
- * @returns SHA-256 hash as Buffer
+ * Compute SHA-256 digest of data using SubtleCrypto
+ * @param data - Data to hash (string or Uint8Array)
+ * @returns SHA-256 hash as Uint8Array
  */
-export const computeDigest = (data: string | Buffer): Buffer => {
-  const hash = crypto.createHash('sha256')
-  hash.update(data)
-  return hash.digest()
+export const computeDigest = async (
+  data: string | Uint8Array
+): Promise<Uint8Array> => {
+  const bytes = typeof data === 'string' ? encoder.encode(data) : data
+  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes)
+  return new Uint8Array(hashBuffer)
 }
 
 /**
- * Create RSA-SHA256 signature
- * @param data - Data to sign
- * @param privateKey - RSA private key in PEM format
- * @param passphrase - Optional passphrase for encrypted keys
- * @returns Signature as Buffer
+ * Strip PEM headers and whitespace to get raw Base64 key data
  */
-export const createSignature = (
-  data: string | Buffer,
-  privateKey: string,
-  passphrase?: string
-): Buffer => {
-  const sign = crypto.createSign('RSA-SHA256')
-  sign.update(data)
-  sign.end()
+const pemToBytes = (pem: string): Uint8Array => {
+  const base64 = pem
+    .replace(/-----BEGIN [A-Z ]+-----/g, '')
+    .replace(/-----END [A-Z ]+-----/g, '')
+    .replace(/\s/g, '')
+  return base64Decode(base64)
+}
 
-  const keyOptions: crypto.SignPrivateKeyInput = {
-    key: privateKey,
-    passphrase: passphrase
+/**
+ * Import an RSA private key from PEM format into a CryptoKey
+ * Supports both PKCS#8 and PKCS#1 formats
+ */
+const importPrivateKey = async (pem: string): Promise<CryptoKey> => {
+  const keyData = pemToBytes(pem)
+
+  // Try PKCS#8 first (BEGIN PRIVATE KEY)
+  if (pem.includes('BEGIN PRIVATE KEY')) {
+    return crypto.subtle.importKey(
+      'pkcs8',
+      keyData,
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        hash: 'SHA-256'
+      },
+      false,
+      ['sign']
+    )
   }
 
-  return sign.sign(keyOptions)
+  // PKCS#1 (BEGIN RSA PRIVATE KEY) - wrap in PKCS#8 envelope
+  // Web Crypto requires PKCS#8, so we wrap PKCS#1 keys
+  if (pem.includes('BEGIN RSA PRIVATE KEY')) {
+    const pkcs8Wrapped = wrapPkcs1InPkcs8(keyData)
+    return crypto.subtle.importKey(
+      'pkcs8',
+      pkcs8Wrapped,
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        hash: 'SHA-256'
+      },
+      false,
+      ['sign']
+    )
+  }
+
+  // Try PKCS#8 as default
+  return crypto.subtle.importKey(
+    'pkcs8',
+    keyData,
+    {
+      name: 'RSASSA-PKCS1-v1_5',
+      hash: 'SHA-256'
+    },
+    false,
+    ['sign']
+  )
 }
 
 /**
- * Verify RSA-SHA256 signature
+ * Import an RSA public key from X509 certificate PEM for verification
+ */
+const importPublicKeyFromCert = async (pem: string): Promise<CryptoKey> => {
+  // Extract the SPKI from the certificate
+  // For X509 certificates, we use the raw certificate bytes
+  const certData = pemToBytes(pem)
+
+  // Try importing as SPKI (works if PEM is a public key)
+  try {
+    return await crypto.subtle.importKey(
+      'spki',
+      certData,
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        hash: 'SHA-256'
+      },
+      false,
+      ['verify']
+    )
+  } catch {
+    // If the PEM is a full X509 certificate, extract the SubjectPublicKeyInfo
+    // from the TBSCertificate. This is a simplified ASN.1 parser for X509.
+    const spki = extractSpkiFromCertificate(certData)
+    return crypto.subtle.importKey(
+      'spki',
+      spki,
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        hash: 'SHA-256'
+      },
+      false,
+      ['verify']
+    )
+  }
+}
+
+/**
+ * Wrap a PKCS#1 RSA private key in a PKCS#8 envelope
+ * PKCS#8 = SEQUENCE { version INTEGER, algorithm AlgorithmIdentifier, privateKey OCTET STRING }
+ */
+function wrapPkcs1InPkcs8(pkcs1Bytes: Uint8Array): Uint8Array {
+  // RSA OID: 1.2.840.113549.1.1.1
+  const rsaOid = new Uint8Array([
+    0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01
+  ])
+  // NULL parameters
+  const nullParam = new Uint8Array([0x05, 0x00])
+
+  // AlgorithmIdentifier SEQUENCE
+  const algIdContent = new Uint8Array(rsaOid.length + nullParam.length)
+  algIdContent.set(rsaOid, 0)
+  algIdContent.set(nullParam, rsaOid.length)
+  const algId = wrapAsn1Sequence(algIdContent)
+
+  // Version INTEGER 0
+  const version = new Uint8Array([0x02, 0x01, 0x00])
+
+  // PrivateKey OCTET STRING wrapping the PKCS#1 bytes
+  const privateKeyOctet = wrapAsn1OctetString(pkcs1Bytes)
+
+  // Outer SEQUENCE
+  const outerContent = new Uint8Array(
+    version.length + algId.length + privateKeyOctet.length
+  )
+  outerContent.set(version, 0)
+  outerContent.set(algId, version.length)
+  outerContent.set(privateKeyOctet, version.length + algId.length)
+
+  return wrapAsn1Sequence(outerContent)
+}
+
+/**
+ * Wrap content in an ASN.1 SEQUENCE tag
+ */
+function wrapAsn1Sequence(content: Uint8Array): Uint8Array {
+  return wrapAsn1Tag(0x30, content)
+}
+
+/**
+ * Wrap content in an ASN.1 OCTET STRING tag
+ */
+function wrapAsn1OctetString(content: Uint8Array): Uint8Array {
+  return wrapAsn1Tag(0x04, content)
+}
+
+/**
+ * Wrap content with an ASN.1 tag and DER-encoded length
+ */
+function wrapAsn1Tag(tag: number, content: Uint8Array): Uint8Array {
+  const lengthBytes = derEncodeLength(content.length)
+  const result = new Uint8Array(1 + lengthBytes.length + content.length)
+  result[0] = tag
+  result.set(lengthBytes, 1)
+  result.set(content, 1 + lengthBytes.length)
+  return result
+}
+
+/**
+ * DER-encode a length value
+ */
+function derEncodeLength(length: number): Uint8Array {
+  if (length < 0x80) {
+    return new Uint8Array([length])
+  }
+  if (length < 0x100) {
+    return new Uint8Array([0x81, length])
+  }
+  if (length < 0x10000) {
+    return new Uint8Array([0x82, (length >> 8) & 0xff, length & 0xff])
+  }
+  return new Uint8Array([
+    0x83,
+    (length >> 16) & 0xff,
+    (length >> 8) & 0xff,
+    length & 0xff
+  ])
+}
+
+/**
+ * Parse a DER-encoded length and return [length, bytesConsumed]
+ */
+function parseDerLength(
+  data: Uint8Array,
+  offset: number
+): [number, number] {
+  const first = data[offset]
+  if (first < 0x80) {
+    return [first, 1]
+  }
+  const numBytes = first & 0x7f
+  let length = 0
+  for (let i = 0; i < numBytes; i++) {
+    length = (length << 8) | data[offset + 1 + i]
+  }
+  return [length, 1 + numBytes]
+}
+
+/**
+ * Extract SubjectPublicKeyInfo (SPKI) from an X.509 certificate
+ *
+ * X.509 Certificate structure (simplified):
+ *   SEQUENCE {
+ *     tbsCertificate SEQUENCE {
+ *       version [0] EXPLICIT INTEGER (optional)
+ *       serialNumber INTEGER
+ *       signature AlgorithmIdentifier
+ *       issuer Name
+ *       validity Validity
+ *       subject Name
+ *       subjectPublicKeyInfo SubjectPublicKeyInfo  <-- we want this
+ *       ...
+ *     }
+ *     signatureAlgorithm AlgorithmIdentifier
+ *     signatureValue BIT STRING
+ *   }
+ */
+function extractSpkiFromCertificate(certDer: Uint8Array): Uint8Array {
+  let offset = 0
+
+  // Outer SEQUENCE (Certificate)
+  if (certDer[offset] !== 0x30) {
+    throw new Error('Invalid certificate: expected SEQUENCE')
+  }
+  offset++
+  const [, outerLenBytes] = parseDerLength(certDer, offset)
+  offset += outerLenBytes
+
+  // TBSCertificate SEQUENCE
+  if (certDer[offset] !== 0x30) {
+    throw new Error('Invalid certificate: expected TBSCertificate SEQUENCE')
+  }
+  offset++
+  const [, tbsLenBytes] = parseDerLength(certDer, offset)
+  offset += tbsLenBytes
+
+  // version [0] EXPLICIT (optional) - tag 0xA0
+  if (certDer[offset] === 0xa0) {
+    offset++
+    const [versionLen, versionLenBytes] = parseDerLength(certDer, offset)
+    offset += versionLenBytes + versionLen
+  }
+
+  // serialNumber INTEGER
+  if (certDer[offset] === 0x02) {
+    offset++
+    const [serialLen, serialLenBytes] = parseDerLength(certDer, offset)
+    offset += serialLenBytes + serialLen
+  }
+
+  // signature AlgorithmIdentifier SEQUENCE
+  if (certDer[offset] === 0x30) {
+    offset++
+    const [sigLen, sigLenBytes] = parseDerLength(certDer, offset)
+    offset += sigLenBytes + sigLen
+  }
+
+  // issuer Name SEQUENCE
+  if (certDer[offset] === 0x30) {
+    offset++
+    const [issuerLen, issuerLenBytes] = parseDerLength(certDer, offset)
+    offset += issuerLenBytes + issuerLen
+  }
+
+  // validity SEQUENCE
+  if (certDer[offset] === 0x30) {
+    offset++
+    const [validityLen, validityLenBytes] = parseDerLength(certDer, offset)
+    offset += validityLenBytes + validityLen
+  }
+
+  // subject Name SEQUENCE
+  if (certDer[offset] === 0x30) {
+    offset++
+    const [subjectLen, subjectLenBytes] = parseDerLength(certDer, offset)
+    offset += subjectLenBytes + subjectLen
+  }
+
+  // subjectPublicKeyInfo SEQUENCE - this is what we want
+  if (certDer[offset] !== 0x30) {
+    throw new Error(
+      'Invalid certificate: expected SubjectPublicKeyInfo SEQUENCE'
+    )
+  }
+
+  const spkiStart = offset
+  offset++
+  const [spkiContentLen, spkiLenBytes] = parseDerLength(certDer, offset)
+  const spkiTotalLen = 1 + spkiLenBytes + spkiContentLen
+
+  return certDer.slice(spkiStart, spkiStart + spkiTotalLen)
+}
+
+/**
+ * Create RSA-SHA256 signature using Web Crypto API
+ * @param data - Data to sign
+ * @param privateKey - RSA private key in PEM format
+ * @param _passphrase - Not supported in Web Crypto (kept for API compatibility)
+ * @returns Signature as Uint8Array
+ */
+export const createSignature = async (
+  data: string | Uint8Array,
+  privateKey: string,
+  _passphrase?: string
+): Promise<Uint8Array> => {
+  const key = await importPrivateKey(privateKey)
+  const bytes = typeof data === 'string' ? encoder.encode(data) : data
+  const signatureBuffer = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5',
+    key,
+    bytes
+  )
+  return new Uint8Array(signatureBuffer)
+}
+
+/**
+ * Verify RSA-SHA256 signature using Web Crypto API
  * @param data - Original data
  * @param signature - Signature to verify
  * @param certificate - X509 certificate in PEM format
  * @returns true if signature is valid
  */
-export const verifySignature = (
-  data: string | Buffer,
-  signature: Buffer,
+export const verifySignature = async (
+  data: string | Uint8Array,
+  signature: Uint8Array,
   certificate: string
-): boolean => {
-  const verify = crypto.createVerify('RSA-SHA256')
-  verify.update(data)
-  verify.end()
-  return verify.verify(certificate, signature)
+): Promise<boolean> => {
+  try {
+    const key = await importPublicKeyFromCert(certificate)
+    const bytes = typeof data === 'string' ? encoder.encode(data) : data
+    return crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, signature, bytes)
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -286,6 +596,17 @@ const removeSignatureElement = (xml: string): string => {
   )
 }
 
+/**
+ * Compare two Uint8Arrays for equality
+ */
+const uint8ArrayEquals = (a: Uint8Array, b: Uint8Array): boolean => {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
+}
+
 // ============================================================================
 // XmlSigner Class
 // ============================================================================
@@ -298,6 +619,9 @@ const removeSignatureElement = (xml: string): string => {
  * - SHA-256 digest algorithm
  * - Enveloped signature transform
  * - Canonical XML (C14N) canonicalization
+ *
+ * All signing and verification methods are async because
+ * the Web Crypto API (SubtleCrypto) is promise-based.
  */
 export class XmlSigner {
   private config: SignerConfig
@@ -324,7 +648,8 @@ export class XmlSigner {
     }
     if (
       !config.certificate.includes('BEGIN CERTIFICATE') &&
-      !config.certificate.includes('BEGIN TRUSTED CERTIFICATE')
+      !config.certificate.includes('BEGIN TRUSTED CERTIFICATE') &&
+      !config.certificate.includes('BEGIN PUBLIC KEY')
     ) {
       throw new Error('Certificate must be in PEM format')
     }
@@ -341,9 +666,9 @@ export class XmlSigner {
    *
    * @param xml - XML document to sign
    * @param options - Optional signing options
-   * @returns Signed XML document with embedded Signature element
+   * @returns Promise resolving to signed XML document with embedded Signature element
    */
-  sign(xml: string, options: SignOptions = {}): string {
+  async sign(xml: string, options: SignOptions = {}): Promise<string> {
     const { referenceUri = '', signatureId } = options
 
     // Step 1: Apply enveloped signature transform (remove any existing signature)
@@ -353,7 +678,7 @@ export class XmlSigner {
     const canonicalXml = canonicalize(xmlWithoutSig)
 
     // Step 3: Compute digest of canonical XML
-    const digest = computeDigest(canonicalXml)
+    const digest = await computeDigest(canonicalXml)
     const digestValue = base64Encode(digest)
 
     // Step 4: Create SignedInfo element
@@ -363,7 +688,7 @@ export class XmlSigner {
     const canonicalSignedInfo = canonicalize(signedInfo)
 
     // Step 6: Create signature over canonical SignedInfo
-    const signature = createSignature(
+    const signature = await createSignature(
       canonicalSignedInfo,
       this.config.privateKey,
       this.config.passphrase
@@ -389,11 +714,11 @@ export class XmlSigner {
    * Verify a signed XML document
    *
    * @param signedXml - Signed XML document
-   * @returns true if signature is valid
+   * @returns Promise resolving to true if signature is valid
    */
-  verify(signedXml: string): boolean {
+  async verify(signedXml: string): Promise<boolean> {
     try {
-      const result = this.verifyWithDetails(signedXml)
+      const result = await this.verifyWithDetails(signedXml)
       return result.valid
     } catch {
       return false
@@ -404,9 +729,9 @@ export class XmlSigner {
    * Verify a signed XML document with detailed results
    *
    * @param signedXml - Signed XML document
-   * @returns Verification result with details
+   * @returns Promise resolving to verification result with details
    */
-  verifyWithDetails(signedXml: string): VerificationResult {
+  async verifyWithDetails(signedXml: string): Promise<VerificationResult> {
     try {
       // Step 1: Extract SignedInfo, SignatureValue, and DigestValue
       const signedInfoMatch = signedXml.match(
@@ -433,10 +758,10 @@ export class XmlSigner {
       // Step 2: Verify digest
       const xmlWithoutSig = removeSignatureElement(signedXml)
       const canonicalXml = canonicalize(xmlWithoutSig)
-      const computedDigest = computeDigest(canonicalXml)
+      const computedDigestBytes = await computeDigest(canonicalXml)
       const expectedDigest = base64Decode(digestValueMatch[1].trim())
 
-      if (!computedDigest.equals(expectedDigest)) {
+      if (!uint8ArrayEquals(computedDigestBytes, expectedDigest)) {
         return { valid: false, error: 'Digest verification failed' }
       }
 
@@ -445,7 +770,7 @@ export class XmlSigner {
       const canonicalSignedInfo = canonicalize(signedInfoElement)
       const signatureBytes = base64Decode(signatureValueMatch[1].trim())
 
-      const isValid = verifySignature(
+      const isValid = await verifySignature(
         canonicalSignedInfo,
         signatureBytes,
         this.config.certificate
@@ -552,15 +877,15 @@ export const createSigner = (config: SignerConfig): XmlSigner => {
  * @param xml - XML document to sign
  * @param certificate - X509 certificate in PEM format
  * @param privateKey - RSA private key in PEM format
- * @param passphrase - Optional passphrase for encrypted keys
- * @returns Signed XML document
+ * @param passphrase - Optional passphrase (not supported in Web Crypto)
+ * @returns Promise resolving to signed XML document
  */
-export const signXml = (
+export const signXml = async (
   xml: string,
   certificate: string,
   privateKey: string,
   passphrase?: string
-): string => {
+): Promise<string> => {
   const signer = createSigner({ certificate, privateKey, passphrase })
   return signer.sign(xml)
 }
@@ -569,9 +894,12 @@ export const signXml = (
  * Verify signed XML (convenience function)
  * @param signedXml - Signed XML document
  * @param certificate - X509 certificate in PEM format
- * @returns true if signature is valid
+ * @returns Promise resolving to true if signature is valid
  */
-export const verifyXml = (signedXml: string, certificate: string): boolean => {
+export const verifyXml = async (
+  signedXml: string,
+  certificate: string
+): Promise<boolean> => {
   // For verification, we need the certificate but not the private key
   // Create a dummy config since verify only uses the certificate
   const signer = createSigner({

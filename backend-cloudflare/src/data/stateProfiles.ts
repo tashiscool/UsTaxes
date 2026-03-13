@@ -41,13 +41,18 @@ export const resolveStateProfile = (
 
   return {
     stateCode: normalized,
-    taxSystemName: systemNames[normalized] ?? `${normalized} Department of Revenue`,
+    taxSystemName:
+      systemNames[normalized] ?? `${normalized} Department of Revenue`,
     landingUrl: buildUrl(env, normalized, '/direct-file'),
     defaultRedirectUrl: buildUrl(env, normalized, '/direct-file/return'),
     departmentOfRevenueUrl: buildUrl(env, normalized, ''),
     filingRequirementsUrl: buildUrl(env, normalized, '/filing-requirements'),
     transferCancelUrl: buildUrl(env, normalized, '/transfer/cancel'),
-    waitingForAcceptanceCancelUrl: buildUrl(env, normalized, '/acceptance/cancel'),
+    waitingForAcceptanceCancelUrl: buildUrl(
+      env,
+      normalized,
+      '/acceptance/cancel'
+    ),
     redirectUrls: [buildUrl(env, normalized, '/direct-file/*')],
     languages: {
       en: 'en',

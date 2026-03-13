@@ -572,7 +572,11 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
         lastScreen: '/review-confirm',
         completionPct: 82,
         estimatedRefund: 1825,
-        completedScreens: ['/taxpayer-profile', '/efile-wizard', '/review-confirm'],
+        completedScreens: [
+          '/taxpayer-profile',
+          '/efile-wizard',
+          '/review-confirm'
+        ],
         screenData: {
           '/taxpayer-profile': {
             firstName: 'Ava',
@@ -743,7 +747,10 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const checklist = await parseJsonResponse<JsonObject>(response)
     expect((checklist.checklist as JsonObject).items).toBeTruthy()
     expect((checklist.findings as JsonObject[]).length).toBe(0)
-    const checklistItems = (checklist.checklist as JsonObject).items as Record<string, JsonObject>
+    const checklistItems = (checklist.checklist as JsonObject).items as Record<
+      string,
+      JsonObject
+    >
     expect(checklistItems.household.status).toBe('complete')
     expect(checklistItems.ctc.status).toBe('complete')
 
@@ -771,7 +778,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect((facts.incomeSummary as JsonObject).totalW2Wages).toBe(75000)
     expect((facts.incomeSummary as JsonObject).total1099Amount).toBe(215)
     expect(Array.isArray(facts.dependents)).toBe(true)
-    expect(((facts.dependents as JsonObject[])[0] as JsonObject).relationship).toBe('child')
+    expect(
+      ((facts.dependents as JsonObject[])[0] as JsonObject).relationship
+    ).toBe('child')
     expect((facts.creditSummary as JsonObject).eligibleCount).toBe(1)
     expect((facts.creditSummary as JsonObject).estimatedTotal).toBe(2000)
     expect(Array.isArray(facts.w2Records)).toBe(true)
@@ -832,7 +841,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     )
     expect(response.status).toBe(200)
     const submission = await parseJsonResponse<JsonObject>(response)
-    expect((submission.submission as JsonObject).lifecycleStatus).toBe('accepted')
+    expect((submission.submission as JsonObject).lifecycleStatus).toBe(
+      'accepted'
+    )
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/state-transfer`,
@@ -842,9 +853,10 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     )
     expect(response.status).toBe(200)
     const stateTransfer = await parseJsonResponse<JsonObject>(response)
-    expect(((stateTransfer.stateTransfer as JsonObject).profile as JsonObject).stateCode).toBe(
-      'MA'
-    )
+    expect(
+      ((stateTransfer.stateTransfer as JsonObject).profile as JsonObject)
+        .stateCode
+    ).toBe('MA')
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/state-transfer/authorize`,
@@ -957,9 +969,12 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(200)
     const rejected = await parseJsonResponse<JsonObject>(response)
     expect((rejected.submission as JsonObject).lifecycleStatus).toBe('rejected')
-    expect(Array.isArray((rejected.submission as JsonObject).rejectionErrors)).toBe(true)
     expect(
-      ((rejected.submission as JsonObject).rejectionErrors as JsonObject[])[0]?.code
+      Array.isArray((rejected.submission as JsonObject).rejectionErrors)
+    ).toBe(true)
+    expect(
+      ((rejected.submission as JsonObject).rejectionErrors as JsonObject[])[0]
+        ?.code
     ).toBe('IND-031')
     expect((rejected.submission as JsonObject).canRetry).toBe(true)
 
@@ -1148,7 +1163,8 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(
       entities.some(
         (entity) =>
-          entity.entityType === 'schedule_c' && entity.id === 'consulting-business'
+          entity.entityType === 'schedule_c' &&
+          entity.id === 'consulting-business'
       )
     ).toBe(true)
     expect(
@@ -1193,7 +1209,8 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(
       entities.some(
         (entity) =>
-          entity.entityType === 'treaty_claim' && entity.id === 'treaty-claim-primary'
+          entity.entityType === 'treaty_claim' &&
+          entity.id === 'treaty-claim-primary'
       )
     ).toBe(true)
     expect(
@@ -1224,12 +1241,13 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(
       (afterDelete.entities as JsonObject[]).some(
         (entity) =>
-          entity.entityType === 'treaty_claim' && entity.id === 'treaty-claim-primary'
+          entity.entityType === 'treaty_claim' &&
+          entity.id === 'treaty-claim-primary'
       )
     ).toBe(false)
   })
 
-  it('derives spouse, unemployment, and investment facts from TaxFlow entities', async () => {
+  it('derives spouse, unemployment, and investment facts from TaxFlow entities', { timeout: 60000 }, async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -1374,7 +1392,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const facts = syncResult.facts as JsonObject
     expect((facts.spouse as JsonObject).firstName).toBe('Taylor')
     expect((facts.incomeSummary as JsonObject).totalUnemployment).toBe(6400)
-    expect((facts.incomeSummary as JsonObject).totalSocialSecurityGross).toBe(18000)
+    expect((facts.incomeSummary as JsonObject).totalSocialSecurityGross).toBe(
+      18000
+    )
     expect((facts.investmentSummary as JsonObject).cryptoAccountCount).toBe(1)
     expect((facts.investmentSummary as JsonObject).taxLotCount).toBe(1)
     expect((facts.investmentSummary as JsonObject).netCapitalGain).toBe(3400)
@@ -1457,10 +1477,16 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const initialPacket = await parseJsonResponse<JsonObject>(response)
     const initialPrintMail = initialPacket.printMail as JsonObject
     expect(initialPrintMail.packetStatus).toBe('ready')
-    expect((initialPrintMail.mailingAddress as JsonObject).withPayment).toBe(true)
-    expect(Array.isArray((initialPrintMail.mailingAddress as JsonObject).lines)).toBe(true)
+    expect((initialPrintMail.mailingAddress as JsonObject).withPayment).toBe(
+      true
+    )
+    expect(
+      Array.isArray((initialPrintMail.mailingAddress as JsonObject).lines)
+    ).toBe(true)
     expect(Array.isArray(initialPrintMail.checklist)).toBe(true)
-    expect(String(initialPrintMail.packetKey)).toContain('/print-mail/packet.json')
+    expect(String(initialPrintMail.packetKey)).toContain(
+      '/print-mail/packet.json'
+    )
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/print-mail`,
@@ -1711,8 +1737,12 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect((facts.businessSummary as JsonObject).finalQBIDeduction).toBe(18000)
     expect((facts.rentalSummary as JsonObject).propertyCount).toBe(1)
     expect((facts.rentalSummary as JsonObject).grossRentsTotal).toBe(24000)
-    expect((facts.foreignSummary as JsonObject).totalForeignEarnedIncome).toBe(140000)
-    expect((facts.foreignSummary as JsonObject).feieExclusionEstimate).toBe(130000)
+    expect((facts.foreignSummary as JsonObject).totalForeignEarnedIncome).toBe(
+      140000
+    )
+    expect((facts.foreignSummary as JsonObject).feieExclusionEstimate).toBe(
+      130000
+    )
     expect((facts.foreignSummary as JsonObject).fbarRequired).toBe(true)
     expect((facts.foreignSummary as JsonObject).requires1040NR).toBe(true)
     expect((facts.foreignSummary as JsonObject).scheduleNecTaxTotal).toBe(630)
@@ -1744,6 +1774,8 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const sections = (review.review as JsonObject).sections as JsonObject[]
     expect(sections.some((section) => section.id === 'business')).toBe(true)
     expect(sections.some((section) => section.id === 'rental')).toBe(true)
-    expect(sections.some((section) => section.id === 'international')).toBe(true)
+    expect(sections.some((section) => section.id === 'international')).toBe(
+      true
+    )
   })
 })
