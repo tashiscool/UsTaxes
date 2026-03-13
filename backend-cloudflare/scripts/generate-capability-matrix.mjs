@@ -127,12 +127,12 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
     r2Artifacts: ['filing-sessions/<id>/entities/schedule_c/<id>.json', 'filing-sessions/<id>/entities/k1_entity/<id>.json'],
-    orchestration: 'generic entity persistence only',
+    orchestration: 'TaxFlow business CRUD -> worker entity store',
     atsCoverage: 'S6|S28|S29|S34|S36',
     directFileCoverage: 'partial',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'UI and persistence exist, but QBI, basis, and K-1 facts are not yet mapped into the backend return model.'
+      'BusinessK1 now round-trips Schedule C and K-1 entities through /app/v1 with worker runtime coverage, while deeper QBI and basis return-model mapping remains a backend follow-up.'
   },
   {
     family: 'rental_property',
@@ -141,12 +141,12 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
     r2Artifacts: ['filing-sessions/<id>/entities/rental_property/<id>.json'],
-    orchestration: 'generic entity persistence only',
+    orchestration: 'TaxFlow rental CRUD -> worker entity store',
     atsCoverage: 'S7',
     directFileCoverage: 'partial',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'Rental properties are persisted, but Schedule E fact derivation and review are still backend gaps.'
+      'RentalWorkspace now persists and restores rental_property entities through /app/v1 with worker runtime coverage, while Schedule E fact derivation is still a backend gap.'
   },
   {
     family: 'retirement_and_hsa',
@@ -155,12 +155,12 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
     r2Artifacts: ['filing-sessions/<id>/entities/hsa_account/<id>.json', 'filing-sessions/<id>/entities/ira_distribution/<id>.json'],
-    orchestration: 'generic entity persistence only',
+    orchestration: 'TaxFlow HSA/IRA CRUD -> worker entity store',
     atsCoverage: 'S15|S23',
     directFileCoverage: 'partial',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'Persisted and restorable, but backend computation hooks for HSA and retirement distributions are still shallow.'
+      'HSAFlow and IRARetirement now round-trip their core entities through /app/v1 with worker runtime coverage, while detailed retirement/HSA tax computation is still shallow.'
   },
   {
     family: 'unemployment_and_social_security',
@@ -183,12 +183,12 @@ const rows = [
     backendEndpoints: sharedEntityEndpoints,
     d1Tables: ['filing_sessions', 'session_entities'],
     r2Artifacts: ['filing-sessions/<id>/entities/foreign_income_record/<id>.json', 'filing-sessions/<id>/entities/foreign_account/<id>.json', 'filing-sessions/<id>/entities/treaty_claim/<id>.json'],
-    orchestration: 'generic entity persistence only',
+    orchestration: 'TaxFlow foreign-entity CRUD -> worker entity store',
     atsCoverage: 'S18|S19|S20|NR1|NR2|NR3|NR4|NR5|NR12',
     directFileCoverage: 'yes',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'Direct File compatibility exists for many NR scenarios, but TaxFlow-to-backend entity mapping is not complete.'
+      'ForeignIncome now persists foreign income, foreign account, and treaty-claim entities through /app/v1 with worker runtime coverage, though deeper nonresident tax mapping remains partial.'
   },
   {
     family: 'credits_and_supporting_entities',
@@ -217,12 +217,12 @@ const rows = [
     ],
     d1Tables: ['filing_sessions', 'session_entities', 'state_transfer_authorizations'],
     r2Artifacts: ['filing-sessions/<id>/state-transfer/<authorizationCode>.json'],
-    orchestration: 'state profile lookup + export authorization',
+    orchestration: 'local tax CRUD + state profile lookup + export authorization',
     atsCoverage: 'S27|NR4',
     directFileCoverage: 'yes',
-    status: 'implemented_stubbed',
+    status: 'implemented_tested',
     notes:
-      'State transfer is wired, but state/local line-item facts are not yet derived from TaxFlow entities.'
+      'StateTaxFlow now round-trips local_tax_obligation entities through /app/v1 and state transfer remains worker-tested, while detailed state/local line-item derivation is still shallow.'
   },
   {
     family: 'checklist_and_review',

@@ -978,4 +978,254 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const retryResult = await parseJsonResponse<JsonObject>(response)
     expect(retryResult.retried).toBe(true)
   })
+
+  it('round-trips advanced TaxFlow entity families through app CRUD', async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sub: 'taxflow-user-advanced-entities',
+        email: 'advanced-entities@example.com',
+        displayName: 'Advanced Entity User'
+      })
+    })
+    expect(response.status).toBe(201)
+    const sessionCookie = extractCookieHeader(response)
+
+    response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionCookie
+      },
+      body: JSON.stringify({
+        taxYear: 2025,
+        filingStatus: 'single',
+        formType: '1040',
+        currentPhase: 'income'
+      })
+    })
+    expect(response.status).toBe(201)
+    const created = await parseJsonResponse<JsonObject>(response)
+    const filingSessionId = String((created.filingSession as JsonObject).id)
+
+    const advancedEntities = [
+      {
+        entityType: 'schedule_c',
+        entityId: 'consulting-business',
+        label: 'Consulting LLC',
+        data: {
+          businessType: 'schedule-c',
+          name: 'Consulting LLC',
+          grossIncome: '92000',
+          cogs: '0'
+        }
+      },
+      {
+        entityType: 'k1_entity',
+        entityId: 'partnership-k1',
+        label: 'Partnership K-1',
+        data: {
+          businessType: 'k1-partnership',
+          name: 'Elm Street Partners',
+          k1Box1: '14500',
+          k1Box2: '0',
+          k1Box3: '0'
+        }
+      },
+      {
+        entityType: 'rental_property',
+        entityId: 'rental-a',
+        label: '12 Rental Ave',
+        data: {
+          address: '12 Rental Ave',
+          type: 'residential',
+          grossRents: '28000',
+          daysRented: '365',
+          expenses: {
+            mortgage: '9000',
+            taxes: '3200'
+          }
+        }
+      },
+      {
+        entityType: 'hsa_account',
+        entityId: 'hsa-primary',
+        label: 'Primary HSA',
+        data: {
+          coverageType: 'family',
+          age55: false,
+          employerContributions: '2500',
+          yourContributions: '1800',
+          totalDistributions: '600',
+          qualifiedDistributions: '600',
+          nonqualifiedDistributions: '0'
+        }
+      },
+      {
+        entityType: 'ira_distribution',
+        entityId: 'retirement-primary',
+        label: 'Retirement summary',
+        data: {
+          traditionalContributions: '6500',
+          pensionIncome: '12000',
+          rothConversion: '0',
+          takingRmd: false
+        }
+      },
+      {
+        entityType: 'foreign_income_record',
+        entityId: 'foreign-income-primary',
+        label: 'Foreign salary',
+        data: {
+          country: 'Canada',
+          incomeType: 'salary',
+          amount: '43000'
+        }
+      },
+      {
+        entityType: 'foreign_account',
+        entityId: 'foreign-account-primary',
+        label: 'RBC account',
+        data: {
+          institution: 'Royal Bank of Canada',
+          highestBalance: '22000',
+          country: 'Canada'
+        }
+      },
+      {
+        entityType: 'treaty_claim',
+        entityId: 'treaty-claim-primary',
+        label: 'US-Canada treaty',
+        data: {
+          treatyCountry: 'Canada',
+          article: 'XV',
+          explanation: 'Employment income allocation'
+        }
+      },
+      {
+        entityType: 'local_tax_obligation',
+        entityId: 'ma-resident',
+        label: 'Massachusetts return',
+        data: {
+          state: 'MA',
+          residencyType: 'resident',
+          incomeAllocated: '75000',
+          stateWithheld: '3200'
+        }
+      }
+    ] as const
+
+    for (const entity of advancedEntities) {
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/${entity.entityType}/${entity.entityId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            status: 'complete',
+            label: entity.label,
+            data: entity.data
+          })
+        }
+      )
+      expect(response.status).toBe(200)
+    }
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const entitiesResponse = await parseJsonResponse<JsonObject>(response)
+    const entities = entitiesResponse.entities as JsonObject[]
+
+    expect(
+      entities.some(
+        (entity) =>
+          entity.entityType === 'schedule_c' && entity.id === 'consulting-business'
+      )
+    ).toBe(true)
+    expect(
+      entities.some(
+        (entity) =>
+          entity.entityType === 'k1_entity' && entity.id === 'partnership-k1'
+      )
+    ).toBe(true)
+    expect(
+      entities.some(
+        (entity) =>
+          entity.entityType === 'rental_property' && entity.id === 'rental-a'
+      )
+    ).toBe(true)
+    expect(
+      entities.some(
+        (entity) =>
+          entity.entityType === 'hsa_account' && entity.id === 'hsa-primary'
+      )
+    ).toBe(true)
+    expect(
+      entities.some(
+        (entity) =>
+          entity.entityType === 'ira_distribution' &&
+          entity.id === 'retirement-primary'
+      )
+    ).toBe(true)
+    expect(
+      entities.some(
+        (entity) =>
+          entity.entityType === 'foreign_income_record' &&
+          entity.id === 'foreign-income-primary'
+      )
+    ).toBe(true)
+    expect(
+      entities.some(
+        (entity) =>
+          entity.entityType === 'foreign_account' &&
+          entity.id === 'foreign-account-primary'
+      )
+    ).toBe(true)
+    expect(
+      entities.some(
+        (entity) =>
+          entity.entityType === 'treaty_claim' && entity.id === 'treaty-claim-primary'
+      )
+    ).toBe(true)
+    expect(
+      entities.some(
+        (entity) =>
+          entity.entityType === 'local_tax_obligation' &&
+          entity.id === 'ma-resident'
+      )
+    ).toBe(true)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/treaty_claim/treaty-claim-primary`,
+      {
+        method: 'DELETE',
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const afterDelete = await parseJsonResponse<JsonObject>(response)
+    expect(
+      (afterDelete.entities as JsonObject[]).some(
+        (entity) =>
+          entity.entityType === 'treaty_claim' && entity.id === 'treaty-claim-primary'
+      )
+    ).toBe(false)
+  })
 })
