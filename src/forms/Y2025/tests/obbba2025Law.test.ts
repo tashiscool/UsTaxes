@@ -398,6 +398,131 @@ describe('2025 federal law updates', () => {
     expect(f8995A.l9c()).toBe(17500)
   })
 
+  it('sources QBI wages and UBIA from business and K-1 data', () => {
+    const information = cloneDeep(baseInformation)
+    information.businesses = [
+      {
+        name: 'Taylor Consulting Services',
+        principalBusinessCode: '541611',
+        businessDescription: 'Management Consulting',
+        accountingMethod: 'cash',
+        materialParticipation: true,
+        startedOrAcquired: false,
+        madePaymentsRequiring1099: false,
+        filed1099s: false,
+        personRole: PersonRole.PRIMARY,
+        qbiW2Wages: 18000,
+        qbiUbia: 95000,
+        income: {
+          grossReceipts: 150000,
+          returns: 0,
+          otherIncome: 0
+        },
+        expenses: {
+          advertising: 2500,
+          carAndTruck: 0,
+          commissions: 0,
+          contractLabor: 0,
+          depletion: 0,
+          depreciation: 0,
+          employeeBenefits: 0,
+          insurance: 3600,
+          interestMortgage: 0,
+          interestOther: 0,
+          legal: 4000,
+          office: 3000,
+          pensionPlans: 0,
+          rentVehicles: 0,
+          rentOther: 0,
+          repairs: 0,
+          supplies: 1500,
+          taxes: 0,
+          travel: 8000,
+          deductibleMeals: 2000,
+          utilities: 0,
+          wages: 12000,
+          otherExpenses: 2400
+        }
+      }
+    ] as never
+    information.scheduleK1Form1065s = [
+      {
+        partnershipName: 'Northwind Partners',
+        partnershipEin: '123456789',
+        partnerOrSCorp: 'P',
+        isForeign: false,
+        isPassive: false,
+        ordinaryBusinessIncome: 0,
+        interestIncome: 0,
+        guaranteedPaymentsForServices: 0,
+        guaranteedPaymentsForCapital: 0,
+        selfEmploymentEarningsA: 0,
+        selfEmploymentEarningsB: 0,
+        selfEmploymentEarningsC: 0,
+        distributionsCodeAAmount: 0,
+        section199AQBI: 50000,
+        section199AW2Wages: 12000,
+        section199AUbia: 60000
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+    const entries = f1040.f8995?.qbiEntries()
+
+    expect(entries).toBeDefined()
+    expect(entries?.[0]).toMatchObject({
+      name: 'Taylor Consulting Services',
+      w2Wages: 18000,
+      ubia: 95000
+    })
+    expect(entries?.[1]).toMatchObject({
+      name: 'Northwind Partners',
+      w2Wages: 12000,
+      ubia: 60000
+    })
+  })
+
+  it('aggregates detailed QBI deductions across more than three businesses', () => {
+    const f1040 = new F1040(cloneDeep(baseInformation), [])
+    const f8995A = new F8995A(f1040)
+
+    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+      {
+        name: 'Alpha Consulting',
+        ein: '111111111',
+        qbi: 100000,
+        w2Wages: 100000,
+        ubia: 0
+      },
+      {
+        name: 'Bravo Services',
+        ein: '222222222',
+        qbi: 80000,
+        w2Wages: 80000,
+        ubia: 0
+      },
+      {
+        name: 'Charlie Rentals',
+        ein: '333333333',
+        qbi: 60000,
+        w2Wages: 60000,
+        ubia: 0
+      },
+      {
+        name: 'Delta Holdings',
+        ein: '444444444',
+        qbi: 40000,
+        w2Wages: 40000,
+        ubia: 0
+      }
+    ])
+    jest.spyOn(f8995A, 'l20').mockReturnValue(f8995A.l21())
+    jest.spyOn(f8995A, 'l34').mockReturnValue(0)
+
+    expect(f8995A.l16()).toBe(56000)
+    expect(f8995A.l27()).toBe(56000)
+  })
+
   it('treats qualified disaster losses differently from other casualty losses in 2025', () => {
     const information = cloneDeep(baseInformation)
     information.casualtyEvents = [

@@ -17,6 +17,26 @@ export default class F8995A extends F8995 {
   tag: FormTag = 'f8995a'
   sequenceIndex = 55.5
 
+  deductionForEntry = (
+    entry: ReturnType<F8995['qbiEntries']>[number]
+  ): number => {
+    const line3 = entry.qbi * qbid.maxRate
+    const line5 = entry.w2Wages * 0.5
+    const line6 = entry.w2Wages * 0.25
+    const line8 = entry.ubia * 0.025
+    const line10 = Math.max(line5, line6 + line8)
+    const line11 = Math.min(line3, line10)
+    const line19 = line3 - line10
+    const line25 = line19 * this.l24()
+    const line26 = line3 - line25
+    return Math.max(line26, line11)
+  }
+
+  allQualifiedBusinessDeductions = (): number[] =>
+    this.qbiEntries()
+      .filter((entry) => entry.qbi > 0)
+      .map((entry) => this.deductionForEntry(entry))
+
   l2a = (): number | undefined => this.qbiEntries()[0]?.qbi
   l2b = (): number | undefined => this.qbiEntries()[1]?.qbi
   l2c = (): number | undefined => this.qbiEntries()[2]?.qbi
@@ -92,7 +112,7 @@ export default class F8995A extends F8995 {
   l15c = (): number | undefined =>
     ifNumber(this.l13c(), (num) => num - (this.l14c() ?? 0))
 
-  l16 = (): number => sumFields([this.l15a(), this.l15b(), this.l15c()])
+  l16 = (): number => sumFields(this.allQualifiedBusinessDeductions())
 
   l17a = (): number | undefined => ifNumber(this.l3a(), (num) => num)
   l17b = (): number | undefined => ifNumber(this.l3b(), (num) => num)

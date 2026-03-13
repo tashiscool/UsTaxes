@@ -76,8 +76,8 @@ export default class F8995 extends F1040Attachment {
           name: business.name,
           ein: business.ein,
           qbi: netProfit,
-          w2Wages: 0,
-          ubia: 0
+          w2Wages: business.qbiW2Wages ?? business.expenses.wages,
+          ubia: business.qbiUbia ?? 0
         }
       })
       .filter((business) => business.qbi > 0)) as QBIEntry[]
@@ -89,8 +89,8 @@ export default class F8995 extends F1040Attachment {
         name: k1.partnershipName,
         ein: k1.partnershipEin,
         qbi: k1.section199AQBI,
-        w2Wages: 0,
-        ubia: 0
+        w2Wages: k1.section199AW2Wages ?? 0,
+        ubia: k1.section199AUbia ?? 0
       }))
 
   qbiEntries = (): QBIEntry[] => [

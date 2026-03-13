@@ -2,7 +2,9 @@ import {
   Address,
   Property,
   PropertyType,
-  PropertyExpenseTypeName
+  PropertyExpenseTypeName,
+  Income1099Type,
+  F1099MISCData
 } from 'ustaxes/core/data'
 import { displayNegPos, sumFields } from 'ustaxes/core/irsForms/util'
 import _ from 'lodash'
@@ -42,7 +44,9 @@ export default class ScheduleE extends F1040Attachment {
 
   isNeeded = (): boolean =>
     this.f1040.info.realEstate.length > 0 ||
-    this.f1040.info.scheduleK1Form1065s.length > 0
+    this.f1040.info.scheduleK1Form1065s.length > 0 ||
+    this.totalRoyaltyIncome() > 0 ||
+    this.hasPage2Adjustments()
 
   addressString = (address: Address): string =>
     [
@@ -74,9 +78,32 @@ export default class ScheduleE extends F1040Attachment {
     return fill(properties.map((a) => a.rentReceived))
   }
 
-  // TODO: not implemented
+  royaltyColumnIndex = (): number | undefined => {
+    if (this.totalRoyaltyIncome() === 0 && (this.royaltyExpenses() ?? 0) === 0) {
+      return undefined
+    }
+    return Math.min(this.f1040.info.realEstate.length, 2)
+  }
+
+  royaltyColumn = (amount: number | undefined): MatrixRow => {
+    const index = this.royaltyColumnIndex()
+    const row: Cell[] = [undefined, undefined, undefined]
+    if (index !== undefined && amount !== undefined && amount !== 0) {
+      row[index] = amount
+    }
+    return row as MatrixRow
+  }
+
+  totalRoyaltyIncome = (): number =>
+    this.f1040.info.f1099s.reduce((total, form) => {
+      if (form.type !== Income1099Type.MISC) {
+        return total
+      }
+      return total + ((form.form as F1099MISCData).royalties ?? 0)
+    }, 0)
+
   l4 = (): MatrixRow => {
-    return [undefined, undefined, undefined]
+    return this.royaltyColumn(this.totalRoyaltyIncome())
   }
 
   getExpensesRow = (expType: PropertyExpenseTypeName): MatrixRow =>
@@ -123,11 +150,20 @@ export default class ScheduleE extends F1040Attachment {
   l12 = (): MatrixRow => this.getExpensesRow('mortgage')
   l18 = (): MatrixRow => this.getExpensesRow('depreciation')
 
-  // TODO - required from pub 596 worksheet 1
-  royaltyExpenses = (): number | undefined => undefined
+  royaltyExpenses = (): number | undefined =>
+    this.f1040.info.scheduleEPage2?.royaltyExpenses
 
-  l20 = (): MatrixRow =>
-    fill(_.unzip(this.allExpenses()).map((column) => sumFields(column)))
+  l20 = (): MatrixRow => {
+    const propertyExpenseColumns = [0, 1, 2].map((columnIndex) =>
+      sumFields(this.allExpenses().map((row) => row[columnIndex]))
+    )
+    const royaltyExpenseColumns = this.royaltyColumn(this.royaltyExpenses() ?? 0)
+    return fill(
+      propertyExpenseColumns.map(
+        (value, columnIndex) => value + (royaltyExpenseColumns[columnIndex] ?? 0)
+      )
+    )
+  }
 
   l21 = (): MatrixRow =>
     _.zipWith(
@@ -139,11 +175,13 @@ export default class ScheduleE extends F1040Attachment {
 
   // Deductible real estate loss from 8582, as positive number
   l22 = (): MatrixRow =>
-    this.f1040.f8582?.deductibleRealEstateLossAfterLimitation() ?? [
-      undefined,
-      undefined,
-      undefined
-    ]
+    this.f1040.info.realEstate.length > 0
+      ? this.f1040.f8582?.deductibleRealEstateLossAfterLimitation() ?? [
+          undefined,
+          undefined,
+          undefined
+        ]
+      : [undefined, undefined, undefined]
 
   l23a = (): number => sumFields(this.l3())
   l23b = (): number => sumFields(this.l4())
@@ -157,8 +195,10 @@ export default class ScheduleE extends F1040Attachment {
   l24 = (): number =>
     sumFields(this.l21().filter((x) => x !== undefined && x > 0))
 
-  // TODO: Royalty losses
-  l25 = (): number => sumFields(this.l22())
+  royaltyLoss = (): number =>
+    Math.max(0, (this.royaltyExpenses() ?? 0) - this.totalRoyaltyIncome())
+
+  l25 = (): number => sumFields([sumFields(this.l22()), this.royaltyLoss()])
 
   l26 = (): number => sumFields([this.l24(), this.l25()])
 
@@ -196,14 +236,22 @@ export default class ScheduleE extends F1040Attachment {
   l34bc = (): number | undefined => undefined
   l34be = (): number | undefined => undefined
 
-  // TODO: Real estate trust income or loss
-  l37 = (): number | undefined => undefined
+  hasPage2Adjustments = (): boolean =>
+    sumFields([
+      this.royaltyExpenses(),
+      this.l37(),
+      this.l39(),
+      this.l40()
+    ]) !== 0
 
-  // TODO: REMICS income or loss
-  l39 = (): number | undefined => undefined
+  l37 = (): number | undefined =>
+    this.f1040.info.scheduleEPage2?.estateTrustIncomeLoss
 
-  // TODO: Farm rental income or loss
-  l40 = (): number | undefined => undefined
+  l39 = (): number | undefined =>
+    this.f1040.info.scheduleEPage2?.remicIncomeLoss
+
+  l40 = (): number | undefined =>
+    this.f1040.info.scheduleEPage2?.farmRentalIncomeLoss
 
   l41 = (): number =>
     sumFields([this.l26(), this.l32(), this.l37(), this.l39(), this.l40()])

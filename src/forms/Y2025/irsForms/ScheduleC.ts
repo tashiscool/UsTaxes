@@ -79,6 +79,9 @@ export interface BusinessInfo {
   costOfGoodsSold?: CostOfGoodsSold
   vehicleMiles?: number
   homeOfficeDeduction?: number
+  qbiW2Wages?: number
+  qbiUbia?: number
+  isSpecifiedServiceTradeOrBusiness?: boolean
   personRole: PersonRole
 }
 

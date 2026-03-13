@@ -484,6 +484,13 @@ export interface Property {
   otherExpenseType?: string
 }
 
+export interface ScheduleEPage2Data {
+  royaltyExpenses?: number
+  estateTrustIncomeLoss?: number
+  remicIncomeLoss?: number
+  farmRentalIncomeLoss?: number
+}
+
 export interface F1098e {
   lender: string
   interest: number
@@ -506,6 +513,9 @@ export interface ScheduleK1Form1065 {
   isForeign: boolean
   isPassive: boolean
   ordinaryBusinessIncome: number // Schedule E (Form 1040), line 28, column (i) or (k).
+  netRentalRealEstateIncome?: number // Schedule E (Form 1040), line 28, column (j)
+  otherNetRentalIncome?: number // Schedule E (Form 1040), line 28, column (k)
+  royalties?: number // Schedule E (Form 1040), Part I royalties
   interestIncome: number // Form 1040, line 2b
   guaranteedPaymentsForServices: number // Schedule E (Form 1040), line 28, column (k)
   guaranteedPaymentsForCapital: number // Schedule E (Form 1040), line 28, column (k)
@@ -514,6 +524,8 @@ export interface ScheduleK1Form1065 {
   selfEmploymentEarningsC: number // Schedule SE (Form 1040)
   distributionsCodeAAmount: number // If the amount shown as code A exceeds the adjusted basis of your partnership interest immediately before the distribution, the excess is treated as gain from the sale or exchange of your partnership interest. Generally, this gain is treated as gain from the sale of a capital asset and should be reported on Form 8949 and the Schedule D for your return.
   section199AQBI: number // Form 8995 or 8995-A
+  section199AW2Wages?: number // Form 8995-A wage limitation support
+  section199AUbia?: number // Form 8995-A UBIA limitation support
 }
 
 export interface ItemizedDeductions {
@@ -2732,6 +2744,8 @@ export interface Information<D = Date> {
   householdTaxDeposits?: number // Schedule H
   // Schedule C - Business Income
   businesses?: Record<string, unknown>[] // Schedule C (cast in form)
+  // Schedule E supplemental entries not captured elsewhere
+  scheduleEPage2?: ScheduleEPage2Data
   // Form 2441 - Child Care
   dependentCareProviders?: DependentCareProvider[]
   dependentCareExpenses?: number
