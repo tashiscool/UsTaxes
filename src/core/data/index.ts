@@ -483,6 +483,10 @@ export interface Property {
   qualifiedJointVenture: boolean
   expenses: Partial<{ [K in PropertyExpenseTypeName]: number }>
   otherExpenseType?: string
+  qualifiesForQbi?: boolean
+  qbiBusinessName?: string
+  qbiW2Wages?: number
+  qbiUbia?: number
 }
 
 export interface ScheduleEPage2Data {

@@ -137,4 +137,55 @@ describe('Schedule E parity improvements', () => {
     expect(f1040.scheduleE.l32()).toBe(1750)
     expect(f1040.scheduleE.l41()).toBe(1750)
   })
+
+  it('treats qualified rental real estate as QBI only when explicitly marked', () => {
+    const information = cloneDeep(baseInformation)
+    information.realEstate = [
+      {
+        address: {
+          address: '123 Qualified Rental Ave',
+          aptNo: '',
+          city: 'Denver',
+          state: 'CO',
+          zip: '80203'
+        },
+        rentalDays: 365,
+        personalUseDays: 0,
+        rentReceived: 28800,
+        propertyType: 'singleFamily',
+        qualifiedJointVenture: false,
+        expenses: {
+          advertising: 200,
+          auto: 350,
+          cleaning: 600,
+          insurance: 1800,
+          management: 2880,
+          mortgage: 8400,
+          repairs: 2500,
+          supplies: 400,
+          taxes: 3200,
+          depreciation: 7273,
+          other: 500
+        },
+        qualifiesForQbi: true,
+        qbiBusinessName: 'Denver Rental Enterprise',
+        qbiW2Wages: 0,
+        qbiUbia: 160000
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+    const entries = f1040.f8995?.qbiEntries()
+
+    expect(entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'Denver Rental Enterprise',
+          qbi: 697,
+          w2Wages: 0,
+          ubia: 160000
+        })
+      ])
+    )
+  })
 })

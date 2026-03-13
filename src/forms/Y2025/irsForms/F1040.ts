@@ -765,7 +765,7 @@ export default class F1040 extends F1040Base {
     this.info.scheduleK1Form1065s
       .map((k1) => k1.section199AQBI)
       .reduce((c, a) => c + a, 0) +
-    (((this.info.businesses as BusinessInfo[] | undefined) ?? [])
+    ((this.info.businesses as BusinessInfo[] | undefined) ?? [])
       .map((business) => {
         const expenses = business.expenses
         const totalExpenses =
@@ -804,10 +804,26 @@ export default class F1040 extends F1040Base {
           business.income.otherIncome
         return Math.max(
           0,
-          grossIncome - cogs - totalExpenses - (business.homeOfficeDeduction ?? 0)
+          grossIncome -
+            cogs -
+            totalExpenses -
+            (business.homeOfficeDeduction ?? 0)
         )
       })
-      .reduce((c, a) => c + a, 0))
+      .reduce((c, a) => c + a, 0) +
+    this.info.realEstate
+      .filter((property) => property.qualifiesForQbi)
+      .map((property) =>
+        Math.max(
+          0,
+          property.rentReceived -
+            Object.values(property.expenses).reduce(
+              (total, amount) => total + (amount ?? 0),
+              0
+            )
+        )
+      )
+      .reduce((c, a) => c + a, 0)
 
   totalQualifiedReitPtpIncome = (): number =>
     this.f1099Divs().reduce(

@@ -33,8 +33,29 @@ export default class F8995 extends F1040Attachment {
   tag: FormTag = 'f8995'
   sequenceIndex = 55
 
+  rentalQbiEntries = (): QBIEntry[] =>
+    this.f1040.info.realEstate
+      .filter((property) => property.qualifiesForQbi)
+      .map((property) => {
+        const totalExpenses = Object.values(property.expenses).reduce(
+          (total, amount) => total + (amount ?? 0),
+          0
+        )
+        return {
+          name:
+            property.qbiBusinessName ??
+            property.address.address ??
+            'Qualified rental enterprise',
+          qbi: property.rentReceived - totalExpenses,
+          w2Wages: property.qbiW2Wages ?? 0,
+          ubia: property.qbiUbia ?? 0,
+          patronReduction: 0
+        }
+      })
+      .filter((property) => property.qbi > 0)
+
   scheduleCQBIBusinesses = (): QBIEntry[] =>
-    (((this.f1040.info.businesses as BusinessInfo[] | undefined) ?? [])
+    ((this.f1040.info.businesses as BusinessInfo[] | undefined) ?? [])
       .map((business) => {
         const expenses = business.expenses
         const totalExpenses =
@@ -72,7 +93,10 @@ export default class F8995 extends F1040Attachment {
           Math.max(0, business.income.grossReceipts - business.income.returns) +
           business.income.otherIncome
         const netProfit =
-          grossIncome - cogs - totalExpenses - (business.homeOfficeDeduction ?? 0)
+          grossIncome -
+          cogs -
+          totalExpenses -
+          (business.homeOfficeDeduction ?? 0)
         return {
           name: business.name,
           ein: business.ein,
@@ -82,7 +106,7 @@ export default class F8995 extends F1040Attachment {
           patronReduction: business.qbiPatronReduction ?? 0
         }
       })
-      .filter((business) => business.qbi > 0)) as QBIEntry[]
+      .filter((business) => business.qbi > 0) as QBIEntry[]
 
   applicableK1s = (): QBIEntry[] =>
     this.f1040.info.scheduleK1Form1065s
@@ -98,13 +122,14 @@ export default class F8995 extends F1040Attachment {
 
   qbiEntries = (): QBIEntry[] => [
     ...this.scheduleCQBIBusinesses(),
+    ...this.rentalQbiEntries(),
     ...this.applicableK1s()
   ]
 
   priorYearQualifiedBusinessLossCarryforward = (): number =>
     Math.abs(
-      this.f1040.info.qbiDeductionData?.priorYearQualifiedBusinessLossCarryforward ??
-        0
+      this.f1040.info.qbiDeductionData
+        ?.priorYearQualifiedBusinessLossCarryforward ?? 0
     )
 
   reitDividends = (): number =>
@@ -112,7 +137,7 @@ export default class F8995 extends F1040Attachment {
       if (form.type !== Income1099Type.DIV) {
         return total
       }
-      return total + ((form.form as F1099DivData).section199ADividends ?? 0)
+      return total + (form.form.section199ADividends ?? 0)
     }, 0) + (this.f1040.info.qbiDeductionData?.reitDividends ?? 0)
 
   currentYearPtpIncome = (): number =>
