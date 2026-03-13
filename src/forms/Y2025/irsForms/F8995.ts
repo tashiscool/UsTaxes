@@ -2,11 +2,12 @@ import F1040Attachment from './F1040Attachment'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { FilingStatus } from 'ustaxes/core/data'
 import { Field } from 'ustaxes/core/pdfFiller'
+import { qbid } from '../data/federal'
 
 export function getF8995PhaseOutIncome(filingStatus: FilingStatus): number {
-  let formAMinAmount = 170050
+  let formAMinAmount = 197300
   if (filingStatus === FilingStatus.MFJ) {
-    formAMinAmount = 340100
+    formAMinAmount = 394600
   }
   return formAMinAmount
 }
@@ -45,23 +46,22 @@ export default class F8995 extends F1040Attachment {
   l3 = (): number | undefined => undefined
   l4 = (): number | undefined =>
     ifNumber(this.l2(), (num) => num + (this.l3() ?? 0))
-  // OBBBA 2025: QBID rate increased to 23% (from 20%)
-  l5 = (): number | undefined => ifNumber(this.l4(), (num) => num * 0.23)
+  l5 = (): number | undefined =>
+    ifNumber(this.l4(), (num) => num * qbid.maxRate)
 
   // TODO: REIT
   l6 = (): number => 0
   l7 = (): number => 0
   l8 = (): number | undefined => ifNumber(this.l6(), (num) => num + this.l7())
-  // OBBBA 2025: QBID rate increased to 23% (from 20%)
-  l9 = (): number | undefined => ifNumber(this.l8(), (num) => num * 0.23)
+  l9 = (): number | undefined =>
+    ifNumber(this.l8(), (num) => num * qbid.maxRate)
 
   l10 = (): number | undefined =>
     ifNumber(this.l5(), (num) => num + (this.l9() ?? 0))
   l11 = (): number => this.f1040.l11() - this.f1040.l12()
   l12 = (): number => this.netCapitalGains()
   l13 = (): number => Math.max(0, this.l11() - this.l12())
-  // OBBBA 2025: QBID rate increased to 23% (from 20%)
-  l14 = (): number => this.l13() * 0.23
+  l14 = (): number => this.l13() * qbid.maxRate
   l15 = (): number => Math.min(this.l10() ?? 0, this.l14())
   l16 = (): number => Math.min(0, (this.l2() ?? 0) + (this.l3() ?? 0))
   l17 = (): number => Math.min(0, this.l6() + this.l7())

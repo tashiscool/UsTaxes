@@ -7,17 +7,17 @@ import { Field } from 'ustaxes/core/pdfFiller'
 /**
  * Form 8839 - Qualified Adoption Expenses
  *
- * Credit for qualified adoption expenses.
- * Maximum credit: $16,810 per child (2025)
- * Phase-out begins at MAGI: $252,150 (2025)
- * Phase-out complete at MAGI: $292,150 (2025)
+ * 2025 changes:
+ * - Maximum credit increased to $17,280 per eligible child.
+ * - MAGI phase-out updated to $259,190-$299,190.
+ * - A refundable amount of up to $5,000 per child is available.
  */
 
-// 2025 adoption credit parameters
 const adoptionCredit = {
-  maxCredit: 16810,
-  phaseOutStart: 252150,
-  phaseOutEnd: 292150,
+  maxCredit: 17280,
+  refundableCapPerChild: 5000,
+  phaseOutStart: 259190,
+  phaseOutEnd: 299190,
   phaseOutRange: 40000
 }
 
@@ -38,45 +38,56 @@ export default class F8839 extends F1040Attachment {
   tag: FormTag = 'f8839'
   sequenceIndex = 38
 
-  isNeeded = (): boolean => {
-    return this.adoptedChildren().length > 0 && this.totalCredit() > 0
-  }
-
   adoptedChildren = (): AdoptedChild[] => {
     return this.f1040.info.adoptedChildren ?? []
   }
 
-  // Calculate MAGI for adoption credit
+  isNeeded = (): boolean => {
+    return (
+      this.adoptedChildren().length > 0 ||
+      this.refundableCredit() > 0 ||
+      this.nonrefundableCredit() > 0 ||
+      this.carryforward() > 0
+    )
+  }
+
   magi = (): number => {
-    // MAGI = AGI + foreign earned income exclusion + foreign housing exclusion
+    // MAGI = AGI + foreign earned income exclusion + foreign housing exclusion.
+    // Form 4563 is not currently modeled in this workspace.
     return this.f1040.l11() + (this.f1040.f2555?.l45() ?? 0)
   }
 
-  // Calculate phase-out percentage
   phaseOutPercentage = (): number => {
     const magi = this.magi()
 
     if (magi <= adoptionCredit.phaseOutStart) {
-      return 1 // Full credit
+      return 1
     }
 
     if (magi >= adoptionCredit.phaseOutEnd) {
-      return 0 // No credit
+      return 0
     }
 
-    // Linear phase-out
     const excess = magi - adoptionCredit.phaseOutStart
     return 1 - excess / adoptionCredit.phaseOutRange
   }
 
-  // Part I - Information About Your Eligible Child or Children
-
-  // Line 1: Child information (up to 3 children per form)
   childInfo = (index: number): AdoptedChild | undefined => {
     return this.adoptedChildren()[index]
   }
 
-  // Part II - Adoption Credit
+  private deemedQualifiedExpenses = (child: AdoptedChild): number => {
+    if (
+      child.specialNeedsChild &&
+      !child.foreignChild &&
+      child.adoptionFinalized
+    ) {
+      return adoptionCredit.maxCredit
+    }
+    return child.qualifiedExpenses
+  }
+
+  // Part I - Information About Your Eligible Child or Children
 
   // Line 2: Maximum adoption credit per child
   l2 = (): number => adoptionCredit.maxCredit
@@ -85,7 +96,7 @@ export default class F8839 extends F1040Attachment {
   l3 = (childIndex: number): number => {
     const child = this.childInfo(childIndex)
     if (!child) return 0
-    return child.qualifiedExpenses
+    return this.deemedQualifiedExpenses(child)
   }
 
   // Line 4a-4c: Prior year expenses claimed
@@ -117,71 +128,92 @@ export default class F8839 extends F1040Attachment {
   // Line 8: Modified AGI
   l8 = (): number => this.magi()
 
-  // Line 9: Enter $252,150 (2025)
+  // Line 9: Enter $259,190 (2025)
   l9 = (): number => adoptionCredit.phaseOutStart
 
-  // Line 10: Subtract line 9 from line 8
-  l10 = (): number => Math.max(0, this.l8() - this.l9())
+  // Line 10: Phase-out percentage
+  l10 = (): number => Math.max(0, 1 - this.phaseOutPercentage())
 
-  // Line 11: Divide line 10 by $40,000
-  l11 = (): number => {
-    if (this.l10() <= 0) return 0
-    return Math.min(1, this.l10() / adoptionCredit.phaseOutRange)
+  // Line 11a: Post-phase-out credit amount for each child
+  l11a = (childIndex: number): number => {
+    return Math.round(this.l6(childIndex) * this.phaseOutPercentage())
   }
 
-  // Line 12: Multiply line 7 by line 11
-  l12 = (): number => Math.round(this.l7() * this.l11())
+  // Line 11b: Refundable portion for each child (up to $5,000)
+  l11b = (childIndex: number): number => {
+    return Math.min(this.l11a(childIndex), adoptionCredit.refundableCapPerChild)
+  }
 
-  // Line 13: Subtract line 12 from line 7
-  l13 = (): number => Math.max(0, this.l7() - this.l12())
+  // Line 12: Add line 11a for all children
+  l12 = (): number => {
+    let total = 0
+    for (let i = 0; i < this.adoptedChildren().length; i++) {
+      total += this.l11a(i)
+    }
+    return total
+  }
 
-  // Line 14: Credit carryforward from prior years
-  l14 = (): number => this.f1040.info.adoptionCreditCarryforward ?? 0
+  // Line 13: Refundable adoption credit
+  l13 = (): number => {
+    let total = 0
+    for (let i = 0; i < this.adoptedChildren().length; i++) {
+      total += this.l11b(i)
+    }
+    return total
+  }
 
-  // Line 15: Add lines 13 and 14
-  l15 = (): number => this.l13() + this.l14()
+  // Line 14: Remaining nonrefundable current-year credit
+  l14 = (): number => Math.max(0, this.l12() - this.l13())
 
-  // Part III - Credit Carryforward
+  // Line 15: Credit carryforward from prior years
+  l15 = (): number => this.f1040.info.adoptionCreditCarryforward ?? 0
 
-  // Line 16: Limitation based on tax liability
-  l16 = (): number => {
+  // Line 16: Total nonrefundable credit available this year
+  l16 = (): number => this.l14() + this.l15()
+
+  // Line 17: Limitation based on tax liability
+  l17 = (): number => {
     const tax = this.f1040.l18()
     const otherCredits = sumFields([
       this.f1040.schedule3.l1(),
       this.f1040.schedule3.l2(),
       this.f1040.schedule3.l3(),
       this.f1040.schedule3.l4(),
+      this.f1040.schedule3.l5(),
+      this.f1040.schedule3.l6a(),
+      this.f1040.schedule3.l6b(),
+      this.f1040.schedule3.l6c(),
       this.f1040.schedule3.l6l()
     ])
     return Math.max(0, tax - otherCredits)
   }
 
-  // Line 17: Adoption credit (smaller of line 15 or line 16)
-  l17 = (): number => Math.min(this.l15(), this.l16())
+  // Line 18: Nonrefundable adoption credit
+  l18 = (): number => Math.min(this.l16(), this.l17())
 
-  // Line 18: Credit carryforward to next year
-  l18 = (): number => Math.max(0, this.l15() - this.l17())
+  // Line 19: Credit carryforward to next year
+  l19 = (): number => Math.max(0, this.l16() - this.l18())
 
-  // Total credit for Schedule 3
-  totalCredit = (): number => this.l17()
-
-  // Carryforward to next year
-  carryforward = (): number => this.l18()
+  refundableCredit = (): number => this.l13()
+  nonrefundableCredit = (): number => this.l18()
+  totalCredit = (): number => this.nonrefundableCredit()
+  carryforward = (): number => this.l19()
 
   fields = (): Field[] => {
     const children = this.adoptedChildren()
     const childFields: Field[] = []
 
-    // Add fields for up to 3 children
+    // Preserve the existing child-field ordering for compatibility with the
+    // current PDF-filling path while exposing the updated 2025 calculations.
     for (let i = 0; i < 3; i++) {
       const child = children[i]
       childFields.push(
-        child.name ?? '',
-        child.ssn ?? '',
-        child.birthYear ?? '',
-        child.disabledChild ?? false,
-        child.foreignChild ?? false,
-        child.specialNeedsChild ?? false,
+        child?.name ?? '',
+        child?.ssn ?? '',
+        child?.birthYear ?? '',
+        child?.disabledChild ?? false,
+        child?.foreignChild ?? false,
+        child?.specialNeedsChild ?? false,
         this.l3(i),
         this.l4(i),
         this.l5(i),
@@ -197,14 +229,14 @@ export default class F8839 extends F1040Attachment {
       this.l8(),
       this.l9(),
       this.l10(),
-      this.l11(),
       this.l12(),
       this.l13(),
       this.l14(),
       this.l15(),
       this.l16(),
       this.l17(),
-      this.l18()
+      this.l18(),
+      this.l19()
     ]
   }
 }

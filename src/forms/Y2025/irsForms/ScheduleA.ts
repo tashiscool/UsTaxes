@@ -1,5 +1,5 @@
 import F1040Attachment from './F1040Attachment'
-import { FilingStatus, ItemizedDeductions } from 'ustaxes/core/data'
+import { ItemizedDeductions } from 'ustaxes/core/data'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { Field } from 'ustaxes/core/pdfFiller'
 import F1040 from './F1040'
@@ -71,16 +71,7 @@ export default class ScheduleA extends F1040Attachment {
     const filingStatus = this.f1040.info.taxPayer.filingStatus
     const agi = this.f1040.l11()
     const saltTotal = this.l5d()
-
-    // Calculate effective cap with phase-out
-    let effectiveCap: number
-    if (filingStatus === FilingStatus.MFS) {
-      // MFS gets half the cap
-      effectiveCap = saltCap.effectiveCap(filingStatus, agi) / 2
-    } else {
-      effectiveCap = saltCap.effectiveCap(filingStatus, agi)
-    }
-
+    const effectiveCap = saltCap.effectiveCap(filingStatus, agi)
     return Math.min(effectiveCap, saltTotal)
   }
 

@@ -12,7 +12,6 @@ import { Field } from 'ustaxes/core/pdfFiller'
  * - Personal casualty losses only deductible if from federally declared disasters
  * - Business/income-producing property casualties fully deductible
  *
- * OBBBA 2025: May restore some personal casualty loss deductions
  */
 
 export type CasualtyType = 'disaster' | 'theft' | 'other'

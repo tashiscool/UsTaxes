@@ -4,7 +4,34 @@ import { sumFields } from 'ustaxes/core/irsForms/util'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { nextMultipleOf1000 } from 'ustaxes/core/util'
-import { childTaxCredit, CURRENT_YEAR } from '../data/federal'
+import { childTaxCredit } from '../data/federal'
+
+const normalizeTin = (value?: string): string => value?.replace(/\D/g, '') ?? ''
+
+const hasValidTin = (value?: string): boolean => {
+  const normalized = normalizeTin(value)
+  if (normalized.length !== 9) return false
+
+  const area = normalized.slice(0, 3)
+  const group = normalized.slice(3, 5)
+  const serial = normalized.slice(5)
+
+  return area !== '000' && area !== '666' && group !== '00' && serial !== '0000'
+}
+
+const isLikelyItin = (value?: string): boolean => {
+  const normalized = normalizeTin(value)
+  if (normalized.length !== 9 || !normalized.startsWith('9')) return false
+  const middle = Number(normalized.slice(3, 5))
+  return (
+    (middle >= 70 && middle <= 88) ||
+    (middle >= 90 && middle <= 92) ||
+    (middle >= 94 && middle <= 99)
+  )
+}
+
+const hasValidChildTaxCreditSsn = (value?: string): boolean =>
+  hasValidTin(value) && !isLikelyItin(value)
 
 type Part2a = { allowed: boolean } & Partial<{
   l16a: number
@@ -58,24 +85,14 @@ export default class Schedule8812 extends F1040Attachment {
   l3 = (): number => sumFields([this.l1(), this.l2d()])
 
   creditDependents = (): Dependent[] =>
-    this.f1040.qualifyingDependents.qualifyingChildren()
+    this.f1040.qualifyingDependents
+      .qualifyingChildren()
+      .filter((dep) => hasValidChildTaxCreditSsn(dep.ssid))
 
   l4 = (): number => this.creditDependents().length
 
-  // OBBBA 2025 Senate: $2,200 per qualifying child (increased from $2,000)
-  // House version uses $2,500; Senate version uses $2,200 for 2025-2026
+  // TY2025: $2,200 per qualifying child with a valid SSN
   l5 = (): number => this.l4() * childTaxCredit.amountPerChild
-
-  // OBBBA 2025: Baby Bonus - $1,000 additional credit for children born in tax year
-  newbornsCount = (): number => {
-    return this.creditDependents().filter((dep) => {
-      const birthYear = new Date(dep.dateOfBirth).getFullYear()
-      return birthYear === CURRENT_YEAR
-    }).length
-  }
-
-  // Line 5a: Baby Bonus amount
-  l5a = (): number => this.newbornsCount() * childTaxCredit.babyBonus
 
   // TODO: Verify:
   // Number of other dependents, including any qualifying children, who are not under age 18 or who do not have the required SSN. Do not include yourself, your spouse,
@@ -83,11 +100,9 @@ export default class Schedule8812 extends F1040Attachment {
   // or do not have the required SSN.
   l6 = (): number => this.f1040.info.taxPayer.dependents.length - this.l4()
 
-  // OBBBA 2025: $500 per other dependent (unchanged)
   l7 = (): number => this.l6() * childTaxCredit.amountPerOtherDependent
 
-  // Total credit = regular CTC + baby bonus + other dependents credit
-  l8 = (): number => sumFields([this.l5(), this.l5a(), this.l7()])
+  l8 = (): number => sumFields([this.l5(), this.l7()])
 
   l9 = (): number =>
     this.f1040.info.taxPayer.filingStatus === FilingStatus.MFJ ? 400000 : 200000
@@ -193,8 +208,6 @@ export default class Schedule8812 extends F1040Attachment {
     const l16a = Math.max(0, this.l12() - this.l14())
     const l16bdeps = this.l4()
 
-    // OBBBA 2025: Refundable portion is $1,700 per child for 2026
-    // (increases in later years per docs)
     const l16b = l16bdeps * childTaxCredit.refundableAmount
 
     const l17 = Math.min(l16a, l16b)

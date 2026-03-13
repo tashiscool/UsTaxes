@@ -4,6 +4,7 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { FilingStatus } from 'ustaxes/core/data'
 import { sumFields } from 'ustaxes/core/irsForms/util'
 import { Field } from 'ustaxes/core/pdfFiller'
+import { qbid } from '../data/federal'
 
 function ifNumber(
   num: number | undefined,
@@ -20,10 +21,12 @@ export default class F8995A extends F8995 {
   l2b = (): number | undefined => this.applicableK1s()[1]?.section199AQBI
   l2c = (): number | undefined => this.applicableK1s()[2]?.section199AQBI
 
-  // OBBBA 2025: QBID rate increased to 23% (from 20%)
-  l3a = (): number | undefined => ifNumber(this.l2a(), (num) => num * 0.23)
-  l3b = (): number | undefined => ifNumber(this.l2b(), (num) => num * 0.23)
-  l3c = (): number | undefined => ifNumber(this.l2c(), (num) => num * 0.23)
+  l3a = (): number | undefined =>
+    ifNumber(this.l2a(), (num) => num * qbid.maxRate)
+  l3b = (): number | undefined =>
+    ifNumber(this.l2b(), (num) => num * qbid.maxRate)
+  l3c = (): number | undefined =>
+    ifNumber(this.l2c(), (num) => num * qbid.maxRate)
 
   // TODO: Allow W2 income with QBI
   l4a = (): number | undefined => ifNumber(this.l2a(), () => 0)
@@ -137,15 +140,13 @@ export default class F8995A extends F8995 {
   l29 = (): number => 0
 
   l30 = (): number => Math.max(0, this.l28() + this.l29())
-  // OBBBA 2025: QBID rate increased to 23% (from 20%)
-  l31 = (): number => this.l30() * 0.23
+  l31 = (): number => this.l30() * qbid.maxRate
 
   l32 = (): number => this.l27() + this.l31()
   l33 = (): number => this.l20()
   l34 = (): number => this.netCapitalGains()
   l35 = (): number => this.l33() - this.l34()
-  // OBBBA 2025: QBID rate increased to 23% (from 20%)
-  l36 = (): number => this.l35() * 0.23
+  l36 = (): number => this.l35() * qbid.maxRate
   l37 = (): number => Math.min(this.l32(), this.l36())
 
   // TODO: DPAD

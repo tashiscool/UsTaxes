@@ -67,7 +67,7 @@ export default class Schedule3 extends F1040Attachment {
   l6a = (): number | undefined => this.f1040.f8801?.credit() // Form 8801: Prior Year AMT Credit
   l6b = (): number | undefined => undefined // General business credit (Form 3800)
   l6c = (): number | undefined => undefined // Credit for prior year minimum tax (Form 8801) - already in 6a
-  l6d = (): number | undefined => this.f1040.f8839?.totalCredit() // Form 8839: Adoption Credit
+  l6d = (): number | undefined => this.f1040.f8839?.nonrefundableCredit() // Form 8839: Adoption Credit
   l6e = (): number | undefined => undefined // TODO: other credits
   l6f = (): number | undefined => undefined // TODO: other credits
   l6g = (): number | undefined => undefined // TODO: other credits

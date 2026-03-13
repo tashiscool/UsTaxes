@@ -137,10 +137,10 @@ describe('ATS Scenario X - [Taxpayer Name]', () => {
 
 ### Credit Limits
 
-- Child Tax Credit: $2,000 per child
+- Child Tax Credit: $2,200 per qualifying child
 - ACTC: 15% of earned income over $2,500
 - Dependent Care: 20-35% of up to $3,000 (1 child) or $6,000 (2+ children)
-- EIC (2 children): Max ~$7,012, phaseout starts $22,200
+- EIC (2 children): Max $7,152; phaseout starts $23,350 non-MFJ / $30,470 MFJ
 
 ## Filing Status Codes
 

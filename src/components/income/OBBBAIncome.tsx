@@ -162,7 +162,10 @@ export const OBBBAIncome = (): ReactElement => {
                 <Typography variant="body2" color="textSecondary" paragraph>
                   If you received overtime pay (time-and-a-half), the premium
                   portion above your regular wage may be deductible. Cap:
-                  $12,500 (Single) / $25,000 (MFJ).
+                  $12,500 per return or $25,000 for MFJ. The deduction phases
+                  down once AGI exceeds $150,000 ($300,000 for MFJ) and requires
+                  valid SSNs. If you are married, you must file jointly to claim
+                  it.
                 </Typography>
 
                 <LabeledCheckbox
@@ -198,7 +201,9 @@ export const OBBBAIncome = (): ReactElement => {
                 <Typography variant="body2" color="textSecondary" paragraph>
                   If you received tip income, you may deduct up to $25,000 of
                   tips from your taxable income. Tips must be reported to your
-                  employer.
+                  employer, phase down above $150,000 AGI ($300,000 for MFJ),
+                  and require valid SSNs. If you are married, you must file
+                  jointly to claim this deduction.
                 </Typography>
 
                 <LabeledCheckbox
@@ -214,6 +219,12 @@ export const OBBBAIncome = (): ReactElement => {
                       patternConfig={Patterns.currency}
                       required={hasTipIncome}
                     />
+                    <Alert severity="warning" style={{ marginTop: '10px' }}>
+                      Only qualified tip income from occupations that
+                      customarily receive tips is eligible. Self-employment
+                      income from a specified service trade or business does not
+                      qualify for this deduction.
+                    </Alert>
                   </Box>
                 )}
               </Paper>
@@ -226,8 +237,11 @@ export const OBBBAIncome = (): ReactElement => {
                   Auto Loan Interest Deduction
                 </Typography>
                 <Typography variant="body2" color="textSecondary" paragraph>
-                  Interest paid on auto loans for vehicles manufactured in the
-                  United States may be deductible. Cap: $10,000.
+                  Interest paid on qualifying auto loans may be deductible up to
+                  $10,000 per return. The deduction phases down above $100,000
+                  AGI ($200,000 for MFJ). The vehicle must have final assembly
+                  in the United States, be new and for personal use, and the
+                  loan must be a post-2024 first-lien vehicle loan.
                 </Typography>
 
                 <LabeledCheckbox
@@ -239,7 +253,7 @@ export const OBBBAIncome = (): ReactElement => {
                   <Box mt={2}>
                     <LabeledCheckbox
                       name="isDomesticVehicle"
-                      label="Vehicle was manufactured in the United States"
+                      label="Vehicle had final assembly in the United States"
                     />
 
                     {isDomesticVehicle && (
@@ -278,8 +292,10 @@ export const OBBBAIncome = (): ReactElement => {
                     {!isDomesticVehicle && (
                       <Alert severity="warning" style={{ marginTop: '10px' }}>
                         The auto loan interest deduction only applies to
-                        vehicles manufactured in the United States. Foreign-made
-                        vehicles do not qualify.
+                        vehicles with final assembly in the United States. You
+                        also need a new personal-use vehicle, a qualifying
+                        first-lien loan originated after 2024, and the VIN for
+                        your return.
                       </Alert>
                     )}
                   </Box>

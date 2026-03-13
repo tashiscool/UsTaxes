@@ -10,8 +10,6 @@ import { Field } from 'ustaxes/core/pdfFiller'
  * for members of the Armed Forces on active duty who move due to military orders
  * for permanent change of station.
  *
- * OBBBA 2025: May restore general moving expense deduction
- *
  * Deductible expenses:
  * - Transportation of household goods
  * - Travel (including lodging) to new home

@@ -248,33 +248,32 @@ export const healthSavingsAccounts = {
 
 // =============================================================================
 // OBBBA AMT Parameters
-// Source: docs/obbba/form-6251-amt/AMT.md
+// Source: IRS 2025 inflation adjustments / Form 6251 instructions
 // =============================================================================
 export const amt = {
-  // OBBBA 2025: AMT exemptions (House version)
-  // Source: docs/obbba/form-6251-amt/AMT.md
+  // 2025 AMT exemptions
   exemptionAmount: (filingStatus: FilingStatus): number => {
     switch (filingStatus) {
       case FilingStatus.S:
       case FilingStatus.HOH:
-        return 70300 // OBBBA: $70,300 (reduced from TCJA $89,400)
+        return 88100
       case FilingStatus.MFJ:
       case FilingStatus.W:
-        return 109400 // OBBBA: $109,400 (reduced from TCJA $139,100)
+        return 137000
       case FilingStatus.MFS:
-        return 54700 // OBBBA: $54,700 (reduced from TCJA $69,500)
+        return 68500
     }
   },
-  // Phase-out thresholds (House version)
+  // 2025 AMT phase-out thresholds
   phaseOutStart: (filingStatus: FilingStatus): number => {
     switch (filingStatus) {
       case FilingStatus.S:
       case FilingStatus.HOH:
       case FilingStatus.MFS:
-        return 500000 // Phase-out begins at $500,000
+        return 626350
       case FilingStatus.MFJ:
       case FilingStatus.W:
-        return 1000000 // Phase-out begins at $1,000,000
+        return 1252700
     }
   },
   // Phase-out rate: 25 cents per dollar above threshold
@@ -323,75 +322,50 @@ export const overtimeExemption = {
         return 12500
     }
   },
-  // Phase-out thresholds (Senate version)
+  // IRS Schedule 1-A: $300,000 for MFJ, otherwise $150,000
   phaseOutStart: (filingStatus: FilingStatus): number => {
     switch (filingStatus) {
       case FilingStatus.MFJ:
-      case FilingStatus.W:
-        return 150000
-      case FilingStatus.HOH:
-        return 125000
+        return 300000
       default:
-        return 100000
+        return 150000
     }
   },
-  phaseOutEnd: (filingStatus: FilingStatus): number => {
-    switch (filingStatus) {
-      case FilingStatus.MFJ:
-      case FilingStatus.W:
-        return 200000
-      case FilingStatus.HOH:
-        return 175000
-      default:
-        return 150000
-    }
-  }
+  phaseOutReductionPerThousand: 100,
+  requiresJointReturnIfMarried: true,
+  requiresValidSsn: true
 }
 
 // Tip Income Exemption - new above-the-line deduction
 // Source: docs/obbba/new-provisions/TIP_INCOME_EXEMPTION.md
 export const tipIncomeExemption = {
   enabled: true,
-  // Senate version: $25,000 cap (House has no cap)
+  // IRS Schedule 1-A: up to $25,000 per return
   annualCap: 25000,
   phaseOutStart: (filingStatus: FilingStatus): number => {
     switch (filingStatus) {
       case FilingStatus.MFJ:
-      case FilingStatus.W:
-        return 150000
-      case FilingStatus.HOH:
-        return 125000
+        return 300000
       default:
-        return 100000
+        return 150000
     }
   },
-  phaseOutEnd: (filingStatus: FilingStatus): number => {
-    switch (filingStatus) {
-      case FilingStatus.MFJ:
-      case FilingStatus.W:
-        return 200000
-      case FilingStatus.HOH:
-        return 175000
-      default:
-        return 150000
-    }
-  }
+  phaseOutReductionPerThousand: 100,
+  requiresJointReturnIfMarried: true,
+  requiresValidSsn: true
 }
 
 // Auto Loan Interest Deduction - new above-the-line deduction
 export const autoLoanInterestDeduction = {
   enabled: true,
-  annualCap: (filingStatus: FilingStatus): number => {
-    return filingStatus === FilingStatus.MFJ ? 20000 : 10000
-  },
+  annualCap: 10000,
   phaseOutStart: (filingStatus: FilingStatus): number => {
     return filingStatus === FilingStatus.MFJ ? 200000 : 100000
   },
-  phaseOutEnd: (filingStatus: FilingStatus): number => {
-    return filingStatus === FilingStatus.MFJ ? 250000 : 125000
-  },
-  // Only for vehicles manufactured in the USA
-  domesticManufactureRequired: true
+  phaseOutReductionPerThousand: 200,
+  // The current data model stores this as a boolean, but the IRS rule is based
+  // on final assembly in the United States.
+  finalAssemblyInUsRequired: true
 }
 
 // Senior Additional Deduction (65+)
@@ -400,6 +374,12 @@ export const seniorAdditionalDeduction = {
   enabled: true,
   amount: 6000, // OBBBA: $6,000 per qualifying person 65+
   minAge: 65,
+  phaseOutStart: (filingStatus: FilingStatus): number => {
+    return filingStatus === FilingStatus.MFJ ? 150000 : 75000
+  },
+  phaseOutRate: 0.06,
+  requiresJointReturnIfMarried: true,
+  requiresValidSsn: true,
   // Effective 2025-2028 (sunsets)
   effectiveYears: [2025, 2026, 2027, 2028]
 }
@@ -409,21 +389,21 @@ export const seniorAdditionalDeduction = {
 // Source: docs/obbba/schedule-a-itemized/SALT_DEDUCTION.md
 // =============================================================================
 export const saltCap = {
-  // OBBBA 2025: SALT cap increased to $40,400 (from $10,000)
-  // Source: docs/obbba/schedule-a-itemized/SALT_DEDUCTION.md
-  baseAmount: 40400, // Base cap amount
+  // OBBBA 2025: SALT cap increased to $40,000 ($20,000 for MFS)
+  baseAmount: (filingStatus: FilingStatus): number =>
+    filingStatus === FilingStatus.MFS ? 20000 : 40000,
   floorAmount: 10000, // Floor (returns to TCJA cap)
-  // Phase-out for high earners: 30% rate, starts at $505,000 AGI
+  // Phase-out for high earners: 30% rate, starts at $500,000 AGI
   phaseOutStart: (filingStatus: FilingStatus): number => {
     if (filingStatus === FilingStatus.MFS) {
-      return 252500 // MFS: $252,500
+      return 250000
     }
-    return 505000 // All others: $505,000
+    return 500000
   },
   phaseOutRate: 0.3, // 30% reduction per dollar above threshold
   // Calculate effective SALT cap with phase-out
   effectiveCap: (filingStatus: FilingStatus, agi: number): number => {
-    const base = saltCap.baseAmount
+    const base = saltCap.baseAmount(filingStatus)
     const floor = saltCap.floorAmount
     const threshold = saltCap.phaseOutStart(filingStatus)
 
@@ -441,8 +421,8 @@ export const saltCap = {
 }
 
 // =============================================================================
-// EITC Parameters (updated for 2025 - Senate Finance Version)
-// Source: IRS Rev Proc 2024-40 with OBBBA adjustments
+// EITC Parameters (updated for 2025)
+// Source: IRS 2025 EITC instructions / 2025 inflation adjustments
 // =============================================================================
 const line11Caps = [19104, 50434, 57310, 61555]
 const line11MfjCaps = [26214, 57554, 64430, 68675]
@@ -463,27 +443,27 @@ const unmarriedFormulas: Piecewise[] = (() => {
   const points: Point[][] = [
     [
       [0, 0],
-      [8050, 616],
-      [10070, 616],
-      [18128, 0]
+      [8490, 649],
+      [10620, 649],
+      [19104, 0]
     ],
     [
       [0, 0],
-      [12075, 4105],
-      [22160, 4105],
-      [47835, 0]
+      [12730, 4328],
+      [23350, 4328],
+      [50434, 0]
     ],
     [
       [0, 0],
-      [16965, 6784],
-      [22160, 6784],
-      [54383, 0]
+      [17880, 7152],
+      [23350, 7152],
+      [57310, 0]
     ],
     [
       [0, 0],
-      [16965, 7633],
-      [22160, 7633],
-      [58411, 0]
+      [17880, 8046],
+      [23350, 8046],
+      [61555, 0]
     ]
   ]
   return points.map((ps: Point[]) => toPieceWise(ps))
@@ -493,27 +473,27 @@ const marriedFormulas: Piecewise[] = (() => {
   const points: Point[][] = [
     [
       [0, 0],
-      [8050, 616],
-      [16820, 4105],
-      [24880, 0]
+      [8490, 649],
+      [17730, 649],
+      [26214, 0]
     ],
     [
       [0, 0],
-      [12075, 4105],
-      [28890, 4105],
-      [54595, 0]
+      [12730, 4328],
+      [30470, 4328],
+      [57554, 0]
     ],
     [
       [0, 0],
-      [16965, 6784],
-      [28890, 6784],
-      [61143, 0]
+      [17880, 7152],
+      [30470, 7152],
+      [64430, 0]
     ],
     [
       [0, 0],
-      [16965, 7633],
-      [28890, 7633],
-      [65171, 0]
+      [17880, 8046],
+      [30470, 8046],
+      [68675, 0]
     ]
   ]
   return points.map((ps) => toPieceWise(ps))
@@ -567,52 +547,44 @@ export const SSBenefits: SocialSecurityBenefitsDef = {
 }
 
 // =============================================================================
-// OBBBA Child Tax Credit Parameters (Senate Finance Version)
-// Source: docs/obbba/form-8812-ctc/CTC.md
+// Child Tax Credit Parameters
+// Source: IRS 2025 Schedule 8812 Instructions
 // =============================================================================
 export const childTaxCredit = {
-  // OBBBA Senate version: $2,200 per qualifying child (under 17) for 2025-2026
-  // Graduates to $2,700 by 2035
+  // TY2025: $2,200 per qualifying child
   amountPerChild: 2200,
-  // OBBBA: $500 for other dependents (unchanged)
+  // TY2025: $500 for other dependents
   amountPerOtherDependent: 500,
-  // Baby Bonus: Additional $1,000 for children born in tax year
-  babyBonus: 1000,
-  // Refundable portion (ACTC) - max per child
-  refundableAmount: 1700, // 2025-2026: $1,700 (increases in later years)
-  // Phase-in threshold for refundable portion
+  // TY2025 ACTC cap per qualifying child
+  refundableAmount: 1700,
+  // Earned-income threshold for ACTC
   phaseInThreshold: 2500,
-  // Phase-in rate
-  phaseInRate: 0.15, // 15% of earned income above threshold
-  // Phase-out thresholds
+  phaseInRate: 0.15,
   phaseOutStart: (filingStatus: FilingStatus): number => {
     return filingStatus === FilingStatus.MFJ ? 400000 : 200000
   },
-  // Phase-out rate: $50 reduction per $1,000 over threshold
   phaseOutRate: 0.05,
-  // Qualifying child max age
   maxAge: 17
 }
 
 // =============================================================================
-// OBBBA Qualified Business Income Deduction (QBID)
-// Source: docs/obbba/schedule-c-qbid/QBID.md
+// Qualified Business Income Deduction (QBID)
+// Source: IRS 2025 Instructions for Forms 8995 and 8995-A
 // =============================================================================
 export const qbid = {
-  // OBBBA House version: 23% rate (up from 20% TCJA)
-  maxRate: 0.23,
+  maxRate: 0.2,
   // W-2 wage limitation
   w2WageLimitRate: 0.5,
   w2WageAltRate: 0.25,
   qualifiedPropertyRate: 0.025,
-  // Phase-out thresholds (House version)
+  // TY2025 threshold for the wage/property limitation phase-in
   phaseOutStart: (filingStatus: FilingStatus): number => {
     switch (filingStatus) {
       case FilingStatus.MFJ:
       case FilingStatus.W:
-        return 400600
+        return 394600
       default:
-        return 200300
+        return 197300
     }
   },
   phaseOutLength: (filingStatus: FilingStatus): number => {

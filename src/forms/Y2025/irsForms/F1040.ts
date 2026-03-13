@@ -1158,9 +1158,7 @@ export default class F1040 extends F1040Base {
   // OBBBA 2025: Line 10 now includes Schedule 1-A additional deductions
   l10 = (): number | undefined => {
     const schedule1Amount = this.schedule1.to1040Line10()
-    const schedule1AAmount = this.schedule1A.isNeeded()
-      ? this.schedule1A.to1040()
-      : 0
+    const schedule1AAmount = this.schedule1A.to1040()
     return schedule1Amount + schedule1AAmount
   }
 
@@ -1177,10 +1175,7 @@ export default class F1040 extends F1040Base {
     // OBBBA 2025: Add senior additional deduction ($6,000 per person 65+)
     // This is added to standard deduction OR itemized deductions
     // Source: docs/obbba/form-1040/STANDARD_DEDUCTION.md
-    if (this.schedule1A.isNeeded()) {
-      const seniorDeduction = this.schedule1A.seniorDeductionTo1040()
-      deduction += seniorDeduction
-    }
+    deduction += this.schedule1A.seniorDeductionTo1040()
 
     return deduction
   }
@@ -1265,8 +1260,8 @@ export default class F1040 extends F1040Base {
 
   l29 = (): number | undefined => this.f8863?.l8()
 
-  // TODO: recovery rebate credit?
-  l30 = (): number | undefined => undefined
+  // Other refundable credits, including the refundable adoption credit.
+  l30 = (): number | undefined => this.f8839?.refundableCredit()
 
   l31 = (): number | undefined =>
     this.schedule3.isNeeded() ? this.schedule3.l15() : undefined

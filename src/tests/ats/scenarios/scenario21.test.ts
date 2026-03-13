@@ -171,7 +171,7 @@ const form2441 = {
 
 // Child Tax Credit
 const childTaxCredit = {
-  creditPerChild: 2000, // 2025 CTC amount
+  creditPerChild: 2200, // 2025 CTC amount
   qualifyingChildren: dependents.filter(
     (d) => d.monthsLivedWithTaxpayer >= 6 && d.isUnder13
   ),
@@ -309,8 +309,8 @@ describe('ATS Scenario 21 - Jennifer & Kevin Kim (Childcare Credit)', () => {
   })
 
   describe('Child Tax Credit', () => {
-    it('should have $2,000 credit per child', () => {
-      expect(childTaxCredit.creditPerChild).toBe(2000)
+    it('should have $2,200 credit per child', () => {
+      expect(childTaxCredit.creditPerChild).toBe(2200)
     })
 
     it('should have two qualifying children', () => {
@@ -318,7 +318,7 @@ describe('ATS Scenario 21 - Jennifer & Kevin Kim (Childcare Credit)', () => {
     })
 
     it('should calculate total CTC', () => {
-      expect(childTaxCredit.totalCredit).toBe(4000)
+      expect(childTaxCredit.totalCredit).toBe(4400)
     })
 
     it('should be below phase-out threshold', () => {
@@ -370,7 +370,7 @@ describe('ATS Scenario 21 - Jennifer & Kevin Kim (Childcare Credit)', () => {
     it('should apply both CTC and care credit', () => {
       const totalCredits =
         childTaxCredit.totalCredit + form2441.getCredit(totals.agi)
-      expect(totalCredits).toBe(5200) // $4,000 + $1,200
+      expect(totalCredits).toBe(5600) // $4,400 + $1,200
     })
   })
 })

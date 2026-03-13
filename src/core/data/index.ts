@@ -705,7 +705,7 @@ export interface TipIncome {
 // Auto Loan Interest Deduction (new for 2025)
 export interface AutoLoanInterest {
   amount: number // Total auto loan interest paid
-  domesticManufacture: boolean // Vehicle manufactured in USA
+  domesticManufacture: boolean // Vehicle final assembly in USA
   lenderName?: string
   vehicleMake?: string
   vehicleModel?: string
@@ -940,7 +940,7 @@ export interface AdoptedChild {
   birthYear: number
   disabledChild: boolean
   foreignChild: boolean
-  specialNeedsChild: boolean
+  specialNeedsChild: boolean // Includes qualifying state or tribal special-needs determinations
   qualifiedExpenses: number
   priorYearExpenses: number
   adoptionFinalized: boolean

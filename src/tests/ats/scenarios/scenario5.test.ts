@@ -229,17 +229,17 @@ const scheduleEIC = {
 
   // 2025 EIC parameters for 2 children
   creditPercentage: 0.4, // 40%
-  earnedIncomeThreshold: 17530,
-  maxCreditAmount: 7012, // 17530 * 0.40
-  phaseoutStart: 22200,
+  earnedIncomeThreshold: 17880,
+  maxCreditAmount: 7152, // 17880 * 0.40
+  phaseoutStart: 23350,
   phaseoutRate: 0.2106,
 
   // Calculated EIC
   // With 2 children and $38,500 income:
-  // Max credit = $7,012
-  // Phaseout amount = (38500 - 22200) * 0.2106 = 3432.78
-  // EIC = 7012 - 3432.78 = 3579.22 -> rounded
-  calculatedEic: 3579,
+  // Max credit = $7,152
+  // Phaseout amount = (38500 - 23350) * 0.2106 = 3190.59
+  // EIC = 7152 - 3190.59 = 3961.41 -> rounded
+  calculatedEic: 3961,
 
   form8867Required: true
 }
@@ -396,7 +396,7 @@ const form1040Data = (() => {
 
   // Payments
   const federalWithholding = w2Data.box2FederalWithholding // $3,850
-  const eic = scheduleEIC.calculatedEic // $3,579
+  const eic = scheduleEIC.calculatedEic // $3,961
 
   const totalPayments = federalWithholding + actc + eic // $10,024
 
@@ -591,7 +591,7 @@ describe('ATS Scenario 5 - Bobby Barker (HOH with Blind, EIC, CTC)', () => {
       const eic = scheduleEIC.calculatedEic
       expect(eic).toBeGreaterThan(0)
       expect(eic).toBeLessThanOrEqual(scheduleEIC.maxCreditAmount)
-      expect(eic).toBe(3579)
+      expect(eic).toBe(3961)
     })
   })
 
