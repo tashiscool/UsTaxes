@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
 import { FilingStatus } from 'ustaxes/core/data'
 import { BusinessRulesEngine } from 'ustaxes/efile/validation/businessRules'
 
@@ -7,7 +8,7 @@ describe('BusinessRulesEngine expanded TY2025 coverage', () => {
   it('flags capped OBBBA overtime deductions', () => {
     const errors = engine.check(
       {
-        overtimeDeduction: 12000,
+        overtimeDeduction: 12000
       } as any,
       2025
     )
@@ -19,7 +20,7 @@ describe('BusinessRulesEngine expanded TY2025 coverage', () => {
     const errors = engine.check(
       {
         trumpAccountContributions: 5500,
-        trumpAccountAge: 7,
+        trumpAccountAge: 7
       } as any,
       2025
     )
@@ -32,7 +33,7 @@ describe('BusinessRulesEngine expanded TY2025 coverage', () => {
       {
         sCorpBasisBeginning: 10000,
         sCorpBasisIncome: 3000,
-        sCorpBasisDistributions: 15000,
+        sCorpBasisDistributions: 15000
       } as any,
       2025
     )
@@ -44,7 +45,7 @@ describe('BusinessRulesEngine expanded TY2025 coverage', () => {
     const errors = engine.check(
       {
         filingStatus: FilingStatus.HOH,
-        dependentCount: 0,
+        dependentCount: 0
       } as any,
       2025
     )

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 /**
  * IRS MeF XML Serializer for Form 1040
  *
@@ -75,9 +76,21 @@ const XML_NAMESPACES = {
  * The serializer picks the latest effective version for the tax year.
  */
 const TY2025_SCHEMA_VERSIONS = [
-  { version: '2025v5.0', atsEffective: '2025-11-26', prodEffective: '2026-01-11' },
-  { version: '2025v5.1', atsEffective: '2026-01-25', prodEffective: '2026-02-08' },
-  { version: '2025v5.2', atsEffective: '2026-03-15', prodEffective: '2026-03-29' }
+  {
+    version: '2025v5.0',
+    atsEffective: '2025-11-26',
+    prodEffective: '2026-01-11'
+  },
+  {
+    version: '2025v5.1',
+    atsEffective: '2026-01-25',
+    prodEffective: '2026-02-08'
+  },
+  {
+    version: '2025v5.2',
+    atsEffective: '2026-03-15',
+    prodEffective: '2026-03-29'
+  }
 ] as const
 
 /**
@@ -1298,7 +1311,10 @@ ${returnData}
     const elements = [
       // Part I - Tax
       xmlElement('AlternativeMinimumTaxAmt', formatAmount(schedule2.l2())),
-      xmlElement('ExcessPremiumTaxCreditRepayAmt', formatAmount(schedule2.l1a())),
+      xmlElement(
+        'ExcessPremiumTaxCreditRepayAmt',
+        formatAmount(schedule2.l1a())
+      ),
       xmlElement('TotalSchedule2PartITaxAmt', formatAmount(schedule2.l3())),
 
       // Part II - Other Taxes
@@ -1361,13 +1377,25 @@ ${returnData}
     }
 
     const elements = [
-      xmlElement('QualifyingChildrenCnt', schedule8812.qualifyingChildrenCount()),
+      xmlElement(
+        'QualifyingChildrenCnt',
+        schedule8812.qualifyingChildrenCount()
+      ),
       xmlElement('OtherDependentsCnt', schedule8812.otherDependentsCount()),
       xmlElement('ModifiedAGIAmt', formatAmount(schedule8812.modifiedAGI())),
-      xmlElement('ChildTaxCreditAmt', formatAmount(schedule8812.childTaxCredit())),
-      xmlElement('OtherDependentCreditAmt', formatAmount(schedule8812.otherDependentCredit())),
+      xmlElement(
+        'ChildTaxCreditAmt',
+        formatAmount(schedule8812.childTaxCredit())
+      ),
+      xmlElement(
+        'OtherDependentCreditAmt',
+        formatAmount(schedule8812.otherDependentCredit())
+      ),
       xmlElement('TotalCreditsAmt', formatAmount(schedule8812.totalCredit())),
-      xmlElement('AdditionalChildTaxCreditAmt', formatAmount(schedule8812.additionalChildTaxCredit()))
+      xmlElement(
+        'AdditionalChildTaxCreditAmt',
+        formatAmount(schedule8812.additionalChildTaxCredit())
+      )
     ]
 
     return xmlContainer('IRS1040Schedule8812', elements, {
@@ -1385,31 +1413,38 @@ ${returnData}
     }
 
     const qualifyingChildren = scheduleEIC.qualifyingChildren()
-    const childElements = qualifyingChildren.map((child: {
-      firstName: string
-      lastName: string
-      ssn: string
-      yearOfBirth: number
-      relationship: string
-      monthsLived: number
-    }, idx: number) =>
-      xmlContainer(
-        'QualifyingChildInformation',
-        [
-          xmlElement('QualifyingChildFirstNm', child.firstName),
-          xmlElement('QualifyingChildLastNm', child.lastName),
-          xmlElement('QualifyingChildSSN', formatSSN(child.ssn)),
-          xmlElement('QualifyingChildBirthYr', child.yearOfBirth),
-          xmlElement('QualifyingChildRelationship', child.relationship),
-          xmlElement('MonthsChildLivedWithYouCnt', child.monthsLived)
-        ],
-        { childNum: String(idx + 1) }
-      )
+    const childElements = qualifyingChildren.map(
+      (
+        child: {
+          firstName: string
+          lastName: string
+          ssn: string
+          yearOfBirth: number
+          relationship: string
+          monthsLived: number
+        },
+        idx: number
+      ) =>
+        xmlContainer(
+          'QualifyingChildInformation',
+          [
+            xmlElement('QualifyingChildFirstNm', child.firstName),
+            xmlElement('QualifyingChildLastNm', child.lastName),
+            xmlElement('QualifyingChildSSN', formatSSN(child.ssn)),
+            xmlElement('QualifyingChildBirthYr', child.yearOfBirth),
+            xmlElement('QualifyingChildRelationship', child.relationship),
+            xmlElement('MonthsChildLivedWithYouCnt', child.monthsLived)
+          ],
+          { childNum: String(idx + 1) }
+        )
     )
 
     const elements = [
       ...childElements,
-      xmlElement('EarnedIncomeCreditAmt', formatAmount(scheduleEIC.creditAmount()))
+      xmlElement(
+        'EarnedIncomeCreditAmt',
+        formatAmount(scheduleEIC.creditAmount())
+      )
     ]
 
     return xmlContainer('IRS1040ScheduleEIC', elements, {
@@ -1427,12 +1462,27 @@ ${returnData}
     }
 
     const elements = [
-      xmlElement('QualifiedBusinessIncomeAmt', formatAmount(form8995.qualifiedBusinessIncome())),
-      xmlElement('QBIDeductionBeforeLimitAmt', formatAmount(form8995.deductionBeforeLimit())),
-      xmlElement('TaxableIncomeBeforeQBIAmt', formatAmount(form8995.taxableIncomeBeforeQBI())),
+      xmlElement(
+        'QualifiedBusinessIncomeAmt',
+        formatAmount(form8995.qualifiedBusinessIncome())
+      ),
+      xmlElement(
+        'QBIDeductionBeforeLimitAmt',
+        formatAmount(form8995.deductionBeforeLimit())
+      ),
+      xmlElement(
+        'TaxableIncomeBeforeQBIAmt',
+        formatAmount(form8995.taxableIncomeBeforeQBI())
+      ),
       xmlElement('NetCapitalGainAmt', formatAmount(form8995.netCapitalGain())),
-      xmlElement('IncomeExceedingCapGainAmt', formatAmount(form8995.incomeExceedingCapGain())),
-      xmlElement('TwentyPercentOfExceedingAmt', formatAmount(form8995.twentyPercentOfExceeding())),
+      xmlElement(
+        'IncomeExceedingCapGainAmt',
+        formatAmount(form8995.incomeExceedingCapGain())
+      ),
+      xmlElement(
+        'TwentyPercentOfExceedingAmt',
+        formatAmount(form8995.twentyPercentOfExceeding())
+      ),
       xmlElement('QualifiedBusIncDedAmt', formatAmount(form8995.qbiDeduction()))
     ]
 
@@ -1452,19 +1502,23 @@ ${returnData}
       return ''
     }
 
-    const schedule1A = (this.f1040 as unknown as { schedule1A?: {
-      isNeeded: () => boolean
-      overtimeHours: () => number
-      overtimeWages: () => number
-      overtimeDeduction: () => number
-      tipIncomeTotal: () => number
-      tipIncomeDeduction: () => number
-      autoLoanInterestPaid: () => number
-      autoLoanInterestDeduction: () => number
-      trumpAccountContributions: () => number
-      trumpAccountDeduction: () => number
-      totalOBBBADeductions: () => number
-    }}).schedule1A
+    const schedule1A = (
+      this.f1040 as unknown as {
+        schedule1A?: {
+          isNeeded: () => boolean
+          overtimeHours: () => number
+          overtimeWages: () => number
+          overtimeDeduction: () => number
+          tipIncomeTotal: () => number
+          tipIncomeDeduction: () => number
+          autoLoanInterestPaid: () => number
+          autoLoanInterestDeduction: () => number
+          trumpAccountContributions: () => number
+          trumpAccountDeduction: () => number
+          totalOBBBADeductions: () => number
+        }
+      }
+    ).schedule1A
 
     if (!schedule1A || !schedule1A.isNeeded()) {
       return ''
@@ -1474,22 +1528,46 @@ ${returnData}
       // Part I - Overtime Wage Deduction (OBBBA Section)
       xmlElement('OvertimeHoursCnt', schedule1A.overtimeHours()),
       xmlElement('OvertimeWagesAmt', formatAmount(schedule1A.overtimeWages())),
-      xmlElement('OvertimeDeductionAmt', formatAmount(schedule1A.overtimeDeduction())),
+      xmlElement(
+        'OvertimeDeductionAmt',
+        formatAmount(schedule1A.overtimeDeduction())
+      ),
 
       // Part II - Tip Income Deduction
-      xmlElement('TipIncomeTotalAmt', formatAmount(schedule1A.tipIncomeTotal())),
-      xmlElement('TipIncomeDeductionAmt', formatAmount(schedule1A.tipIncomeDeduction())),
+      xmlElement(
+        'TipIncomeTotalAmt',
+        formatAmount(schedule1A.tipIncomeTotal())
+      ),
+      xmlElement(
+        'TipIncomeDeductionAmt',
+        formatAmount(schedule1A.tipIncomeDeduction())
+      ),
 
       // Part III - Auto Loan Interest Deduction
-      xmlElement('AutoLoanInterestPaidAmt', formatAmount(schedule1A.autoLoanInterestPaid())),
-      xmlElement('AutoLoanInterestDeductionAmt', formatAmount(schedule1A.autoLoanInterestDeduction())),
+      xmlElement(
+        'AutoLoanInterestPaidAmt',
+        formatAmount(schedule1A.autoLoanInterestPaid())
+      ),
+      xmlElement(
+        'AutoLoanInterestDeductionAmt',
+        formatAmount(schedule1A.autoLoanInterestDeduction())
+      ),
 
       // Part IV - Trump Account Contributions
-      xmlElement('TrumpAccountContributionsAmt', formatAmount(schedule1A.trumpAccountContributions())),
-      xmlElement('TrumpAccountDeductionAmt', formatAmount(schedule1A.trumpAccountDeduction())),
+      xmlElement(
+        'TrumpAccountContributionsAmt',
+        formatAmount(schedule1A.trumpAccountContributions())
+      ),
+      xmlElement(
+        'TrumpAccountDeductionAmt',
+        formatAmount(schedule1A.trumpAccountDeduction())
+      ),
 
       // Total
-      xmlElement('TotalOBBBADeductionsAmt', formatAmount(schedule1A.totalOBBBADeductions()))
+      xmlElement(
+        'TotalOBBBADeductionsAmt',
+        formatAmount(schedule1A.totalOBBBADeductions())
+      )
     ]
 
     return xmlContainer('IRS1040Schedule1A', elements, {
@@ -1508,19 +1586,23 @@ ${returnData}
       return ''
     }
 
-    const form4547 = (this.f1040 as unknown as { form4547?: {
-      isNeeded: () => boolean
-      accountHolderName: () => string
-      accountHolderSSN: () => string
-      custodianName: () => string
-      custodianEIN: () => string
-      accountNumber: () => string
-      accountOpenDate: () => string
-      contributionAmount: () => number
-      rolloverAmount: () => number
-      distributionAmount: () => number
-      fairMarketValue: () => number
-    }}).form4547
+    const form4547 = (
+      this.f1040 as unknown as {
+        form4547?: {
+          isNeeded: () => boolean
+          accountHolderName: () => string
+          accountHolderSSN: () => string
+          custodianName: () => string
+          custodianEIN: () => string
+          accountNumber: () => string
+          accountOpenDate: () => string
+          contributionAmount: () => number
+          rolloverAmount: () => number
+          distributionAmount: () => number
+          fairMarketValue: () => number
+        }
+      }
+    ).form4547
 
     if (!form4547 || !form4547.isNeeded()) {
       return ''
@@ -1533,9 +1615,15 @@ ${returnData}
       xmlElement('CustodianEIN', formatEIN(form4547.custodianEIN())),
       xmlElement('AccountNum', form4547.accountNumber()),
       xmlElement('AccountOpenDt', form4547.accountOpenDate()),
-      xmlElement('ContributionAmt', formatAmount(form4547.contributionAmount())),
+      xmlElement(
+        'ContributionAmt',
+        formatAmount(form4547.contributionAmount())
+      ),
       xmlElement('RolloverAmt', formatAmount(form4547.rolloverAmount())),
-      xmlElement('DistributionAmt', formatAmount(form4547.distributionAmount())),
+      xmlElement(
+        'DistributionAmt',
+        formatAmount(form4547.distributionAmount())
+      ),
       xmlElement('FairMarketValueAmt', formatAmount(form4547.fairMarketValue()))
     ]
 

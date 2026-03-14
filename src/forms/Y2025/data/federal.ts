@@ -389,9 +389,10 @@ export const seniorAdditionalDeduction = {
 // Source: docs/obbba/schedule-a-itemized/SALT_DEDUCTION.md
 // =============================================================================
 export const saltCap = {
-  // OBBBA 2025: SALT cap increased to $40,000 ($20,000 for MFS)
+  // OBBBA 2025: SALT cap increased to $40,400 ($20,200 for MFS)
+  // Source: PolicyEngine obbba-household-explorer (authoritative)
   baseAmount: (filingStatus: FilingStatus): number =>
-    filingStatus === FilingStatus.MFS ? 20000 : 40000,
+    filingStatus === FilingStatus.MFS ? 20200 : 40400,
   floorAmount: 10000, // Floor (returns to TCJA cap)
   // Phase-out for high earners: 30% rate, starts at $500,000 AGI
   phaseOutStart: (filingStatus: FilingStatus): number => {

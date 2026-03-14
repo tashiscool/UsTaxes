@@ -1,15 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-var-requires, @typescript-eslint/no-empty-function, @typescript-eslint/require-await */
 import { TextDecoder, TextEncoder } from 'util'
 import type { TransmitterConfig } from 'ustaxes/efile/mef/transmitter'
 import type { SubmissionId } from 'ustaxes/efile/types/mefTypes'
 
 Object.assign(globalThis, {
   TextEncoder,
-  TextDecoder,
+  TextDecoder
 })
 
-const { createTestTransmitter, EFileTransmitter } = require(
-  'ustaxes/efile/mef/transmitter'
-) as typeof import('ustaxes/efile/mef/transmitter')
+const { createTestTransmitter, EFileTransmitter } =
+  require('ustaxes/efile/mef/transmitter') as typeof import('ustaxes/efile/mef/transmitter')
 
 const buildTestConfig = (): TransmitterConfig => ({
   taxYear: '2025',
@@ -21,7 +21,7 @@ const buildTestConfig = (): TransmitterConfig => ({
       submitUrl: 'https://la.www4.irs.gov/a2a/mef/submit',
       getAckUrl: 'https://la.www4.irs.gov/a2a/mef/getack',
       getStatusUrl: 'https://la.www4.irs.gov/a2a/mef/getstatus',
-      getBulkAckUrl: 'https://la.www4.irs.gov/a2a/mef/getbulkack',
+      getBulkAckUrl: 'https://la.www4.irs.gov/a2a/mef/getbulkack'
     },
     timeoutMs: 60000,
     connectionTimeoutMs: 30000,
@@ -29,14 +29,14 @@ const buildTestConfig = (): TransmitterConfig => ({
       minVersion: 'TLSv1.2',
       certPath: '',
       keyPath: '',
-      rejectUnauthorized: true,
+      rejectUnauthorized: true
     },
     retryConfig: {
       maxAttempts: 3,
       initialDelayMs: 1000,
       maxDelayMs: 30000,
       backoffMultiplier: 2,
-      retryableStatusCodes: [408, 429, 500, 502, 503, 504],
+      retryableStatusCodes: [408, 429, 500, 502, 503, 504]
     },
     softwareId: 'USTAXES1',
     softwareVersion: '1.0.0',
@@ -54,12 +54,12 @@ const buildTestConfig = (): TransmitterConfig => ({
           expirationDate: new Date('2026-12-31'),
           serialNumber: '',
           subjectDN: '',
-          issuerDN: '',
+          issuerDN: ''
         },
-        privateKey: '',
-      },
-    },
-  },
+        privateKey: ''
+      }
+    }
+  }
 })
 
 describe('EFileTransmitter acknowledgment workflow', () => {
@@ -83,8 +83,8 @@ describe('EFileTransmitter acknowledgment workflow', () => {
       simulatedAcknowledgment: {
         mode: 'reject',
         errorCode: 'R0000-507-01',
-        errorMessage: 'Dependent TIN conflict',
-      },
+        errorMessage: 'Dependent TIN conflict'
+      }
     })
 
     const result = await transmitter.pollForAcknowledgment(
@@ -113,9 +113,9 @@ describe('EFileTransmitter acknowledgment workflow', () => {
           ackTs: new Date('2026-03-13T12:00:00.000Z').toISOString(),
           irsReceiptId: 'IRS-ADAPTER-1',
           taxYr: '2025',
-          returnTypeCd: '1040',
-        }),
-      },
+          returnTypeCd: '1040'
+        })
+      }
     })
 
     const result = await transmitter.pollForAcknowledgment(

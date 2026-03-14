@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/restrict-plus-operands */
 import { execSync } from 'child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
@@ -31,10 +32,7 @@ const OUTPUT_JSON = resolve(
   TAXES_ROOT,
   'UsTaxes/docs/2025_form_output_diff.json'
 )
-const OUTPUT_CSV = resolve(
-  TAXES_ROOT,
-  'UsTaxes/docs/2025_form_output_diff.csv'
-)
+const OUTPUT_CSV = resolve(TAXES_ROOT, 'UsTaxes/docs/2025_form_output_diff.csv')
 
 const scenarioPath = (fileName: string): string =>
   resolve(
@@ -109,7 +107,12 @@ const asAmount = (value: unknown): string => {
 }
 
 const sameAmount = (left: unknown, right: unknown): boolean => {
-  if (left === null || left === undefined || right === null || right === undefined) {
+  if (
+    left === null ||
+    left === undefined ||
+    right === null ||
+    right === undefined
+  ) {
     return left === right
   }
   const leftNum = Number(left)
@@ -185,23 +188,27 @@ const createScenario28Output = (): Record<string, unknown> => {
     totalQBI: f1040.totalQbi(),
     qbiDeduction: f1040.l13(),
     qbi8995A: detailed?.l27?.() ?? null,
-    w2Wages8995A: detailed?.qbiEntries?.().reduce(
-      (total: number, entry: any) => total + (entry.w2Wages ?? 0),
-      0
-    ) ?? null,
-    ubia8995A: detailed?.qbiEntries?.().reduce(
-      (total: number, entry: any) => total + (entry.ubia ?? 0),
-      0
-    ) ?? null,
+    w2Wages8995A:
+      detailed
+        ?.qbiEntries?.()
+        .reduce(
+          (total: number, entry: any) => total + (entry.w2Wages ?? 0),
+          0
+        ) ?? null,
+    ubia8995A:
+      detailed
+        ?.qbiEntries?.()
+        .reduce((total: number, entry: any) => total + (entry.ubia ?? 0), 0) ??
+      null,
     form8995ATotalBusinesses: detailed?.qbiEntries?.().length ?? 0,
-    form8995AOverflowBusinesses:
-      Math.max(0, (detailed?.qbiEntries?.().length ?? 0) - 3),
-    hasForm8995AAttachmentStatement:
-      (detailed?.qbiEntries?.().length ?? 0) > 3,
-    form8995AOverflowQBI:
-      detailed?.overflowTotals?.().qbi ?? null,
-    reitDividends: f1040.f8995?.reitDividends?.() ?? 0,
-    ptpIncome: f1040.f8995?.currentYearPtpIncome?.() ?? 0
+    form8995AOverflowBusinesses: Math.max(
+      0,
+      (detailed?.qbiEntries?.().length ?? 0) - 3
+    ),
+    hasForm8995AAttachmentStatement: (detailed?.qbiEntries?.().length ?? 0) > 3,
+    form8995AOverflowQBI: detailed?.overflowTotals?.().qbi ?? null,
+    reitDividends: f1040.f8995?.reitDividends() ?? 0,
+    ptpIncome: f1040.f8995?.currentYearPtpIncome() ?? 0
   }
 }
 
@@ -278,15 +285,17 @@ const createScenario18Output = (): Record<string, unknown> => {
   return {
     hasRentalIncome: true,
     hasScheduleEPage2Activity: false,
-    totalRentalRoyaltyIncome: (f1040.scheduleE.l23a() ?? 0) + (f1040.scheduleE.l23b() ?? 0),
+    totalRentalRoyaltyIncome:
+      (f1040.scheduleE.l23a() ?? 0) + (f1040.scheduleE.l23b() ?? 0),
     totalRentalExpenses: f1040.scheduleE.l23e(),
     rentalNetIncomeLoss: f1040.scheduleE.l26(),
     partnershipScheduleEIncome: 0,
     scheduleEPage2IncomeLoss: f1040.scheduleE.l32(),
-    scheduleEQualifiedBusinessIncome: f1040.f8995?.rentalQbiEntries?.().reduce(
-      (total: number, entry: any) => total + (entry.qbi ?? 0),
-      0
-    ) ?? 0,
+    scheduleEQualifiedBusinessIncome:
+      f1040.f8995
+        ?.rentalQbiEntries()
+        .reduce((total: number, entry: any) => total + (entry.qbi ?? 0), 0) ??
+      0,
     scheduleETotalIncomeLoss: f1040.scheduleE.l41()
   }
 }
@@ -336,10 +345,11 @@ const createScenario29Output = (): Record<string, unknown> => {
     rentalNetIncomeLoss: 0,
     partnershipScheduleEIncome: f1040.scheduleE.l29ak(),
     scheduleEPage2IncomeLoss: f1040.scheduleE.l32(),
-    scheduleEQualifiedBusinessIncome: f1040.f8995?.applicableK1s?.().reduce(
-      (total: number, entry: any) => total + (entry.qbi ?? 0),
-      0
-    ) ?? 0,
+    scheduleEQualifiedBusinessIncome:
+      f1040.f8995
+        ?.applicableK1s()
+        .reduce((total: number, entry: any) => total + (entry.qbi ?? 0), 0) ??
+      0,
     scheduleETotalIncomeLoss: f1040.scheduleE.l41()
   }
 }
@@ -392,7 +402,8 @@ const createScenarioNr5Output = (): Record<string, unknown> => {
     visaType: f1040nr.visaType(),
     daysInUS: f1040nr.daysInUSThisYear(),
     daysInUSPriorYear: f1040nr.nonresidentInfo()?.daysInUSPriorYear ?? null,
-    daysInUSTwoYearsPrior: f1040nr.nonresidentInfo()?.daysInUS2YearsPrior ?? null,
+    daysInUSTwoYearsPrior:
+      f1040nr.nonresidentInfo()?.daysInUS2YearsPrior ?? null,
     substantialPresenceWeightedDays: f1040nr.substantialPresenceDays(),
     claimsTreatyBenefits: f1040nr.claimsTaxTreaty(),
     scheduleOIRequiresTreatyDisclosure: f1040nr.claimsTaxTreaty(),
@@ -447,8 +458,7 @@ const createScenarioNr12Output = (): Record<string, unknown> => {
       otherDeductions: 0
     },
     taxWithheld: 0,
-    estimatedTaxPayments:
-      scenario.expectedValues.totalPayments ?? 0
+    estimatedTaxPayments: scenario.expectedValues.totalPayments ?? 0
   }
 
   const f1040 = new F1040(info, [])
@@ -461,7 +471,8 @@ const createScenarioNr12Output = (): Record<string, unknown> => {
     visaType: f1040nr.visaType(),
     daysInUS: f1040nr.daysInUSThisYear(),
     daysInUSPriorYear: f1040nr.nonresidentInfo()?.daysInUSPriorYear ?? null,
-    daysInUSTwoYearsPrior: f1040nr.nonresidentInfo()?.daysInUS2YearsPrior ?? null,
+    daysInUSTwoYearsPrior:
+      f1040nr.nonresidentInfo()?.daysInUS2YearsPrior ?? null,
     substantialPresenceWeightedDays: f1040nr.substantialPresenceDays(),
     claimsTreatyBenefits: f1040nr.claimsTaxTreaty(),
     scheduleOIRequiresTreatyDisclosure: f1040nr.claimsTaxTreaty(),
@@ -494,26 +505,28 @@ const buildRows = (
     'scenario-nr12-harrier.json': '1040_nr'
   }
 
-  return Object.entries(usTaxesOutputs).flatMap(([scenario, usTaxesMetrics]) => {
-    const directMetrics = directFileOutputs[scenario] ?? {}
-    return Object.keys({
-      ...usTaxesMetrics,
-      ...directMetrics
-    }).map((metric) => {
-      const usValue = usTaxesMetrics[metric]
-      const directValue = directMetrics[metric]
-      const matches = sameAmount(usValue, directValue)
-      return {
-        scenario,
-        domain: domainByScenario[scenario],
-        metric,
-        usTaxes: asAmount(usValue),
-        directFile: asAmount(directValue),
-        matches: matches ? 'yes' : 'no',
-        note: matches ? '' : 'Review scenario mapping or engine parity'
-      }
-    })
-  })
+  return Object.entries(usTaxesOutputs).flatMap(
+    ([scenario, usTaxesMetrics]) => {
+      const directMetrics = directFileOutputs[scenario] ?? {}
+      return Object.keys({
+        ...usTaxesMetrics,
+        ...directMetrics
+      }).map((metric) => {
+        const usValue = usTaxesMetrics[metric]
+        const directValue = directMetrics[metric]
+        const matches = sameAmount(usValue, directValue)
+        return {
+          scenario,
+          domain: domainByScenario[scenario],
+          metric,
+          usTaxes: asAmount(usValue),
+          directFile: asAmount(directValue),
+          matches: matches ? 'yes' : 'no',
+          note: matches ? '' : 'Review scenario mapping or engine parity'
+        }
+      })
+    }
+  )
 }
 
 describe('Form parity diff harness', () => {
