@@ -4,6 +4,12 @@
  * Bridges the taxflow backend facts (screen-centric flat records) to the
  * UsTaxes tax engine (strongly-typed Information interface), runs the
  * engine, and returns computed tax results.
+ *
+ * All federal tax math rules (standard deduction, brackets, CTC, SALT cap,
+ * QBID, AMT, NIIT, etc.) are honored wholly via create1040() and the form
+ * implementations in UsTaxes/src/forms/Y2025/. The single source of truth
+ * for rule documentation is docs/MATH_RULES_INDEX.md; parameters live in
+ * UsTaxes/src/forms/Y2025/data/federal.ts. Keep both in sync when law changes.
  */
 
 import {
@@ -149,8 +155,7 @@ const toNum = (v: unknown): number => {
   return 0
 }
 
-const toStr = (v: unknown): string =>
-  v == null ? '' : String(v)
+const toStr = (v: unknown): string => (v == null ? '' : String(v))
 
 const toDate = (v: unknown): Date => {
   if (v instanceof Date) return v
@@ -180,17 +185,17 @@ const mapFilingStatus = (status: string): FilingStatus => {
     s: FilingStatus.S,
     mfj: FilingStatus.MFJ,
     'married filing jointly': FilingStatus.MFJ,
-    'married_filing_jointly': FilingStatus.MFJ,
+    married_filing_jointly: FilingStatus.MFJ,
     mfs: FilingStatus.MFS,
     'married filing separately': FilingStatus.MFS,
-    'married_filing_separately': FilingStatus.MFS,
+    married_filing_separately: FilingStatus.MFS,
     hoh: FilingStatus.HOH,
     'head of household': FilingStatus.HOH,
-    'head_of_household': FilingStatus.HOH,
+    head_of_household: FilingStatus.HOH,
     w: FilingStatus.W,
     widow: FilingStatus.W,
     'qualifying widow(er)': FilingStatus.W,
-    'qualifying_surviving_spouse': FilingStatus.W
+    qualifying_surviving_spouse: FilingStatus.W
   }
   return map[normalized] ?? FilingStatus.S
 }
@@ -213,9 +218,7 @@ const adaptW2s = (facts: FactsRecord): IncomeW2[] => {
       ? { EIN: toStr(r.ein), employerName: toStr(r.employerName) }
       : undefined,
     personRole:
-      toStr(r.owner) === 'spouse'
-        ? PersonRole.SPOUSE
-        : PersonRole.PRIMARY,
+      toStr(r.owner) === 'spouse' ? PersonRole.SPOUSE : PersonRole.PRIMARY,
     state: undefined,
     stateWages: toNum(r.stateWages) || undefined,
     stateWithholding: toNum(r.stateWithheld) || undefined
@@ -233,103 +236,121 @@ const adapt1099s = (facts: FactsRecord): Supported1099[] => {
     switch (type) {
       case 'INT':
       case '1099INT':
-        return [{
-          payer,
-          type: Income1099Type.INT,
-          form: { income: amount } as F1099IntData,
-          personRole
-        }]
-      case 'DIV':
-      case '1099DIV':
-        return [{
-          payer,
-          type: Income1099Type.DIV,
-          form: {
-            dividends: amount,
-            qualifiedDividends: 0,
-            totalCapitalGainsDistributions: 0
-          } as F1099DivData,
-          personRole
-        }]
-      case 'B':
-      case '1099B':
-        return [{
-          payer,
-          type: Income1099Type.B,
-          form: {
-            shortTermProceeds: 0,
-            shortTermCostBasis: 0,
-            longTermProceeds: amount,
-            longTermCostBasis: 0
-          } as F1099BData,
-          personRole
-        }]
-      case 'R':
-      case '1099R':
-        return [{
-          payer,
-          type: Income1099Type.R,
-          form: {
-            grossDistribution: amount,
-            taxableAmount: amount,
-            federalIncomeTaxWithheld: toNum(r.federalWithheld),
-            planType: PlanType1099.IRA
-          } as F1099RData,
-          personRole
-        }]
-      case 'SSA':
-      case '1099SSA':
-        return [{
-          payer,
-          type: Income1099Type.SSA,
-          form: {
-            netBenefits: amount,
-            federalIncomeTaxWithheld: toNum(r.federalWithheld)
-          } as F1099SSAData,
-          personRole
-        }]
-      case 'NEC':
-      case '1099NEC':
-        return [{
-          payer,
-          type: Income1099Type.NEC,
-          form: {
-            nonemployeeCompensation: amount,
-            federalIncomeTaxWithheld: toNum(r.federalWithheld)
-          } as F1099NECData,
-          personRole
-        }]
-      case 'MISC':
-      case '1099MISC':
-        return [{
-          payer,
-          type: Income1099Type.MISC,
-          form: {
-            otherIncome: amount,
-            federalIncomeTaxWithheld: toNum(r.federalWithheld)
-          } as F1099MISCData,
-          personRole
-        }]
-      case 'G':
-      case '1099G':
-        return [{
-          payer,
-          type: Income1099Type.G,
-          form: {
-            unemploymentCompensation: amount,
-            federalIncomeTaxWithheld: toNum(r.federalWithheld)
-          } as F1099GData,
-          personRole
-        }]
-      default:
-        // Unrecognized 1099 type — treat as INT (interest)
-        if (amount > 0) {
-          return [{
+        return [
+          {
             payer,
             type: Income1099Type.INT,
             form: { income: amount } as F1099IntData,
             personRole
-          }]
+          }
+        ]
+      case 'DIV':
+      case '1099DIV':
+        return [
+          {
+            payer,
+            type: Income1099Type.DIV,
+            form: {
+              dividends: amount,
+              qualifiedDividends: 0,
+              totalCapitalGainsDistributions: 0
+            } as F1099DivData,
+            personRole
+          }
+        ]
+      case 'B':
+      case '1099B':
+        return [
+          {
+            payer,
+            type: Income1099Type.B,
+            form: {
+              shortTermProceeds: 0,
+              shortTermCostBasis: 0,
+              longTermProceeds: amount,
+              longTermCostBasis: 0
+            } as F1099BData,
+            personRole
+          }
+        ]
+      case 'R':
+      case '1099R':
+        return [
+          {
+            payer,
+            type: Income1099Type.R,
+            form: {
+              grossDistribution: amount,
+              taxableAmount: amount,
+              federalIncomeTaxWithheld: toNum(r.federalWithheld),
+              planType: PlanType1099.IRA
+            } as F1099RData,
+            personRole
+          }
+        ]
+      case 'SSA':
+      case '1099SSA':
+        return [
+          {
+            payer,
+            type: Income1099Type.SSA,
+            form: {
+              netBenefits: amount,
+              federalIncomeTaxWithheld: toNum(r.federalWithheld)
+            } as F1099SSAData,
+            personRole
+          }
+        ]
+      case 'NEC':
+      case '1099NEC':
+        return [
+          {
+            payer,
+            type: Income1099Type.NEC,
+            form: {
+              nonemployeeCompensation: amount,
+              federalIncomeTaxWithheld: toNum(r.federalWithheld)
+            } as F1099NECData,
+            personRole
+          }
+        ]
+      case 'MISC':
+      case '1099MISC':
+        return [
+          {
+            payer,
+            type: Income1099Type.MISC,
+            form: {
+              otherIncome: amount,
+              federalIncomeTaxWithheld: toNum(r.federalWithheld)
+            } as F1099MISCData,
+            personRole
+          }
+        ]
+      case 'G':
+      case '1099G':
+        return [
+          {
+            payer,
+            type: Income1099Type.G,
+            form: {
+              unemploymentCompensation: amount,
+              federalIncomeTaxWithheld: toNum(r.federalWithheld)
+            } as F1099GData,
+            personRole
+          }
+        ]
+      default:
+        // Unrecognized 1099 type — treat as INT (interest)
+        if (amount > 0) {
+          return [
+            {
+              payer,
+              type: Income1099Type.INT,
+              form: { income: amount } as F1099IntData,
+              personRole
+            }
+          ]
         }
         return []
     }
@@ -421,23 +442,84 @@ const adaptAddress = (facts: FactsRecord): Address => {
 // ─── State residency mapping ─────────────────────────────────────────────────
 
 const US_STATE_CODES: Set<string> = new Set([
-  'AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN',
-  'IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH',
-  'NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT',
-  'VT','VA','WA','WV','WI','WY'
+  'AL',
+  'AK',
+  'AZ',
+  'AR',
+  'CA',
+  'CO',
+  'CT',
+  'DE',
+  'DC',
+  'FL',
+  'GA',
+  'HI',
+  'ID',
+  'IL',
+  'IN',
+  'IA',
+  'KS',
+  'KY',
+  'LA',
+  'ME',
+  'MD',
+  'MA',
+  'MI',
+  'MN',
+  'MS',
+  'MO',
+  'MT',
+  'NE',
+  'NV',
+  'NH',
+  'NJ',
+  'NM',
+  'NY',
+  'NC',
+  'ND',
+  'OH',
+  'OK',
+  'OR',
+  'PA',
+  'RI',
+  'SC',
+  'SD',
+  'TN',
+  'TX',
+  'UT',
+  'VT',
+  'VA',
+  'WA',
+  'WV',
+  'WI',
+  'WY'
 ])
 
 const mapStateCode = (code: string): State | undefined => {
   const upper = code.toUpperCase().trim()
   // Handle full state names for common states
   const nameMap: Record<string, string> = {
-    'california': 'CA', 'new york': 'NY', 'texas': 'TX', 'florida': 'FL',
-    'illinois': 'IL', 'massachusetts': 'MA', 'virginia': 'VA',
-    'new jersey': 'NJ', 'pennsylvania': 'PA', 'ohio': 'OH',
-    'georgia': 'GA', 'north carolina': 'NC', 'michigan': 'MI',
-    'washington': 'WA', 'arizona': 'AZ', 'colorado': 'CO',
-    'maryland': 'MD', 'minnesota': 'MN', 'connecticut': 'CT',
-    'oregon': 'OR', 'indiana': 'IN'
+    california: 'CA',
+    'new york': 'NY',
+    texas: 'TX',
+    florida: 'FL',
+    illinois: 'IL',
+    massachusetts: 'MA',
+    virginia: 'VA',
+    'new jersey': 'NJ',
+    pennsylvania: 'PA',
+    ohio: 'OH',
+    georgia: 'GA',
+    'north carolina': 'NC',
+    michigan: 'MI',
+    washington: 'WA',
+    arizona: 'AZ',
+    colorado: 'CO',
+    maryland: 'MD',
+    minnesota: 'MN',
+    connecticut: 'CT',
+    oregon: 'OR',
+    indiana: 'IN'
   }
   const mapped = nameMap[code.toLowerCase().trim()] ?? upper
   return US_STATE_CODES.has(mapped) ? (mapped as State) : undefined
@@ -457,7 +539,9 @@ const adaptStateResidencies = (facts: FactsRecord): StateResidency[] => {
 
   // Fallback: try facts.residenceState or facts.state
   if (residencies.length === 0) {
-    const stateStr = toStr(facts.residenceState || facts.state || facts.filerState)
+    const stateStr = toStr(
+      facts.residenceState || facts.state || facts.filerState
+    )
     if (stateStr) {
       const state = mapStateCode(stateStr)
       if (state) residencies.push({ state })
@@ -480,9 +564,7 @@ const adaptStateResidencies = (facts: FactsRecord): StateResidency[] => {
 
 // ─── Main adapter ────────────────────────────────────────────────────────────
 
-export const adaptFactsToInformation = (
-  facts: FactsRecord
-): Information => {
+export const adaptFactsToInformation = (facts: FactsRecord): Information => {
   const filingStatus = mapFilingStatus(toStr(facts.filingStatus))
   const dependents = adaptDependents(facts)
   const spouse = adaptSpouse(facts, filingStatus)
@@ -567,7 +649,8 @@ export const adaptFactsToInformation = (
         a.contributionAmount ?? a.annualContribution ?? a.contribution
       ),
       governmentContribution: toNum(a.governmentContribution),
-      fairMarketValue: toNum(a.fairMarketValue ?? a.accountBalance) || undefined,
+      fairMarketValue:
+        toNum(a.fairMarketValue ?? a.accountBalance) || undefined,
       accountNumber: toStr(a.accountNumber) || undefined,
       custodianName: toStr(a.custodianName) || undefined,
       custodianEIN: toStr(a.custodianEIN) || undefined
@@ -657,7 +740,9 @@ const adaptFactsToForm1120Data = (facts: FactsRecord): Form1120Data => {
   return {
     entity: defaultBusinessEntity(facts) as Form1120Data['entity'],
     income: {
-      grossReceiptsOrSales: toNum(income.grossReceiptsOrSales ?? facts.grossReceipts),
+      grossReceiptsOrSales: toNum(
+        income.grossReceiptsOrSales ?? facts.grossReceipts
+      ),
       returnsAndAllowances: toNum(income.returnsAndAllowances),
       costOfGoodsSold: toNum(income.costOfGoodsSold ?? facts.costOfGoodsSold),
       dividendIncome: toNum(income.dividendIncome),
@@ -682,14 +767,22 @@ const adaptFactsToForm1120Data = (facts: FactsRecord): Form1120Data => {
       advertising: toNum(deductions.advertising),
       pensionPlans: toNum(deductions.pensionPlans),
       employeeBenefits: toNum(deductions.employeeBenefits),
-      domesticProductionDeduction: toNum(deductions.domesticProductionDeduction),
+      domesticProductionDeduction: toNum(
+        deductions.domesticProductionDeduction
+      ),
       otherDeductions: toNum(deductions.otherDeductions)
     },
     specialDeductions: {
-      dividendsReceivedDeduction: toNum(specialDeductions.dividendsReceivedDeduction),
+      dividendsReceivedDeduction: toNum(
+        specialDeductions.dividendsReceivedDeduction
+      ),
       dividendsFromAffiliated: toNum(specialDeductions.dividendsFromAffiliated),
-      dividendsOnDebtFinancedStock: toNum(specialDeductions.dividendsOnDebtFinancedStock),
-      dividendsOnCertainPreferred: toNum(specialDeductions.dividendsOnCertainPreferred),
+      dividendsOnDebtFinancedStock: toNum(
+        specialDeductions.dividendsOnDebtFinancedStock
+      ),
+      dividendsOnCertainPreferred: toNum(
+        specialDeductions.dividendsOnCertainPreferred
+      ),
       foreignDividends: toNum(specialDeductions.foreignDividends),
       nol: toNum(specialDeductions.nol)
     },
@@ -745,7 +838,9 @@ const adaptFactsToForm1120SData = (facts: FactsRecord): Form1120SData => {
   return {
     entity: defaultBusinessEntity(facts) as Form1120SData['entity'],
     income: {
-      grossReceiptsOrSales: toNum(income.grossReceiptsOrSales ?? facts.grossReceipts),
+      grossReceiptsOrSales: toNum(
+        income.grossReceiptsOrSales ?? facts.grossReceipts
+      ),
       returnsAndAllowances: toNum(income.returnsAndAllowances),
       costOfGoodsSold: toNum(income.costOfGoodsSold ?? facts.costOfGoodsSold),
       netGainFromSaleOfAssets: toNum(income.netGainFromSaleOfAssets),
@@ -756,7 +851,9 @@ const adaptFactsToForm1120SData = (facts: FactsRecord): Form1120SData => {
       grossRoyalties: toNum(income.grossRoyalties)
     },
     deductions: {
-      compensation: toNum(deductions.compensation ?? deductions.compensationOfOfficers),
+      compensation: toNum(
+        deductions.compensation ?? deductions.compensationOfOfficers
+      ),
       salariesAndWages: toNum(deductions.salariesAndWages),
       repairsAndMaintenance: toNum(deductions.repairsAndMaintenance),
       badDebts: toNum(deductions.badDebts),
@@ -770,14 +867,16 @@ const adaptFactsToForm1120SData = (facts: FactsRecord): Form1120SData => {
       employeeBenefits: toNum(deductions.employeeBenefits),
       otherDeductions: toNum(deductions.otherDeductions)
     },
-    shareholders: shareholders.map((s): SCorpShareholder => ({
-      name: toStr(s.name),
-      ssn: toStr(s.ssn ?? s.tin).replace(/\D/g, ''),
-      ownershipPercentage: toNum(s.ownershipPercentage ?? s.ownershipPct),
-      stockOwned: toNum(s.stockOwned ?? s.shares),
-      isOfficer: toBool(s.isOfficer),
-      compensation: toNum(s.compensation) || undefined
-    })),
+    shareholders: shareholders.map(
+      (s): SCorpShareholder => ({
+        name: toStr(s.name),
+        ssn: toStr(s.ssn ?? s.tin).replace(/\D/g, ''),
+        ownershipPercentage: toNum(s.ownershipPercentage ?? s.ownershipPct),
+        stockOwned: toNum(s.stockOwned ?? s.shares),
+        isOfficer: toBool(s.isOfficer),
+        compensation: toNum(s.compensation) || undefined
+      })
+    ),
     scheduleK: defaultScheduleK(facts),
     builtInGainsTax: toNum(facts.builtInGainsTax) || undefined,
     excessPassiveIncomeTax: toNum(facts.excessPassiveIncomeTax) || undefined,
@@ -794,7 +893,9 @@ const adaptFactsToForm1065Data = (facts: FactsRecord): Form1065Data => {
   return {
     entity: defaultBusinessEntity(facts) as Form1065Data['entity'],
     income: {
-      grossReceiptsOrSales: toNum(income.grossReceiptsOrSales ?? facts.grossReceipts),
+      grossReceiptsOrSales: toNum(
+        income.grossReceiptsOrSales ?? facts.grossReceipts
+      ),
       returnsAndAllowances: toNum(income.returnsAndAllowances),
       costOfGoodsSold: toNum(income.costOfGoodsSold ?? facts.costOfGoodsSold),
       ordinaryIncome: toNum(income.ordinaryIncome),
@@ -809,7 +910,9 @@ const adaptFactsToForm1065Data = (facts: FactsRecord): Form1065Data => {
     },
     deductions: {
       salariesAndWages: toNum(deductions.salariesAndWages),
-      guaranteedPaymentsToPartners: toNum(deductions.guaranteedPaymentsToPartners),
+      guaranteedPaymentsToPartners: toNum(
+        deductions.guaranteedPaymentsToPartners
+      ),
       repairsAndMaintenance: toNum(deductions.repairsAndMaintenance),
       badDebts: toNum(deductions.badDebts),
       rents: toNum(deductions.rents),
@@ -821,32 +924,51 @@ const adaptFactsToForm1065Data = (facts: FactsRecord): Form1065Data => {
       employeeBenefits: toNum(deductions.employeeBenefits),
       otherDeductions: toNum(deductions.otherDeductions)
     },
-    partners: partners.map((p): PartnerInfo => ({
-      name: toStr(p.name),
-      tin: toStr(p.tin ?? p.ssn).replace(/\D/g, ''),
-      tinType: toStr(p.tinType) === 'EIN' ? 'EIN' : 'SSN',
-      isGeneralPartner: toBool(p.isGeneralPartner ?? true),
-      isLimitedPartner: toBool(p.isLimitedPartner),
-      isDomestic: toBool(p.isDomestic ?? true),
-      profitSharingPercent: toNum(p.profitSharingPercent ?? p.profitPct),
-      lossSharingPercent: toNum(p.lossSharingPercent ?? p.lossPct ?? p.profitSharingPercent ?? p.profitPct),
-      capitalSharingPercent: toNum(p.capitalSharingPercent ?? p.capitalPct ?? p.profitSharingPercent ?? p.profitPct),
-      beginningCapitalAccount: toNum(p.beginningCapitalAccount),
-      capitalContributed: toNum(p.capitalContributed),
-      currentYearIncrease: toNum(p.currentYearIncrease),
-      withdrawalsDistributions: toNum(p.withdrawalsDistributions),
-      endingCapitalAccount: toNum(p.endingCapitalAccount)
-    })),
+    partners: partners.map(
+      (p): PartnerInfo => ({
+        name: toStr(p.name),
+        tin: toStr(p.tin ?? p.ssn).replace(/\D/g, ''),
+        tinType: toStr(p.tinType) === 'EIN' ? 'EIN' : 'SSN',
+        isGeneralPartner: toBool(p.isGeneralPartner ?? true),
+        isLimitedPartner: toBool(p.isLimitedPartner),
+        isDomestic: toBool(p.isDomestic ?? true),
+        profitSharingPercent: toNum(p.profitSharingPercent ?? p.profitPct),
+        lossSharingPercent: toNum(
+          p.lossSharingPercent ??
+            p.lossPct ??
+            p.profitSharingPercent ??
+            p.profitPct
+        ),
+        capitalSharingPercent: toNum(
+          p.capitalSharingPercent ??
+            p.capitalPct ??
+            p.profitSharingPercent ??
+            p.profitPct
+        ),
+        beginningCapitalAccount: toNum(p.beginningCapitalAccount),
+        capitalContributed: toNum(p.capitalContributed),
+        currentYearIncrease: toNum(p.currentYearIncrease),
+        withdrawalsDistributions: toNum(p.withdrawalsDistributions),
+        endingCapitalAccount: toNum(p.endingCapitalAccount)
+      })
+    ),
     scheduleK: defaultScheduleK(facts),
-    numberOfGeneralPartners: partners.filter((p) => toBool(p.isGeneralPartner ?? true)).length,
-    numberOfLimitedPartners: partners.filter((p) => toBool(p.isLimitedPartner)).length,
+    numberOfGeneralPartners: partners.filter((p) =>
+      toBool(p.isGeneralPartner ?? true)
+    ).length,
+    numberOfLimitedPartners: partners.filter((p) => toBool(p.isLimitedPartner))
+      .length,
     liabilitiesAtYearEnd: {
       recourse: toNum(liabilities.recourse),
       nonrecourse: toNum(liabilities.nonrecourse),
       qualifiedNonrecourse: toNum(liabilities.qualifiedNonrecourse)
     },
     capitalAccountMethod:
-      (toStr(facts.capitalAccountMethod) as 'tax' | 'GAAP' | 'section704b' | 'other') || 'tax'
+      (toStr(facts.capitalAccountMethod) as
+        | 'tax'
+        | 'GAAP'
+        | 'section704b'
+        | 'other') || 'tax'
   }
 }
 
@@ -858,7 +980,8 @@ const adaptFactsToForm1041Info = (facts: FactsRecord): Form1041Info => {
   const beneficiaries = asArray<Record<string, unknown>>(facts.beneficiaries)
 
   return {
-    entityType: (toStr(facts.entityType) || 'complexTrust') as Form1041Info['entityType'],
+    entityType: (toStr(facts.entityType) ||
+      'complexTrust') as Form1041Info['entityType'],
     entityName: toStr(facts.entityName) || 'Estate/Trust',
     ein: toStr(facts.ein).replace(/\D/g, ''),
     dateCreated: toDate(facts.dateCreated),
@@ -916,7 +1039,7 @@ const adaptFactsToForm1041Info = (facts: FactsRecord): Form1041Info => {
 // ─── Trust/Estate tax computation (standalone, mirrors F1041 logic) ──────────
 
 const TRUST_BRACKETS_2025 = [
-  { limit: 3150, rate: 0.10 },
+  { limit: 3150, rate: 0.1 },
   { limit: 11450, rate: 0.24 },
   { limit: 15650, rate: 0.35 },
   { limit: Infinity, rate: 0.37 }
@@ -1060,9 +1183,7 @@ export class TaxCalculationService {
     } catch (err) {
       return {
         success: false,
-        errors: [
-          err instanceof Error ? err.message : 'Tax calculation failed'
-        ]
+        errors: [err instanceof Error ? err.message : 'Tax calculation failed']
       }
     }
   }
@@ -1087,7 +1208,10 @@ export class TaxCalculationService {
           const stateRefund = this.extractStateRefund(stateForm)
           const stateAmountOwed = this.extractStateAmountOwed(stateForm)
           const stateWithholding = this.extractStateWithholding(stateForm)
-          const stateTaxableIncome = this.extractStateTaxableIncome(stateForm, f1040)
+          const stateTaxableIncome = this.extractStateTaxableIncome(
+            stateForm,
+            f1040
+          )
 
           return {
             state: form.state,
@@ -1150,14 +1274,22 @@ export class TaxCalculationService {
 
   /** Extract state withholding */
   private extractStateWithholding(form: Record<string, unknown>): number {
-    if (typeof (form as { methods?: { stateWithholding?: () => number } }).methods?.stateWithholding === 'function') {
-      return (form as { methods: { stateWithholding: () => number } }).methods.stateWithholding()
+    if (
+      typeof (form as { methods?: { stateWithholding?: () => number } }).methods
+        ?.stateWithholding === 'function'
+    ) {
+      return (
+        form as { methods: { stateWithholding: () => number } }
+      ).methods.stateWithholding()
     }
     return 0
   }
 
   /** Extract state taxable income */
-  private extractStateTaxableIncome(form: Record<string, unknown>, f1040: F1040): number {
+  private extractStateTaxableIncome(
+    form: Record<string, unknown>,
+    f1040: F1040
+  ): number {
     // IL: l11 (net income), CA: l18 (taxable income)
     for (const method of ['l18', 'l11', 'l9']) {
       if (typeof form[method] === 'function') {
@@ -1279,9 +1411,7 @@ export class TaxCalculationService {
     const amountOwed = form.l38()
     const overpayment = form.l39()
     const effectiveTaxRate =
-      totalIncome > 0
-        ? Math.round((totalTax / totalIncome) * 10000) / 10000
-        : 0
+      totalIncome > 0 ? Math.round((totalTax / totalIncome) * 10000) / 10000 : 0
 
     return {
       success: true,
@@ -1314,9 +1444,7 @@ export class TaxCalculationService {
     const amountOwed = form.l25()
     const overpayment = form.l26()
     const effectiveTaxRate =
-      totalIncome > 0
-        ? Math.round((totalTax / totalIncome) * 10000) / 10000
-        : 0
+      totalIncome > 0 ? Math.round((totalTax / totalIncome) * 10000) / 10000 : 0
 
     // Build per-shareholder allocations
     const ownerAllocations: OwnerAllocation[] = data.shareholders.map((sh) => {

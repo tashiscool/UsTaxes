@@ -2,3 +2,6 @@ serviceWorker.js
 
 # don't worry about generated files
 /src/core/data/validate-fns.js
+
+# backend-cloudflare uses its own tsconfig — skip with root eslint
+backend-cloudflare/
