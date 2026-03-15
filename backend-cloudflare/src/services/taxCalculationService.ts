@@ -679,7 +679,7 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
       : undefined
 
   // Adapt itemized deductions (Schedule A — SALT, mortgage interest, charity, etc.)
-  // SALT cap ($40,400 for TY2025, $20,200 MFS) is enforced by the engine via ScheduleA.ts
+  // SALT cap ($40,000 for TY2025, $20,000 MFS) is enforced by the engine via ScheduleA.ts
   const itemizedDeductions: ItemizedDeductions | undefined = (() => {
     const d = asRecord(facts.itemizedDeductions)
     if (!d || Object.keys(d).length === 0) return undefined
@@ -1421,6 +1421,20 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     injuredSpouse: adaptInjuredSpouse(facts),
     // Form 2210 (Underpayment of estimated tax)
     priorYearTax: toNum(facts.priorYearTax),
+    // Form 4137 (Unreported tip income)
+    unreportedTipIncome: toNum(facts.unreportedTipIncome),
+    // Form 8919 (Uncollected SS/Medicare on wages)
+    uncollectedSSTaxWages: adaptUncollectedSSTaxWages(facts),
+    // Form 8801 (AMT credit carryforward)
+    priorYearAmtCredit: toNum(facts.priorYearAmtCredit),
+    priorYearAmtCreditCarryforward: toNum(facts.priorYearAmtCreditCarryforward),
+    // Form 8283 (Noncash charitable contributions)
+    noncashContributions: adaptNoncashContributions(facts),
+    // Schedule R (Credit for Elderly or Disabled)
+    disabilityIncome: toNum(facts.disabilityIncome) || undefined,
+    nontaxablePensionIncome: toNum(facts.nontaxablePensionIncome) || undefined,
+    // Form 8829 (Business Use of Home) - from first Schedule C business with home office
+    homeOffice: adaptHomeOffice(facts),
     // Form 2441 Dependent Care
     dependentCareProviders,
     dependentCareExpenses,
@@ -1443,6 +1457,94 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
   }
 
   return info
+}
+
+const adaptUncollectedSSTaxWages = (
+  facts: FactsRecord
+): Record<string, unknown>[] | undefined => {
+  const records = asArray<Record<string, unknown>>(
+    facts.uncollectedSSTaxWages ?? facts.form8919Records
+  )
+  if (records.length === 0) return undefined
+  return records
+    .filter((r) => toNum(r.wagesReceived ?? r.wages ?? 0) > 0)
+    .map((r) => ({
+      employerName: toStr(r.employerName ?? r.employer ?? 'Employer'),
+      employerEIN: toStr(r.employerEIN ?? r.ein ?? '').replace(/\D/g, ''),
+      wagesReceived: toNum(r.wagesReceived ?? r.wages ?? 0),
+      reasonCode:
+        (toStr(r.reasonCode ?? r.reason ?? 'A') as 'A' | 'C' | 'G' | 'H') || 'A'
+    }))
+}
+
+const adaptHomeOffice = (
+  facts: FactsRecord
+): Record<string, unknown> | undefined => {
+  const records = asArray<Record<string, unknown>>(facts.businessRecords)
+  const withHome = records.find(
+    (r) =>
+      Boolean(r.homeOffice) &&
+      toNum(r.homeOfficeSqFt ?? r.homeOfficeSqft ?? 0) > 0
+  )
+  if (!withHome) return undefined
+  const sqFt = toNum(withHome.homeOfficeSqFt ?? withHome.homeOfficeSqft ?? 0)
+  const totalSqFt = toNum(withHome.homeSqFt ?? withHome.homeSqft ?? 1) || 1
+  return {
+    method: 'simplified',
+    totalSquareFeet: totalSqFt,
+    businessSquareFeet: sqFt,
+    mortgageInterest: 0,
+    realEstateTaxes: 0,
+    insurance: 0,
+    utilities: 0,
+    repairs: 0,
+    otherExpenses: 0,
+    homeValue: 0,
+    landValue: 0,
+    homePurchaseDate: new Date(),
+    priorDepreciation: 0
+  }
+}
+
+const adaptNoncashContributions = (
+  facts: FactsRecord
+): Record<string, unknown> | undefined => {
+  const raw = asRecord(facts.noncashContributions ?? facts.form8283Data)
+  if (!raw) return undefined
+  const sectionA = asArray<Record<string, unknown>>(
+    raw.sectionADonations ?? raw.donations ?? []
+  )
+  const sectionB = asArray<Record<string, unknown>>(raw.sectionBDonations ?? [])
+  const vehicles = asArray<Record<string, unknown>>(raw.vehicleDonations ?? [])
+  if (sectionA.length === 0 && sectionB.length === 0 && vehicles.length === 0)
+    return undefined
+  const mapDonation = (d: Record<string, unknown>) => ({
+    description: toStr(d.description ?? d.doneeName ?? 'Property'),
+    propertyType: toStr(d.propertyType ?? d.type ?? 'other'),
+    doneeName: toStr(d.doneeName ?? d.organization ?? ''),
+    doneeAddress: toStr(d.doneeAddress ?? ''),
+    dateAcquired: toDate(d.dateAcquired) ?? new Date(),
+    howAcquired: toStr(d.howAcquired ?? 'purchase'),
+    dateContributed: toDate(d.dateContributed) ?? new Date(),
+    fairMarketValue: toNum(d.fairMarketValue ?? d.fmv ?? 0),
+    costOrBasis: toNum(d.costOrBasis ?? d.basis ?? 0),
+    condition: toStr(d.condition ?? 'good'),
+    isPartialInterest: toBool(d.isPartialInterest ?? false)
+  })
+  return {
+    sectionADonations: sectionA.map(mapDonation),
+    sectionBDonations: sectionB.map(mapDonation),
+    vehicleDonations: vehicles.map((v) => ({
+      vehicleDescription: toStr(v.vehicleDescription ?? v.description ?? ''),
+      vehicleIdentificationNumber: toStr(v.vin ?? v.vehicleId ?? ''),
+      dateContributed: toDate(v.dateContributed) ?? new Date(),
+      grossProceeds: toNum(v.grossProceeds ?? 0),
+      fairMarketValue: toNum(v.fairMarketValue ?? 0),
+      deductionClaimed: toNum(v.deductionClaimed ?? 0),
+      form1098CAttached: toBool(v.form1098CAttached ?? false)
+    })),
+    hasConservationEasement: toBool(raw.hasConservationEasement ?? false)
+  }
 }
 
 const adaptParentInfo = (facts: FactsRecord): ParentTaxInfo | undefined => {

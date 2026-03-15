@@ -44,7 +44,7 @@ const scheduleRParams = {
 }
 
 export default class ScheduleR extends F1040Attachment {
-  tag: FormTag = 'f1040sr'
+  tag: FormTag = 'scheduleR'
   sequenceIndex = 16
 
   isNeeded = (): boolean => {

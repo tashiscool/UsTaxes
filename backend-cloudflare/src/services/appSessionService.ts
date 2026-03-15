@@ -543,6 +543,10 @@ const getBusinessRecords = (entities: SessionEntitySnapshot[]) =>
           ? Math.max(0, ordinaryIncome)
           : 0
 
+      // Simplified home office deduction: $5/sq ft, max 300 sq ft = $1,500
+      const homeOfficeDeduction =
+        homeOffice && homeOfficeSqFt > 0 ? Math.min(homeOfficeSqFt, 300) * 5 : 0
+
       return {
         id: entity.id,
         entityType: entity.entityType,
@@ -566,6 +570,9 @@ const getBusinessRecords = (entities: SessionEntitySnapshot[]) =>
         qbiProperty,
         homeOffice,
         homeOfficePct,
+        homeOfficeSqFt,
+        homeSqFt,
+        homeOfficeDeduction,
         netBusinessIncome,
         selfEmploymentIncome:
           entity.entityType === 'schedule_c'
@@ -1757,6 +1764,174 @@ const getPriorYearTax = (
   return undefined
 }
 
+/** Form 4137: unreported tip income from entity or screen */
+const getUnreportedTipIncome = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): number | undefined => {
+  const entity = entities.find((e) => e.entityType === 'form_4137')
+  const fromEntity = entity?.data as Record<string, unknown> | undefined
+  if (fromEntity?.unreportedTips != null)
+    return toMoney(fromEntity.unreportedTips)
+  const screen = requireScreen(snapshot, '/form-4137') as Record<
+    string,
+    unknown
+  >
+  const amount = screen.unreportedTips ?? screen.unreportedTipIncome
+  if (amount != null && amount !== '')
+    return toMoney(Number(String(amount).replace(/[^\d.]/g, '')) || 0)
+  return undefined
+}
+
+/** Form 8919: uncollected SS/Medicare wages from entities or screen */
+const getUncollectedSSTaxWages = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): Record<string, unknown>[] => {
+  const entityList = entities.filter((e) => e.entityType === 'form_8919')
+  if (entityList.length > 0) {
+    return entityList.map((e) => {
+      const d = e.data as Record<string, unknown>
+      return {
+        employerName: toText(d.employerName ?? d.employer),
+        employerEIN: toText(d.employerEIN ?? d.ein).replace(/\D/g, ''),
+        wagesReceived: toMoney(d.wagesReceived ?? d.wages ?? 0),
+        reasonCode: toText(d.reasonCode ?? d.reason ?? 'A')
+      }
+    })
+  }
+  const screen = requireScreen(snapshot, '/form-8919') as Record<
+    string,
+    unknown
+  >
+  const employers = asArray<Record<string, unknown>>(
+    screen.employers ?? screen.records ?? []
+  )
+  return employers
+    .filter((r) => toMoney(r.wagesReceived ?? r.wages ?? 0) > 0)
+    .map((r) => ({
+      employerName: toText(r.employerName ?? r.employer),
+      employerEIN: toText(r.employerEIN ?? r.ein).replace(/\D/g, ''),
+      wagesReceived: toMoney(r.wagesReceived ?? r.wages ?? 0),
+      reasonCode: toText(r.reasonCode ?? r.reason ?? 'A')
+    }))
+}
+
+/** Form 8801: AMT credit carryforward from entity or screen */
+const getAmtCreditData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): { priorYearAmtCredit?: number; priorYearAmtCreditCarryforward?: number } => {
+  const entity = entities.find((e) => e.entityType === 'form_8801')
+  const fromEntity = entity?.data as Record<string, unknown> | undefined
+  if (fromEntity) {
+    return {
+      priorYearAmtCredit:
+        fromEntity.priorYearAmtCredit != null
+          ? toMoney(fromEntity.priorYearAmtCredit)
+          : undefined,
+      priorYearAmtCreditCarryforward:
+        fromEntity.priorYearAmtCreditCarryforward != null
+          ? toMoney(fromEntity.priorYearAmtCreditCarryforward)
+          : undefined
+    }
+  }
+  const screen = requireScreen(snapshot, '/form-8801') as Record<
+    string,
+    unknown
+  >
+  const prior = screen.priorYearAmtCredit ?? screen.amtCredit
+  const carryforward =
+    screen.priorYearAmtCreditCarryforward ?? screen.carryforward
+  return {
+    priorYearAmtCredit:
+      prior != null && prior !== ''
+        ? toMoney(Number(String(prior).replace(/[^\d.]/g, '')) || 0)
+        : undefined,
+    priorYearAmtCreditCarryforward:
+      carryforward != null && carryforward !== ''
+        ? toMoney(Number(String(carryforward).replace(/[^\d.]/g, '')) || 0)
+        : undefined
+  }
+}
+
+/** Schedule R: disability income and nontaxable pension from entity or /schedule-r screen */
+const getScheduleRData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): { disabilityIncome?: number; nontaxablePensionIncome?: number } => {
+  const entity = entities.find((e) => e.entityType === 'schedule_r')
+  const fromEntity = entity?.data as Record<string, unknown> | undefined
+  if (fromEntity) {
+    const disabilityIncome =
+      fromEntity.disabilityIncome != null
+        ? toMoney(fromEntity.disabilityIncome)
+        : undefined
+    const nontaxablePensionIncome =
+      fromEntity.nontaxablePensionIncome != null
+        ? toMoney(fromEntity.nontaxablePensionIncome)
+        : undefined
+    if (
+      disabilityIncome !== undefined ||
+      nontaxablePensionIncome !== undefined
+    ) {
+      return { disabilityIncome, nontaxablePensionIncome }
+    }
+  }
+  const screen = requireScreen(snapshot, '/schedule-r') as Record<
+    string,
+    unknown
+  >
+  if (!screen || Object.keys(screen).length === 0) return {}
+  const disabilityIncome =
+    screen.disabilityIncome != null && screen.disabilityIncome !== ''
+      ? toMoney(
+          Number(String(screen.disabilityIncome).replace(/[^\d.]/g, '')) || 0
+        )
+      : undefined
+  const nontaxablePensionIncome =
+    screen.nontaxablePensionIncome != null &&
+    screen.nontaxablePensionIncome !== ''
+      ? toMoney(
+          Number(
+            String(screen.nontaxablePensionIncome).replace(/[^\d.]/g, '')
+          ) || 0
+        )
+      : undefined
+  return { disabilityIncome, nontaxablePensionIncome }
+}
+
+/** Form 8283: noncash charitable contributions from entity or screen */
+const getNoncashContributions = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): Record<string, unknown> | undefined => {
+  const entity = entities.find((e) => e.entityType === 'form_8283')
+  const fromEntity = entity?.data as Record<string, unknown> | undefined
+  if (fromEntity && Object.keys(fromEntity).length > 0) return fromEntity
+  const screen = requireScreen(snapshot, '/form-8283') as Record<
+    string,
+    unknown
+  >
+  if (!screen || Object.keys(screen).length === 0) return undefined
+  const sectionA = asArray<Record<string, unknown>>(
+    screen.sectionADonations ?? screen.donations ?? []
+  )
+  const sectionB = asArray<Record<string, unknown>>(
+    screen.sectionBDonations ?? []
+  )
+  const vehicles = asArray<Record<string, unknown>>(
+    screen.vehicleDonations ?? []
+  )
+  if (sectionA.length === 0 && sectionB.length === 0 && vehicles.length === 0)
+    return undefined
+  return {
+    sectionADonations: sectionA,
+    sectionBDonations: sectionB,
+    vehicleDonations: vehicles
+  }
+}
+
 const toFacts = (
   row: FilingSessionRow,
   snapshot: FilingSessionSnapshot,
@@ -1833,6 +2008,16 @@ const toFacts = (
   const injuredSpouse = getInjuredSpouseInfo(snapshot, entities)
   // Form 2210 — prior year tax for underpayment penalty
   const priorYearTax = getPriorYearTax(snapshot, entities)
+  // Form 4137 — unreported tip income
+  const unreportedTipIncome = getUnreportedTipIncome(snapshot, entities)
+  // Form 8919 — uncollected SS/Medicare wages
+  const uncollectedSSTaxWages = getUncollectedSSTaxWages(snapshot, entities)
+  // Form 8801 — AMT credit carryforward
+  const amtCreditData = getAmtCreditData(snapshot, entities)
+  // Form 8283 — noncash charitable contributions
+  const noncashContributions = getNoncashContributions(snapshot, entities)
+  // Schedule R — Credit for Elderly or Disabled
+  const scheduleRData = getScheduleRData(snapshot, entities)
 
   return {
     primaryTIN: primaryTin,
@@ -1870,6 +2055,14 @@ const toFacts = (
     parentInfo,
     injuredSpouse,
     priorYearTax,
+    unreportedTipIncome,
+    uncollectedSSTaxWages,
+    priorYearAmtCredit: amtCreditData.priorYearAmtCredit,
+    priorYearAmtCreditCarryforward:
+      amtCreditData.priorYearAmtCreditCarryforward,
+    noncashContributions,
+    disabilityIncome: scheduleRData.disabilityIncome,
+    nontaxablePensionIncome: scheduleRData.nontaxablePensionIncome,
     '/taxYear': {
       $type: 'gov.irs.factgraph.persisters.IntWrapper',
       item: snapshot.taxYear
