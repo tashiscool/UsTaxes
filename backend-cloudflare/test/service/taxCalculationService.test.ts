@@ -421,9 +421,9 @@ describe('TaxCalculationService', () => {
       }
     })
 
-    it('§2.4 SALT cap: itemized deductions with $50k state taxes capped at $40,400', () => {
+    it('§2.4 SALT cap: itemized deductions with $50k state taxes capped at $40,000', () => {
       // Single filer with $120k wages and $50k in state taxes (far over cap)
-      // With itemized, taxable income should reflect SALT capped at $40,400 not $50k
+      // With itemized, taxable income should reflect SALT capped at $40,000 not $50k
       const withHighSalt = taxCalcService.calculate(
         baseFacts({
           w2Records: [
@@ -438,7 +438,7 @@ describe('TaxCalculationService', () => {
             }
           ],
           itemizedDeductions: {
-            stateAndLocalTaxes: 50000, // well above $40,400 cap
+            stateAndLocalTaxes: 50000, // well above $40,000 cap
             stateAndLocalRealEstateTaxes: 0,
             stateAndLocalPropertyTaxes: 0,
             interest8a: 0,
@@ -471,15 +471,15 @@ describe('TaxCalculationService', () => {
       expect(withHighSalt.success).toBe(true)
       expect(withNoItemized.success).toBe(true)
       if (withHighSalt.success && withNoItemized.success) {
-        // The itemized deduction should be capped at $40,400 (not $50,000)
-        // So taxable income with itemized = $120k - $40,400 = $79,600
+        // The itemized deduction should be capped at $40,000 (not $50,000)
+        // So taxable income with itemized = $120k - $40,000 = $80,000
         // Without itemized (standard deduction $15,750): taxable = $104,250
         // Itemized should produce lower taxable income when state taxes > standard deduction
         expect(withHighSalt.taxableIncome).toBeLessThan(
           withNoItemized.taxableIncome
         )
-        // With $40,400 SALT cap (as the itemized deduction), taxable = $120k - $40,400 = ~$79,600
-        expect(withHighSalt.taxableIncome).toBeCloseTo(79600, -3) // within $1000
+        // With $40,000 SALT cap (as the itemized deduction), taxable = $120k - $40,000 = $80,000
+        expect(withHighSalt.taxableIncome).toBeCloseTo(80000, -3) // within $1000
       }
     })
 

@@ -198,8 +198,8 @@ const federalBrackets: FederalBrackets = {
 }
 
 export const fica = {
-  maxSSTax: 10710.6, // Updated for 2025
-  maxIncomeSSTaxApplies: 172800, // Updated for 2025
+  maxSSTax: 10918.2, // 2025: $176,100 × 6.2% (SSA announcement Oct 2024)
+  maxIncomeSSTaxApplies: 176100, // 2025 SS wage base (up from $168,600 in 2024)
 
   regularMedicareTaxRate: 1.45 / 100,
   additionalMedicareTaxRate: 0.9 / 100,
@@ -389,10 +389,10 @@ export const seniorAdditionalDeduction = {
 // Source: docs/obbba/schedule-a-itemized/SALT_DEDUCTION.md
 // =============================================================================
 export const saltCap = {
-  // OBBBA 2025: SALT cap increased to $40,400 ($20,200 for MFS)
-  // Source: PolicyEngine obbba-household-explorer (authoritative)
+  // OBBBA 2025: SALT cap $40,000 ($20,000 for MFS); 2026 is $40,400/$20,200
+  // Source: OBBBA / Tax & Accounting glossary
   baseAmount: (filingStatus: FilingStatus): number =>
-    filingStatus === FilingStatus.MFS ? 20200 : 40400,
+    filingStatus === FilingStatus.MFS ? 20000 : 40000,
   floorAmount: 10000, // Floor (returns to TCJA cap)
   // Phase-out for high earners: 30% rate, starts at $500,000 AGI
   phaseOutStart: (filingStatus: FilingStatus): number => {

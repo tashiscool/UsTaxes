@@ -50,15 +50,15 @@ export interface W4Data {
   firstDateOfEmployment?: Date
 }
 
-// 2025 Standard Deductions
+// 2025 Standard Deductions (OBBBA)
 const STANDARD_DEDUCTIONS = {
-  single: 14600,
-  married_jointly: 29200,
-  head_of_household: 21900
+  single: 15750,
+  married_jointly: 31500,
+  head_of_household: 23625
 }
 
-// 2025 Child Tax Credit amounts
-const CHILD_TAX_CREDIT = 2000
+// 2025 Child Tax Credit amounts (OBBBA: $2,200 per qualifying child)
+const CHILD_TAX_CREDIT = 2200
 const OTHER_DEPENDENT_CREDIT = 500
 
 export default class W4 extends F1040Attachment {
