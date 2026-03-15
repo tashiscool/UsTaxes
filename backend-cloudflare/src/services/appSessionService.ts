@@ -1850,6 +1850,70 @@ const getForm5695Data = (
   return { cleanEnergyProperties: cleanEnergy, homeImprovements }
 }
 
+/** Educator expenses (Schedule 1 Line 11) from educator_expenses entity or /educator-expenses screen */
+const getEducatorExpensesData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const entity = entities.find((e) => e.entityType === 'educator_expenses')
+  const screen = requireScreen(snapshot, '/educator-expenses')
+  const d = (entity?.data ?? screen) as Record<string, unknown>
+  const total = toMoney(d.totalDeduction ?? 0)
+  return total > 0 ? total : undefined
+}
+
+/** Alimony received/paid (Schedule 1 Lines 2a/19a) from alimony entity or /alimony screen */
+const getAlimonyData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const entity = entities.find((e) => e.entityType === 'alimony')
+  const screen = requireScreen(snapshot, '/alimony')
+  const d = (entity?.data ?? screen) as Record<string, unknown>
+  const received = toMoney(d.alimonyReceived ?? 0)
+  const paid = toMoney(d.alimonyPaid ?? 0)
+  if (received <= 0 && paid <= 0) return undefined
+  return { alimonyReceived: received, alimonyPaid: paid }
+}
+
+/** Self-employed health insurance (Schedule 1 Line 17) from se_health_insurance entity */
+const getSEHealthInsuranceData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const entity = entities.find((e) => e.entityType === 'se_health_insurance')
+  const screen = requireScreen(snapshot, '/se-health-insurance')
+  const d = (entity?.data ?? screen) as Record<string, unknown>
+  const deduction = toMoney(d.deductibleAmount ?? 0)
+  return deduction > 0 ? deduction : undefined
+}
+
+/** Capital loss carryover from capital_loss_carryover entity */
+const getCapitalLossCarryoverData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const entity = entities.find((e) => e.entityType === 'capital_loss_carryover')
+  const screen = requireScreen(snapshot, '/capital-loss-carryover')
+  const d = (entity?.data ?? screen) as Record<string, unknown>
+  const st = toMoney(d.shortTermCarryover ?? 0)
+  const lt = toMoney(d.longTermCarryover ?? 0)
+  if (st <= 0 && lt <= 0) return undefined
+  return { shortTerm: st, longTerm: lt }
+}
+
+/** Passive activity loss allowance from passive_activity_loss entity */
+const getPassiveActivityLossData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const entity = entities.find((e) => e.entityType === 'passive_activity_loss')
+  const screen = requireScreen(snapshot, '/passive-activity-loss')
+  const d = (entity?.data ?? screen) as Record<string, unknown>
+  const allowance = toMoney(d.allowableLoss ?? 0)
+  return allowance > 0 ? allowance : undefined
+}
+
 const getIncomeSummary = (
   w2Records: ReturnType<typeof getW2Records>,
   form1099Records: ReturnType<typeof get1099Records>,
@@ -2234,6 +2298,13 @@ const toFacts = (
   const iraContributionsData = getIRAContributionsData(snapshot, entities)
   const form5695Data = getForm5695Data(snapshot, entities)
 
+  // Educator, alimony, SE health, capital loss, passive activity
+  const educatorExpenses = getEducatorExpensesData(snapshot, entities)
+  const alimonyData = getAlimonyData(snapshot, entities)
+  const seHealthInsurance = getSEHealthInsuranceData(snapshot, entities)
+  const capitalLossCarryover = getCapitalLossCarryoverData(snapshot, entities)
+  const passiveActivityLoss = getPassiveActivityLossData(snapshot, entities)
+
   // Form 8615 (Kiddie Tax) — parent info for child's unearned income
   const parentInfo = getParentInfoFromKiddieTax(snapshot, entities)
   // Form 8379 (Injured Spouse) — MFJ refund allocation
@@ -2289,6 +2360,13 @@ const toFacts = (
     iraContributions: iraContributionsData,
     cleanEnergyProperties: form5695Data?.cleanEnergyProperties,
     homeImprovements: form5695Data?.homeImprovements,
+    educatorExpenses,
+    alimonyReceived: alimonyData?.alimonyReceived,
+    alimonyPaid: alimonyData?.alimonyPaid,
+    selfEmployedHealthInsuranceDeduction: seHealthInsurance,
+    priorYearCapitalLossCarryoverShortTerm: capitalLossCarryover?.shortTerm,
+    priorYearCapitalLossCarryoverLongTerm: capitalLossCarryover?.longTerm,
+    passiveActivityLossAllowance: passiveActivityLoss,
     parentInfo,
     injuredSpouse,
     priorYearTax,

@@ -23,10 +23,17 @@ export default class Schedule1 extends F1040Attachment {
     this.f1040.f8889.isNeeded() ||
     (this.f1040.f8889Spouse?.isNeeded() ?? false) ||
     (this.f1040.scheduleF?.isNeeded() ?? false) || // Farm income
-    (this.f1040.f3903?.isNeeded() ?? false) // Moving expenses (military)
+    (this.f1040.f3903?.isNeeded() ?? false) || // Moving expenses (military)
+    (this.f1040.info.educatorExpenses ?? 0) > 0 ||
+    (this.f1040.info.alimonyReceived ?? 0) > 0 ||
+    (this.f1040.info.alimonyPaid ?? 0) > 0 ||
+    (this.f1040.info.selfEmployedHealthInsuranceDeduction ?? 0) > 0
 
   l1 = (): number | undefined => undefined
-  l2a = (): number | undefined => undefined
+  l2a = (): number | undefined =>
+    (this.f1040.info.alimonyReceived ?? 0) > 0
+      ? this.f1040.info.alimonyReceived
+      : undefined
   l2b = (): number | undefined => undefined
   l3 = (): number | undefined => this.f1040.scheduleC?.netProfit()
   l4 = (): number | undefined => undefined
@@ -111,16 +118,25 @@ export default class Schedule1 extends F1040Attachment {
 
   to1040Line8 = (): number => this.l10()
 
-  l11 = (): number | undefined => undefined
+  l11 = (): number | undefined =>
+    (this.f1040.info.educatorExpenses ?? 0) > 0
+      ? this.f1040.info.educatorExpenses
+      : undefined
   l12 = (): number | undefined => undefined
   l13 = (): number | undefined =>
     sumFields([this.f1040.f8889.l13(), this.f1040.f8889Spouse?.l13()])
   l14 = (): number | undefined => this.f1040.f3903?.deduction() // Form 3903: Moving expenses (military only)
   l15 = (): number | undefined => this.f1040.scheduleSE.l13()
   l16 = (): number | undefined => undefined
-  l17 = (): number | undefined => undefined
+  l17 = (): number | undefined =>
+    (this.f1040.info.selfEmployedHealthInsuranceDeduction ?? 0) > 0
+      ? this.f1040.info.selfEmployedHealthInsuranceDeduction
+      : undefined
   l18 = (): number | undefined => undefined
-  l19a = (): number | undefined => undefined
+  l19a = (): number | undefined =>
+    (this.f1040.info.alimonyPaid ?? 0) > 0
+      ? this.f1040.info.alimonyPaid
+      : undefined
   l19b = (): string | undefined => undefined
   l19c = (): string | undefined => undefined
   l20 = (): number | undefined => undefined

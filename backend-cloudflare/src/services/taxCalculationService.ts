@@ -1465,7 +1465,34 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     // Form 8606 IRA contribution deductibility
     iraContributions,
     // Form 8606 Roth IRA conversions
-    rothConversions
+    rothConversions,
+    // Schedule 1 additional adjustments
+    educatorExpenses:
+      toNum(facts.educatorExpenses) > 0
+        ? toNum(facts.educatorExpenses)
+        : undefined,
+    alimonyReceived:
+      toNum(facts.alimonyReceived) > 0
+        ? toNum(facts.alimonyReceived)
+        : undefined,
+    alimonyPaid:
+      toNum(facts.alimonyPaid) > 0 ? toNum(facts.alimonyPaid) : undefined,
+    selfEmployedHealthInsuranceDeduction:
+      toNum(facts.selfEmployedHealthInsuranceDeduction) > 0
+        ? toNum(facts.selfEmployedHealthInsuranceDeduction)
+        : undefined,
+    priorYearCapitalLossCarryoverShortTerm:
+      toNum(facts.priorYearCapitalLossCarryoverShortTerm) > 0
+        ? toNum(facts.priorYearCapitalLossCarryoverShortTerm)
+        : undefined,
+    priorYearCapitalLossCarryoverLongTerm:
+      toNum(facts.priorYearCapitalLossCarryoverLongTerm) > 0
+        ? toNum(facts.priorYearCapitalLossCarryoverLongTerm)
+        : undefined,
+    passiveActivityLossAllowance:
+      toNum(facts.passiveActivityLossAllowance) > 0
+        ? toNum(facts.passiveActivityLossAllowance)
+        : undefined
   }
 
   return info

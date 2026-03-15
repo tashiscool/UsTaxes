@@ -47,7 +47,10 @@ export default class ScheduleD extends F1040Attachment {
   }
 
   isNeeded = (): boolean =>
-    this.f1040.f1099Bs().length > 0 || this.f1040.f8949.isNeeded()
+    this.f1040.f1099Bs().length > 0 ||
+    this.f1040.f8949.isNeeded() ||
+    (this.f1040.info.priorYearCapitalLossCarryoverShortTerm ?? 0) > 0 ||
+    (this.f1040.info.priorYearCapitalLossCarryoverLongTerm ?? 0) > 0
 
   l21Min = (): number => {
     if (this.f1040.info.taxPayer.filingStatus === FilingStatus.MFS) {
@@ -106,7 +109,10 @@ export default class ScheduleD extends F1040Attachment {
 
   l5 = (): number | undefined => undefined
 
-  l6 = (): number | undefined => undefined
+  l6 = (): number | undefined =>
+    (this.f1040.info.priorYearCapitalLossCarryoverShortTerm ?? 0) > 0
+      ? this.f1040.info.priorYearCapitalLossCarryoverShortTerm
+      : undefined
 
   l7 = (): number =>
     sumFields([
@@ -177,7 +183,10 @@ export default class ScheduleD extends F1040Attachment {
       .f1099Divs()
       .reduce((s, f) => s + f.form.totalCapitalGainsDistributions, 0)
 
-  l14 = (): number | undefined => undefined
+  l14 = (): number | undefined =>
+    (this.f1040.info.priorYearCapitalLossCarryoverLongTerm ?? 0) > 0
+      ? this.f1040.info.priorYearCapitalLossCarryoverLongTerm
+      : undefined
 
   l15 = (): number =>
     sumFields([

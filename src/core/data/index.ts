@@ -2839,6 +2839,19 @@ export interface Information<D = Date> {
   refundAllocations?: Record<string, unknown>[]
   // Form 4137 - Unreported Tip Income
   unreportedTipIncome?: number
+  // Schedule 1 Line 2a - Alimony received (pre-2019 agreements only)
+  alimonyReceived?: number
+  // Schedule 1 Line 11 - Educator expenses ($300/$600)
+  educatorExpenses?: number
+  // Schedule 1 Line 17 - Self-employed health insurance deduction
+  selfEmployedHealthInsuranceDeduction?: number
+  // Schedule 1 Line 19a - Alimony paid (pre-2019 agreements only)
+  alimonyPaid?: number
+  // Prior year capital loss carryover (Schedule D)
+  priorYearCapitalLossCarryoverShortTerm?: number
+  priorYearCapitalLossCarryoverLongTerm?: number
+  // Passive activity loss - allowable rental loss (Form 8582)
+  passiveActivityLossAllowance?: number
   // Form 8910 - Alternative Motor Vehicle Credit
   fuelCellVehicles?: Record<string, unknown>[]
   fuelCellCreditCarryforward?: number
