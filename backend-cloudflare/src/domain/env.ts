@@ -3,6 +3,7 @@ import type { SubmissionQueueMessage } from './types'
 export interface Env {
   USTAXES_DB: D1Database
   ARTIFACTS_BUCKET: R2Bucket
+  AI?: Ai
   SUBMISSION_QUEUE: Queue<SubmissionQueueMessage>
   SUBMISSION_ORCHESTRATOR: DurableObjectNamespace
   INTERNAL_API_TOKEN?: string

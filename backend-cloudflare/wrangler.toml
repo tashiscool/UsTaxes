@@ -23,6 +23,9 @@ binding = "ARTIFACTS_BUCKET"
 bucket_name = "ustaxes-artifacts"
 preview_bucket_name = "ustaxes-artifacts-preview"
 
+[ai]
+binding = "AI"
+
 [[queues.producers]]
 binding = "SUBMISSION_QUEUE"
 queue = "ustaxes-submissions"
@@ -61,6 +64,9 @@ migrations_dir = "migrations"
 [[env.staging.r2_buckets]]
 binding = "ARTIFACTS_BUCKET"
 bucket_name = "ustaxes-artifacts-staging"
+
+[env.staging.ai]
+binding = "AI"
 
 [[env.staging.queues.producers]]
 binding = "SUBMISSION_QUEUE"
@@ -101,6 +107,9 @@ migrations_dir = "migrations"
 [[env.production.r2_buckets]]
 binding = "ARTIFACTS_BUCKET"
 bucket_name = "ustaxes-artifacts-production"
+
+[env.production.ai]
+binding = "AI"
 
 [[env.production.queues.producers]]
 binding = "SUBMISSION_QUEUE"

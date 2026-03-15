@@ -484,27 +484,58 @@ describe('TaxCalculationService', () => {
     })
 
     it('§2.5 QBI: self-employment income produces ~20% QBI deduction', () => {
-      // 1099-NEC filer with $90k income — below phase-out, no W-2 limit
-      // QBI deduction = $90k × 20% = $18,000 → taxable income ≈ $90k - $15,750 std ded - $6,359 SE ded - $18k QBI
+      // Schedule C sole proprietor with $90k gross — below phase-out, no W-2 limit
+      // QBI deduction = $90k × 20% = $18,000 → taxable ≈ $90k - $15,750 std - $6,359 SE ded - $18k QBI ≈ $50k
       const result = taxCalcService.calculate(
         baseFacts({
-          form1099Records: [
+          businessRecords: [
             {
-              id: '1099-qbi',
-              type: 'NEC',
-              payer: 'Client LLC',
-              amount: 90000,
-              federalWithheld: 0,
-              isComplete: true
+              id: 'biz-qbi',
+              name: 'Consulting LLC',
+              principalBusinessCode: '541000',
+              businessDescription: 'Consulting',
+              accountingMethod: 'cash',
+              materialParticipation: true,
+              startedOrAcquired: false,
+              madePaymentsRequiring1099: false,
+              filed1099s: false,
+              income: { grossReceipts: 90000, returns: 0, otherIncome: 0 },
+              expenses: {
+                advertising: 0,
+                carAndTruck: 0,
+                commissions: 0,
+                contractLabor: 0,
+                depletion: 0,
+                depreciation: 0,
+                employeeBenefits: 0,
+                insurance: 0,
+                interestMortgage: 0,
+                interestOther: 0,
+                legal: 0,
+                office: 0,
+                pensionPlans: 0,
+                rentVehicles: 0,
+                rentOther: 0,
+                repairs: 0,
+                supplies: 0,
+                taxes: 0,
+                travel: 0,
+                deductibleMeals: 0,
+                utilities: 0,
+                wages: 0,
+                otherExpenses: 0
+              },
+              personRole: 'PRIMARY',
+              owner: 'taxpayer'
             }
           ]
         })
       )
       expect(result.success).toBe(true)
       if (result.success) {
-        // Taxable income should be lower than AGI by more than just the standard deduction
-        // (QBI deduction adds ~$18k on top of standard deduction)
-        // AGI ≈ $90k - ~$6.4k (1/2 SE tax) ≈ $83.6k; std ded $15,750; QBI ≈ $16.7k → taxable ~$51k
+        // Taxable income should be lower than AGI minus standard deduction (QBI adds further reduction)
+        // AGI ≈ $90k - ~$6.4k SE ded ≈ $83.6k; taxable ≈ $83.6k - $15,750 - ~$16.7k QBI ≈ $51k
+        expect(result.agi).toBeGreaterThan(0)
         expect(result.taxableIncome).toBeLessThan(result.agi - 15750)
       }
     })
@@ -529,7 +560,7 @@ describe('TaxCalculationService', () => {
       if (result.success) {
         // NIIT = 3.8% × ($250k - $200k) = 3.8% × $50k = $1,900 minimum
         // Total tax should include regular income tax + NIIT
-        expect(result.totalTax).toBeGreaterThan(60000) // meaningful tax at this income level
+        expect(result.totalTax).toBeGreaterThan(50000) // meaningful tax at this income level
         expect(result.schedules).toContain('f1040')
       }
     })

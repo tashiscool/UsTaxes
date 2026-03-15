@@ -701,6 +701,209 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     }
   })()
 
+  // Adapt Schedule C businesses
+  // If explicit businessRecords exist, use them; otherwise synthesize from 1099-NEC records
+  const businesses = (() => {
+    const explicit = asArray<Record<string, unknown>>(facts.businessRecords)
+    if (explicit.length > 0) {
+      return explicit.map((b) => {
+        const inc = asRecord(b.income) ?? {}
+        const exp = asRecord(b.expenses) ?? {}
+        return {
+          name: toStr(b.name ?? b.businessName ?? 'Business'),
+          ein: toStr(b.ein) || undefined,
+          principalBusinessCode: toStr(
+            b.naicsCode ?? b.principalBusinessCode ?? '999999'
+          ),
+          businessDescription: toStr(
+            b.businessDescription ?? b.description ?? 'Services'
+          ),
+          accountingMethod: (toStr(b.accountingMethod) || 'cash') as
+            | 'cash'
+            | 'accrual'
+            | 'other',
+          materialParticipation: toBool(b.materialParticipation ?? true),
+          startedOrAcquired: toBool(b.startedOrAcquired ?? false),
+          madePaymentsRequiring1099: toBool(
+            b.madePaymentsRequiring1099 ?? false
+          ),
+          filed1099s: toBool(b.filed1099s ?? false),
+          income: {
+            grossReceipts: toNum(
+              inc.grossReceipts ?? inc.revenue ?? b.grossReceipts ?? 0
+            ),
+            returns: toNum(inc.returns ?? 0),
+            otherIncome: toNum(inc.otherIncome ?? 0)
+          },
+          expenses: {
+            advertising: toNum(exp.advertising ?? 0),
+            carAndTruck: toNum(exp.carAndTruck ?? exp.vehicle ?? 0),
+            commissions: toNum(exp.commissions ?? 0),
+            contractLabor: toNum(exp.contractLabor ?? 0),
+            depletion: toNum(exp.depletion ?? 0),
+            depreciation: toNum(exp.depreciation ?? 0),
+            employeeBenefits: toNum(
+              exp.employeeBenefits ?? exp.employeeBenefit ?? exp.benefits ?? 0
+            ),
+            insurance: toNum(exp.insurance ?? 0),
+            interestMortgage: toNum(
+              exp.interestMortgage ?? exp.mortgageInterest ?? 0
+            ),
+            interestOther: toNum(exp.interestOther ?? exp.interest ?? 0),
+            legal: toNum(exp.legal ?? 0),
+            office: toNum(exp.office ?? exp.officeExpense ?? 0),
+            pensionPlans: toNum(exp.pensionPlans ?? exp.pension ?? 0),
+            rentVehicles: toNum(exp.rentVehicles ?? exp.rentMachinery ?? 0),
+            rentOther: toNum(exp.rentOther ?? exp.rentLease ?? exp.rent ?? 0),
+            repairs: toNum(exp.repairs ?? 0),
+            supplies: toNum(exp.supplies ?? 0),
+            taxes: toNum(exp.taxes ?? 0),
+            travel: toNum(exp.travel ?? 0),
+            deductibleMeals: toNum(exp.deductibleMeals ?? exp.meals ?? 0),
+            utilities: toNum(exp.utilities ?? 0),
+            wages: toNum(exp.wages ?? 0),
+            otherExpenses: toNum(exp.otherExpenses ?? exp.other ?? 0)
+          },
+          homeOfficeDeduction: toNum(b.homeOfficeDeduction) || undefined,
+          qbiW2Wages: toNum(b.qbiW2Wages) || undefined,
+          isSpecifiedServiceTradeOrBusiness: toBool(
+            b.isSpecifiedServiceTradeOrBusiness ?? false
+          ),
+          personRole: (toStr(b.owner) === 'spouse'
+            ? PersonRole.SPOUSE
+            : PersonRole.PRIMARY) as PersonRole
+        }
+      })
+    }
+    // Synthesize Schedule C entries from 1099-NEC records so that self-employment
+    // income (AGI, SE tax, QBI deduction) flows correctly through the engine
+    const necIncome = all1099s
+      .filter((r) => r.type === Income1099Type.NEC)
+      .reduce(
+        (sum, r) =>
+          sum +
+          ((r.form as { nonemployeeCompensation?: number })
+            .nonemployeeCompensation ?? 0),
+        0
+      )
+    if (necIncome > 0) {
+      return [
+        {
+          name: 'Self-Employment',
+          principalBusinessCode: '999999',
+          businessDescription: 'Freelance / Contract Work',
+          accountingMethod: 'cash' as const,
+          materialParticipation: true,
+          startedOrAcquired: false,
+          madePaymentsRequiring1099: false,
+          filed1099s: false,
+          income: { grossReceipts: necIncome, returns: 0, otherIncome: 0 },
+          expenses: {
+            advertising: 0,
+            carAndTruck: 0,
+            commissions: 0,
+            contractLabor: 0,
+            depletion: 0,
+            depreciation: 0,
+            employeeBenefits: 0,
+            insurance: 0,
+            interestMortgage: 0,
+            interestOther: 0,
+            legal: 0,
+            office: 0,
+            pensionPlans: 0,
+            rentVehicles: 0,
+            rentOther: 0,
+            repairs: 0,
+            supplies: 0,
+            taxes: 0,
+            travel: 0,
+            deductibleMeals: 0,
+            utilities: 0,
+            wages: 0,
+            otherExpenses: 0
+          },
+          personRole: PersonRole.PRIMARY as PersonRole
+        }
+      ]
+    }
+    return undefined
+  })()
+
+  // Adapt farm business (Schedule F)
+  const farmBusiness = (() => {
+    const fb = asRecord(facts.farmBusiness)
+    if (!fb || Object.keys(fb).length === 0) return undefined
+    const inc = asRecord(fb.income) ?? {}
+    const exp = asRecord(fb.expenses) ?? {}
+    return {
+      name: toStr(fb.name ?? fb.farmName ?? 'Farm'),
+      ein: toStr(fb.ein) || undefined,
+      accountingMethod: (toStr(fb.accountingMethod) || 'cash') as
+        | 'cash'
+        | 'accrual',
+      income: {
+        salesLivestock: toNum(inc.salesLivestock ?? inc.livestock ?? 0),
+        salesCrops: toNum(inc.salesCrops ?? inc.crops ?? 0),
+        cooperativeDistributions: toNum(
+          inc.cooperativeDistributions ?? inc.coop ?? 0
+        ),
+        agriculturalPayments: toNum(
+          inc.agriculturalPayments ?? inc.govPayments ?? 0
+        ),
+        cccLoans: toNum(inc.cccLoans ?? 0),
+        cropInsurance: toNum(inc.cropInsurance ?? 0),
+        customHireIncome: toNum(inc.customHireIncome ?? inc.customHire ?? 0),
+        otherIncome: toNum(inc.otherIncome ?? inc.other ?? 0)
+      },
+      expenses: {
+        carTruck: toNum(exp.carTruck ?? exp.vehicle ?? 0),
+        chemicals: toNum(exp.chemicals ?? 0),
+        conservation: toNum(exp.conservation ?? 0),
+        customHire: toNum(exp.customHire ?? 0),
+        depreciation: toNum(exp.depreciation ?? 0),
+        employeeBenefit: toNum(exp.employeeBenefit ?? exp.benefits ?? 0),
+        feed: toNum(exp.feed ?? 0),
+        fertilizers: toNum(exp.fertilizers ?? 0),
+        freight: toNum(exp.freight ?? 0),
+        fuel: toNum(exp.fuel ?? exp.gasoline ?? 0),
+        insurance: toNum(exp.insurance ?? 0),
+        interest: toNum(exp.interest ?? exp.mortgageInterest ?? 0),
+        labor: toNum(exp.labor ?? exp.laborHired ?? 0),
+        pensionPlans: toNum(exp.pensionPlans ?? exp.pension ?? 0),
+        rentLease: toNum(exp.rentLease ?? exp.rentMachinery ?? 0),
+        repairs: toNum(exp.repairs ?? 0),
+        seeds: toNum(exp.seeds ?? 0),
+        storage: toNum(exp.storage ?? 0),
+        supplies: toNum(exp.supplies ?? 0),
+        taxes: toNum(exp.taxes ?? 0),
+        utilities: toNum(exp.utilities ?? 0),
+        veterinary: toNum(exp.veterinary ?? 0),
+        otherExpenses: toNum(exp.otherExpenses ?? exp.other ?? 0)
+      },
+      livestockCost: toNum(fb.livestockCost) || undefined,
+      mortgageInterest: toNum(fb.mortgageInterest) || undefined,
+      otherInterest: toNum(fb.otherInterest) || undefined
+    }
+  })()
+
+  // Adapt household employees (Schedule H — nanny tax)
+  const householdEmployees = (() => {
+    const employees = asArray<Record<string, unknown>>(facts.householdEmployees)
+    if (employees.length === 0) return undefined
+    return employees.map((e) => ({
+      name: toStr(e.name ?? e.employeeName ?? 'Employee'),
+      ssn: toStr(e.ssn ?? e.employeeSsn ?? '').replace(/\D/g, ''),
+      cashWages: toNum(e.cashWages ?? e.wages ?? 0),
+      federalWithholding: toNum(e.federalWithholding ?? e.federalTax ?? 0),
+      stateWithholding: toNum(e.stateWithholding ?? e.stateTax ?? 0),
+      socialSecurityWithheld: toNum(
+        e.socialSecurityWithheld ?? e.ssWithheld ?? 0
+      ),
+      medicareWithheld: toNum(e.medicareWithheld ?? e.medicareWH ?? 0)
+    }))
+  })()
+
   // Build the Information object
   const info: Information = {
     f1099s: all1099s,
@@ -728,7 +931,11 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     autoLoanInterest,
     trumpSavingsAccounts,
     // QBI
-    qbiDeductionData
+    qbiDeductionData,
+    // Schedule C / Schedule F / Schedule H
+    businesses,
+    farmBusiness,
+    householdEmployees
   }
 
   return info
