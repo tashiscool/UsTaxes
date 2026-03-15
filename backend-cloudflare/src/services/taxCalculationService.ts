@@ -1489,20 +1489,35 @@ const adaptHomeOffice = (
   if (!withHome) return undefined
   const sqFt = toNum(withHome.homeOfficeSqFt ?? withHome.homeOfficeSqft ?? 0)
   const totalSqFt = toNum(withHome.homeSqFt ?? withHome.homeSqft ?? 1) || 1
+  const method = String(withHome.homeOfficeMethod ?? 'simplified').toLowerCase()
+  const isRegular = method === 'regular'
+  const parseDate = (v: unknown): Date => {
+    if (!v || typeof v !== 'string') return new Date()
+    const d = new Date(v)
+    return isNaN(d.getTime()) ? new Date() : d
+  }
   return {
-    method: 'simplified',
+    method: isRegular ? 'regular' : 'simplified',
     totalSquareFeet: totalSqFt,
     businessSquareFeet: sqFt,
-    mortgageInterest: 0,
-    realEstateTaxes: 0,
-    insurance: 0,
-    utilities: 0,
-    repairs: 0,
-    otherExpenses: 0,
-    homeValue: 0,
-    landValue: 0,
-    homePurchaseDate: new Date(),
-    priorDepreciation: 0
+    mortgageInterest: isRegular
+      ? toNum(withHome.homeOfficeMortgageInterest ?? 0)
+      : 0,
+    realEstateTaxes: isRegular
+      ? toNum(withHome.homeOfficeRealEstateTaxes ?? 0)
+      : 0,
+    insurance: isRegular ? toNum(withHome.homeOfficeInsurance ?? 0) : 0,
+    utilities: isRegular ? toNum(withHome.homeOfficeUtilities ?? 0) : 0,
+    repairs: isRegular ? toNum(withHome.homeOfficeRepairs ?? 0) : 0,
+    otherExpenses: isRegular ? toNum(withHome.homeOfficeOther ?? 0) : 0,
+    homeValue: isRegular ? toNum(withHome.homeOfficeHomeValue ?? 0) : 0,
+    landValue: isRegular ? toNum(withHome.homeOfficeLandValue ?? 0) : 0,
+    homePurchaseDate: isRegular
+      ? parseDate(withHome.homeOfficePurchaseDate)
+      : new Date(),
+    priorDepreciation: isRegular
+      ? toNum(withHome.homeOfficePriorDepreciation ?? 0)
+      : 0
   }
 }
 

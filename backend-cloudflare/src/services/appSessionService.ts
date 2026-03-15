@@ -569,9 +569,24 @@ const getBusinessRecords = (entities: SessionEntitySnapshot[]) =>
         qbiWages,
         qbiProperty,
         homeOffice,
+        homeOfficeMethod: toText(data.homeOfficeMethod ?? 'simplified'),
         homeOfficePct,
         homeOfficeSqFt,
         homeSqFt,
+        homeOfficeMortgageInterest: toMoney(
+          data.homeOfficeMortgageInterest ?? 0
+        ),
+        homeOfficeRealEstateTaxes: toMoney(data.homeOfficeRealEstateTaxes ?? 0),
+        homeOfficeInsurance: toMoney(data.homeOfficeInsurance ?? 0),
+        homeOfficeUtilities: toMoney(data.homeOfficeUtilities ?? 0),
+        homeOfficeRepairs: toMoney(data.homeOfficeRepairs ?? 0),
+        homeOfficeOther: toMoney(data.homeOfficeOther ?? 0),
+        homeOfficeHomeValue: toMoney(data.homeOfficeHomeValue ?? 0),
+        homeOfficeLandValue: toMoney(data.homeOfficeLandValue ?? 0),
+        homeOfficePurchaseDate: toText(data.homeOfficePurchaseDate ?? ''),
+        homeOfficePriorDepreciation: toMoney(
+          data.homeOfficePriorDepreciation ?? 0
+        ),
         homeOfficeDeduction,
         netBusinessIncome,
         selfEmploymentIncome:
@@ -1746,7 +1761,7 @@ const getInjuredSpouseInfo = (
   }
 }
 
-/** Form 2210: prior year tax from underpayment entity or /underpayment screen */
+/** Form 2210: prior year tax from underpayment entity, /underpayment screen, or prior-year-import */
 const getPriorYearTax = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
@@ -1754,13 +1769,23 @@ const getPriorYearTax = (
   const entity = entities.find((e) => e.entityType === 'underpayment_data')
   const fromEntity = entity?.data as Record<string, unknown> | undefined
   if (fromEntity?.priorYearTax != null) return toMoney(fromEntity.priorYearTax)
-  const screen = requireScreen(snapshot, '/underpayment') as Record<
+  const underpaymentScreen = requireScreen(snapshot, '/underpayment') as Record<
     string,
     unknown
   >
-  const prior = screen.priorYearTax
+  const prior = underpaymentScreen.priorYearTax
   if (prior != null && prior !== '')
     return toMoney(Number(String(prior).replace(/[^\d.]/g, '')) || 0)
+  const priorYearForm = requireScreen(snapshot, '/prior-year-import') as Record<
+    string,
+    unknown
+  >
+  const form = priorYearForm.form as Record<string, unknown> | undefined
+  const priorYearTaxFromImport = form?.priorYearTax
+  if (priorYearTaxFromImport != null && priorYearTaxFromImport !== '')
+    return toMoney(
+      Number(String(priorYearTaxFromImport).replace(/[^\d.]/g, '')) || 0
+    )
   return undefined
 }
 
