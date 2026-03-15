@@ -39,6 +39,14 @@ import {
   type DependentCareProvider,
   type EducationExpense,
   type EnergyImprovement,
+  type EnergyImprovementType,
+  type AdoptedChild,
+  type ForeignEarnedIncomeInfo,
+  type HealthInsuranceMarketplaceInfo,
+  type IraContribution,
+  type RothConversion,
+  type LocalTaxInfo,
+  IraPlanType,
   type Asset,
   type F1099IntData,
   type F1099DivData,
@@ -905,15 +913,485 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     }))
   })()
 
+  // ─── Schedule E rental properties ─────────────────────────────────────────
+  const realEstate = (() => {
+    const properties = asArray<Record<string, unknown>>(facts.rentalProperties)
+    if (properties.length === 0) return []
+    return properties.map((p) => {
+      const addr = asRecord(p.address) ?? {}
+      const exp = asRecord(p.expenses) ?? {}
+      const addrObj: Address = {
+        address: toStr(addr.street ?? addr.address ?? p.streetAddress),
+        city: toStr(addr.city ?? p.city),
+        state: mapStateCode(toStr(addr.state ?? p.state)) as State | undefined,
+        zip: toStr(addr.zip ?? addr.postalCode ?? p.zip)
+      }
+      return {
+        address: addrObj,
+        rentalDays: toNum(p.rentalDays ?? p.daysRented ?? 365),
+        personalUseDays: toNum(p.personalUseDays ?? 0),
+        rentReceived: toNum(p.rentReceived ?? p.grossRents ?? p.income ?? 0),
+        propertyType: ([
+          'singleFamily',
+          'multiFamily',
+          'vacation',
+          'commercial',
+          'land',
+          'selfRental',
+          'other'
+        ].includes(toStr(p.propertyType))
+          ? toStr(p.propertyType)
+          : 'singleFamily') as
+          | 'singleFamily'
+          | 'multiFamily'
+          | 'vacation'
+          | 'commercial'
+          | 'land'
+          | 'selfRental'
+          | 'other',
+        qualifiedJointVenture: toBool(p.qualifiedJointVenture ?? false),
+        expenses: {
+          advertising: toNum(exp.advertising ?? 0) || undefined,
+          auto: toNum(exp.auto ?? exp.carAndTruck ?? 0) || undefined,
+          cleaning:
+            toNum(exp.cleaning ?? exp.cleaningMaintenance ?? 0) || undefined,
+          commissions: toNum(exp.commissions ?? 0) || undefined,
+          insurance: toNum(exp.insurance ?? 0) || undefined,
+          legal: toNum(exp.legal ?? exp.legalProfessional ?? 0) || undefined,
+          management:
+            toNum(exp.management ?? exp.managementFees ?? 0) || undefined,
+          mortgage:
+            toNum(exp.mortgage ?? exp.mortgageInterest ?? 0) || undefined,
+          otherInterest: toNum(exp.otherInterest ?? 0) || undefined,
+          repairs: toNum(exp.repairs ?? 0) || undefined,
+          supplies: toNum(exp.supplies ?? 0) || undefined,
+          taxes: toNum(exp.taxes ?? exp.propertyTaxes ?? 0) || undefined,
+          utilities: toNum(exp.utilities ?? 0) || undefined,
+          depreciation: toNum(exp.depreciation ?? 0) || undefined,
+          other: toNum(exp.other ?? exp.otherExpenses ?? 0) || undefined
+        }
+      }
+    })
+  })()
+
+  // ─── Estimated tax payments (Form 2210 / F1040-ES) ────────────────────────
+  const estimatedTaxes = (() => {
+    const payments = asArray<Record<string, unknown>>(
+      facts.estimatedTaxPayments
+    )
+    if (payments.length > 0) {
+      return payments.map((p) => ({
+        label: toStr(p.label ?? p.quarter ?? 'Estimated Payment'),
+        payment: toNum(p.payment ?? p.amount ?? 0)
+      }))
+    }
+    const total = toNum(facts.estimatedTaxPaid ?? facts.estimatedPayments)
+    if (total > 0) return [{ label: 'Estimated Tax Paid', payment: total }]
+    return []
+  })()
+
+  // ─── Form 1098-E student loan interest ───────────────────────────────────
+  const f1098es = (() => {
+    const records = asArray<Record<string, unknown>>(
+      facts.studentLoanRecords ?? facts.f1098eRecords
+    )
+    if (records.length > 0) {
+      return records.map((r) => ({
+        lender: toStr(r.lender ?? r.lenderName ?? 'Student Loan Servicer'),
+        interest: toNum(
+          r.interest ?? r.interestPaid ?? r.studentLoanInterest ?? 0
+        )
+      }))
+    }
+    const interest = toNum(facts.studentLoanInterest)
+    if (interest > 0) return [{ lender: 'Student Loan Servicer', interest }]
+    return []
+  })()
+
+  // ─── Form 3921 ISO stock option exercises ────────────────────────────────
+  const f3921s = (() => {
+    const records = asArray<Record<string, unknown>>(
+      facts.f3921Records ?? facts.isoExercises
+    )
+    return records.map((r) => ({
+      name: toStr(r.name ?? r.companyName ?? 'Employer'),
+      personRole: (toStr(r.owner) === 'spouse'
+        ? PersonRole.SPOUSE
+        : PersonRole.PRIMARY) as PersonRole.PRIMARY | PersonRole.SPOUSE,
+      exercisePricePerShare: toNum(
+        r.exercisePricePerShare ?? r.exercisePrice ?? 0
+      ),
+      fmv: toNum(r.fmv ?? r.fairMarketValue ?? 0),
+      numShares: toNum(r.numShares ?? r.shares ?? 0)
+    }))
+  })()
+
+  // ─── Schedule K-1 (Form 1065) partnerships ───────────────────────────────
+  const scheduleK1Form1065s = (() => {
+    const records = asArray<Record<string, unknown>>(
+      facts.k1Records ?? facts.partnershipK1s
+    )
+    return records.map((r) => ({
+      personRole: (toStr(r.owner) === 'spouse'
+        ? PersonRole.SPOUSE
+        : PersonRole.PRIMARY) as PersonRole.PRIMARY | PersonRole.SPOUSE,
+      partnershipName: toStr(r.partnershipName ?? r.name ?? 'Partnership'),
+      partnershipEin: toStr(r.partnershipEin ?? r.ein ?? '').replace(/\D/g, ''),
+      partnerOrSCorp: (toStr(r.partnerOrSCorp) === 'S' ? 'S' : 'P') as
+        | 'P'
+        | 'S',
+      isForeign: toBool(r.isForeign ?? false),
+      isPassive: toBool(r.isPassive ?? false),
+      ordinaryBusinessIncome: toNum(
+        r.ordinaryBusinessIncome ?? r.ordinaryIncome ?? 0
+      ),
+      netRentalRealEstateIncome:
+        toNum(r.netRentalRealEstateIncome ?? 0) || undefined,
+      otherNetRentalIncome: toNum(r.otherNetRentalIncome ?? 0) || undefined,
+      royalties: toNum(r.royalties ?? 0) || undefined,
+      interestIncome: toNum(r.interestIncome ?? 0),
+      guaranteedPaymentsForServices: toNum(
+        r.guaranteedPaymentsForServices ?? r.guaranteedPayments ?? 0
+      ),
+      guaranteedPaymentsForCapital: toNum(r.guaranteedPaymentsForCapital ?? 0),
+      selfEmploymentEarningsA: toNum(
+        r.selfEmploymentEarningsA ?? r.seEarnings ?? 0
+      ),
+      selfEmploymentEarningsB: toNum(r.selfEmploymentEarningsB ?? 0),
+      selfEmploymentEarningsC: toNum(r.selfEmploymentEarningsC ?? 0),
+      distributionsCodeAAmount: toNum(
+        r.distributionsCodeAAmount ?? r.distributions ?? 0
+      ),
+      section199AQBI: toNum(r.section199AQBI ?? r.qbiIncome ?? 0),
+      section199AW2Wages: toNum(r.section199AW2Wages ?? 0) || undefined,
+      section199AUbia: toNum(r.section199AUbia ?? 0) || undefined
+    }))
+  })()
+
+  // ─── Form 8889 Health Savings Accounts ──────────────────────────────────
+  const healthSavingsAccounts = (() => {
+    const accounts = asArray<Record<string, unknown>>(facts.hsaAccounts)
+    const year = new Date().getFullYear()
+    return accounts.map((a) => ({
+      label: toStr(a.label ?? a.bankName ?? 'HSA'),
+      coverageType: (toStr(a.coverageType) === 'family'
+        ? 'family'
+        : 'self-only') as 'self-only' | 'family',
+      contributions: toNum(a.contributions ?? a.contributionAmount ?? 0),
+      personRole: (toStr(a.owner) === 'spouse'
+        ? PersonRole.SPOUSE
+        : PersonRole.PRIMARY) as PersonRole.PRIMARY | PersonRole.SPOUSE,
+      startDate: toDate(a.startDate) ?? new Date(`${year}-01-01`),
+      endDate: toDate(a.endDate) ?? new Date(`${year}-12-31`),
+      totalDistributions: toNum(a.totalDistributions ?? a.distributions ?? 0),
+      qualifiedDistributions: toNum(
+        a.qualifiedDistributions ?? a.qualifiedAmount ?? 0
+      )
+    }))
+  })()
+
+  // ─── Form 8606 / 1099-R IRA accounts ────────────────────────────────────
+  const individualRetirementArrangements = (() => {
+    const accounts = asArray<Record<string, unknown>>(facts.iraAccounts)
+    return accounts.map((a) => {
+      const planTypeStr = toStr(a.planType ?? a.accountType).toLowerCase()
+      let planType: IraPlanType = IraPlanType.IRA
+      if (planTypeStr.includes('roth')) planType = IraPlanType.RothIRA
+      else if (planTypeStr.includes('sep')) planType = IraPlanType.SepIRA
+      else if (planTypeStr.includes('simple')) planType = IraPlanType.SimpleIRA
+      return {
+        payer: toStr(
+          a.payer ?? a.financialInstitution ?? a.custodian ?? 'IRA Custodian'
+        ),
+        personRole: (toStr(a.owner) === 'spouse'
+          ? PersonRole.SPOUSE
+          : PersonRole.PRIMARY) as PersonRole.PRIMARY | PersonRole.SPOUSE,
+        grossDistribution: toNum(a.grossDistribution ?? a.distributions ?? 0),
+        taxableAmount: toNum(a.taxableAmount ?? 0),
+        taxableAmountNotDetermined: toBool(
+          a.taxableAmountNotDetermined ?? false
+        ),
+        totalDistribution: toBool(a.totalDistribution ?? false),
+        federalIncomeTaxWithheld: toNum(
+          a.federalIncomeTaxWithheld ?? a.federalWithheld ?? 0
+        ),
+        planType,
+        contributions: toNum(a.contributions ?? a.contributionAmount ?? 0),
+        rolloverContributions: toNum(a.rolloverContributions ?? 0),
+        rothIraConversion: toNum(a.rothIraConversion ?? a.rothConversion ?? 0),
+        recharacterizedContributions: toNum(
+          a.recharacterizedContributions ?? 0
+        ),
+        requiredMinimumDistributions: toNum(
+          a.requiredMinimumDistributions ?? a.rmd ?? 0
+        ),
+        lateContributions: toNum(a.lateContributions ?? 0),
+        repayments: toNum(a.repayments ?? 0)
+      }
+    })
+  })()
+
+  // ─── IRA contribution deductibility (Form 8606, F8880) ──────────────────
+  const iraContributions: IraContribution[] | undefined = (() => {
+    const records = asArray<Record<string, unknown>>(facts.iraContributions)
+    if (records.length === 0) return undefined
+    return records.map((r) => ({
+      personRole: (toStr(r.owner) === 'spouse'
+        ? PersonRole.SPOUSE
+        : PersonRole.PRIMARY) as PersonRole.PRIMARY | PersonRole.SPOUSE,
+      traditionalContributions: toNum(
+        r.traditionalContributions ?? r.contributions ?? 0
+      ),
+      traditionalDeductibleAmount: toNum(
+        r.traditionalDeductibleAmount ?? r.deductibleAmount ?? 0
+      ),
+      rothContributions: toNum(r.rothContributions ?? r.rothAmount ?? 0)
+    }))
+  })()
+
+  // ─── Roth IRA conversions (Form 8606) ───────────────────────────────────
+  const rothConversions: RothConversion[] | undefined = (() => {
+    const records = asArray<Record<string, unknown>>(facts.rothConversions)
+    if (records.length === 0) return undefined
+    return records.map((r) => ({
+      personRole: (toStr(r.owner) === 'spouse'
+        ? PersonRole.SPOUSE
+        : PersonRole.PRIMARY) as PersonRole.PRIMARY | PersonRole.SPOUSE,
+      amount: toNum(r.amount ?? r.conversionAmount ?? 0),
+      taxableAmount: toNum(r.taxableAmount ?? r.amount ?? 0),
+      year: toNum(r.year ?? new Date().getFullYear())
+    }))
+  })()
+
+  // ─── Form 2441 dependent care providers ─────────────────────────────────
+  const dependentCareProviders: DependentCareProvider[] | undefined = (() => {
+    const providers = asArray<Record<string, unknown>>(
+      facts.dependentCareProviders
+    )
+    if (providers.length === 0) return undefined
+    return providers.map((p) => ({
+      name: toStr(p.name ?? p.providerName ?? 'Care Provider'),
+      address: toStr(p.address ?? ''),
+      tin: toStr(p.tin ?? p.ssn ?? p.ein ?? '').replace(/\D/g, ''),
+      amountPaid: toNum(p.amountPaid ?? p.amount ?? 0)
+    }))
+  })()
+
+  const dependentCareExpenses: number | undefined = (() => {
+    const amount = toNum(facts.dependentCareExpenses)
+    if (amount > 0) return amount
+    const providers = asArray<Record<string, unknown>>(
+      facts.dependentCareProviders
+    )
+    const total = providers.reduce(
+      (sum, p) => sum + toNum(p.amountPaid ?? p.amount ?? 0),
+      0
+    )
+    return total > 0 ? total : undefined
+  })()
+
+  // ─── Form 8863 education expenses ───────────────────────────────────────
+  const educationExpenses: EducationExpense[] | undefined = (() => {
+    const expenses = asArray<Record<string, unknown>>(facts.educationExpenses)
+    if (expenses.length === 0) return undefined
+    return expenses.map((e) => ({
+      studentName: toStr(e.studentName ?? e.name ?? ''),
+      studentSsn: toStr(e.studentSsn ?? e.ssn ?? '').replace(/\D/g, ''),
+      institutionName: toStr(
+        e.institutionName ?? e.schoolName ?? e.institution ?? ''
+      ),
+      institutionEin: toStr(e.institutionEin ?? e.ein ?? '') || undefined,
+      institutionAddress: toStr(e.institutionAddress ?? '') || undefined,
+      qualifiedExpenses: toNum(
+        e.qualifiedExpenses ?? e.tuition ?? e.expenses ?? 0
+      ),
+      scholarshipsReceived: toNum(
+        e.scholarshipsReceived ?? e.scholarships ?? 0
+      ),
+      isHalfTimeStudent: toBool(e.isHalfTimeStudent ?? e.halfTime ?? true),
+      isFirstFourYears: toBool(e.isFirstFourYears ?? e.firstFourYears ?? true),
+      hasConviction: toBool(e.hasConviction ?? false),
+      creditType: (toStr(e.creditType) === 'LLC' ? 'LLC' : 'AOTC') as
+        | 'AOTC'
+        | 'LLC',
+      personRole: (() => {
+        const role = toStr(e.personRole ?? e.owner)
+        if (role === 'spouse') return PersonRole.SPOUSE
+        if (role === 'dependent') return PersonRole.DEPENDENT
+        return PersonRole.PRIMARY
+      })()
+    }))
+  })()
+
+  // ─── Form 5695 energy improvements ──────────────────────────────────────
+  const energyImprovements: EnergyImprovement[] | undefined = (() => {
+    const improvements = asArray<Record<string, unknown>>(
+      facts.energyImprovements
+    )
+    if (improvements.length === 0) return undefined
+    const validTypes = new Set([
+      'insulation',
+      'exteriorDoors',
+      'windows',
+      'centralAirConditioner',
+      'waterHeater',
+      'furnace',
+      'heatPump',
+      'biomassStove',
+      'homeEnergyAudit'
+    ])
+    return improvements.map((i) => {
+      const rawType = toStr(i.type ?? i.improvementType ?? 'insulation')
+      return {
+        type: (validTypes.has(rawType)
+          ? rawType
+          : 'insulation') as EnergyImprovementType,
+        cost: toNum(i.cost ?? i.amount ?? 0),
+        dateInstalled: toDate(i.dateInstalled ?? i.installDate) ?? new Date()
+      }
+    })
+  })()
+
+  // ─── Form 8839 adopted children ─────────────────────────────────────────
+  const adoptedChildren: AdoptedChild[] | undefined = (() => {
+    const children = asArray<Record<string, unknown>>(facts.adoptedChildren)
+    if (children.length === 0) return undefined
+    return children.map((c) => ({
+      name: toStr(c.name ?? c.childName ?? ''),
+      ssn: toStr(c.ssn ?? '').replace(/\D/g, ''),
+      birthYear: toNum(
+        c.birthYear ?? c.yearOfBirth ?? new Date().getFullYear() - 5
+      ),
+      disabledChild: toBool(c.disabledChild ?? c.disabled ?? false),
+      foreignChild: toBool(c.foreignChild ?? c.isForeign ?? false),
+      specialNeedsChild: toBool(c.specialNeedsChild ?? c.specialNeeds ?? false),
+      qualifiedExpenses: toNum(
+        c.qualifiedExpenses ?? c.adoptionExpenses ?? c.expenses ?? 0
+      ),
+      priorYearExpenses: toNum(c.priorYearExpenses ?? c.previousExpenses ?? 0),
+      adoptionFinalized: toBool(c.adoptionFinalized ?? c.finalized ?? false),
+      yearAdoptionBegan: toNum(
+        c.yearAdoptionBegan ?? c.yearBegan ?? new Date().getFullYear()
+      )
+    }))
+  })()
+
+  // ─── Local city/municipal tax (LocalCityTax page) ───────────────────────
+  const localTaxInfo: LocalTaxInfo | undefined = (() => {
+    const raw = asRecord(facts.localTaxInfo)
+    if (!raw || Object.keys(raw).length === 0) return undefined
+    const nycBorough = toStr(raw.nycBorough)
+    const validBoroughs = [
+      'Manhattan',
+      'Brooklyn',
+      'Queens',
+      'Bronx',
+      'Staten Island'
+    ]
+    return {
+      residenceCity: toStr(raw.residenceCity ?? raw.city) || undefined,
+      residenceState:
+        mapStateCode(toStr(raw.residenceState ?? raw.state)) || undefined,
+      isResident: toBool(raw.isResident ?? true),
+      workCity: toStr(raw.workCity) || undefined,
+      workState: mapStateCode(toStr(raw.workState)) || undefined,
+      worksInDifferentCity: toBool(raw.worksInDifferentCity ?? false),
+      localWithholding: toNum(
+        raw.localWithholding ?? raw.localTaxWithheld ?? 0
+      ),
+      workCityWithholding: toNum(raw.workCityWithholding ?? 0) || undefined,
+      estimatedPayments: toNum(raw.estimatedPayments ?? 0) || undefined,
+      otherMunicipalTaxPaid: toNum(raw.otherMunicipalTaxPaid ?? 0) || undefined,
+      ohioSchoolDistrict: toStr(raw.ohioSchoolDistrict) || undefined,
+      ohioSchoolDistrictNumber:
+        toStr(raw.ohioSchoolDistrictNumber) || undefined,
+      nycBorough: (validBoroughs.includes(nycBorough)
+        ? nycBorough
+        : undefined) as
+        | 'Manhattan'
+        | 'Brooklyn'
+        | 'Queens'
+        | 'Bronx'
+        | 'Staten Island'
+        | undefined,
+      philadelphiaWageTaxAccountNumber:
+        toStr(raw.philadelphiaWageTaxAccountNumber) || undefined
+    }
+  })()
+
+  // ─── Form 2555 foreign earned income exclusion ───────────────────────────
+  const foreignEarnedIncome: ForeignEarnedIncomeInfo | undefined = (() => {
+    const raw = asRecord(facts.foreignEarnedIncome)
+    if (!raw || !toStr(raw.foreignCountry)) return undefined
+    return {
+      foreignCountry: toStr(raw.foreignCountry),
+      foreignAddress: toStr(raw.foreignAddress ?? raw.address ?? ''),
+      employerName: toStr(raw.employerName) || undefined,
+      employerAddress: toStr(raw.employerAddress) || undefined,
+      employerIsForeign: toBool(raw.employerIsForeign ?? false),
+      foreignEarnedWages: toNum(raw.foreignEarnedWages ?? raw.wages ?? 0),
+      foreignEarnedSelfEmployment: toNum(
+        raw.foreignEarnedSelfEmployment ?? raw.selfEmployment ?? 0
+      ),
+      foreignHousingAmount: toNum(
+        raw.foreignHousingAmount ?? raw.housingAmount ?? 0
+      ),
+      qualifyingTest: (toStr(raw.qualifyingTest) === 'physicalPresence'
+        ? 'physicalPresence'
+        : 'bonaFideResident') as 'bonaFideResident' | 'physicalPresence',
+      taxHomeCountry: toStr(raw.taxHomeCountry ?? raw.foreignCountry),
+      residenceStartDate: toDate(raw.residenceStartDate) || undefined,
+      residenceEndDate: toDate(raw.residenceEndDate) || undefined,
+      physicalPresenceDays:
+        toNum(raw.physicalPresenceDays ?? raw.daysAbroad) || undefined,
+      physicalPresenceStartDate:
+        toDate(raw.physicalPresenceStartDate) || undefined,
+      physicalPresenceEndDate: toDate(raw.physicalPresenceEndDate) || undefined
+    }
+  })()
+
+  // ─── Form 8962 ACA marketplace health insurance ─────────────────────────
+  const healthInsuranceMarketplace:
+    | HealthInsuranceMarketplaceInfo[]
+    | undefined = (() => {
+    const records = asArray<Record<string, unknown>>(
+      facts.marketplaceInsurance ?? facts.aca1095a
+    )
+    if (records.length === 0) return undefined
+    const year = new Date().getFullYear()
+    const makeMonthly = (val: unknown): number[] => {
+      const arr = asArray<unknown>(val)
+      if (arr.length === 12) return arr.map((v) => toNum(v))
+      const scalar = toNum(val)
+      return Array(12).fill(Math.round((scalar / 12) * 100) / 100)
+    }
+    return records.map((r) => ({
+      policyNumber: toStr(r.policyNumber ?? r.policy ?? ''),
+      coverageStartDate:
+        toDate(r.coverageStartDate ?? r.startDate) ?? new Date(`${year}-01-01`),
+      coverageEndDate:
+        toDate(r.coverageEndDate ?? r.endDate) ?? new Date(`${year}-12-31`),
+      enrollmentPremiums: makeMonthly(
+        r.enrollmentPremiums ?? r.monthlyPremiums ?? r.annualPremium
+      ),
+      slcsp: makeMonthly(r.slcsp ?? r.secondLowestCostPlan ?? r.slcspPremiums),
+      advancePayments: makeMonthly(
+        r.advancePayments ?? r.aptcPayments ?? r.monthlyAptc
+      ),
+      coverageFamily: toNum(r.coverageFamily ?? r.coveredPersons ?? 1),
+      sharedPolicyAllocation: toNum(r.sharedPolicyAllocation) || undefined
+    }))
+  })()
+
   // Build the Information object
   const info: Information = {
     f1099s: all1099s,
     w2s: adaptW2s(facts),
-    realEstate: [], // Rental properties handled separately
-    estimatedTaxes: [],
-    f1098es: [],
-    f3921s: [],
-    scheduleK1Form1065s: [],
+    realEstate,
+    estimatedTaxes,
+    f1098es,
+    f3921s,
+    scheduleK1Form1065s,
     itemizedDeductions,
     taxPayer: {
       filingStatus,
@@ -924,8 +1402,8 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     questions: {},
     credits,
     stateResidencies: adaptStateResidencies(facts),
-    healthSavingsAccounts: [],
-    individualRetirementArrangements: [],
+    healthSavingsAccounts,
+    individualRetirementArrangements,
     // OBBBA fields
     overtimeIncome,
     tipIncome,
@@ -942,7 +1420,26 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     // Form 8379 (Injured Spouse)
     injuredSpouse: adaptInjuredSpouse(facts),
     // Form 2210 (Underpayment of estimated tax)
-    priorYearTax: toNum(facts.priorYearTax)
+    priorYearTax: toNum(facts.priorYearTax),
+    // Form 2441 Dependent Care
+    dependentCareProviders,
+    dependentCareExpenses,
+    // Form 8863 Education Credits
+    educationExpenses,
+    // Form 5695 Energy Credits
+    energyImprovements,
+    // Form 8839 Adoption Credit
+    adoptedChildren,
+    // Local city/municipal tax
+    localTaxInfo,
+    // Form 2555 Foreign Earned Income Exclusion
+    foreignEarnedIncome,
+    // Form 8962 ACA Premium Tax Credit
+    healthInsuranceMarketplace,
+    // Form 8606 IRA contribution deductibility
+    iraContributions,
+    // Form 8606 Roth IRA conversions
+    rothConversions
   }
 
   return info
