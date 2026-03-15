@@ -1682,6 +1682,81 @@ const getIncomeSummary = (
   }
 }
 
+/** Form 8615 (Kiddie Tax): parent info from kiddie_tax entity for create1040 parentInfo */
+const getParentInfoFromKiddieTax = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): Record<string, unknown> | undefined => {
+  const entity = entities.find((e) => e.entityType === 'kiddie_tax')
+  const data = entity?.data as Record<string, unknown> | undefined
+  if (!data?.parentsTaxableIncome && !data?.parentsAGI) return undefined
+  const filingStatus = toText(
+    data.parentsFilingStatus ?? data.filingStatus ?? 'single'
+  )
+  return {
+    name: toText(data.parentName ?? 'Parent'),
+    ssn: toText(data.parentSSN ?? data.parentsSSN ?? '').replace(/\D/g, ''),
+    filingStatus: filingStatus.toLowerCase(),
+    taxableIncome: toMoney(data.parentsTaxableIncome ?? data.parentsAGI ?? 0),
+    taxLiability: toMoney(
+      data.parentTaxLiability ?? data.parentsTaxLiability ?? 0
+    )
+  }
+}
+
+/** Form 8379 (Injured Spouse): allocation info from injured_spouse_allocation entity */
+const getInjuredSpouseInfo = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): Record<string, unknown> | undefined => {
+  const entity = entities.find(
+    (e) => e.entityType === 'injured_spouse_allocation'
+  )
+  const data = entity?.data as Record<string, unknown> | undefined
+  if (
+    !data ||
+    (toMoney(data.totalInjuredIncome ?? 0) === 0 &&
+      toMoney(data.injuredWithholding ?? 0) === 0 &&
+      toMoney(data.injuredEstimatedPayments ?? 0) === 0)
+  )
+    return undefined
+  const debtTypes = (data.debtTypes as string[] | undefined) ?? []
+  return {
+    injuredSpouse:
+      (data.injuredSpouseRole as string) === 'spouse' ? 'spouse' : 'primary',
+    spouseHasPastDueChildSupport: debtTypes.includes('child_support'),
+    spouseHasPastDueFederalDebt:
+      debtTypes.includes('federal_tax') ||
+      debtTypes.includes('federal') ||
+      debtTypes.includes('federal_nontax'),
+    spouseHasPastDueStateDebt:
+      debtTypes.includes('state_tax') ||
+      debtTypes.includes('state') ||
+      debtTypes.includes('state_income_tax') ||
+      debtTypes.includes('state_unemployment'),
+    isInCommunityPropertyState: Boolean(data.isInCommunityPropertyState),
+    communityPropertyState: toText(data.communityPropertyState)
+  }
+}
+
+/** Form 2210: prior year tax from underpayment entity or /underpayment screen */
+const getPriorYearTax = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): number | undefined => {
+  const entity = entities.find((e) => e.entityType === 'underpayment_data')
+  const fromEntity = entity?.data as Record<string, unknown> | undefined
+  if (fromEntity?.priorYearTax != null) return toMoney(fromEntity.priorYearTax)
+  const screen = requireScreen(snapshot, '/underpayment') as Record<
+    string,
+    unknown
+  >
+  const prior = screen.priorYearTax
+  if (prior != null && prior !== '')
+    return toMoney(Number(String(prior).replace(/[^\d.]/g, '')) || 0)
+  return undefined
+}
+
 const toFacts = (
   row: FilingSessionRow,
   snapshot: FilingSessionSnapshot,
@@ -1752,6 +1827,13 @@ const toFacts = (
   // OBBBA 2025 provisions
   const obbbaData = getObbbaData(snapshot, entities)
 
+  // Form 8615 (Kiddie Tax) — parent info for child's unearned income
+  const parentInfo = getParentInfoFromKiddieTax(snapshot, entities)
+  // Form 8379 (Injured Spouse) — MFJ refund allocation
+  const injuredSpouse = getInjuredSpouseInfo(snapshot, entities)
+  // Form 2210 — prior year tax for underpayment penalty
+  const priorYearTax = getPriorYearTax(snapshot, entities)
+
   return {
     primaryTIN: primaryTin,
     primaryDob: toText(taxpayer.dob),
@@ -1785,6 +1867,9 @@ const toFacts = (
     tipIncome: obbbaData.tipIncome,
     autoLoanInterest: obbbaData.autoLoanInterest,
     trumpSavingsAccounts: obbbaData.trumpSavingsAccounts,
+    parentInfo,
+    injuredSpouse,
+    priorYearTax,
     '/taxYear': {
       $type: 'gov.irs.factgraph.persisters.IntWrapper',
       item: snapshot.taxYear

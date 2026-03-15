@@ -55,6 +55,7 @@ import {
   type SCorpShareholder,
   type PartnerInfo,
   type State,
+  type ParentTaxInfo,
   FilingStatus,
   PersonRole,
   Income1099Type,
@@ -935,10 +936,53 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     // Schedule C / Schedule F / Schedule H
     businesses,
     farmBusiness,
-    householdEmployees
+    householdEmployees,
+    // Form 8615 (Kiddie Tax)
+    parentInfo: adaptParentInfo(facts),
+    // Form 8379 (Injured Spouse)
+    injuredSpouse: adaptInjuredSpouse(facts),
+    // Form 2210 (Underpayment of estimated tax)
+    priorYearTax: toNum(facts.priorYearTax)
   }
 
   return info
+}
+
+const adaptParentInfo = (facts: FactsRecord): ParentTaxInfo | undefined => {
+  const raw = asRecord(facts.parentInfo)
+  if (
+    !raw ||
+    (toNum(raw.taxableIncome) === 0 &&
+      toNum(raw.taxLiability) === 0 &&
+      !toStr(raw.ssn))
+  )
+    return undefined
+  return {
+    name: toStr(raw.name) || 'Parent',
+    ssn: toStr(raw.ssn).replace(/\D/g, ''),
+    filingStatus: mapFilingStatus(toStr(raw.filingStatus)),
+    taxableIncome: toNum(raw.taxableIncome),
+    taxLiability: toNum(raw.taxLiability)
+  }
+}
+
+const adaptInjuredSpouse = (
+  facts: FactsRecord
+): Record<string, unknown> | undefined => {
+  const raw = asRecord(facts.injuredSpouse)
+  if (!raw) return undefined
+  const injuredRole =
+    toStr(raw.injuredSpouse).toLowerCase() === 'spouse'
+      ? PersonRole.SPOUSE
+      : PersonRole.PRIMARY
+  return {
+    injuredSpouse: injuredRole,
+    spouseHasPastDueChildSupport: toBool(raw.spouseHasPastDueChildSupport),
+    spouseHasPastDueFederalDebt: toBool(raw.spouseHasPastDueFederalDebt),
+    spouseHasPastDueStateDebt: toBool(raw.spouseHasPastDueStateDebt),
+    isInCommunityPropertyState: toBool(raw.isInCommunityPropertyState),
+    communityPropertyState: toStr(raw.communityPropertyState) || undefined
+  }
 }
 
 // ─── Business entity fact adapters ──────────────────────────────────────────
