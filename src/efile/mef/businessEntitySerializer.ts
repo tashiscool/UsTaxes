@@ -209,16 +209,26 @@ function formatSSN(ssn: string | undefined): string {
   return ssn.replace(/[-\s]/g, '')
 }
 
-function xmlEl(name: string, content: string | number | undefined | null): string {
+function xmlEl(
+  name: string,
+  content: string | number | undefined | null
+): string {
   if (content === undefined || content === null || content === '') return ''
   return `<${name}>${escapeXml(String(content))}</${name}>`
 }
 
-function xmlGroup(name: string, children: string[], attrs?: Record<string, string>): string {
+function xmlGroup(
+  name: string,
+  children: string[],
+  attrs?: Record<string, string>
+): string {
   const filtered = children.filter((c) => c.length > 0)
   if (filtered.length === 0) return ''
   const attrStr = attrs
-    ? ' ' + Object.entries(attrs).map(([k, v]) => `${k}="${escapeXml(v)}"`).join(' ')
+    ? ' ' +
+      Object.entries(attrs)
+        .map(([k, v]) => `${k}="${escapeXml(v)}"`)
+        .join(' ')
     : ''
   return `<${name}${attrStr}>\n${filtered.join('\n')}\n</${name}>`
 }
@@ -240,7 +250,9 @@ export class BusinessEntitySerializer {
    * Serialize the business entity return to XML
    */
   serialize(): string {
-    const track = this.config.schemaTrack ?? (this.config.isTestSubmission ? 'ats' : 'production')
+    const track =
+      this.config.schemaTrack ??
+      (this.config.isTestSubmission ? 'ats' : 'production')
     const returnVersion = resolveSchemaVersion(this.config.taxYear, track)
 
     const header = this.buildReturnHeader()
@@ -266,7 +278,9 @@ ${returnData}
       xmlEl('BusinessNameLine1Txt', d.entityName),
       xmlGroup('USAddress', [
         xmlEl('AddressLine1Txt', d.address.addressLine1),
-        d.address.addressLine2 ? xmlEl('AddressLine2Txt', d.address.addressLine2) : '',
+        d.address.addressLine2
+          ? xmlEl('AddressLine2Txt', d.address.addressLine2)
+          : '',
         xmlEl('CityNm', d.address.city),
         xmlEl('StateAbbreviationCd', d.address.state),
         xmlEl('ZIPCd', d.address.zip)
@@ -276,8 +290,14 @@ ${returnData}
     const elements = [
       xmlEl('ReturnTs', now.toISOString()),
       xmlEl('TaxYr', this.config.taxYear),
-      xmlEl('TaxPeriodBeginDt', d.taxPeriodBeginDate ?? `${this.config.taxYear}-01-01`),
-      xmlEl('TaxPeriodEndDt', d.taxPeriodEndDate ?? `${this.config.taxYear}-12-31`),
+      xmlEl(
+        'TaxPeriodBeginDt',
+        d.taxPeriodBeginDate ?? `${this.config.taxYear}-01-01`
+      ),
+      xmlEl(
+        'TaxPeriodEndDt',
+        d.taxPeriodEndDate ?? `${this.config.taxYear}-12-31`
+      ),
       xmlEl('SoftwareId', this.config.softwareId),
       xmlEl('SoftwareVersionNum', this.config.softwareVersion),
       xmlEl('ReturnTypeCd', this.config.returnType),
@@ -461,7 +481,9 @@ ${returnData}
 
       // Decedent info (if estate)
       d.decedentName ? xmlEl('DecedentNm', d.decedentName) : '',
-      d.decedentDateOfDeath ? xmlEl('DateOfDeathDt', d.decedentDateOfDeath) : '',
+      d.decedentDateOfDeath
+        ? xmlEl('DateOfDeathDt', d.decedentDateOfDeath)
+        : '',
 
       // Fiduciary
       d.fiduciaryName ? xmlEl('FiduciaryNm', d.fiduciaryName) : '',
@@ -482,7 +504,10 @@ ${returnData}
       xmlEl('TotalDeductionsAmt', formatAmount(d.totalDeductions)),
 
       // Distributable Net Income
-      xmlEl('DistributableNetIncomeAmt', formatAmount(d.distributableNetIncome)),
+      xmlEl(
+        'DistributableNetIncomeAmt',
+        formatAmount(d.distributableNetIncome)
+      ),
       xmlEl('IncomeDistributedAmt', formatAmount(d.incomeDistributed)),
       xmlEl('IncomeRetainedByTrustAmt', formatAmount(d.incomeRetained)),
 
@@ -564,7 +589,8 @@ ${returnData}
   }
 
   private serializeShareholderSchedule(): string {
-    if (!this.data.shareholders || this.data.shareholders.length === 0) return ''
+    if (!this.data.shareholders || this.data.shareholders.length === 0)
+      return ''
 
     const elements = this.data.shareholders.map((sh, idx) =>
       xmlGroup(
@@ -596,7 +622,10 @@ ${returnData}
           xmlEl('ProfitSharingPct', p.percentProfit),
           xmlEl('LossSharingPct', p.percentLoss),
           xmlEl('CapitalSharingPct', p.percentCapital),
-          xmlEl('CapitalContributionsAmt', formatAmount(p.capitalContributions)),
+          xmlEl(
+            'CapitalContributionsAmt',
+            formatAmount(p.capitalContributions)
+          ),
           xmlEl('CurrentYearIncomeAmt', formatAmount(p.currentYearIncome)),
           xmlEl('WithdrawalsAmt', formatAmount(p.withdrawals)),
           xmlEl('EndingCapitalAccountAmt', formatAmount(p.endingCapitalAccount))
@@ -619,24 +648,40 @@ ${returnData}
           xmlEl('RecipientTIN', formatSSN(k1.recipientTin)),
           xmlEl('RecipientTypeCd', k1.recipientType),
           xmlEl('OrdinaryBusinessIncomeAmt', formatAmount(k1.ordinaryIncome)),
-          xmlEl('NetRentalRealEstateIncomeAmt', formatAmount(k1.netRentalIncome)),
-          xmlEl('OtherNetRentalIncomeAmt', formatAmount(k1.otherNetRentalIncome)),
+          xmlEl(
+            'NetRentalRealEstateIncomeAmt',
+            formatAmount(k1.netRentalIncome)
+          ),
+          xmlEl(
+            'OtherNetRentalIncomeAmt',
+            formatAmount(k1.otherNetRentalIncome)
+          ),
           xmlEl('InterestIncomeAmt', formatAmount(k1.interestIncome)),
           xmlEl('DividendIncomeAmt', formatAmount(k1.dividendIncome)),
           xmlEl('RoyaltyIncomeAmt', formatAmount(k1.royaltyIncome)),
-          xmlEl('NetShortTermCapitalGainAmt', formatAmount(k1.netShortTermCapGain)),
-          xmlEl('NetLongTermCapitalGainAmt', formatAmount(k1.netLongTermCapGain)),
+          xmlEl(
+            'NetShortTermCapitalGainAmt',
+            formatAmount(k1.netShortTermCapGain)
+          ),
+          xmlEl(
+            'NetLongTermCapitalGainAmt',
+            formatAmount(k1.netLongTermCapGain)
+          ),
           xmlEl('Section179DeductionAmt', formatAmount(k1.section179Deduction)),
           xmlEl('OtherDeductionsAmt', formatAmount(k1.otherDeductions)),
-          xmlEl('SelfEmploymentEarningsAmt', formatAmount(k1.selfEmploymentEarnings))
+          xmlEl(
+            'SelfEmploymentEarningsAmt',
+            formatAmount(k1.selfEmploymentEarnings)
+          )
         ],
         { k1Num: String(idx + 1) }
       )
     )
 
-    const formTag = this.config.returnType === '1120S'
-      ? 'ScheduleK1Form1120S'
-      : this.config.returnType === '1065'
+    const formTag =
+      this.config.returnType === '1120S'
+        ? 'ScheduleK1Form1120S'
+        : this.config.returnType === '1065'
         ? 'ScheduleK1Form1065'
         : 'ScheduleK1'
 
@@ -654,9 +699,15 @@ ${returnData}
       xmlEl('CashEOYAmt', formatAmount(bs.cashEnd)),
       xmlEl('TotalAssetsBOYAmt', formatAmount(bs.totalAssetsBeginning)),
       xmlEl('TotalAssetsEOYAmt', formatAmount(bs.totalAssetsEnd)),
-      xmlEl('TotalLiabilitiesBOYAmt', formatAmount(bs.totalLiabilitiesBeginning)),
+      xmlEl(
+        'TotalLiabilitiesBOYAmt',
+        formatAmount(bs.totalLiabilitiesBeginning)
+      ),
       xmlEl('TotalLiabilitiesEOYAmt', formatAmount(bs.totalLiabilitiesEnd)),
-      xmlEl('RetainedEarningsBOYAmt', formatAmount(bs.retainedEarningsBeginning)),
+      xmlEl(
+        'RetainedEarningsBOYAmt',
+        formatAmount(bs.retainedEarningsBeginning)
+      ),
       xmlEl('RetainedEarningsEOYAmt', formatAmount(bs.retainedEarningsEnd))
     ]
 

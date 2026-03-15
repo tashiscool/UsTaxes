@@ -1398,10 +1398,33 @@ export const RULES_SCHEDULE_SE: BusinessRule[] = [
  * EIC phase-out thresholds by filing status (TY2025 estimated values).
  * Updated from IRS Rev. Proc. for the applicable year.
  */
-const EIC_PHASE_OUT_2025: Record<string, { noChildren: number; oneChild: number; twoChildren: number; threeChildren: number }> = {
-  single: { noChildren: 18591, oneChild: 46560, twoChildren: 52918, threeChildren: 56004 },
-  hoh: { noChildren: 18591, oneChild: 46560, twoChildren: 52918, threeChildren: 56004 },
-  mfj: { noChildren: 25511, oneChild: 53490, twoChildren: 59848, threeChildren: 62934 }
+const EIC_PHASE_OUT_2025: Record<
+  string,
+  {
+    noChildren: number
+    oneChild: number
+    twoChildren: number
+    threeChildren: number
+  }
+> = {
+  single: {
+    noChildren: 18591,
+    oneChild: 46560,
+    twoChildren: 52918,
+    threeChildren: 56004
+  },
+  hoh: {
+    noChildren: 18591,
+    oneChild: 46560,
+    twoChildren: 52918,
+    threeChildren: 56004
+  },
+  mfj: {
+    noChildren: 25511,
+    oneChild: 53490,
+    twoChildren: 59848,
+    threeChildren: 62934
+  }
 }
 
 export const RULES_CREDIT_ELIGIBILITY: BusinessRule[] = [
@@ -1422,13 +1445,15 @@ export const RULES_CREDIT_ELIGIBILITY: BusinessRule[] = [
       fields: ['Line 27', 'Investment Income'],
       expected: 'Investment income <= $11,600',
       actual: `$${(data.investmentIncome || 0).toFixed(2)}`,
-      suggestion: 'EIC is disallowed when investment income exceeds $11,600 for TY2025',
+      suggestion:
+        'EIC is disallowed when investment income exceeds $11,600 for TY2025',
       irsReference: 'IRC Section 32(i)'
     })
   },
   {
     id: 'CE002',
-    description: 'EIC AGI must not exceed phase-out threshold for filing status and number of children',
+    description:
+      'EIC AGI must not exceed phase-out threshold for filing status and number of children',
     category: RuleCategory.CREDIT,
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1040', 'ScheduleEIC'],
@@ -1450,7 +1475,8 @@ export const RULES_CREDIT_ELIGIBILITY: BusinessRule[] = [
     },
     getErrorDetails: (data) => ({
       fields: ['Line 11', 'Line 27'],
-      suggestion: 'AGI exceeds the EIC phase-out threshold for the filing status and number of qualifying children'
+      suggestion:
+        'AGI exceeds the EIC phase-out threshold for the filing status and number of qualifying children'
     })
   },
   {
@@ -1489,9 +1515,10 @@ export const RULES_CREDIT_ELIGIBILITY: BusinessRule[] = [
     },
     getErrorDetails: (data) => ({
       fields: ['Line 29'],
-      expected: `<= $${((data.aotcStudentCount || 1) * 2500)}`,
+      expected: `<= $${(data.aotcStudentCount || 1) * 2500}`,
       actual: `$${(data.line29 || 0).toFixed(2)}`,
-      suggestion: 'AOTC is $2,500 per eligible student, available only for the first 4 tax years of post-secondary education',
+      suggestion:
+        'AOTC is $2,500 per eligible student, available only for the first 4 tax years of post-secondary education',
       irsReference: 'IRC Section 25A(b)(1)'
     })
   }
@@ -1514,7 +1541,8 @@ export const RULES_OBBBA: BusinessRule[] = [
       fields: ['Schedule 1-A Overtime Deduction'],
       expected: '<= $10,000',
       actual: `$${(data.overtimeDeduction || 0).toFixed(2)}`,
-      suggestion: 'The OBBBA overtime wage deduction is capped at $10,000 per tax year'
+      suggestion:
+        'The OBBBA overtime wage deduction is capped at $10,000 per tax year'
     })
   },
   {
@@ -1529,7 +1557,8 @@ export const RULES_OBBBA: BusinessRule[] = [
       fields: ['Schedule 1-A Tip Income Deduction'],
       expected: '<= $10,000',
       actual: `$${(data.tipIncomeDeduction || 0).toFixed(2)}`,
-      suggestion: 'The OBBBA tip income deduction is capped at $10,000 per tax year'
+      suggestion:
+        'The OBBBA tip income deduction is capped at $10,000 per tax year'
     })
   },
   {
@@ -1562,7 +1591,8 @@ export const RULES_OBBBA: BusinessRule[] = [
       fields: ['Schedule 1-A Auto Loan Interest Deduction'],
       expected: '<= $10,000 per year',
       actual: `$${(data.autoLoanInterestDeduction || 0).toFixed(2)}`,
-      suggestion: 'The OBBBA auto loan interest deduction is capped at $10,000 per tax year for US-manufactured vehicles'
+      suggestion:
+        'The OBBBA auto loan interest deduction is capped at $10,000 per tax year for US-manufactured vehicles'
     })
   },
   {
@@ -1574,13 +1604,17 @@ export const RULES_OBBBA: BusinessRule[] = [
     applicableYears: [2025, 2026, 2027, 2028],
     check: (data) => {
       if ((data.autoLoanInterestDeduction || 0) > 0) {
-        return (data.autoLoanInterestDeduction || 0) <= (data.autoLoanInterestPaid || 0)
+        return (
+          (data.autoLoanInterestDeduction || 0) <=
+          (data.autoLoanInterestPaid || 0)
+        )
       }
       return true
     },
     getErrorDetails: () => ({
       fields: ['Schedule 1-A Auto Loan Interest'],
-      suggestion: 'Auto loan interest deduction cannot exceed actual interest paid'
+      suggestion:
+        'Auto loan interest deduction cannot exceed actual interest paid'
     })
   },
   {
@@ -1609,7 +1643,8 @@ export const RULES_OBBBA: BusinessRule[] = [
         fields: ['Form 4547 Contribution Amount'],
         expected: `<= $${limit} for age ${age}`,
         actual: `$${(data.trumpAccountContributions || 0).toFixed(2)}`,
-        suggestion: 'Trump Account contributions are capped per year based on the account holder age bracket'
+        suggestion:
+          'Trump Account contributions are capped per year based on the account holder age bracket'
       }
     }
   },
@@ -1627,8 +1662,12 @@ export const RULES_OBBBA: BusinessRule[] = [
       return true
     },
     getErrorDetails: () => ({
-      fields: ['Schedule 1-A Overtime Wages', 'Schedule 1-A Overtime Deduction'],
-      suggestion: 'Cannot claim overtime deduction without reported overtime wages'
+      fields: [
+        'Schedule 1-A Overtime Wages',
+        'Schedule 1-A Overtime Deduction'
+      ],
+      suggestion:
+        'Cannot claim overtime deduction without reported overtime wages'
     })
   },
   {
@@ -1645,8 +1684,12 @@ export const RULES_OBBBA: BusinessRule[] = [
       return true
     },
     getErrorDetails: () => ({
-      fields: ['Schedule 1-A Overtime Deduction', 'Schedule 1-A Overtime Wages'],
-      suggestion: 'Overtime deduction cannot exceed total overtime wages reported'
+      fields: [
+        'Schedule 1-A Overtime Deduction',
+        'Schedule 1-A Overtime Wages'
+      ],
+      suggestion:
+        'Overtime deduction cannot exceed total overtime wages reported'
     })
   }
 ]
@@ -1663,19 +1706,29 @@ export const RULES_BUSINESS_ENTITY: BusinessRule[] = [
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1120S', 'ScheduleE'],
     check: (data) => {
-      if (data.sCorpBasisBeginning !== undefined && data.sCorpBasisDistributions !== undefined) {
-        const availableBasis = (data.sCorpBasisBeginning || 0) + (data.sCorpBasisIncome || 0)
+      if (
+        data.sCorpBasisBeginning !== undefined &&
+        data.sCorpBasisDistributions !== undefined
+      ) {
+        const availableBasis =
+          (data.sCorpBasisBeginning || 0) + (data.sCorpBasisIncome || 0)
         return (data.sCorpBasisDistributions || 0) <= availableBasis
       }
       return true
     },
     getErrorDetails: (data) => {
-      const availableBasis = (data.sCorpBasisBeginning || 0) + (data.sCorpBasisIncome || 0)
+      const availableBasis =
+        (data.sCorpBasisBeginning || 0) + (data.sCorpBasisIncome || 0)
       return {
         fields: ['S-Corp Basis', 'Distributions'],
-        expected: `Distributions <= $${availableBasis.toFixed(2)} (available basis)`,
-        actual: `Distributions: $${(data.sCorpBasisDistributions || 0).toFixed(2)}`,
-        suggestion: 'S-Corp distributions exceeding basis are taxable as capital gains. IRC Section 1368.',
+        expected: `Distributions <= $${availableBasis.toFixed(
+          2
+        )} (available basis)`,
+        actual: `Distributions: $${(data.sCorpBasisDistributions || 0).toFixed(
+          2
+        )}`,
+        suggestion:
+          'S-Corp distributions exceeding basis are taxable as capital gains. IRC Section 1368.',
         irsReference: 'IRC Section 1368'
       }
     }
@@ -1687,16 +1740,22 @@ export const RULES_BUSINESS_ENTITY: BusinessRule[] = [
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form6198', 'ScheduleE'],
     check: (data) => {
-      if (data.atRiskAmount !== undefined && data.atRiskDeductionsTotal !== undefined) {
+      if (
+        data.atRiskAmount !== undefined &&
+        data.atRiskDeductionsTotal !== undefined
+      ) {
         return (data.atRiskDeductionsTotal || 0) <= (data.atRiskAmount || 0)
       }
       return true
     },
     getErrorDetails: (data) => ({
       fields: ['At-Risk Amount', 'Total Deductions'],
-      expected: `Deductions <= $${(data.atRiskAmount || 0).toFixed(2)} (at-risk amount)`,
+      expected: `Deductions <= $${(data.atRiskAmount || 0).toFixed(
+        2
+      )} (at-risk amount)`,
       actual: `Deductions: $${(data.atRiskDeductionsTotal || 0).toFixed(2)}`,
-      suggestion: 'Losses from an activity are limited to the amount the taxpayer has at-risk in the activity',
+      suggestion:
+        'Losses from an activity are limited to the amount the taxpayer has at-risk in the activity',
       irsReference: 'IRC Section 465'
     })
   },
@@ -1714,49 +1773,67 @@ export const RULES_BUSINESS_ENTITY: BusinessRule[] = [
     },
     getErrorDetails: () => ({
       fields: ['K-1 Ordinary Income', 'Schedule E Part II'],
-      suggestion: 'K-1 income from partnerships and S-corps must be reported on Schedule E, Part II'
+      suggestion:
+        'K-1 income from partnerships and S-corps must be reported on Schedule E, Part II'
     })
   },
   {
     id: 'BE004',
-    description: 'Trust/Estate DNI: income distributed cannot exceed distributable net income',
+    description:
+      'Trust/Estate DNI: income distributed cannot exceed distributable net income',
     category: RuleCategory.RANGE,
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1041'],
     check: (data) => {
-      if (data.isTrustOrEstate && data.trustDistributableNetIncome !== undefined) {
-        return (data.trustIncomeDistributed || 0) <= (data.trustDistributableNetIncome || 0)
+      if (
+        data.isTrustOrEstate &&
+        data.trustDistributableNetIncome !== undefined
+      ) {
+        return (
+          (data.trustIncomeDistributed || 0) <=
+          (data.trustDistributableNetIncome || 0)
+        )
       }
       return true
     },
     getErrorDetails: (data) => ({
       fields: ['DNI', 'Income Distributed'],
-      expected: `Distributed <= $${(data.trustDistributableNetIncome || 0).toFixed(2)} (DNI)`,
+      expected: `Distributed <= $${(
+        data.trustDistributableNetIncome || 0
+      ).toFixed(2)} (DNI)`,
       actual: `Distributed: $${(data.trustIncomeDistributed || 0).toFixed(2)}`,
-      suggestion: 'Income distribution deduction for trusts/estates cannot exceed distributable net income (DNI)',
+      suggestion:
+        'Income distribution deduction for trusts/estates cannot exceed distributable net income (DNI)',
       irsReference: 'IRC Section 661'
     })
   },
   {
     id: 'BE005',
-    description: 'Trust/Estate income must be distributed or retained: DNI = distributed + retained',
+    description:
+      'Trust/Estate income must be distributed or retained: DNI = distributed + retained',
     category: RuleCategory.MATHEMATICAL,
     severity: RuleSeverity.ERROR,
     applicableForms: ['Form1041'],
     check: (data) => {
-      if (data.isTrustOrEstate && data.trustDistributableNetIncome !== undefined) {
-        const sum = (data.trustIncomeDistributed || 0) + (data.trustIncomeRetained || 0)
+      if (
+        data.isTrustOrEstate &&
+        data.trustDistributableNetIncome !== undefined
+      ) {
+        const sum =
+          (data.trustIncomeDistributed || 0) + (data.trustIncomeRetained || 0)
         return Math.abs((data.trustDistributableNetIncome || 0) - sum) < 0.01
       }
       return true
     },
     getErrorDetails: (data) => {
-      const sum = (data.trustIncomeDistributed || 0) + (data.trustIncomeRetained || 0)
+      const sum =
+        (data.trustIncomeDistributed || 0) + (data.trustIncomeRetained || 0)
       return {
         fields: ['DNI', 'Income Distributed', 'Income Retained'],
         expected: `$${(data.trustDistributableNetIncome || 0).toFixed(2)}`,
         actual: `Distributed + Retained = $${sum.toFixed(2)}`,
-        suggestion: 'DNI must equal the sum of income distributed and income retained by the trust/estate'
+        suggestion:
+          'DNI must equal the sum of income distributed and income retained by the trust/estate'
       }
     }
   },
@@ -1767,19 +1844,34 @@ export const RULES_BUSINESS_ENTITY: BusinessRule[] = [
     severity: RuleSeverity.WARNING,
     applicableForms: ['Form1120S'],
     check: (data) => {
-      if (data.sCorpBasisBeginning !== undefined && data.sCorpBasisEnd !== undefined) {
-        const expected = (data.sCorpBasisBeginning || 0) + (data.sCorpBasisIncome || 0) - (data.sCorpBasisDistributions || 0)
+      if (
+        data.sCorpBasisBeginning !== undefined &&
+        data.sCorpBasisEnd !== undefined
+      ) {
+        const expected =
+          (data.sCorpBasisBeginning || 0) +
+          (data.sCorpBasisIncome || 0) -
+          (data.sCorpBasisDistributions || 0)
         return Math.abs((data.sCorpBasisEnd || 0) - expected) < 1
       }
       return true
     },
     getErrorDetails: (data) => {
-      const expected = (data.sCorpBasisBeginning || 0) + (data.sCorpBasisIncome || 0) - (data.sCorpBasisDistributions || 0)
+      const expected =
+        (data.sCorpBasisBeginning || 0) +
+        (data.sCorpBasisIncome || 0) -
+        (data.sCorpBasisDistributions || 0)
       return {
-        fields: ['S-Corp Basis BOY', 'S-Corp Income', 'Distributions', 'S-Corp Basis EOY'],
+        fields: [
+          'S-Corp Basis BOY',
+          'S-Corp Income',
+          'Distributions',
+          'S-Corp Basis EOY'
+        ],
         expected: `$${expected.toFixed(2)}`,
         actual: `$${(data.sCorpBasisEnd || 0).toFixed(2)}`,
-        suggestion: 'Ending basis = Beginning basis + share of income - distributions'
+        suggestion:
+          'Ending basis = Beginning basis + share of income - distributions'
       }
     }
   }
@@ -1804,7 +1896,8 @@ export const RULES_FILING_STATUS_EXTENDED: BusinessRule[] = [
     },
     getErrorDetails: () => ({
       fields: ['Filing Status', 'Dependents'],
-      suggestion: 'Head of Household requires a qualifying person listed as a dependent'
+      suggestion:
+        'Head of Household requires a qualifying person listed as a dependent'
     })
   },
   {
@@ -1815,7 +1908,9 @@ export const RULES_FILING_STATUS_EXTENDED: BusinessRule[] = [
     applicableForms: ['Form1040'],
     check: (data) => {
       if (data.filingStatus === FilingStatus.MFJ) {
-        return !!data.spouseSSN && data.spouseSSN.replace(/\D/g, '').length === 9
+        return (
+          !!data.spouseSSN && data.spouseSSN.replace(/\D/g, '').length === 9
+        )
       }
       return true
     },
@@ -1832,15 +1927,21 @@ export const RULES_FILING_STATUS_EXTENDED: BusinessRule[] = [
     applicableForms: ['ScheduleC', 'ScheduleSE', 'Schedule2'],
     check: (data) => {
       if (data.hasScheduleC && (data.scheduleCNetProfit || 0) >= 400) {
-        return data.hasScheduleSE === true && (data.scheduleSESelfEmploymentTax || 0) > 0
+        return (
+          data.hasScheduleSE === true &&
+          (data.scheduleSESelfEmploymentTax || 0) > 0
+        )
       }
       return true
     },
     getErrorDetails: (data) => ({
       fields: ['Schedule C Line 31', 'Schedule SE'],
       expected: 'SE tax > $0 when Schedule C profit >= $400',
-      actual: `Profit: $${(data.scheduleCNetProfit || 0).toFixed(2)}, SE Tax: $${(data.scheduleSESelfEmploymentTax || 0).toFixed(2)}`,
-      suggestion: 'Self-employment tax (Schedule SE) is required when net Schedule C profit is $400 or more'
+      actual: `Profit: $${(data.scheduleCNetProfit || 0).toFixed(
+        2
+      )}, SE Tax: $${(data.scheduleSESelfEmploymentTax || 0).toFixed(2)}`,
+      suggestion:
+        'Self-employment tax (Schedule SE) is required when net Schedule C profit is $400 or more'
     })
   }
 ]

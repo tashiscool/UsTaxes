@@ -73,4 +73,7 @@ export {
 } from './businessEntitySerializer'
 
 export type { SerializerConfig } from './serializer'
-export type { BusinessEntityConfig, BusinessEntityData } from './businessEntitySerializer'
+export type {
+  BusinessEntityConfig,
+  BusinessEntityData
+} from './businessEntitySerializer'

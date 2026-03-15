@@ -237,9 +237,7 @@ describe('S-Corp (Form 1120-S)', () => {
     expect(alice.selfEmploymentEarnings).toBe(0)
 
     // Bob: 40% of $300K ordinary = $120K
-    const bob = result.ownerAllocations!.find(
-      (a) => a.name === 'Bob Smith'
-    )!
+    const bob = result.ownerAllocations!.find((a) => a.name === 'Bob Smith')!
     expect(bob).toBeDefined()
     expect(bob.ownershipPct).toBe(40)
     expect(bob.ordinaryIncome).toBe(120_000)

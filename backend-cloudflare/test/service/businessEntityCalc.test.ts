@@ -437,9 +437,7 @@ describe('Business Entity Tax Calculations', () => {
       const alice = result.ownerAllocations!.find(
         (a) => a.name === 'Alice Johnson'
       )!
-      const bob = result.ownerAllocations!.find(
-        (a) => a.name === 'Bob Smith'
-      )!
+      const bob = result.ownerAllocations!.find((a) => a.name === 'Bob Smith')!
 
       expect(alice.ownershipPct).toBe(60)
       expect(bob.ownershipPct).toBe(40)
@@ -560,15 +558,11 @@ describe('Business Entity Tax Calculations', () => {
       expect(alphaK1.ownershipPct).toBe(50)
 
       // Check that line items exist
-      const ordinaryLine = alphaK1.lineItems.find(
-        (li) => li.lineNumber === '1'
-      )
+      const ordinaryLine = alphaK1.lineItems.find((li) => li.lineNumber === '1')
       expect(ordinaryLine).toBeDefined()
       expect(ordinaryLine!.amount).toBe(175000)
 
-      const interestLine = alphaK1.lineItems.find(
-        (li) => li.lineNumber === '5'
-      )
+      const interestLine = alphaK1.lineItems.find((li) => li.lineNumber === '5')
       expect(interestLine).toBeDefined()
       expect(interestLine!.amount).toBe(2500)
     })
@@ -691,10 +685,7 @@ describe('Business Entity Tax Calculations', () => {
     })
 
     it('routes 1065 to Partnership calculation', () => {
-      const result = taxCalcService.calculateEntity(
-        partnershipFacts(),
-        '1065'
-      )
+      const result = taxCalcService.calculateEntity(partnershipFacts(), '1065')
       expect(result.success).toBe(true)
       if (!result.success) return
       expect(result.formType).toBe('1065')
@@ -730,13 +721,9 @@ describe('Business Entity Tax Calculations', () => {
       expect(aliceK1.formType).toBe('K-1 (1120-S)')
       expect(aliceK1.ownershipPct).toBe(60)
 
-      const ordinaryLine = aliceK1.lineItems.find(
-        (li) => li.lineNumber === '1'
-      )
+      const ordinaryLine = aliceK1.lineItems.find((li) => li.lineNumber === '1')
       expect(ordinaryLine).toBeDefined()
-      expect(ordinaryLine!.description).toBe(
-        'Ordinary business income (loss)'
-      )
+      expect(ordinaryLine!.description).toBe('Ordinary business income (loss)')
       expect(ordinaryLine!.amount).toBe(120000)
     })
 

@@ -669,6 +669,38 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
       ? (qbiData as unknown as QbiDeductionData)
       : undefined
 
+  // Adapt itemized deductions (Schedule A — SALT, mortgage interest, charity, etc.)
+  // SALT cap ($40,400 for TY2025, $20,200 MFS) is enforced by the engine via ScheduleA.ts
+  const itemizedDeductions: ItemizedDeductions | undefined = (() => {
+    const d = asRecord(facts.itemizedDeductions)
+    if (!d || Object.keys(d).length === 0) return undefined
+    return {
+      medicalAndDental: toNum(d.medicalAndDental ?? d.medicalDental ?? 0),
+      stateAndLocalTaxes: toNum(
+        d.stateAndLocalTaxes ?? d.stateLocalIncomeTax ?? d.stateTax ?? 0
+      ),
+      isSalesTax: toBool(d.isSalesTax ?? false),
+      stateAndLocalRealEstateTaxes: toNum(
+        d.stateAndLocalRealEstateTaxes ??
+          d.realEstateTaxes ??
+          d.propertyTaxes ??
+          0
+      ),
+      stateAndLocalPropertyTaxes: toNum(
+        d.stateAndLocalPropertyTaxes ?? d.personalPropertyTaxes ?? 0
+      ),
+      interest8a: toNum(d.interest8a ?? d.mortgageInterest ?? 0),
+      interest8b: toNum(d.interest8b ?? 0),
+      interest8c: toNum(d.interest8c ?? 0),
+      interest8d: toNum(d.interest8d ?? 0),
+      investmentInterest: toNum(d.investmentInterest ?? 0),
+      charityCashCheck: toNum(
+        d.charityCashCheck ?? d.charityCash ?? d.charitableContributions ?? 0
+      ),
+      charityOther: toNum(d.charityOther ?? d.charityNonCash ?? 0)
+    }
+  })()
+
   // Build the Information object
   const info: Information = {
     f1099s: all1099s,
@@ -678,7 +710,7 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     f1098es: [],
     f3921s: [],
     scheduleK1Form1065s: [],
-    itemizedDeductions: undefined,
+    itemizedDeductions,
     taxPayer: {
       filingStatus,
       primaryPerson,

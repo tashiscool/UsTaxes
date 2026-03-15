@@ -129,7 +129,19 @@ const filingSessionCreateSchema = z.object({
   name: z.string().min(1).optional(),
   taxYear: z.number().int().min(2024).max(2050).default(2025),
   filingStatus: z.string().min(2).default('single'),
-  formType: z.enum(['1040', '1040-NR', '1040-SS', '4868', '1120', '1120-S', '1065', '1041', '990']).default('1040'),
+  formType: z
+    .enum([
+      '1040',
+      '1040-NR',
+      '1040-SS',
+      '4868',
+      '1120',
+      '1120-S',
+      '1065',
+      '1041',
+      '990'
+    ])
+    .default('1040'),
   currentPhase: z
     .enum([
       'my_info',
@@ -1074,9 +1086,13 @@ const getW2Records = (
     .map((entity) => {
       const d = entity.data
       const wages = toMoney(d.box1Wages ?? d.box1 ?? d.wages)
-      const fedWithheld = toMoney(d.box2FederalWithheld ?? d.box2 ?? d.federalWithholding)
+      const fedWithheld = toMoney(
+        d.box2FederalWithheld ?? d.box2 ?? d.federalWithholding
+      )
       const stWages = toMoney(d.stateWages ?? d.box16 ?? d.stateIncome)
-      const stWithheld = toMoney(d.stateWithheld ?? d.box17 ?? d.stateWithholding)
+      const stWithheld = toMoney(
+        d.stateWithheld ?? d.box17 ?? d.stateWithholding
+      )
       const employer = toText(d.employerName ?? d.employer)
       return {
         id: entity.id,
@@ -1468,21 +1484,25 @@ const getObbbaData = (
   const screenOvertimeAmount = toMoney(
     obbbaScreen.overtimeAmount ?? incomeScreen.overtimeAmount
   )
-  const screenOvertimeIncome = screenOvertimeAmount > 0
-    ? {
-        amount: screenOvertimeAmount,
-        employerName: toText(
-          obbbaScreen.overtimeEmployerName ?? incomeScreen.overtimeEmployerName
-        )
-      }
-    : undefined
+  const screenOvertimeIncome =
+    screenOvertimeAmount > 0
+      ? {
+          amount: screenOvertimeAmount,
+          employerName: toText(
+            obbbaScreen.overtimeEmployerName ??
+              incomeScreen.overtimeEmployerName
+          )
+        }
+      : undefined
 
   const entityOvertime = entities.find(
     (entity) => entity.entityType === 'obbba_overtime'
   )
   const entityOvertimeIncome = entityOvertime
     ? {
-        amount: toMoney(entityOvertime.data.amount ?? entityOvertime.data.overtimeAmount),
+        amount: toMoney(
+          entityOvertime.data.amount ?? entityOvertime.data.overtimeAmount
+        ),
         employerName: toText(entityOvertime.data.employerName)
       }
     : undefined
@@ -1496,14 +1516,15 @@ const getObbbaData = (
   const screenTipAmount = toMoney(
     obbbaScreen.tipAmount ?? incomeScreen.tipAmount
   )
-  const screenTipIncome = screenTipAmount > 0
-    ? {
-        amount: screenTipAmount,
-        employerName: toText(
-          obbbaScreen.tipEmployerName ?? incomeScreen.tipEmployerName
-        )
-      }
-    : undefined
+  const screenTipIncome =
+    screenTipAmount > 0
+      ? {
+          amount: screenTipAmount,
+          employerName: toText(
+            obbbaScreen.tipEmployerName ?? incomeScreen.tipEmployerName
+          )
+        }
+      : undefined
 
   const entityTip = entities.find(
     (entity) => entity.entityType === 'obbba_tips'
@@ -1523,24 +1544,28 @@ const getObbbaData = (
   const screenAutoLoanAmount = toMoney(
     obbbaScreen.autoLoanInterestAmount ?? obbbaScreen.autoLoanInterest
   )
-  const screenAutoLoanInterest = screenAutoLoanAmount > 0
-    ? {
-        amount: screenAutoLoanAmount,
-        domesticManufacture: obbbaScreen.autoLoanDomesticManufacture !== false &&
-          obbbaScreen.autoLoanDomesticManufacture !== 'no',
-        lenderName: toText(obbbaScreen.autoLoanLenderName),
-        vehicleMake: toText(obbbaScreen.autoLoanVehicleMake),
-        vehicleModel: toText(obbbaScreen.autoLoanVehicleModel),
-        vehicleYear: toMoney(obbbaScreen.autoLoanVehicleYear) || undefined
-      }
-    : undefined
+  const screenAutoLoanInterest =
+    screenAutoLoanAmount > 0
+      ? {
+          amount: screenAutoLoanAmount,
+          domesticManufacture:
+            obbbaScreen.autoLoanDomesticManufacture !== false &&
+            obbbaScreen.autoLoanDomesticManufacture !== 'no',
+          lenderName: toText(obbbaScreen.autoLoanLenderName),
+          vehicleMake: toText(obbbaScreen.autoLoanVehicleMake),
+          vehicleModel: toText(obbbaScreen.autoLoanVehicleModel),
+          vehicleYear: toMoney(obbbaScreen.autoLoanVehicleYear) || undefined
+        }
+      : undefined
 
   const entityAutoLoan = entities.find(
     (entity) => entity.entityType === 'obbba_auto_loan'
   )
   const entityAutoLoanInterest = entityAutoLoan
     ? {
-        amount: toMoney(entityAutoLoan.data.amount ?? entityAutoLoan.data.interestPaid),
+        amount: toMoney(
+          entityAutoLoan.data.amount ?? entityAutoLoan.data.interestPaid
+        ),
         domesticManufacture:
           entityAutoLoan.data.domesticManufacture !== false &&
           entityAutoLoan.data.domesticManufacture !== 'no',
@@ -1581,16 +1606,17 @@ const getObbbaData = (
     }))
 
   const allAccounts = mergeCollectionById(screenAccounts, entityAccounts)
-  const trumpSavingsAccounts = allAccounts.length > 0
-    ? allAccounts.map((a) => ({
-        beneficiaryName: a.beneficiaryName,
-        beneficiarySSN: a.beneficiarySSN,
-        beneficiaryDateOfBirth: a.beneficiaryDateOfBirth,
-        beneficiaryIsCitizen: a.beneficiaryIsCitizen,
-        contributionAmount: a.contributionAmount,
-        accountNumber: a.accountNumber
-      }))
-    : undefined
+  const trumpSavingsAccounts =
+    allAccounts.length > 0
+      ? allAccounts.map((a) => ({
+          beneficiaryName: a.beneficiaryName,
+          beneficiarySSN: a.beneficiarySSN,
+          beneficiaryDateOfBirth: a.beneficiaryDateOfBirth,
+          beneficiaryIsCitizen: a.beneficiaryIsCitizen,
+          contributionAmount: a.contributionAmount,
+          accountNumber: a.accountNumber
+        }))
+      : undefined
 
   return {
     overtimeIncome,
@@ -1599,7 +1625,6 @@ const getObbbaData = (
     trumpSavingsAccounts
   }
 }
-
 
 const getIncomeSummary = (
   w2Records: ReturnType<typeof getW2Records>,
@@ -1842,19 +1867,22 @@ const toSubmissionPayload = (
 
   // Prefer engine-computed values; fall back to frontend-provided values
   // For business entities, use bizCalcResult; for individuals, use taxCalcResult
-  const totalTax = bizCalcResult?.totalTax
-    ?? taxCalcResult?.totalTax
-    ?? Number(review.totalTax ?? 0)
-  const totalPayments = bizCalcResult?.totalPayments
-    ?? taxCalcResult?.totalPayments
-    ?? Number(review.totalPayments ?? 0)
+  const totalTax =
+    bizCalcResult?.totalTax ??
+    taxCalcResult?.totalTax ??
+    Number(review.totalTax ?? 0)
+  const totalPayments =
+    bizCalcResult?.totalPayments ??
+    taxCalcResult?.totalPayments ??
+    Number(review.totalPayments ?? 0)
   const refund = bizCalcResult
     ? Math.max(0, bizCalcResult.overpayment)
-    : (taxCalcResult?.refund
-      ?? Number(review.totalRefund ?? snapshot.estimatedRefund ?? 0))
-  const amountOwed = bizCalcResult?.amountOwed
-    ?? taxCalcResult?.amountOwed
-    ?? Math.max(0, totalTax - totalPayments)
+    : taxCalcResult?.refund ??
+      Number(review.totalRefund ?? snapshot.estimatedRefund ?? 0)
+  const amountOwed =
+    bizCalcResult?.amountOwed ??
+    taxCalcResult?.amountOwed ??
+    Math.max(0, totalTax - totalPayments)
 
   return {
     taxYear: snapshot.taxYear,
@@ -1898,18 +1926,20 @@ const toSubmissionPayload = (
       },
       dependents,
       credits: creditSummary,
-      ...(bizCalcResult ? {
-        businessEntity: {
-          formType: bizCalcResult.formType,
-          entityName: bizCalcResult.entityName,
-          totalIncome: bizCalcResult.totalIncome,
-          totalDeductions: bizCalcResult.totalDeductions,
-          taxableIncome: bizCalcResult.taxableIncome,
-          effectiveTaxRate: bizCalcResult.effectiveTaxRate,
-          ownerAllocations: bizCalcResult.ownerAllocations,
-          schedules: bizCalcResult.schedules
-        }
-      } : {})
+      ...(bizCalcResult
+        ? {
+            businessEntity: {
+              formType: bizCalcResult.formType,
+              entityName: bizCalcResult.entityName,
+              totalIncome: bizCalcResult.totalIncome,
+              totalDeductions: bizCalcResult.totalDeductions,
+              taxableIncome: bizCalcResult.taxableIncome,
+              effectiveTaxRate: bizCalcResult.effectiveTaxRate,
+              ownerAllocations: bizCalcResult.ownerAllocations,
+              schedules: bizCalcResult.schedules
+            }
+          }
+        : {})
     },
     metadata: {
       source: 'taxflow-app-v1',
@@ -3511,10 +3541,7 @@ export class AppSessionService {
     if (taxSummary) {
       const refund = Number(taxSummary.refund ?? taxSummary.overpayment ?? 0)
       const amountOwed = Number(taxSummary.amountOwed ?? 0)
-      const estimatedRefund =
-        refund > 0
-          ? refund
-          : -amountOwed
+      const estimatedRefund = refund > 0 ? refund : -amountOwed
       await this.env.USTAXES_DB.prepare(
         `UPDATE filing_sessions SET estimated_refund = ?1, updated_at = ?2 WHERE id = ?3`
       )
@@ -3608,15 +3635,23 @@ export class AppSessionService {
     // Use tax calc result from syncReturn if available
     // Determine whether the summary came from a 1040 or a business entity calc
     const isBizForm = isBusinessFormType(snapshot.formType)
-    const taxCalcResult = !isBizForm && syncResult.taxSummary
-      ? (syncResult.taxSummary as unknown as TaxCalculationResult)
-      : undefined
-    const bizCalcResult = isBizForm && syncResult.taxSummary
-      ? (syncResult.taxSummary as unknown as BusinessEntityResult)
-      : undefined
+    const taxCalcResult =
+      !isBizForm && syncResult.taxSummary
+        ? (syncResult.taxSummary as unknown as TaxCalculationResult)
+        : undefined
+    const bizCalcResult =
+      isBizForm && syncResult.taxSummary
+        ? (syncResult.taxSummary as unknown as BusinessEntityResult)
+        : undefined
 
     const payload = {
-      ...toSubmissionPayload(refreshed, snapshot, facts, taxCalcResult, bizCalcResult),
+      ...toSubmissionPayload(
+        refreshed,
+        snapshot,
+        facts,
+        taxCalcResult,
+        bizCalcResult
+      ),
       ...(body.payloadOverride ?? {})
     } as SubmissionPayload
     const result = await this.apiService.submitReturn(syncResult.taxReturnId, {

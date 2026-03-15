@@ -292,10 +292,7 @@ function derEncodeLength(length: number): Uint8Array {
 /**
  * Parse a DER-encoded length and return [length, bytesConsumed]
  */
-function parseDerLength(
-  data: Uint8Array,
-  offset: number
-): [number, number] {
+function parseDerLength(data: Uint8Array, offset: number): [number, number] {
   const first = data[offset]
   if (first < 0x80) {
     return [first, 1]

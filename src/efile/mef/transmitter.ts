@@ -831,7 +831,7 @@ export class EFileTransmitter {
         ? submission.returnData.content
         : JSON.stringify(submission.returnData.content)
 
-    if (creds?.certificate && creds?.privateKey) {
+    if (creds?.certificate && creds.privateKey) {
       // Full XMLDSig signing with real credentials
       const signerConfig: SignerConfig = {
         certificate: creds.certificate,

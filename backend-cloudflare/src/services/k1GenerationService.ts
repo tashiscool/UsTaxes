@@ -6,7 +6,10 @@
  * line items suitable for downstream tax filing or reporting.
  */
 
-import type { BusinessEntityResult, OwnerAllocation } from './taxCalculationService'
+import type {
+  BusinessEntityResult,
+  OwnerAllocation
+} from './taxCalculationService'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -214,8 +217,8 @@ export class K1GenerationService {
     const k1FormType = isSCorp
       ? 'K-1 (1120-S)'
       : isPartnership
-        ? 'K-1 (1065)'
-        : `K-1 (${entityResult.formType})`
+      ? 'K-1 (1065)'
+      : `K-1 (${entityResult.formType})`
 
     return allocations.map((alloc) => {
       const lineItems = isSCorp
@@ -226,11 +229,12 @@ export class K1GenerationService {
         .filter((li) => li.amount > 0)
         .reduce((sum, li) => sum + li.amount, 0)
 
-      const totalDeductions = lineItems
-        .filter((li) => li.amount < 0)
-        .reduce((sum, li) => sum + Math.abs(li.amount), 0)
-        + (alloc.section179Deduction > 0 ? alloc.section179Deduction : 0)
-        + (alloc.otherDeductions > 0 ? alloc.otherDeductions : 0)
+      const totalDeductions =
+        lineItems
+          .filter((li) => li.amount < 0)
+          .reduce((sum, li) => sum + Math.abs(li.amount), 0) +
+        (alloc.section179Deduction > 0 ? alloc.section179Deduction : 0) +
+        (alloc.otherDeductions > 0 ? alloc.otherDeductions : 0)
 
       // Net amount: positive income items minus deduction items
       const netAmount = lineItems.reduce((sum, li) => sum + li.amount, 0)

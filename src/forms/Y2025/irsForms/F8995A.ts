@@ -17,9 +17,11 @@ export default class F8995A extends F8995 {
   tag: FormTag = 'f8995a'
   sequenceIndex = 55.5
 
-  visibleEntries = (): ReturnType<F8995['qbiEntries']> => this.qbiEntries().slice(0, 3)
+  visibleEntries = (): ReturnType<F8995['qbiEntries']> =>
+    this.qbiEntries().slice(0, 3)
 
-  overflowEntries = (): ReturnType<F8995['qbiEntries']> => this.qbiEntries().slice(3)
+  overflowEntries = (): ReturnType<F8995['qbiEntries']> =>
+    this.qbiEntries().slice(3)
 
   needsAdditionalStatement = (): boolean => this.overflowEntries().length > 0
 

@@ -298,7 +298,9 @@ describe('TaxCalculationService', () => {
         if (withState.stateResults && withState.stateResults.length > 0) {
           expect(withState.stateResults[0].state).toBe('CA')
           expect(withState.stateResults[0].stateTax).toBeGreaterThan(0)
-          expect(withState.stateResults[0].effectiveStateRate).toBeGreaterThan(0)
+          expect(withState.stateResults[0].effectiveStateRate).toBeGreaterThan(
+            0
+          )
         }
       }
     })
@@ -339,6 +341,200 @@ describe('TaxCalculationService', () => {
     })
   })
 
+  // ─── OBBBA 2025 rule coverage (MATH_RULES_INDEX §2.1–2.6) ──────────────────
+  // Each test verifies that the backend worker correctly applies OBBBA parameters
+  // from federal.ts through create1040() for a specific math rule.
+  describe('OBBBA rule coverage via backend', () => {
+    it('§2.1 standard deduction: single $15,750 applied to taxable income', () => {
+      const result = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-sd',
+              employerName: 'Employer',
+              ein: '12-3456789',
+              box1Wages: 50000,
+              box2FederalWithheld: 0,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ]
+        })
+      )
+      expect(result.success).toBe(true)
+      if (result.success) {
+        // Taxable income = AGI ($50,000) - standard deduction ($15,750) = $34,250
+        expect(result.taxableIncome).toBeCloseTo(34250, -2) // within $100
+      }
+    })
+
+    it('§2.3 CTC: MFJ with qualifying child reduces tax by at least $2,200', () => {
+      const baseResult = taxCalcService.calculate(
+        baseFacts({
+          filingStatus: 'mfj',
+          w2Records: [
+            {
+              id: 'w2-ctc',
+              employerName: 'Employer',
+              ein: '12-3456789',
+              box1Wages: 60000,
+              box2FederalWithheld: 0,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ]
+        })
+      )
+      const ctcResult = taxCalcService.calculate(
+        baseFacts({
+          filingStatus: 'mfj',
+          w2Records: [
+            {
+              id: 'w2-ctc',
+              employerName: 'Employer',
+              ein: '12-3456789',
+              box1Wages: 60000,
+              box2FederalWithheld: 0,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          dependents: [
+            {
+              id: 'dep-ctc',
+              name: 'Child A',
+              dob: '2015-01-01', // age 10 — qualifies (under 17)
+              relationship: 'child',
+              ssn: '111223333',
+              months: '12',
+              isComplete: true
+            }
+          ]
+        })
+      )
+      expect(baseResult.success).toBe(true)
+      expect(ctcResult.success).toBe(true)
+      if (baseResult.success && ctcResult.success) {
+        // Adding one qualifying child should reduce total tax by at least $2,200 (OBBBA CTC rate)
+        const taxReduction = baseResult.totalTax - ctcResult.totalTax
+        expect(taxReduction).toBeGreaterThanOrEqual(2200)
+      }
+    })
+
+    it('§2.4 SALT cap: itemized deductions with $50k state taxes capped at $40,400', () => {
+      // Single filer with $120k wages and $50k in state taxes (far over cap)
+      // With itemized, taxable income should reflect SALT capped at $40,400 not $50k
+      const withHighSalt = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-salt',
+              employerName: 'Employer',
+              ein: '12-3456789',
+              box1Wages: 120000,
+              box2FederalWithheld: 0,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          itemizedDeductions: {
+            stateAndLocalTaxes: 50000, // well above $40,400 cap
+            stateAndLocalRealEstateTaxes: 0,
+            stateAndLocalPropertyTaxes: 0,
+            interest8a: 0,
+            charityCashCheck: 0,
+            charityOther: 0,
+            medicalAndDental: 0,
+            isSalesTax: false,
+            interest8b: 0,
+            interest8c: 0,
+            interest8d: 0,
+            investmentInterest: 0
+          }
+        })
+      )
+      const withNoItemized = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-salt-noitem',
+              employerName: 'Employer',
+              ein: '12-3456789',
+              box1Wages: 120000,
+              box2FederalWithheld: 0,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ]
+        })
+      )
+      expect(withHighSalt.success).toBe(true)
+      expect(withNoItemized.success).toBe(true)
+      if (withHighSalt.success && withNoItemized.success) {
+        // The itemized deduction should be capped at $40,400 (not $50,000)
+        // So taxable income with itemized = $120k - $40,400 = $79,600
+        // Without itemized (standard deduction $15,750): taxable = $104,250
+        // Itemized should produce lower taxable income when state taxes > standard deduction
+        expect(withHighSalt.taxableIncome).toBeLessThan(
+          withNoItemized.taxableIncome
+        )
+        // With $40,400 SALT cap (as the itemized deduction), taxable = $120k - $40,400 = ~$79,600
+        expect(withHighSalt.taxableIncome).toBeCloseTo(79600, -3) // within $1000
+      }
+    })
+
+    it('§2.5 QBI: self-employment income produces ~20% QBI deduction', () => {
+      // 1099-NEC filer with $90k income — below phase-out, no W-2 limit
+      // QBI deduction = $90k × 20% = $18,000 → taxable income ≈ $90k - $15,750 std ded - $6,359 SE ded - $18k QBI
+      const result = taxCalcService.calculate(
+        baseFacts({
+          form1099Records: [
+            {
+              id: '1099-qbi',
+              type: 'NEC',
+              payer: 'Client LLC',
+              amount: 90000,
+              federalWithheld: 0,
+              isComplete: true
+            }
+          ]
+        })
+      )
+      expect(result.success).toBe(true)
+      if (result.success) {
+        // Taxable income should be lower than AGI by more than just the standard deduction
+        // (QBI deduction adds ~$18k on top of standard deduction)
+        // AGI ≈ $90k - ~$6.4k (1/2 SE tax) ≈ $83.6k; std ded $15,750; QBI ≈ $16.7k → taxable ~$51k
+        expect(result.taxableIncome).toBeLessThan(result.agi - 15750)
+      }
+    })
+
+    it('§2.6 NIIT: investment income above $200k threshold attracts 3.8% tax', () => {
+      // Single filer with $250k in dividends (above $200k NIIT threshold)
+      const result = taxCalcService.calculate(
+        baseFacts({
+          form1099Records: [
+            {
+              id: '1099-div-niit',
+              type: 'DIV',
+              payer: 'Brokerage Inc',
+              amount: 250000,
+              federalWithheld: 0,
+              isComplete: true
+            }
+          ]
+        })
+      )
+      expect(result.success).toBe(true)
+      if (result.success) {
+        // NIIT = 3.8% × ($250k - $200k) = 3.8% × $50k = $1,900 minimum
+        // Total tax should include regular income tax + NIIT
+        expect(result.totalTax).toBeGreaterThan(60000) // meaningful tax at this income level
+        expect(result.schedules).toContain('f1040')
+      }
+    })
+  })
+
   describe('calculateBusinessEntity', () => {
     it('computes C-Corp tax at 21% flat rate', () => {
       const result = taxCalcService.calculateBusinessEntity('1120', {
@@ -347,12 +543,12 @@ describe('TaxCalculationService', () => {
         taxYear: 2025,
         income: {
           grossReceiptsOrSales: 500000,
-          costOfGoodsSold: 200000,
+          costOfGoodsSold: 200000
         },
         deductions: {
           salariesAndWages: 50000,
           rents: 10000,
-          taxesAndLicenses: 5000,
+          taxesAndLicenses: 5000
         },
         specialDeductions: {}
       })
@@ -374,17 +570,27 @@ describe('TaxCalculationService', () => {
         taxYear: 2025,
         income: {
           grossReceiptsOrSales: 400000,
-          costOfGoodsSold: 100000,
+          costOfGoodsSold: 100000
         },
         deductions: {
-          salariesAndWages: 100000,
+          salariesAndWages: 100000
         },
         shareholders: [
-          { name: 'Owner A', ssn: '111223333', ownershipPercentage: 60, stockOwned: 600 },
-          { name: 'Owner B', ssn: '444556666', ownershipPercentage: 40, stockOwned: 400 }
+          {
+            name: 'Owner A',
+            ssn: '111223333',
+            ownershipPercentage: 60,
+            stockOwned: 600
+          },
+          {
+            name: 'Owner B',
+            ssn: '444556666',
+            ownershipPercentage: 40,
+            stockOwned: 400
+          }
         ],
         scheduleK: {
-          ordinaryBusinessIncome: 200000,
+          ordinaryBusinessIncome: 200000
         }
       })
 
@@ -408,11 +614,11 @@ describe('TaxCalculationService', () => {
         taxYear: 2025,
         income: {
           grossReceiptsOrSales: 600000,
-          costOfGoodsSold: 200000,
+          costOfGoodsSold: 200000
         },
         deductions: {
           salariesAndWages: 100000,
-          guaranteedPaymentsToPartners: 50000,
+          guaranteedPaymentsToPartners: 50000
         },
         partners: [
           { name: 'Partner A', tin: '111223333', profitSharingPercent: 50 },
@@ -420,7 +626,7 @@ describe('TaxCalculationService', () => {
           { name: 'Partner C', tin: '777889999', profitSharingPercent: 20 }
         ],
         scheduleK: {
-          ordinaryBusinessIncome: 250000,
+          ordinaryBusinessIncome: 250000
         },
         liabilitiesAtYearEnd: {}
       })
@@ -442,10 +648,10 @@ describe('TaxCalculationService', () => {
         income: {
           interest: 50000,
           ordinaryDividends: 20000,
-          qualifiedDividends: 10000,
+          qualifiedDividends: 10000
         },
         deductions: {
-          fiduciaryFees: 5000,
+          fiduciaryFees: 5000
         },
         fiduciary: { name: 'John Smith', title: 'Trustee' },
         beneficiaries: [

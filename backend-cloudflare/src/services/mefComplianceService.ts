@@ -260,7 +260,11 @@ const invalidResult = (
 })
 
 const BUSINESS_ENTITY_FORM_TYPES = new Set<string>([
-  '1120', '1120-S', '1065', '1041', '990'
+  '1120',
+  '1120-S',
+  '1065',
+  '1041',
+  '990'
 ])
 
 const FORM_TYPE_TO_XML_ROOT: Record<string, string> = {
@@ -422,14 +426,18 @@ export const validateMefCompliance = async (
   const validator = new SchemaValidator(payload.taxYear)
 
   const isBusinessEntity = BUSINESS_ENTITY_FORM_TYPES.has(formType)
-  const schemaFormType = isBusinessEntity ? `Form${formType.replace('-', '')}` : 'Form1040'
+  const schemaFormType = isBusinessEntity
+    ? `Form${formType.replace('-', '')}`
+    : 'Form1040'
   const schemaResult = await validator.validate(xml, schemaFormType)
   if (!schemaResult.valid) {
     report.xmlValidationErrors = xmlErrorsToMessages(schemaResult.errors)
   }
 
   const tinType = isBusinessEntity ? 'EINType' : 'SSNType'
-  const formContext = isBusinessEntity ? `Form${formType.replace('-', '')}` : 'Form1040'
+  const formContext = isBusinessEntity
+    ? `Form${formType.replace('-', '')}`
+    : 'Form1040'
 
   const fieldErrors = [
     validator.validateFieldValue(normalizedTin, tinType, formContext),
