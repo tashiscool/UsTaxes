@@ -1252,6 +1252,14 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     })
   })()
 
+  // ─── Form 5695 clean energy + home improvements (from form_5695 / residential-energy) ─
+  const cleanEnergyProperties = asArray<Record<string, unknown>>(
+    facts.cleanEnergyProperties
+  ).filter((p) => toNum(p.cost) > 0)
+  const homeImprovements = asArray<Record<string, unknown>>(
+    facts.homeImprovements
+  ).filter((p) => toNum(p.cost) > 0)
+
   // ─── Form 8839 adopted children ─────────────────────────────────────────
   const adoptedChildren: AdoptedChild[] | undefined = (() => {
     const children = asArray<Record<string, unknown>>(facts.adoptedChildren)
@@ -1442,6 +1450,10 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     educationExpenses,
     // Form 5695 Energy Credits
     energyImprovements,
+    cleanEnergyProperties:
+      cleanEnergyProperties.length > 0 ? cleanEnergyProperties : undefined,
+    homeImprovements:
+      homeImprovements.length > 0 ? homeImprovements : undefined,
     // Form 8839 Adoption Credit
     adoptedChildren,
     // Local city/municipal tax

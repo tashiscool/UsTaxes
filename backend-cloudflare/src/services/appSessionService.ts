@@ -1529,7 +1529,7 @@ const getObbbaData = (
       }
     : undefined
   // Entity record takes priority when it has a nonzero amount
-  const overtimeIncome =
+  let overtimeIncome =
     entityOvertimeIncome && entityOvertimeIncome.amount > 0
       ? entityOvertimeIncome
       : screenOvertimeIncome
@@ -1557,7 +1557,7 @@ const getObbbaData = (
         employerName: toText(entityTip.data.employerName)
       }
     : undefined
-  const tipIncome =
+  let tipIncome =
     entityTipIncome && entityTipIncome.amount > 0
       ? entityTipIncome
       : screenTipIncome
@@ -1583,7 +1583,7 @@ const getObbbaData = (
   const entityAutoLoan = entities.find(
     (entity) => entity.entityType === 'obbba_auto_loan'
   )
-  const entityAutoLoanInterest = entityAutoLoan
+  let entityAutoLoanInterest = entityAutoLoan
     ? {
         amount: toMoney(
           entityAutoLoan.data.amount ?? entityAutoLoan.data.interestPaid
@@ -1597,10 +1597,50 @@ const getObbbaData = (
         vehicleYear: toMoney(entityAutoLoan.data.vehicleYear) || undefined
       }
     : undefined
-  const autoLoanInterest =
+  let autoLoanInterest =
     entityAutoLoanInterest && entityAutoLoanInterest.amount > 0
       ? entityAutoLoanInterest
       : screenAutoLoanInterest
+
+  // ── Schedule 1-A entity (unified OBBBA page): fallback when obbba_* entities absent ─
+  const schedule1AEntity = entities.find((e) => e.entityType === 'schedule_1a')
+  const schedule1AScreen = requireScreen(snapshot, '/schedule-1a')
+  if (schedule1AEntity?.data || Object.keys(schedule1AScreen).length > 0) {
+    const d = (schedule1AEntity?.data ?? schedule1AScreen) as Record<
+      string,
+      unknown
+    >
+    const otAmt = toMoney(d.overtimeAmount ?? 0)
+    const tipAmt =
+      toMoney(d.employeeTipAmount ?? 0) + toMoney(d.selfEmployedTipAmount ?? 0)
+    const autoAmt = toMoney(d.autoLoanInterestPaid ?? 0)
+    const vehUS =
+      d.vehicleAssembledInUS !== false && d.vehicleAssembledInUS !== 'no'
+    const vehPersonal =
+      d.vehiclePersonalUse !== false && d.vehiclePersonalUse !== 'no'
+    if (otAmt > 0 && !overtimeIncome) {
+      overtimeIncome = {
+        amount: otAmt,
+        employerName: toText(d.overtimeEmployerName ?? '')
+      }
+    }
+    if (tipAmt > 0 && !tipIncome) {
+      tipIncome = {
+        amount: tipAmt,
+        employerName: toText(d.tipEmployerName ?? '')
+      }
+    }
+    if (autoAmt > 0 && vehUS && vehPersonal && !autoLoanInterest) {
+      autoLoanInterest = {
+        amount: autoAmt,
+        domesticManufacture: true,
+        lenderName: toText(d.autoLoanLenderName ?? ''),
+        vehicleMake: toText(d.vehicleMake ?? ''),
+        vehicleModel: toText(d.vehicleModel ?? ''),
+        vehicleYear: toMoney(d.vehicleYear) || undefined
+      }
+    }
+  }
 
   // ── Trump Savings Accounts: screen data array + entity records ─────────────
   const screenAccounts = asArray<Record<string, unknown>>(
@@ -1646,6 +1686,168 @@ const getObbbaData = (
     autoLoanInterest,
     trumpSavingsAccounts
   }
+}
+
+/** Student loan interest (1098-E) from student_loan_interest entity or /student-loan screen */
+const getStudentLoanData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const entity = entities.find((e) => e.entityType === 'student_loan_interest')
+  const screen = requireScreen(snapshot, '/student-loan')
+  const d = (entity?.data ?? screen) as Record<string, unknown>
+  const interest = toMoney(d.interestPaid ?? d.interest ?? 0)
+  if (interest <= 0) return undefined
+  return [
+    {
+      lender: toText(d.lenderName ?? 'Student Loan Servicer'),
+      interest,
+      interestPaid: interest
+    }
+  ]
+}
+
+/** IRA contribution deductibility from ira_contribution_deduction entity or /ira-contribution screen */
+const getIRAContributionsData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const entity = entities.find(
+    (e) => e.entityType === 'ira_contribution_deduction'
+  )
+  const screen = requireScreen(snapshot, '/ira-contribution')
+  const d = (entity?.data ?? screen) as Record<string, unknown>
+  const traditional = toMoney(d.traditionalAmount ?? d.contributionAmount ?? 0)
+  const deductible = toMoney(
+    d.deductibleAmount ?? d.traditionalDeductibleAmount ?? 0
+  )
+  if (traditional <= 0) return undefined
+  return [
+    {
+      owner: toText(d.owner ?? 'primary'),
+      traditionalContributions: traditional,
+      traditionalDeductibleAmount: deductible > 0 ? deductible : traditional,
+      rothContributions: toMoney(d.rothAmount ?? 0)
+    }
+  ]
+}
+
+/** Form 5695: clean energy + home improvements from form_5695 entity or /residential-energy screen */
+const getForm5695Data = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const entity = entities.find((e) => e.entityType === 'form_5695')
+  const screen = requireScreen(snapshot, '/residential-energy')
+  const d = (entity?.data ?? screen) as Record<string, unknown>
+  const p = (v: unknown) => toMoney(v)
+  const year = new Date().getFullYear()
+  const date = new Date(`${year}-06-15`)
+  const cleanEnergy: Record<string, unknown>[] = []
+  if (d.hasSolarElectric && p(d.solarElectricCost) > 0) {
+    cleanEnergy.push({
+      type: 'solarElectric',
+      cost: p(d.solarElectricCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasSolarWaterHeating && p(d.solarWaterCost) > 0) {
+    cleanEnergy.push({
+      type: 'solarWaterHeating',
+      cost: p(d.solarWaterCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasWindEnergy && p(d.windCost) > 0) {
+    cleanEnergy.push({
+      type: 'smallWind',
+      cost: p(d.windCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasGeothermal && p(d.geothermalCost) > 0) {
+    cleanEnergy.push({
+      type: 'geothermal',
+      cost: p(d.geothermalCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasBatteryStorage && p(d.batteryCost) > 0) {
+    cleanEnergy.push({
+      type: 'batteryStorage',
+      cost: p(d.batteryCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasFuelCell && p(d.fuelCellCost) > 0) {
+    cleanEnergy.push({
+      type: 'fuelCell',
+      cost: p(d.fuelCellCost),
+      dateInstalled: date,
+      fuelCellKwCapacity: p(d.fuelCellKW)
+    })
+  }
+  const homeImprovements: Record<string, unknown>[] = []
+  if (d.hasInsulation && p(d.insulationCost) > 0) {
+    homeImprovements.push({
+      type: 'insulation',
+      cost: p(d.insulationCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasWindows && p(d.windowsCost) > 0) {
+    homeImprovements.push({
+      type: 'windowsSkylights',
+      cost: p(d.windowsCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasDoors && p(d.doorsCost) > 0) {
+    homeImprovements.push({
+      type: 'exteriorDoors',
+      cost: p(d.doorsCost),
+      dateInstalled: date,
+      doorCount: toMoney(d.doorsCount)
+    })
+  }
+  if (d.hasCentralAC && p(d.centralACCost) > 0) {
+    homeImprovements.push({
+      type: 'centralAC',
+      cost: p(d.centralACCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasWaterHeater && p(d.waterHeaterCost) > 0) {
+    homeImprovements.push({
+      type: 'waterHeater',
+      cost: p(d.waterHeaterCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasHeatPumpWaterHeater && p(d.heatPumpWaterHeaterCost) > 0) {
+    homeImprovements.push({
+      type: 'heatPumpWaterHeater',
+      cost: p(d.heatPumpWaterHeaterCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasHeatPumpHVAC && p(d.heatPumpHVACCost) > 0) {
+    homeImprovements.push({
+      type: 'heatPump',
+      cost: p(d.heatPumpHVACCost),
+      dateInstalled: date
+    })
+  }
+  if (d.hasEnergyAudit && p(d.energyAuditCost) > 0) {
+    homeImprovements.push({
+      type: 'homeEnergyAudit',
+      cost: p(d.energyAuditCost),
+      dateInstalled: date
+    })
+  }
+  if (cleanEnergy.length === 0 && homeImprovements.length === 0)
+    return undefined
+  return { cleanEnergyProperties: cleanEnergy, homeImprovements }
 }
 
 const getIncomeSummary = (
@@ -2027,6 +2229,11 @@ const toFacts = (
   // OBBBA 2025 provisions
   const obbbaData = getObbbaData(snapshot, entities)
 
+  // Student loan interest, IRA contributions, Form 5695
+  const studentLoanRecords = getStudentLoanData(snapshot, entities)
+  const iraContributionsData = getIRAContributionsData(snapshot, entities)
+  const form5695Data = getForm5695Data(snapshot, entities)
+
   // Form 8615 (Kiddie Tax) — parent info for child's unearned income
   const parentInfo = getParentInfoFromKiddieTax(snapshot, entities)
   // Form 8379 (Injured Spouse) — MFJ refund allocation
@@ -2077,6 +2284,11 @@ const toFacts = (
     tipIncome: obbbaData.tipIncome,
     autoLoanInterest: obbbaData.autoLoanInterest,
     trumpSavingsAccounts: obbbaData.trumpSavingsAccounts,
+    // Student loan, IRA contribution, Form 5695
+    studentLoanRecords,
+    iraContributions: iraContributionsData,
+    cleanEnergyProperties: form5695Data?.cleanEnergyProperties,
+    homeImprovements: form5695Data?.homeImprovements,
     parentInfo,
     injuredSpouse,
     priorYearTax,
