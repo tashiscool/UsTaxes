@@ -1,0 +1,28 @@
+{
+  "scenarioId": "EXCEL1040-GOLDEN",
+  "scenarioName": "Excel1040 parity - minimal: Single, 1 W-2 $50K, standard deduction",
+  "description": "Golden scenario for Excel1040/NAMED_RANGES parity. Single filer, $50K wages, standard deduction $15,750 (TY2025). Expected values from our engine aligned with IRS/Excel rules.",
+  "taxYear": 2025,
+  "filingStatus": 1,
+  "formType": "1040",
+  "primaryTaxpayer": { "ssn": "123-45-6789", "dateOfBirth": "1990-01-01" },
+  "spouse": null,
+  "dependents": [],
+  "w2Forms": [
+    {
+      "wages": 50000,
+      "federalWithholding": 5000,
+      "employerName": "Acme Corp",
+      "employerEin": "12-3456789"
+    }
+  ],
+  "form1099Rs": [],
+  "expectedValues": {
+    "agi": 50000,
+    "taxableIncome": 34250,
+    "totalTax": 3875,
+    "totalPayments": 5000,
+    "refund": 1125,
+    "amountOwed": 0
+  }
+}
