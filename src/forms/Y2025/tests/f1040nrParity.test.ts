@@ -86,6 +86,7 @@ describe('Form 1040-NR parity', () => {
 
     const f1040 = new F1040(information, [])
     const f1040nr = f1040.f1040nr
+    if (!f1040nr) throw new Error('F1040-NR required for nonresident scenario')
 
     expect(f1040nr.isNeeded()).toBe(true)
     expect(f1040nr.totalEffectivelyConnectedIncome()).toBe(165000)
@@ -140,6 +141,7 @@ describe('Form 1040-NR parity', () => {
 
     const f1040 = new F1040(information, [])
     const f1040nr = f1040.f1040nr
+    if (!f1040nr) throw new Error('F1040-NR required for nonresident scenario')
 
     expect(f1040nr.fdapTaxRate()).toBe(0)
     expect(f1040nr.fdapTax()).toBe(0)
@@ -187,6 +189,7 @@ describe('Form 1040-NR parity', () => {
 
     const f1040 = new F1040(information, [])
     const f1040nr = f1040.f1040nr
+    if (!f1040nr) throw new Error('F1040-NR required for nonresident scenario')
 
     expect(f1040nr.eciScholarshipIncome()).toBe(5000)
     expect(f1040nr.treatyExemptScholarship()).toBe(5000)

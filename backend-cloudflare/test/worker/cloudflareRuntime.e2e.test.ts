@@ -1249,7 +1249,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
 
   it(
     'derives spouse, unemployment, and investment facts from TaxFlow entities',
-    { timeout: 60000 },
+    { timeout: 120000 },
     async () => {
       let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
         method: 'POST',

@@ -3,70 +3,130 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-TAXFLOW_DIR="$(cd "${BACKEND_DIR}/../../taxflow" && pwd)"
 
-# Load .env-prod
-if [[ -f "${BACKEND_DIR}/.env-prod" ]]; then
-  set -a
-  # shellcheck source=../.env-prod
-  source "${BACKEND_DIR}/.env-prod"
-  set +a
+# shellcheck source=./_prod_env.sh
+source "${SCRIPT_DIR}/_prod_env.sh"
+
+TAXFLOW_DIR="$(taxflow_root_dir)"
+
+backend_load_prod_env "${1:-}"
+backend_prepare_wrangler_env
+if ! backend_verify_cloudflare_token; then
+  echo "[warn] Cloudflare token preflight failed; continuing because the deploy may still succeed." >&2
 fi
 
-export CLOUDFLARE_API_TOKEN
-export CLOUDFLARE_ACCOUNT_ID
+backend_require_cmd npm
+backend_require_cmd npx
+backend_require_cmd node
+backend_require_cmd curl
+backend_require_cmd pnpm
 
-echo "=== FreeTaxFlow Production Deploy ==="
+WORKER_ENV="${CLOUDFLARE_WORKER_ENV:-production}"
+RUN_CF_BOOTSTRAP="${RUN_CF_BOOTSTRAP:-1}"
+SYNC_WRANGLER_SECRETS="${SYNC_WRANGLER_SECRETS:-0}"
+RUN_PREDEPLOY_TESTS="${RUN_PREDEPLOY_TESTS:-1}"
+APPLY_D1_MIGRATIONS="${APPLY_D1_MIGRATIONS:-1}"
+RUN_POST_DEPLOY_SMOKE="${RUN_POST_DEPLOY_SMOKE:-1}"
+SKIP_FRONTEND_DEPLOY="${SKIP_FRONTEND_DEPLOY:-0}"
+
+echo "=== FreeTaxFlow Cloudflare Deploy ==="
+echo "Worker env: ${WORKER_ENV}"
 echo "Account: ${CLOUDFLARE_ACCOUNT_ID}"
-echo ""
+echo "Env file: ${BACKEND_ENV_FILE_LOADED}"
 
-# ── Step 1: Run tests ────────────────────────────────────────────────────────
-echo "[1/6] Running backend tests..."
-cd "${BACKEND_DIR}"
-npx vitest run --reporter=dot 2>&1 | tail -5
+backend_step "Workers deploy access preflight"
+backend_verify_workers_deploy_access
 
-# ── Step 2: TypeScript check ─────────────────────────────────────────────────
-echo "[2/6] TypeScript check..."
-npx tsc --noEmit
-
-# ── Step 3: Apply D1 migrations ──────────────────────────────────────────────
-echo "[3/6] Applying D1 migrations to production..."
-npx wrangler d1 migrations apply USTAXES_DB --env production --remote
-
-# ── Step 4: Deploy backend worker ────────────────────────────────────────────
-echo "[4/6] Deploying backend worker..."
-npx wrangler deploy --env production
-
-# ── Step 5: Build and deploy frontend ────────────────────────────────────────
-echo "[5/6] Building frontend..."
-cd "${TAXFLOW_DIR}"
-pnpm run build 2>&1 | tail -5
-
-echo "[5/6] Deploying frontend worker..."
-cd "${TAXFLOW_DIR}/deploy/cloudflare"
-npx wrangler deploy --env production
-
-# ── Step 6: Smoke test ───────────────────────────────────────────────────────
-echo "[6/6] Post-deploy smoke test..."
-sleep 2
-
-HEALTH=$(curl -sS --max-time 10 --resolve "api.freetaxflow.com:443:$(dig api.freetaxflow.com A @1.1.1.1 +short | head -1)" \
-  "https://api.freetaxflow.com/health" 2>&1 || true)
-
-if echo "$HEALTH" | grep -q '"ok"'; then
-  echo "[ok] API health check passed"
+if [[ "${RUN_CF_BOOTSTRAP}" == "1" ]]; then
+  backend_step "Cloudflare resource bootstrap"
+  CLOUDFLARE_WORKER_ENV="${WORKER_ENV}" bash "${SCRIPT_DIR}/bootstrap_cloudflare_resources.sh"
 else
-  echo "[warn] API health check response: $HEALTH"
+  echo "[skip] RUN_CF_BOOTSTRAP=0"
 fi
 
-FRONTEND=$(curl -sS --max-time 10 "https://freetaxflow.com/" 2>&1 | head -1 || true)
-if echo "$FRONTEND" | grep -q "doctype\|DOCTYPE\|html"; then
-  echo "[ok] Frontend serving HTML"
+if [[ "${SYNC_WRANGLER_SECRETS}" == "1" ]]; then
+  backend_step "Sync Wrangler secrets"
+  CLOUDFLARE_WORKER_ENV="${WORKER_ENV}" bash "${SCRIPT_DIR}/sync_wrangler_secrets.sh"
 else
-  echo "[warn] Frontend response: $FRONTEND"
+  echo "[skip] SYNC_WRANGLER_SECRETS=0"
 fi
 
-echo ""
-echo "[ok] Production deployment complete"
-echo "  API:      https://api.freetaxflow.com"
-echo "  Frontend: https://freetaxflow.com"
+if [[ "${RUN_PREDEPLOY_TESTS}" == "1" ]]; then
+  backend_step "Backend predeploy checks"
+  (
+    cd "${BACKEND_DIR}"
+    npm run test:all
+  )
+
+  if [[ -d "${TAXFLOW_DIR}" ]]; then
+    backend_step "TaxFlow predeploy checks"
+    (
+      cd "${TAXFLOW_DIR}"
+      pnpm check
+      pnpm build
+    )
+  else
+    echo "[warn] TaxFlow directory not found; skipping frontend predeploy checks"
+  fi
+else
+  echo "[skip] RUN_PREDEPLOY_TESTS=0"
+fi
+
+if [[ "${APPLY_D1_MIGRATIONS}" == "1" ]]; then
+  backend_step "Apply D1 migrations (${WORKER_ENV})"
+  (
+    cd "${BACKEND_DIR}"
+    npx wrangler d1 migrations apply USTAXES_DB --env "${WORKER_ENV}" --remote
+  )
+else
+  echo "[skip] APPLY_D1_MIGRATIONS=0"
+fi
+
+backend_step "Deploy backend worker"
+(
+  cd "${BACKEND_DIR}"
+  npx wrangler deploy --env "${WORKER_ENV}"
+)
+
+if [[ "${SKIP_FRONTEND_DEPLOY}" == "1" ]]; then
+  echo "[skip] SKIP_FRONTEND_DEPLOY=1"
+elif [[ -d "${TAXFLOW_DIR}" ]]; then
+  backend_step "Build frontend"
+  (
+    cd "${TAXFLOW_DIR}"
+    pnpm build
+  )
+
+  backend_step "Deploy frontend worker"
+  (
+    cd "${TAXFLOW_DIR}/deploy/cloudflare"
+    npx wrangler deploy --env production
+  )
+else
+  echo "[warn] TaxFlow directory not found; skipping frontend deploy"
+fi
+
+if [[ "${RUN_POST_DEPLOY_SMOKE}" == "1" ]]; then
+  backend_step "Post-deploy smoke test"
+  backend_url="${USTAXES_PROD_BASE_URL:-https://api.freetaxflow.com}"
+  frontend_url="${USTAXES_FRONTEND_URL:-https://freetaxflow.com}"
+
+  health="$(curl -sS --max-time 10 "${backend_url}/health" 2>&1 || true)"
+  if echo "${health}" | grep -q '"ok"'; then
+    echo "[ok] API health check passed"
+  else
+    echo "[warn] API health response: ${health}"
+  fi
+
+  frontend="$(curl -sS --max-time 10 "${frontend_url}/" 2>&1 | head -1 || true)"
+  if echo "${frontend}" | grep -qi "doctype\\|html"; then
+    echo "[ok] Frontend serving HTML"
+  else
+    echo "[warn] Frontend response: ${frontend}"
+  fi
+else
+  echo "[skip] RUN_POST_DEPLOY_SMOKE=0"
+fi
+
+echo
+echo "[ok] Cloudflare deploy pipeline completed"

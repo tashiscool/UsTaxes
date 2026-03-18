@@ -84,7 +84,7 @@ export default class Schedule8812 extends F1040Attachment {
 
   l3 = (): number => sumFields([this.l1(), this.l2d()])
 
-  creditDependents = (): Dependent[] =>
+  creditDependents = (): Dependent<Date | string>[] =>
     this.f1040.qualifyingDependents
       .qualifyingChildren()
       .filter((dep) => hasValidChildTaxCreditSsn(dep.ssid))
@@ -297,6 +297,20 @@ export default class Schedule8812 extends F1040Attachment {
 
   l27 = (): number | undefined =>
     this.l12no() ? 0 : this.part2a().toLine27 ?? this.part2b().toLine27
+
+  qualifyingChildrenCount = (): number => this.l4()
+
+  otherDependentsCount = (): number => this.l6()
+
+  modifiedAGI = (): number => this.l3()
+
+  childTaxCredit = (): number => this.l5()
+
+  otherDependentCredit = (): number => this.l7()
+
+  totalCredit = (): number => this.l8()
+
+  additionalChildTaxCredit = (): number => this.l27() ?? 0
 
   fields = (): Field[] => {
     const part2a = this.part2a()

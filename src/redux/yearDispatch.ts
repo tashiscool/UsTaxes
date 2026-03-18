@@ -26,10 +26,10 @@ const useYearDispatch = (): Dispatch<SignalAction> => {
  * being accessed.
  */
 const useYearSelector = <R>(f: (t: TaxesState) => R): R =>
-  f(
-    useSelector((state: YearsTaxesState) => ({
-      information: state[state.activeYear]
-    }))
-  )
+  f({
+    information: useSelector(
+      (state: YearsTaxesState) => state[state.activeYear]
+    )
+  })
 
 export { useYearDispatch, useYearSelector }

@@ -11,7 +11,6 @@ import {
 } from 'ustaxes/core/data'
 import { blankState } from 'ustaxes/redux/reducer'
 import W2JobInfo from 'ustaxes/components/income/W2JobInfo'
-import userEvent from '@testing-library/user-event'
 
 jest.mock('redux-persist', () => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -150,7 +149,9 @@ describe('W2JobInfo', () => {
     }
 
     const clickButton = (buttonText: string, index = 0) => {
-      userEvent.click(screen.getAllByText(buttonText)[index])
+      act(() => {
+        fireEvent.click(screen.getAllByText(buttonText)[index])
+      })
     }
 
     return { store, changeByLabelText, selectOption, clickButton }
@@ -243,7 +244,7 @@ describe('W2JobInfo', () => {
         screen.getByText(testW2sSpouse.employer.employerName)
       ).toBeInTheDocument()
 
-      userEvent.click(screen.getAllByRole('button')[1])
+      fireEvent.click(screen.getAllByRole('button')[1])
 
       await waitFor(() =>
         expect(screen.queryByText('w2s employer name')).not.toBeInTheDocument()
@@ -254,7 +255,7 @@ describe('W2JobInfo', () => {
   it('sets current information when editing', () => {
     setup(testInfo)
 
-    userEvent.click(screen.getAllByRole('button')[0])
+    fireEvent.click(screen.getAllByRole('button')[0])
 
     expect(screen.getByLabelText('Employer name')).toHaveValue(
       testW2sSpouse.employer?.employerName
@@ -298,7 +299,7 @@ describe('W2JobInfo', () => {
   it('updates information', async () => {
     const { changeByLabelText, selectOption, clickButton } = setup(testInfo)
 
-    userEvent.click(screen.getAllByRole('button')[0])
+    fireEvent.click(screen.getAllByRole('button')[0])
 
     changeByLabelText('Employer name', 'updated employer name')
     changeByLabelText(/Employer's Identification Number/, '999999999')

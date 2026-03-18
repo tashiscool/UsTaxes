@@ -10,6 +10,7 @@ ENVIRONMENT = "development"
 CORS_ORIGIN = "http://localhost:5173"
 SESSION_SECRET_HMAC_KEY = "dev-secret-change-in-production"
 LOCAL_DEV_AUTH_ENABLED = "true"
+APP_DEV_ALLOW_LOCAL_LOGIN = "true"
 LOG_LEVEL = "debug"
 
 [[d1_databases]]
@@ -51,8 +52,8 @@ name = "ustaxes-backend-staging"
 [env.staging.vars]
 ENVIRONMENT = "staging"
 CORS_ORIGIN = "https://staging.freetaxflow.com"
-SESSION_SECRET_HMAC_KEY = "staging-secret-change-before-real-use"
 LOCAL_DEV_AUTH_ENABLED = "false"
+APP_DEV_ALLOW_LOCAL_LOGIN = "false"
 LOG_LEVEL = "info"
 
 [[env.staging.d1_databases]]
@@ -94,8 +95,8 @@ routes = [{ pattern = "api.freetaxflow.com", custom_domain = true }]
 [env.production.vars]
 ENVIRONMENT = "production"
 CORS_ORIGIN = "https://freetaxflow.com"
-SESSION_SECRET_HMAC_KEY = "prod-secret-rotate-via-wrangler-secret"
 LOCAL_DEV_AUTH_ENABLED = "false"
+APP_DEV_ALLOW_LOCAL_LOGIN = "false"
 LOG_LEVEL = "warn"
 
 [[env.production.d1_databases]]

@@ -14,9 +14,11 @@ import { AppSessionService } from './services/appSessionService'
 import { ApiService } from './services/apiService'
 import { DirectFileCompatibilityService } from './services/directFileCompatibilityService'
 import {
+  clearAuthFlowCookie,
   clearAppSessionCookie,
   issueAppSessionCookie,
   localDevAuthAllowed,
+  readCookieValue,
   requireAppUser
 } from './utils/appAuth'
 import { HttpError, jsonResponse } from './utils/http'
@@ -105,6 +107,60 @@ const requireParam = (value: string | undefined, name: string): string => {
     throw new HttpError(400, `Missing path parameter: ${name}`)
   }
   return value
+}
+
+const parseAuthState = (
+  state: string | undefined
+): { redirectUri?: string; nonce?: string } | null => {
+  if (!state) {
+    return null
+  }
+
+  try {
+    const decoded = atob(state)
+    try {
+      const parsed = JSON.parse(decoded) as Record<string, unknown>
+      return {
+        redirectUri:
+          typeof parsed.redirectUri === 'string' ? parsed.redirectUri : undefined,
+        nonce: typeof parsed.nonce === 'string' ? parsed.nonce : undefined
+      }
+    } catch {
+      return { redirectUri: decoded }
+    }
+  } catch {
+    return null
+  }
+}
+
+const resolveSafeRedirect = (
+  requestedRedirect: string | undefined,
+  fallbackOrigin: string | undefined
+): string => {
+  const fallback = fallbackOrigin ?? '/'
+  if (!requestedRedirect) {
+    return fallback
+  }
+
+  if (requestedRedirect.startsWith('/')) {
+    return requestedRedirect
+  }
+
+  try {
+    const target = new URL(requestedRedirect)
+    if (!fallbackOrigin) {
+      return target.origin
+    }
+
+    const allowedOrigin = new URL(fallbackOrigin)
+    if (target.origin === allowedOrigin.origin) {
+      return requestedRedirect
+    }
+  } catch {
+    return fallback
+  }
+
+  return fallback
 }
 
 app.get('/health', (c) =>
@@ -259,6 +315,16 @@ app.get('/app/v1/auth/callback', async (c) => {
     )
   }
 
+  const parsedState = parseAuthState(state)
+  const authFlowNonce = readCookieValue(c.req.header('cookie'), 'app_auth_flow')
+  if (parsedState?.nonce) {
+    if (!authFlowNonce || authFlowNonce !== parsedState.nonce) {
+      throw new HttpError(400, 'Invalid or expired authentication flow state.')
+    }
+  } else if (!localDevAuthAllowed(c.env)) {
+    throw new HttpError(400, 'Missing signed authentication flow state.')
+  }
+
   const cookie = await issueAppSessionCookie(c.env, {
     sub,
     email,
@@ -266,15 +332,15 @@ app.get('/app/v1/auth/callback', async (c) => {
     displayName
   })
   c.header('set-cookie', cookie)
-  if (state) {
-    const redirect = atob(state)
-    return c.redirect(redirect)
-  }
-  return c.redirect('/')
+  c.header('set-cookie', clearAuthFlowCookie(c.env), { append: true })
+  return c.redirect(
+    resolveSafeRedirect(parsedState?.redirectUri, c.env.CORS_ORIGIN)
+  )
 })
 
 app.post('/app/v1/auth/logout', async (c) => {
-  c.header('set-cookie', clearAppSessionCookie())
+  c.header('set-cookie', clearAppSessionCookie(c.env))
+  c.header('set-cookie', clearAuthFlowCookie(c.env), { append: true })
   return c.json({ loggedOut: true })
 })
 

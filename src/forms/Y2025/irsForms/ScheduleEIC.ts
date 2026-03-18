@@ -375,6 +375,28 @@ export default class ScheduleEIC extends F1040Attachment {
   numberMonths = (): Array<number | undefined> =>
     this.qualifyingDependents().map((d) => d.qualifyingInfo?.numberOfMonths)
 
+  // Serializer compatibility helpers used by MeF XML output.
+  qualifyingChildren = (): Array<{
+    firstName: string
+    lastName: string
+    ssn: string
+    yearOfBirth: number
+    relationship: string
+    monthsLived: number
+  }> =>
+    this.qualifyingDependents()
+      .filter((d): d is Dependent & { ssid: string } => d.ssid !== undefined)
+      .map((d) => ({
+        firstName: d.firstName,
+        lastName: d.lastName,
+        ssn: d.ssid,
+        yearOfBirth: d.dateOfBirth.getFullYear(),
+        relationship: d.relationship ?? '',
+        monthsLived: d.qualifyingInfo?.numberOfMonths ?? 0
+      }))
+
+  creditAmount = (): number => this.credit()
+
   fields = (): Field[] => [
     this.f1040.namesString(),
     this.f1040.info.taxPayer.primaryPerson.ssid,

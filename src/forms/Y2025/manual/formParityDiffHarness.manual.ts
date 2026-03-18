@@ -394,6 +394,7 @@ const createScenarioNr5Output = (): Record<string, unknown> => {
 
   const f1040 = new F1040(info, [])
   const f1040nr = f1040.f1040nr
+  if (!f1040nr) throw new Error('F1040-NR required for NR scenario')
   return {
     hasScheduleOI: true,
     hasScheduleNEC: false,
@@ -463,6 +464,7 @@ const createScenarioNr12Output = (): Record<string, unknown> => {
 
   const f1040 = new F1040(info, [])
   const f1040nr = f1040.f1040nr
+  if (!f1040nr) throw new Error('F1040-NR required for NR scenario')
   return {
     hasScheduleOI: true,
     hasScheduleNEC: false,

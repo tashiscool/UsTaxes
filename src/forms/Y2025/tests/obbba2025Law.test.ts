@@ -369,21 +369,24 @@ describe('2025 federal law updates', () => {
         ein: '111111111',
         qbi: 100000,
         w2Wages: 10000,
-        ubia: 40000
+        ubia: 40000,
+        patronReduction: 0
       },
       {
         name: 'Bravo Services',
         ein: '222222222',
         qbi: 80000,
         w2Wages: 30000,
-        ubia: 120000
+        ubia: 120000,
+        patronReduction: 0
       },
       {
         name: 'Charlie Rentals',
         ein: '333333333',
         qbi: 60000,
         w2Wages: 50000,
-        ubia: 200000
+        ubia: 200000,
+        patronReduction: 0
       }
     ])
 

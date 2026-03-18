@@ -12,8 +12,10 @@ export interface AppUserClaims {
 }
 
 const SESSION_COOKIE = 'app_session_id'
+const AUTH_FLOW_COOKIE = 'app_auth_flow'
 const DEV_LOCAL_SECRET = 'ustaxes-local-dev-secret'
 const ONE_WEEK_SECONDS = 60 * 60 * 24 * 7
+const TEN_MINUTES_SECONDS = 60 * 10
 
 const encoder = new TextEncoder()
 
@@ -40,7 +42,9 @@ const timingSafeEqual = (left: string, right: string): boolean => {
 }
 
 const resolveSecret = (env: Env): string =>
-  env.APP_AUTH_SECRET?.trim() || DEV_LOCAL_SECRET
+  env.APP_AUTH_SECRET?.trim() ||
+  env.SESSION_SECRET_HMAC_KEY?.trim() ||
+  DEV_LOCAL_SECRET
 
 const importHmacKey = async (env: Env): Promise<CryptoKey> =>
   crypto.subtle.importKey(
@@ -83,6 +87,9 @@ const parseCookie = (
   return null
 }
 
+const cookieSecurityAttributes = (env: Env): string =>
+  env.ENVIRONMENT && env.ENVIRONMENT !== 'development' ? '; Secure' : ''
+
 export const issueAppSessionCookie = async (
   env: Env,
   user: Omit<AppUserClaims, 'exp'>,
@@ -96,11 +103,34 @@ export const issueAppSessionCookie = async (
   const signature = await sign(env, encodedPayload)
   const token = `${encodedPayload}.${signature}`
 
-  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ttlSeconds}`
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ttlSeconds}${cookieSecurityAttributes(
+    env
+  )}`
 }
 
-export const clearAppSessionCookie = (): string =>
-  `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`
+export const clearAppSessionCookie = (env: Env): string =>
+  `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${cookieSecurityAttributes(
+    env
+  )}`
+
+export const issueAuthFlowCookie = (
+  env: Env,
+  nonce: string,
+  ttlSeconds = TEN_MINUTES_SECONDS
+): string =>
+  `${AUTH_FLOW_COOKIE}=${nonce}; Path=/; SameSite=Lax; Max-Age=${ttlSeconds}${cookieSecurityAttributes(
+    env
+  )}`
+
+export const clearAuthFlowCookie = (env: Env): string =>
+  `${AUTH_FLOW_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0${cookieSecurityAttributes(
+    env
+  )}`
+
+export const readCookieValue = (
+  cookieHeader: string | null | undefined,
+  name: string
+): string | null => parseCookie(cookieHeader, name)
 
 export const readAppUserFromRequest = async (
   c: Context<{ Bindings: Env }>
@@ -138,5 +168,16 @@ export const requireAppUser = async (
   return user
 }
 
-export const localDevAuthAllowed = (env: Env): boolean =>
-  env.APP_DEV_ALLOW_LOCAL_LOGIN !== 'false'
+export const localDevAuthAllowed = (env: Env): boolean => {
+  const explicitFlag = env.APP_DEV_ALLOW_LOCAL_LOGIN?.trim()
+  if (explicitFlag) {
+    return explicitFlag !== 'false'
+  }
+
+  const legacyFlag = env.LOCAL_DEV_AUTH_ENABLED?.trim()
+  if (legacyFlag) {
+    return legacyFlag !== 'false'
+  }
+
+  return true
+}

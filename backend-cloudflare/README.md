@@ -31,6 +31,69 @@ npm run test
 npm run dev
 ```
 
+## Production Setup
+
+This package now uses the same production ergonomics pattern as the sibling
+`alovoa` Cloudflare worker project:
+
+- a dedicated env loader in `scripts/_prod_env.sh`
+- token verification in `scripts/verify_cloudflare_token.sh`
+- resource bootstrap in `scripts/bootstrap_cloudflare_resources.sh`
+- optional Wrangler secret sync in `scripts/sync_wrangler_secrets.sh`
+- a safer end-to-end deploy pipeline in `scripts/deploy-prod.sh`
+
+### Env files
+
+- Local production config lives in `.env-prod`
+- A template is provided in `.env-prod.example`
+- `.env-prod` is gitignored
+- If local `.env-prod` is missing, the helper can fall back to a sibling
+  `../alovoa/.env-prod` on this workstation for convenience
+
+Recommended production-only secrets to keep out of `wrangler.toml`:
+
+- `APP_AUTH_SECRET`
+- `INTERNAL_API_TOKEN`
+- `SESSION_SECRET_HMAC_KEY`
+
+### Production commands
+
+Verify Cloudflare access:
+
+```bash
+npm run cf:verify
+```
+
+Bootstrap remote resources:
+
+```bash
+npm run cf:bootstrap:production
+```
+
+Sync Wrangler secrets from `.env-prod`:
+
+```bash
+npm run cf:secrets:production
+```
+
+Full production pipeline:
+
+```bash
+npm run deploy:pipeline:production
+```
+
+The deploy pipeline can:
+
+- verify the Cloudflare token
+- preflight Workers deploy access
+- optionally bootstrap D1 / Queue / R2 resources
+- optionally sync Wrangler secrets
+- run backend and TaxFlow predeploy checks
+- apply remote D1 migrations
+- deploy the backend worker
+- build and deploy the TaxFlow frontend worker
+- run basic post-deploy smoke checks against `api.freetaxflow.com` and `freetaxflow.com`
+
 ## Local Flow (manual smoke)
 
 1. Create return
@@ -90,3 +153,11 @@ Validation pipeline coverage includes:
 - local Worker runtime integration (`unstable_dev`) with migrated D1 + real DO routing
 
 These run locally with in-memory adapters while production code uses D1/R2/Queue/DO bindings.
+
+## Deployment Notes
+
+- `APP_DEV_ALLOW_LOCAL_LOGIN` is now wired in `wrangler.toml` for development,
+  staging, and production, so the runtime flag matches what the app actually reads.
+- `appAuth` now accepts `APP_AUTH_SECRET` first and `SESSION_SECRET_HMAC_KEY`
+  second, which lets production use Wrangler-managed secrets without breaking the
+  current local setup.
