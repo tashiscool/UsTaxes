@@ -33,3 +33,4 @@ yarn-error.log*
 
 /logs/
 /src/core/data/validate-fns.js
+/docs/1040_workbook_deep_audit/formula_trace.csv

@@ -10,6 +10,7 @@ Outputs:
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 from dataclasses import dataclass
@@ -357,8 +358,26 @@ def build_summary_markdown(
     output_path.write_text("\n".join(lines) + "\n")
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=DEFAULT_OUTPUT_DIR,
+        help="Directory to write audit artifacts into.",
+    )
+    parser.add_argument(
+        "--include-full-formula-csv",
+        action="store_true",
+        help="Write the full formula_trace.csv artifact. Omitted by default because it is large.",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
-    ensure_output_dir(DEFAULT_OUTPUT_DIR)
+    args = parse_args()
+    output_dir = args.output_dir
+    ensure_output_dir(output_dir)
 
     all_sheets: list[dict[str, object]] = []
     all_formulas: list[dict[str, object]] = []
@@ -370,22 +389,26 @@ def main() -> int:
         all_formulas.extend(result["formula_rows"])
         all_names.extend(result["name_rows"])
 
-    write_csv(all_sheets, DEFAULT_OUTPUT_DIR / "sheet_inventory.csv")
-    write_csv(all_names, DEFAULT_OUTPUT_DIR / "defined_names.csv")
-    write_csv(all_formulas, DEFAULT_OUTPUT_DIR / "formula_trace.csv")
-    write_json(all_sheets, DEFAULT_OUTPUT_DIR / "sheet_inventory.json")
-    write_json(all_names, DEFAULT_OUTPUT_DIR / "defined_names.json")
+    formula_trace_path = output_dir / "formula_trace.csv"
+    write_csv(all_sheets, output_dir / "sheet_inventory.csv")
+    write_csv(all_names, output_dir / "defined_names.csv")
+    if args.include_full_formula_csv:
+        write_csv(all_formulas, formula_trace_path)
+    elif formula_trace_path.exists():
+        formula_trace_path.unlink()
+    write_json(all_sheets, output_dir / "sheet_inventory.json")
+    write_json(all_names, output_dir / "defined_names.json")
     write_json(
         {
             "row_count": len(all_formulas),
             "sample": all_formulas[:500],
         },
-        DEFAULT_OUTPUT_DIR / "formula_trace_sample.json",
+        output_dir / "formula_trace_sample.json",
     )
     build_summary_markdown(
         all_sheets,
         all_names,
-        DEFAULT_OUTPUT_DIR / "README.md",
+        output_dir / "README.md",
     )
     return 0
 

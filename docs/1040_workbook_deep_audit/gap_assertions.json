@@ -1,0 +1,186 @@
+[
+  {
+    "logical_area": "schedule_e",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/ScheduleEParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "schedule_e_page_2",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/ScheduleEParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "form_6251",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/f6251.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "form_8812",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/Schedule8812.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "eitc",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/ScheduleEIC.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "earned_income_worksheet",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/ScheduleEIC.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "eitc_table",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/ScheduleEIC.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "form_8949",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 12,
+    "required_test_files": [
+      "src/forms/Y2025/tests/F8949Parity.test.ts",
+      "src/forms/Y2025/tests/ScheduleD.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "schedule_d",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/F8949Parity.test.ts",
+      "src/forms/Y2025/tests/ScheduleD.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "schedule_d_worksheet",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/F8949Parity.test.ts",
+      "src/forms/Y2025/tests/ScheduleD.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "form_8995",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/obbba2025Law.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "form_1040",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/obbba2025Law.test.ts",
+      "src/forms/Y2025/tests/f1040nrParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  }
+]
