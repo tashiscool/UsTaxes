@@ -10,6 +10,7 @@ import {
   type BusinessEntityResult,
   TaxCalculationService,
   type TaxCalculationResult,
+  getBusinessFormCapability,
   isBusinessFormType
 } from './taxCalculationService'
 import { resolveStateProfile } from '../data/stateProfiles'
@@ -122,7 +123,12 @@ interface ReviewFindingRow {
 interface CachedTaxComputation {
   taxSummary?: Record<string, unknown>
   taxCalcErrors?: string[]
+  businessFormCapability?: Record<string, unknown>
 }
+
+type BusinessReturnCapabilityView = ReturnType<
+  typeof getBusinessReturnCapabilityView
+>
 
 const filingSessionCreateSchema = z.object({
   localSessionId: z.string().min(1).optional(),
@@ -346,8 +352,303 @@ const toSnapshot = (
   latestSubmissionId: row.latest_submission_id ?? undefined,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+  businessFormCapability: isBusinessFormType(row.form_type)
+    ? getBusinessReturnCapabilityView(snapshot)
+    : undefined,
   snapshot
 })
+
+const BUSINESS_RETURN_SCALAR_KEYS = [
+  'entityName',
+  'ein',
+  'entityType',
+  'streetAddress',
+  'city',
+  'zip',
+  'naicsCode',
+  'productOrService',
+  'accountingMethod',
+  'taxYear',
+  'isFiscalYear',
+  'totalAssets',
+  'grossReceipts',
+  'costOfGoodsSold',
+  'builtInGainsTax',
+  'excessPassiveIncomeTax',
+  'estimatedTaxPayments',
+  'withholding',
+  'dateCreated',
+  'isFinalReturn',
+  'requiredDistributions',
+  'otherDistributions',
+  'section645Election',
+  'section663bElection',
+  'organizationType',
+  'missionStatement'
+] as const
+
+const BUSINESS_RETURN_RECORD_KEYS = [
+  'income',
+  'deductions',
+  'specialDeductions',
+  'scheduleK',
+  'liabilitiesAtYearEnd',
+  'fiduciary'
+] as const
+
+const BUSINESS_RETURN_ARRAY_KEYS = [
+  'shareholders',
+  'partners',
+  'beneficiaries'
+] as const
+
+const hasAnyBusinessReturnKeys = (data: Record<string, unknown>) =>
+  BUSINESS_RETURN_SCALAR_KEYS.some((key) => data[key] != null) ||
+  BUSINESS_RETURN_RECORD_KEYS.some((key) => Object.keys(asRecord(data[key])).length > 0) ||
+  BUSINESS_RETURN_ARRAY_KEYS.some((key) => asArray(data[key]).length > 0)
+
+const mergeNumericFactRecord = (
+  base: Record<string, unknown>,
+  patch: Record<string, unknown>
+) => ({
+  ...base,
+  ...Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value != null && value !== '')
+  )
+})
+
+const deriveBusinessEntityWorkflowFacts = (
+  snapshot: FilingSessionSnapshot,
+  data: Record<string, unknown>
+): Record<string, unknown> => {
+  const workflowEntities = asArray<Record<string, unknown>>(data.entities)
+  if (workflowEntities.length === 0) {
+    return {}
+  }
+
+  const normalizedEntities = workflowEntities.map((entity, index) => ({
+    entityName: toText(entity.entityName ?? entity.name),
+    ein: toText(entity.ein).replace(/\D/g, ''),
+    ownershipPct: Math.max(
+      0,
+      Math.min(100, toMoney(entity.ownershipPct ?? entity.ownershipPercentage))
+    ),
+    ordinaryIncome: toMoney(entity.ordinaryIncome),
+    guaranteedPayments: toMoney(entity.guaranteedPayments),
+    section179: toMoney(entity.section179),
+    charitableContrib: toMoney(entity.charitableContrib),
+    selfEmployedHealthIns: toMoney(entity.selfEmployedHealthIns),
+    ownerName: toText(entity.ownerName) || `Primary owner ${index + 1}`,
+    ownerTin: toText(entity.ownerTin ?? entity.ssn ?? entity.tin).replace(
+      /\D/g,
+      ''
+    )
+  }))
+
+  const firstEntity =
+    normalizedEntities.find((entity) => entity.entityName || entity.ein) ??
+    normalizedEntities[0]
+  const defaultPct = Math.round((100 / normalizedEntities.length) * 100) / 100
+  const totalOrdinaryIncome = normalizedEntities.reduce(
+    (sum, entity) => sum + entity.ordinaryIncome,
+    0
+  )
+  const totalGuaranteedPayments = normalizedEntities.reduce(
+    (sum, entity) => sum + entity.guaranteedPayments,
+    0
+  )
+  const totalOtherDeductions = normalizedEntities.reduce(
+    (sum, entity) =>
+      sum +
+      entity.section179 +
+      entity.charitableContrib +
+      entity.selfEmployedHealthIns,
+    0
+  )
+  const grossReceipts = Math.max(
+    0,
+    totalOrdinaryIncome +
+      totalOtherDeductions +
+      (snapshot.formType === '1065' ? totalGuaranteedPayments : 0)
+  )
+  const owners = normalizedEntities.map((entity) => ({
+    name: entity.ownerName,
+    ssn: entity.ownerTin,
+    tin: entity.ownerTin,
+    ownershipPercentage:
+      entity.ownershipPct > 0 ? entity.ownershipPct : defaultPct,
+    ownershipPct: entity.ownershipPct > 0 ? entity.ownershipPct : defaultPct,
+    profitSharingPercent:
+      entity.ownershipPct > 0 ? entity.ownershipPct : defaultPct,
+    lossSharingPercent:
+      entity.ownershipPct > 0 ? entity.ownershipPct : defaultPct,
+    capitalSharingPercent:
+      entity.ownershipPct > 0 ? entity.ownershipPct : defaultPct,
+    isGeneralPartner: true,
+    isDomestic: true
+  }))
+
+  return {
+    entityName: firstEntity.entityName,
+    ein: firstEntity.ein,
+    entityType:
+      snapshot.formType === '1120-S'
+        ? 'S-Corporation'
+        : snapshot.formType === '1065'
+        ? 'Partnership'
+        : snapshot.formType === '1120'
+        ? 'C-Corporation'
+        : undefined,
+    grossReceipts,
+    income: {
+      grossReceiptsOrSales: grossReceipts,
+      ordinaryIncome: totalOrdinaryIncome,
+      otherIncome: 0
+    },
+    deductions: {
+      otherDeductions: totalOtherDeductions,
+      ...(snapshot.formType === '1065'
+        ? { guaranteedPaymentsToPartners: totalGuaranteedPayments }
+        : {})
+    },
+    ...(snapshot.formType === '1120-S' ? { shareholders: owners } : {}),
+    ...(snapshot.formType === '1065' ? { partners: owners } : {})
+  }
+}
+
+const extractBusinessReturnFacts = (
+  snapshot: FilingSessionSnapshot
+): Record<string, unknown> => {
+  const extracted: Record<string, unknown> = {}
+  for (const data of Object.values(snapshot.screenData ?? {})) {
+    const derivedWorkflowFacts = deriveBusinessEntityWorkflowFacts(snapshot, data)
+    if (
+      !hasAnyBusinessReturnKeys(data) &&
+      Object.keys(derivedWorkflowFacts).length === 0
+    ) {
+      continue
+    }
+    const mergedSource: Record<string, unknown> = {
+      ...derivedWorkflowFacts,
+      ...data,
+      income: mergeNumericFactRecord(
+        asRecord(derivedWorkflowFacts.income),
+        asRecord(data.income)
+      ),
+      deductions: mergeNumericFactRecord(
+        asRecord(derivedWorkflowFacts.deductions),
+        asRecord(data.deductions)
+      ),
+      specialDeductions: mergeNumericFactRecord(
+        asRecord(derivedWorkflowFacts.specialDeductions),
+        asRecord(data.specialDeductions)
+      )
+    }
+    for (const key of BUSINESS_RETURN_SCALAR_KEYS) {
+      if (mergedSource[key] != null && mergedSource[key] !== '') {
+        extracted[key] = mergedSource[key]
+      }
+    }
+    for (const key of BUSINESS_RETURN_RECORD_KEYS) {
+      const value = asRecord(mergedSource[key])
+      if (Object.keys(value).length > 0) {
+        extracted[key] = mergeNumericFactRecord(asRecord(extracted[key]), value)
+      }
+    }
+    for (const key of BUSINESS_RETURN_ARRAY_KEYS) {
+      const value = asArray(mergedSource[key])
+      if (value.length > 0) {
+        extracted[key] = value
+      }
+    }
+  }
+  return extracted
+}
+
+const hasFactInput = (
+  record: Record<string, unknown>,
+  keys: readonly string[]
+) =>
+  keys.some((key) => {
+    const value = record[key]
+    return value !== undefined && value !== null && value !== ''
+  })
+
+const getBusinessReturnCapabilityView = (snapshot: FilingSessionSnapshot) => {
+  const capability = getBusinessFormCapability(snapshot.formType)
+  const facts = extractBusinessReturnFacts(snapshot)
+  const income = asRecord(facts.income)
+  const deductions = asRecord(facts.deductions)
+  const fiduciary = asRecord(facts.fiduciary)
+  const entityName = toText(facts.entityName)
+  const ein = toText(facts.ein).replace(/\D/g, '')
+  const shareholders = asArray(facts.shareholders)
+  const partners = asArray(facts.partners)
+  const beneficiaries = asArray(facts.beneficiaries)
+
+  const missingInputs = ['entityName', 'ein'].filter((key) => {
+    if (key === 'entityName') return !entityName
+    if (key === 'ein') return ein.length !== 9
+    return false
+  })
+
+  if (
+    !hasFactInput(income, [
+      'grossReceiptsOrSales',
+      'ordinaryIncome',
+      'interestIncome',
+      'dividendIncome',
+      'grossRents',
+      'grossRoyalties',
+      'businessIncome',
+      'rents',
+      'royalties',
+      'farmIncome',
+      'otherIncome'
+    ]) &&
+    facts.grossReceipts == null
+  ) {
+    missingInputs.push('income')
+  }
+
+  if (Object.keys(deductions).length === 0) {
+    missingInputs.push('deductions')
+  }
+
+  if (snapshot.formType === '1120-S' && shareholders.length === 0) {
+    missingInputs.push('shareholders')
+  }
+  if (snapshot.formType === '1065' && partners.length === 0) {
+    missingInputs.push('partners')
+  }
+  if (
+    snapshot.formType === '1041' &&
+    (!toText(fiduciary.name) || beneficiaries.length === 0)
+  ) {
+    missingInputs.push('fiduciary_or_beneficiaries')
+  }
+
+  const hasMinimumData = missingInputs.length === 0
+  const readiness =
+    capability.supportLevel === 'expert_required'
+      ? 'expert_required'
+      : hasMinimumData
+      ? 'ready'
+      : 'needs_input'
+
+  const smallNonprofitHint =
+    snapshot.formType === '990' && toMoney(facts.grossReceipts) > 0
+      ? toMoney(facts.grossReceipts) <= 50_000
+      : false
+
+  return {
+    ...capability,
+    hasMinimumData,
+    readiness,
+    missingInputs,
+    smallNonprofitHint
+  }
+}
 
 const defaultSnapshot = (
   input: z.infer<typeof filingSessionCreateSchema>
@@ -2321,8 +2622,10 @@ const toFacts = (
   const noncashContributions = getNoncashContributions(snapshot, entities)
   // Schedule R — Credit for Elderly or Disabled
   const scheduleRData = getScheduleRData(snapshot, entities)
+  const businessReturnFacts = extractBusinessReturnFacts(snapshot)
 
   return {
+    ...businessReturnFacts,
     primaryTIN: primaryTin,
     primaryDob: toText(taxpayer.dob),
     primaryFirstName: toText(taxpayer.firstName),
@@ -2565,6 +2868,9 @@ const buildChecklist = (
   entities: SessionEntitySnapshot[],
   findings: ReviewFindingRow[]
 ) => {
+  const businessReturnCapability = isBusinessFormType(snapshot.formType)
+    ? getBusinessReturnCapabilityView(snapshot)
+    : null
   const w2Records = getW2Records(snapshot, entities)
   const form1099Records = get1099Records(snapshot, entities)
   const dependents = getDependents(snapshot, entities)
@@ -2716,9 +3022,23 @@ const buildChecklist = (
           }))
       },
       business: {
-        status: buildStatusFromCollection(businessRecords, true),
+        status: businessReturnCapability
+          ? businessReturnCapability.supportLevel === 'expert_required'
+            ? 'in_progress'
+            : businessReturnCapability.hasMinimumData
+            ? 'complete'
+            : 'in_progress'
+          : buildStatusFromCollection(businessRecords, true),
         sublabel:
-          businessRecords.length > 0
+          businessReturnCapability
+            ? businessReturnCapability.supportLevel === 'expert_required'
+              ? businessReturnCapability.smallNonprofitHint
+                ? 'Expert-required: this nonprofit may qualify for 990-N, but Form 990 self-service is not available here yet'
+                : 'Expert-required: Form 990 self-service is not available in the production backend'
+              : businessReturnCapability.hasMinimumData
+              ? `${snapshot.formType} entity return facts are ready for calculation`
+              : `${snapshot.formType} is supported, but core entity return facts are still missing`
+            : businessRecords.length > 0
             ? `${countCompleted(businessRecords)}/${
                 businessRecords.length
               } businesses complete`
@@ -2727,7 +3047,9 @@ const buildChecklist = (
           .filter(
             (finding) =>
               finding.code === 'BUSINESS-INCOMPLETE' ||
-              finding.code === 'QBI-REVIEW'
+              finding.code === 'QBI-REVIEW' ||
+              finding.code === 'BUSINESS-ENTITY-RETURN-INCOMPLETE' ||
+              finding.code === 'BUSINESS-FORM-EXPERT-REQUIRED'
           )
           .map((finding) => ({
             message: finding.message,
@@ -2898,8 +3220,9 @@ const buildChecklist = (
               | Record<string, unknown>
               | undefined
           )?.filingPathTreeCollapsed
-        ) || false
-    }
+      ) || false
+    },
+    businessReturnCapability: businessReturnCapability ?? undefined
   }
 }
 
@@ -2908,6 +3231,9 @@ const buildReview = (
   findings: ReviewFindingRow[],
   entities: SessionEntitySnapshot[]
 ) => {
+  const businessReturnCapability = isBusinessFormType(snapshot.formType)
+    ? getBusinessReturnCapabilityView(snapshot)
+    : null
   const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
   const efile = requireScreen(snapshot, '/efile-wizard')
   const w2Records = getW2Records(snapshot, entities)
@@ -2943,6 +3269,86 @@ const buildReview = (
   const creditSummary = getCreditSummary(snapshot, dependents)
   const investmentSummary = getInvestmentSummary(taxLots, cryptoAccounts)
   const sections = [
+    ...(businessReturnCapability
+      ? [
+          {
+            id: 'business-entity-return',
+            title: 'Business entity return status',
+            rows: [
+              {
+                label: 'Return type',
+                value: snapshot.formType,
+                editPath: '/situation',
+                editLabel: 'Review'
+              },
+              {
+                label: 'Support level',
+                value:
+                  businessReturnCapability.supportLevel ===
+                  'self_service_supported'
+                    ? 'Self-service supported'
+                    : businessReturnCapability.supportLevel ===
+                      'expert_required'
+                    ? 'Expert-required'
+                    : 'Unsupported',
+                editPath:
+                  businessReturnCapability.supportLevel === 'expert_required'
+                    ? '/situation'
+                    : '/business-entity',
+                editLabel:
+                  businessReturnCapability.supportLevel === 'expert_required'
+                    ? 'Review support'
+                    : 'Complete facts',
+                hasWarning:
+                  businessReturnCapability.supportLevel !==
+                  'self_service_supported'
+              },
+              {
+                label: 'Readiness',
+                value:
+                  businessReturnCapability.readiness === 'ready'
+                    ? 'Ready for calculation'
+                    : businessReturnCapability.readiness ===
+                      'expert_required'
+                    ? 'Handled by expert workflow'
+                    : 'Missing required entity facts',
+                editPath:
+                  businessReturnCapability.supportLevel === 'expert_required'
+                    ? '/situation'
+                    : '/business-entity',
+                editLabel: 'Review'
+              },
+              {
+                label: 'Missing inputs',
+                value:
+                  businessReturnCapability.missingInputs.length > 0
+                    ? businessReturnCapability.missingInputs.join(', ')
+                    : 'None',
+                editPath: '/business-entity',
+                editLabel: 'Edit',
+                hasError:
+                  businessReturnCapability.supportLevel ===
+                    'self_service_supported' &&
+                  !businessReturnCapability.hasMinimumData
+              }
+            ],
+            warnings: findings
+              .filter(
+                (finding) =>
+                  finding.code ===
+                    'BUSINESS-ENTITY-RETURN-INCOMPLETE' ||
+                  finding.code === 'BUSINESS-FORM-EXPERT-REQUIRED'
+              )
+              .map((finding) => ({
+                id: finding.id,
+                level: finding.severity,
+                message: finding.message,
+                editPath: finding.fix_path ?? '/business-entity',
+                editLabel: finding.fix_label ?? 'Review'
+              }))
+          }
+        ]
+      : []),
     {
       id: 'filing-info',
       title: 'Filing information',
@@ -3355,6 +3761,9 @@ const toFindingRows = (
     businessRecords,
     qbiWorksheetEntities
   )
+  const businessReturnCapability = isBusinessFormType(snapshot.formType)
+    ? getBusinessReturnCapabilityView(snapshot)
+    : null
   const rentalProperties = getRentalProperties(entities)
   const foreignIncomeRecords = getForeignIncomeRecords(snapshot, entities)
   const foreignAccounts = getForeignAccounts(snapshot, entities)
@@ -3567,6 +3976,49 @@ const toFindingRows = (
         'Your business income may qualify for the Section 199A deduction. Review the QBI worksheet before filing.',
       fix_path: '/qbi-worksheet',
       fix_label: 'Review QBI worksheet',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (businessReturnCapability?.supportLevel === 'expert_required') {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'BUSINESS-FORM-EXPERT-REQUIRED',
+      severity: 'warning',
+      title: `${snapshot.formType} requires expert help`,
+      message: businessReturnCapability.smallNonprofitHint
+        ? 'This nonprofit may qualify for 990-N, but TaxFlow still routes Form 990-family work to expert help today.'
+        : businessReturnCapability.reason ??
+          `${snapshot.formType} self-service filing is not available in TaxFlow today.`,
+      fix_path: '/situation',
+      fix_label: 'Review support path',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (
+    businessReturnCapability &&
+    businessReturnCapability.supportLevel === 'self_service_supported' &&
+    !businessReturnCapability.hasMinimumData
+  ) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'BUSINESS-ENTITY-RETURN-INCOMPLETE',
+      severity: 'error',
+      title: `Finish ${snapshot.formType} entity return details`,
+      message: `Your ${snapshot.formType} return is missing required facts: ${businessReturnCapability.missingInputs.join(
+        ', '
+      )}.`,
+      fix_path: '/business-entity',
+      fix_label: 'Complete entity return facts',
       acknowledged: 0,
       metadata_key: null,
       created_at: now,
@@ -4094,8 +4546,12 @@ export class AppSessionService {
     const snapshot = await this.getSnapshot(row)
     const entities = await this.loadSessionEntities(row.id)
     const findings = await this.syncReviewFindings(row.id, snapshot, entities)
+    const businessReturnCapability = isBusinessFormType(snapshot.formType)
+      ? getBusinessReturnCapabilityView(snapshot)
+      : null
     return {
       checklist: buildChecklist(snapshot, entities, findings),
+      businessFormCapability: businessReturnCapability,
       findings: findings.map((finding) => ({
         id: finding.id,
         severity: finding.severity,
@@ -4113,11 +4569,16 @@ export class AppSessionService {
     const findings = await this.syncReviewFindings(row.id, snapshot, entities)
     const facts = toFacts(row, snapshot, entities)
     const computed = await this.computeTaxSummary(sessionId, snapshot, facts)
+    const businessReturnCapability = isBusinessFormType(snapshot.formType)
+      ? getBusinessReturnCapabilityView(snapshot)
+      : null
 
     return {
       review: buildReview(snapshot, findings, entities),
       taxSummary: computed.taxSummary,
-      taxCalcErrors: computed.taxCalcErrors
+      taxCalcErrors: computed.taxCalcErrors,
+      businessFormCapability:
+        computed.businessFormCapability ?? businessReturnCapability
     }
   }
 
@@ -4129,6 +4590,9 @@ export class AppSessionService {
     const computed = await this.computeTaxSummary(sessionId, snapshot, facts)
     const taxSummary = computed.taxSummary
     const taxCalcErrors = computed.taxCalcErrors
+    const businessReturnCapability = isBusinessFormType(snapshot.formType)
+      ? getBusinessReturnCapabilityView(snapshot)
+      : null
 
     // Update estimated refund on the session
     if (taxSummary) {
@@ -4178,7 +4642,9 @@ export class AppSessionService {
       taxReturnId,
       facts,
       taxSummary,
-      taxCalcErrors
+      taxCalcErrors,
+      businessFormCapability:
+        computed.businessFormCapability ?? businessReturnCapability
     }
   }
 
@@ -4218,16 +4684,39 @@ export class AppSessionService {
 
   async submit(sessionId: string, rawBody: unknown, user: AppUserClaims) {
     const row = await this.requireSession(sessionId, user.sub)
+    const snapshot = await this.getSnapshot(row)
+    const businessReturnCapability = isBusinessFormType(snapshot.formType)
+      ? getBusinessReturnCapabilityView(snapshot)
+      : null
+    if (businessReturnCapability?.supportLevel === 'expert_required') {
+      throw new HttpError(
+        409,
+        businessReturnCapability.reason ??
+          `${snapshot.formType} is routed to expert help and cannot be self-served here yet`
+      )
+    }
+    if (
+      businessReturnCapability?.supportLevel === 'self_service_supported' &&
+      !businessReturnCapability.hasMinimumData
+    ) {
+      throw new HttpError(
+        422,
+        `${snapshot.formType} is missing required entity-return facts: ${businessReturnCapability.missingInputs.join(
+          ', '
+        )}`
+      )
+    }
     const body = submitSchema.parse(rawBody ?? {})
     const syncResult = await this.syncReturn(sessionId, user)
     const refreshed = await this.requireSession(sessionId, user.sub)
-    const snapshot = await this.getSnapshot(refreshed)
+    const refreshedSnapshot = await this.getSnapshot(refreshed)
     const entities = await this.loadSessionEntities(refreshed.id)
-    const facts = body.factsOverride ?? toFacts(refreshed, snapshot, entities)
+    const facts =
+      body.factsOverride ?? toFacts(refreshed, refreshedSnapshot, entities)
 
     // Use tax calc result from syncReturn if available
     // Determine whether the summary came from a 1040 or a business entity calc
-    const isBizForm = isBusinessFormType(snapshot.formType)
+    const isBizForm = isBusinessFormType(refreshedSnapshot.formType)
     const taxCalcResult =
       !isBizForm && syncResult.taxSummary
         ? (syncResult.taxSummary as unknown as TaxCalculationResult)
@@ -4240,7 +4729,7 @@ export class AppSessionService {
     const payload = {
       ...toSubmissionPayload(
         refreshed,
-        snapshot,
+        refreshedSnapshot,
         facts,
         taxCalcResult,
         bizCalcResult
@@ -4332,6 +4821,7 @@ export class AppSessionService {
     let computed: CachedTaxComputation
 
     if (isBusinessFormType(snapshot.formType)) {
+      const businessFormCapability = getBusinessReturnCapabilityView(snapshot)
       const bizOutcome = taxCalcService.calculateBusinessEntity(
         snapshot.formType,
         facts
@@ -4347,9 +4837,13 @@ export class AppSessionService {
               effectiveTaxRate: bizOutcome.effectiveTaxRate,
               schedules: bizOutcome.schedules,
               ownerAllocations: bizOutcome.ownerAllocations
-            }
+            },
+            businessFormCapability
           }
-        : { taxCalcErrors: bizOutcome.errors }
+        : {
+            taxCalcErrors: bizOutcome.errors,
+            businessFormCapability
+          }
     } else {
       const taxCalcOutcome = taxCalcService.calculate(facts)
       computed = taxCalcOutcome.success

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   TaxCalculationService,
+  getBusinessFormCapability,
   isBusinessFormType
 } from '../../src/services/taxCalculationService'
 
@@ -51,6 +52,23 @@ describe('isBusinessFormType', () => {
     expect(isBusinessFormType('1040')).toBe(false)
     expect(isBusinessFormType('1040-NR')).toBe(false)
     expect(isBusinessFormType('4868')).toBe(false)
+  })
+})
+
+describe('getBusinessFormCapability', () => {
+  it('marks 990 as expert-required instead of silently unsupported', () => {
+    const capability = getBusinessFormCapability('990')
+    expect(capability.supportLevel).toBe('expert_required')
+    expect(capability.computeSupported).toBe(false)
+    expect(capability.reviewSupported).toBe(true)
+    expect(capability.reasonCode).toBe('FORM_990_EXPERT_REQUIRED')
+  })
+
+  it('keeps 1120-S self-service capable for backend computation', () => {
+    const capability = getBusinessFormCapability('1120-S')
+    expect(capability.supportLevel).toBe('self_service_supported')
+    expect(capability.computeSupported).toBe(true)
+    expect(capability.submitSupported).toBe(true)
   })
 })
 

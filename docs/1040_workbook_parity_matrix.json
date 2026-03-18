@@ -1,0 +1,755 @@
+[
+  {
+    "canonical_form": "W-2",
+    "local_files": [
+      "FormW2W3.ts"
+    ],
+    "local_test_files": [],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "W-2s"
+    ],
+    "workbook_2024_cell_count": 348,
+    "workbook_2024_formula_count": 146,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "W-2s"
+    ],
+    "workbook_2025_cell_count": 444,
+    "workbook_2025_formula_count": 164,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "W-2s"
+    ],
+    "workbook_2026_cell_count": 444,
+    "workbook_2026_formula_count": 164,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Workbook wage intake sheet and the local wage statement implementation.",
+    "workbook_2024_formula_density": 0.4195,
+    "workbook_2025_formula_density": 0.3694,
+    "workbook_2026_formula_density": 0.3694,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "1099s",
+    "local_files": [
+      "Form1099.ts",
+      "F1099INT.ts",
+      "F1099DIV.ts",
+      "F1099G.ts",
+      "F1099MISC.ts",
+      "F1099NEC.ts",
+      "F1099R.ts"
+    ],
+    "local_test_files": [],
+    "local_file_count": 7,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "1099-INT",
+      "1099-DIV",
+      "1099-G",
+      "1099-MISC",
+      "1099-R",
+      "Lines 4ab (IRA Dist.)",
+      "SSA-1099"
+    ],
+    "workbook_2024_cell_count": 3035,
+    "workbook_2024_formula_count": 2225,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "1099-INT",
+      "1099-DIV",
+      "1099-G",
+      "1099-MISC",
+      "1099-NEC",
+      "1099-R",
+      "Lines 4ab (IRA Dist.)",
+      "SSA-1099"
+    ],
+    "workbook_2025_cell_count": 3140,
+    "workbook_2025_formula_count": 2249,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "1099-INT",
+      "1099-DIV",
+      "1099-G",
+      "1099-MISC",
+      "1099-NEC",
+      "1099-R",
+      "Lines 4ab (IRA Dist.)",
+      "SSA-1099"
+    ],
+    "workbook_2026_cell_count": 3135,
+    "workbook_2026_formula_count": 2248,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Aggregates the information-return bundle the workbooks use for 1099 and SSA/IRA-adjacent inputs.",
+    "workbook_2024_formula_density": 0.7331,
+    "workbook_2025_formula_density": 0.7162,
+    "workbook_2026_formula_density": 0.7171,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "1040",
+    "local_files": [
+      "F1040.ts",
+      "F1040SR.ts"
+    ],
+    "local_test_files": [
+      "f1040.test.ts"
+    ],
+    "local_file_count": 2,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "1040",
+      "Dependents",
+      "Earned Inc WS",
+      "Lines 5ab (Simplified Meth WS)",
+      "Line 6ab (SS Bene)",
+      "Line 12 (SD Depnts)",
+      "Line 16 (QDCG Tax)"
+    ],
+    "workbook_2024_cell_count": 2500,
+    "workbook_2024_formula_count": 1187,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "1040",
+      "Dependents",
+      "Earned Inc WS",
+      "Lines 5ab (Simplified Meth WS)",
+      "Line 6ab (SS Bene)",
+      "Line 12e (SD Depnts)",
+      "Line 16 (QDCG Tax)"
+    ],
+    "workbook_2025_cell_count": 3102,
+    "workbook_2025_formula_count": 1575,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "1040",
+      "Dependents",
+      "Earned Inc WS",
+      "Lines 5ab (Simplified Meth WS)",
+      "Line 6ab (SS Bene)",
+      "Line 12e (SD Depnts)",
+      "Line 16 (QDCG Tax)"
+    ],
+    "workbook_2026_cell_count": 3113,
+    "workbook_2026_formula_count": 1579,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Main individual return plus the supporting workpapers that feed core line items.",
+    "workbook_2024_formula_density": 0.4748,
+    "workbook_2025_formula_density": 0.5077,
+    "workbook_2026_formula_density": 0.5072,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "Schedule 1",
+    "local_files": [
+      "Schedule1.ts"
+    ],
+    "local_test_files": [],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "Sch. 1",
+      "Sch 1, Line 1 (SALT)",
+      "Sch. 1, Line 20 (IRA)",
+      "Sch. 1, Line 21 (Stu Loan)"
+    ],
+    "workbook_2024_cell_count": 942,
+    "workbook_2024_formula_count": 334,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "Sch. 1",
+      "Sch 1, Line 1 (SALT)",
+      "Sch. 1, Line 20 (IRA)",
+      "Sch. 1, Line 21 (Stu Loan)"
+    ],
+    "workbook_2025_cell_count": 952,
+    "workbook_2025_formula_count": 339,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "Sch. 1",
+      "Sch 1, Line 1 (SALT)",
+      "Sch. 1, Line 20 (IRA)",
+      "Sch. 1, Line 21 (Stu Loan)"
+    ],
+    "workbook_2026_cell_count": 941,
+    "workbook_2026_formula_count": 329,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Additional income and adjustments to income plus the workbook line-item worksheets.",
+    "workbook_2024_formula_density": 0.3546,
+    "workbook_2025_formula_density": 0.3561,
+    "workbook_2026_formula_density": 0.3496,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "Schedule 1-A",
+    "local_files": [
+      "Schedule1A.ts"
+    ],
+    "local_test_files": [
+      "obbba2025Law.test.ts"
+    ],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": false,
+    "workbook_2024_sheet_names": [],
+    "workbook_2024_cell_count": 0,
+    "workbook_2024_formula_count": 0,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "Sch. 1-A"
+    ],
+    "workbook_2025_cell_count": 545,
+    "workbook_2025_formula_count": 247,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "Sch. 1-A"
+    ],
+    "workbook_2026_cell_count": 544,
+    "workbook_2026_formula_count": 246,
+    "years_present": [
+      "2025",
+      "2026"
+    ],
+    "years_missing": [
+      "2024"
+    ],
+    "notes": "2025 deduction expansion workbook and local OBBBA implementation.",
+    "workbook_2024_formula_density": 0.0,
+    "workbook_2025_formula_density": 0.4532,
+    "workbook_2026_formula_density": 0.4522,
+    "year_count_present": 2,
+    "year_count_missing": 1
+  },
+  {
+    "canonical_form": "Schedule A",
+    "local_files": [
+      "ScheduleA.ts"
+    ],
+    "local_test_files": [
+      "ScheduleA.test.ts"
+    ],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "Sch. A"
+    ],
+    "workbook_2024_cell_count": 363,
+    "workbook_2024_formula_count": 115,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "Sch. A"
+    ],
+    "workbook_2025_cell_count": 551,
+    "workbook_2025_formula_count": 190,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "Sch. A"
+    ],
+    "workbook_2026_cell_count": 554,
+    "workbook_2026_formula_count": 191,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Itemized deductions.",
+    "workbook_2024_formula_density": 0.3168,
+    "workbook_2025_formula_density": 0.3448,
+    "workbook_2026_formula_density": 0.3448,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "Schedule B",
+    "local_files": [
+      "ScheduleB.ts"
+    ],
+    "local_test_files": [],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "Sch. B"
+    ],
+    "workbook_2024_cell_count": 192,
+    "workbook_2024_formula_count": 86,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "Sch. B"
+    ],
+    "workbook_2025_cell_count": 195,
+    "workbook_2025_formula_count": 87,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "Sch. B"
+    ],
+    "workbook_2026_cell_count": 195,
+    "workbook_2026_formula_count": 87,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Interest and ordinary dividends.",
+    "workbook_2024_formula_density": 0.4479,
+    "workbook_2025_formula_density": 0.4462,
+    "workbook_2026_formula_density": 0.4462,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "Schedule C",
+    "local_files": [
+      "ScheduleC.ts"
+    ],
+    "local_test_files": [],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "Sch. C"
+    ],
+    "workbook_2024_cell_count": 822,
+    "workbook_2024_formula_count": 160,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "Sch. C"
+    ],
+    "workbook_2025_cell_count": 858,
+    "workbook_2025_formula_count": 190,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "Sch. C"
+    ],
+    "workbook_2026_cell_count": 856,
+    "workbook_2026_formula_count": 190,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Business profit or loss.",
+    "workbook_2024_formula_density": 0.1946,
+    "workbook_2025_formula_density": 0.2214,
+    "workbook_2026_formula_density": 0.222,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "Schedule D",
+    "local_files": [
+      "ScheduleD.ts"
+    ],
+    "local_test_files": [
+      "ScheduleD.test.ts"
+    ],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "Sch. D",
+      "Sch. D WS"
+    ],
+    "workbook_2024_cell_count": 1232,
+    "workbook_2024_formula_count": 594,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "Sch. D",
+      "Sch. D WS"
+    ],
+    "workbook_2025_cell_count": 1345,
+    "workbook_2025_formula_count": 708,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "Sch. D",
+      "Sch. D WS"
+    ],
+    "workbook_2026_cell_count": 1345,
+    "workbook_2026_formula_count": 708,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Capital gains and losses, including the workbook side calculations.",
+    "workbook_2024_formula_density": 0.4821,
+    "workbook_2025_formula_density": 0.5264,
+    "workbook_2026_formula_density": 0.5264,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "Schedule E",
+    "local_files": [
+      "ScheduleE.ts"
+    ],
+    "local_test_files": [
+      "ScheduleEParity.test.ts"
+    ],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "Sch. E",
+      "Sch. E (2)"
+    ],
+    "workbook_2024_cell_count": 1822,
+    "workbook_2024_formula_count": 396,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "Sch. E",
+      "Sch. E (2)"
+    ],
+    "workbook_2025_cell_count": 1858,
+    "workbook_2025_formula_count": 428,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "Sch. E",
+      "Sch. E (2)"
+    ],
+    "workbook_2026_cell_count": 1858,
+    "workbook_2026_formula_count": 424,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Supplemental income and loss, including the second workbook sheet.",
+    "workbook_2024_formula_density": 0.2173,
+    "workbook_2025_formula_density": 0.2304,
+    "workbook_2026_formula_density": 0.2282,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "Schedule F",
+    "local_files": [
+      "ScheduleF.ts"
+    ],
+    "local_test_files": [],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "Sch. F"
+    ],
+    "workbook_2024_cell_count": 411,
+    "workbook_2024_formula_count": 46,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "Sch. F"
+    ],
+    "workbook_2025_cell_count": 411,
+    "workbook_2025_formula_count": 46,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "Sch. F"
+    ],
+    "workbook_2026_cell_count": 411,
+    "workbook_2026_formula_count": 46,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Farming income and loss.",
+    "workbook_2024_formula_density": 0.1119,
+    "workbook_2025_formula_density": 0.1119,
+    "workbook_2026_formula_density": 0.1119,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "Schedule SE",
+    "local_files": [
+      "ScheduleSE.ts"
+    ],
+    "local_test_files": [],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "Sch. SE"
+    ],
+    "workbook_2024_cell_count": 677,
+    "workbook_2024_formula_count": 258,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "Sch. SE"
+    ],
+    "workbook_2025_cell_count": 702,
+    "workbook_2025_formula_count": 270,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "Sch. SE"
+    ],
+    "workbook_2026_cell_count": 702,
+    "workbook_2026_formula_count": 270,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Self-employment tax.",
+    "workbook_2024_formula_density": 0.3811,
+    "workbook_2025_formula_density": 0.3846,
+    "workbook_2026_formula_density": 0.3846,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "6251",
+    "local_files": [
+      "F6251.ts"
+    ],
+    "local_test_files": [
+      "f6251.test.ts"
+    ],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "6251"
+    ],
+    "workbook_2024_cell_count": 729,
+    "workbook_2024_formula_count": 330,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "6251"
+    ],
+    "workbook_2025_cell_count": 745,
+    "workbook_2025_formula_count": 338,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "6251"
+    ],
+    "workbook_2026_cell_count": 745,
+    "workbook_2026_formula_count": 339,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Alternative minimum tax.",
+    "workbook_2024_formula_density": 0.4527,
+    "workbook_2025_formula_density": 0.4537,
+    "workbook_2026_formula_density": 0.455,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "8812",
+    "local_files": [
+      "Schedule8812.ts"
+    ],
+    "local_test_files": [
+      "Schedule8812.test.ts"
+    ],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "8812"
+    ],
+    "workbook_2024_cell_count": 569,
+    "workbook_2024_formula_count": 154,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "8812"
+    ],
+    "workbook_2025_cell_count": 573,
+    "workbook_2025_formula_count": 152,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "8812"
+    ],
+    "workbook_2026_cell_count": 573,
+    "workbook_2026_formula_count": 152,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Child tax credit and related worksheet coverage.",
+    "workbook_2024_formula_density": 0.2707,
+    "workbook_2025_formula_density": 0.2653,
+    "workbook_2026_formula_density": 0.2653,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "8949",
+    "local_files": [
+      "F8949.ts"
+    ],
+    "local_test_files": [],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "8949A",
+      "8949B",
+      "8949C",
+      "8949D"
+    ],
+    "workbook_2024_cell_count": 4392,
+    "workbook_2024_formula_count": 3968,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "8949A",
+      "8949B",
+      "8949C",
+      "8949D"
+    ],
+    "workbook_2025_cell_count": 2471,
+    "workbook_2025_formula_count": 2024,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "8949A",
+      "8949B",
+      "8949C",
+      "8949D"
+    ],
+    "workbook_2026_cell_count": 2471,
+    "workbook_2026_formula_count": 2024,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Sales and dispositions of capital assets.",
+    "workbook_2024_formula_density": 0.9035,
+    "workbook_2025_formula_density": 0.8191,
+    "workbook_2026_formula_density": 0.8191,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "8995",
+    "local_files": [
+      "F8995.ts",
+      "F8995A.ts"
+    ],
+    "local_test_files": [
+      "obbba2025Law.test.ts"
+    ],
+    "local_file_count": 2,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "8995"
+    ],
+    "workbook_2024_cell_count": 151,
+    "workbook_2024_formula_count": 41,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "8995"
+    ],
+    "workbook_2025_cell_count": 163,
+    "workbook_2025_formula_count": 50,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "8995"
+    ],
+    "workbook_2026_cell_count": 162,
+    "workbook_2026_formula_count": 50,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "QBI deduction workbook and local 8995/8995-A implementation.",
+    "workbook_2024_formula_density": 0.2715,
+    "workbook_2025_formula_density": 0.3067,
+    "workbook_2026_formula_density": 0.3086,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  },
+  {
+    "canonical_form": "EIC",
+    "local_files": [
+      "ScheduleEIC.ts"
+    ],
+    "local_test_files": [
+      "ScheduleEIC.test.ts"
+    ],
+    "local_file_count": 1,
+    "local_present": true,
+    "workbook_2024_present": true,
+    "workbook_2024_sheet_names": [
+      "Line 27 (EIC)",
+      "EIC Table"
+    ],
+    "workbook_2024_cell_count": 14328,
+    "workbook_2024_formula_count": 342,
+    "workbook_2025_present": true,
+    "workbook_2025_sheet_names": [
+      "Line 27a (EIC)",
+      "EIC Table"
+    ],
+    "workbook_2025_cell_count": 16173,
+    "workbook_2025_formula_count": 12779,
+    "workbook_2026_present": true,
+    "workbook_2026_sheet_names": [
+      "Line 27a (EIC)",
+      "EIC Table"
+    ],
+    "workbook_2026_cell_count": 16513,
+    "workbook_2026_formula_count": 13089,
+    "years_present": [
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "years_missing": [],
+    "notes": "Earned income credit worksheets and supporting table.",
+    "workbook_2024_formula_density": 0.0239,
+    "workbook_2025_formula_density": 0.7901,
+    "workbook_2026_formula_density": 0.7926,
+    "year_count_present": 3,
+    "year_count_missing": 0
+  }
+]

@@ -1645,6 +1645,101 @@ const BUSINESS_FORM_TYPES = new Set(['1120', '1120-S', '1065', '1041', '990'])
 export const isBusinessFormType = (formType: string): boolean =>
   BUSINESS_FORM_TYPES.has(formType)
 
+export type BusinessFormSupportLevel =
+  | 'self_service_supported'
+  | 'expert_required'
+  | 'unsupported'
+
+export interface BusinessFormCapability {
+  formType: string
+  supportLevel: BusinessFormSupportLevel
+  computeSupported: boolean
+  submitSupported: boolean
+  reviewSupported: boolean
+  expertRequired: boolean
+  reasonCode?: string
+  reason?: string
+  guidance: string
+}
+
+const BUSINESS_FORM_CAPABILITIES: Record<string, BusinessFormCapability> = {
+  '1120': {
+    formType: '1120',
+    supportLevel: 'self_service_supported',
+    computeSupported: true,
+    submitSupported: true,
+    reviewSupported: true,
+    expertRequired: false,
+    guidance:
+      'Form 1120 is supported in the Cloudflare backend when entity income, deductions, and officer/payment details are provided.'
+  },
+  '1120-S': {
+    formType: '1120-S',
+    supportLevel: 'self_service_supported',
+    computeSupported: true,
+    submitSupported: true,
+    reviewSupported: true,
+    expertRequired: false,
+    guidance:
+      'Form 1120-S is supported in the Cloudflare backend when the return includes entity facts plus shareholder ownership data.'
+  },
+  '1065': {
+    formType: '1065',
+    supportLevel: 'self_service_supported',
+    computeSupported: true,
+    submitSupported: true,
+    reviewSupported: true,
+    expertRequired: false,
+    guidance:
+      'Form 1065 is supported in the Cloudflare backend when the return includes entity facts plus partner allocation data.'
+  },
+  '1041': {
+    formType: '1041',
+    supportLevel: 'self_service_supported',
+    computeSupported: true,
+    submitSupported: true,
+    reviewSupported: true,
+    expertRequired: false,
+    guidance:
+      'Form 1041 is supported in the Cloudflare backend when fiduciary, beneficiary, income, and distribution facts are provided.'
+  },
+  '990': {
+    formType: '990',
+    supportLevel: 'expert_required',
+    computeSupported: false,
+    submitSupported: false,
+    reviewSupported: true,
+    expertRequired: true,
+    reasonCode: 'FORM_990_EXPERT_REQUIRED',
+    reason:
+      'Form 990 family returns still require expert preparation in the Cloudflare production path.',
+    guidance:
+      'TaxFlow can identify nonprofit filings, but Form 990 self-service computation and submission are not implemented in backend-cloudflare yet.'
+  }
+}
+
+export const getBusinessFormCapability = (
+  formType: string
+): BusinessFormCapability => {
+  const capability = BUSINESS_FORM_CAPABILITIES[formType]
+  if (capability) {
+    return capability
+  }
+
+  return {
+    formType,
+    supportLevel: 'unsupported',
+    computeSupported: false,
+    submitSupported: false,
+    reviewSupported: false,
+    expertRequired: false,
+    reasonCode: 'UNSUPPORTED_BUSINESS_FORM',
+    reason: `Unsupported business form type: ${formType}`,
+    guidance:
+      'This business return type is not supported by the Cloudflare backend.'
+  }
+}
+
 const defaultBusinessEntity = (facts: FactsRecord) => ({
   entityName: toStr(facts.entityName) || 'Business Entity',
   ein: toStr(facts.ein).replace(/\D/g, ''),
@@ -2306,6 +2401,16 @@ export class TaxCalculationService {
     facts: FactsRecord
   ): BusinessCalcOutcome {
     try {
+      const capability = getBusinessFormCapability(formType)
+      if (!capability.computeSupported) {
+        return {
+          success: false,
+          errors: [
+            capability.reason ??
+              `Unsupported business form type: ${formType}`
+          ]
+        }
+      }
       switch (formType) {
         case '1120':
           return this.calculateCCorp(facts)
@@ -2318,7 +2423,7 @@ export class TaxCalculationService {
         default:
           return {
             success: false,
-            errors: [`Unsupported business form type: ${formType}`]
+            errors: [getBusinessFormCapability(formType).guidance]
           }
       }
     } catch (err) {

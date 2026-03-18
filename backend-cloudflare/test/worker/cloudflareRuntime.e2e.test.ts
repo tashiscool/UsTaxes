@@ -877,6 +877,112 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(typeof authorization.authorizationCode).toBe('string')
   })
 
+  it(
+    'surfaces Form 990 as expert-required and blocks self-serve submit',
+    async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sub: 'taxflow-user-990',
+        email: 'nonprofit@example.com',
+        displayName: 'Nonprofit User'
+      })
+    })
+    expect(response.status).toBe(201)
+    const sessionCookie = extractCookieHeader(response)
+
+    response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionCookie
+      },
+      body: JSON.stringify({
+        taxYear: 2025,
+        filingStatus: 'single',
+        formType: '990',
+        currentPhase: 'review',
+        screenData: {
+          '/taxpayer-profile': {
+            firstName: 'Nora',
+            lastName: 'Nonprofit',
+            ssn: '400-01-1099',
+            filingStatus: 'single',
+            address: {
+              line1: '88 Charity Way',
+              city: 'Boston',
+              state: 'MA',
+              zip: '02110'
+            }
+          },
+          '/business-entity': {
+            entityName: 'Helping Hands Foundation',
+            ein: '12-3456789',
+            grossReceipts: 42000
+          },
+          '/efile-wizard': {
+            signatureText: 'Nora Nonprofit',
+            agreed8879: true
+          }
+        }
+      })
+    })
+    expect(response.status).toBe(201)
+    const created = await parseJsonResponse<JsonObject>(response)
+    const filingSessionId = String((created.filingSession as JsonObject).id)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const checklist = await parseJsonResponse<JsonObject>(response)
+    expect(
+      ((checklist.businessFormCapability as JsonObject).supportLevel as string)
+    ).toBe('expert_required')
+    expect(
+      (checklist.findings as JsonObject[]).some(
+        (finding) =>
+          String((finding as JsonObject).message).includes('expert') ||
+          String((finding as JsonObject).message).includes('Form 990')
+      )
+    ).toBe(true)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const review = await parseJsonResponse<JsonObject>(response)
+    expect(
+      ((review.businessFormCapability as JsonObject).supportLevel as string)
+    ).toBe('expert_required')
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/submit`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          idempotencyKey: crypto.randomUUID()
+        })
+      }
+    )
+    expect(response.status).toBe(409)
+    const blocked = await parseJsonResponse<JsonObject>(response)
+    expect(String(blocked.error)).toContain('Form 990')
+    },
+    120_000
+  )
+
   it('supports app-level rejection repair and retry orchestration', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
       method: 'POST',

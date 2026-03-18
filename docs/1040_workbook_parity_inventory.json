@@ -1,0 +1,1982 @@
+{
+  "generated_at": "2026-03-18T20:24:51.697557+00:00",
+  "root": "/Users/tkhan/IdeaProjects/taxes/UsTaxes",
+  "workbooks": [
+    {
+      "workbook_label": "2024",
+      "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+      "sheet_count": 62,
+      "target_sheet_count": 23,
+      "support_sheet_count": 14,
+      "excluded_sheet_count": 25,
+      "total_cells": 59396,
+      "total_formulas": 24310,
+      "sheets": [
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Coversheet",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 74,
+          "formula_count": 22,
+          "formula_density": 0.2973
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Table of Contents",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 538,
+          "formula_count": 118,
+          "formula_density": 0.2193
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Instructions",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 93,
+          "formula_count": 0,
+          "formula_density": 0.0
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "W-2s",
+          "canonical_form": "W-2",
+          "role": "target",
+          "cell_count": 348,
+          "formula_count": 146,
+          "formula_density": 0.4195
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "1099-INT",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 492,
+          "formula_count": 325,
+          "formula_density": 0.6606
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "1099-DIV",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 753,
+          "formula_count": 542,
+          "formula_density": 0.7198
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "1099-G",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 129,
+          "formula_count": 40,
+          "formula_density": 0.3101
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "1099-MISC",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 8,
+          "formula_count": 0,
+          "formula_density": 0.0
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "1099-R",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 1445,
+          "formula_count": 1248,
+          "formula_density": 0.8637
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Lines 4ab (IRA Dist.)",
+          "canonical_form": "1099s",
+          "role": "support",
+          "cell_count": 116,
+          "formula_count": 39,
+          "formula_density": 0.3362
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "SSA-1099",
+          "canonical_form": "1099s",
+          "role": "support",
+          "cell_count": 92,
+          "formula_count": 31,
+          "formula_density": 0.337
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "1040",
+          "canonical_form": "1040",
+          "role": "target",
+          "cell_count": 826,
+          "formula_count": 363,
+          "formula_density": 0.4395
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "1040-SR",
+          "canonical_form": null,
+          "role": "auxiliary",
+          "cell_count": 592,
+          "formula_count": 218,
+          "formula_density": 0.3682
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Dependents",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 419,
+          "formula_count": 355,
+          "formula_density": 0.8473
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. 1",
+          "canonical_form": "Schedule 1",
+          "role": "target",
+          "cell_count": 442,
+          "formula_count": 132,
+          "formula_density": 0.2986
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch 1, Line 1 (SALT)",
+          "canonical_form": "Schedule 1",
+          "role": "support",
+          "cell_count": 176,
+          "formula_count": 82,
+          "formula_density": 0.4659
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. 1, Line 20 (IRA)",
+          "canonical_form": "Schedule 1",
+          "role": "support",
+          "cell_count": 253,
+          "formula_count": 91,
+          "formula_density": 0.3597
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. 1, Line 21 (Stu Loan)",
+          "canonical_form": "Schedule 1",
+          "role": "support",
+          "cell_count": 71,
+          "formula_count": 29,
+          "formula_density": 0.4085
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. 2",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 325,
+          "formula_count": 78,
+          "formula_density": 0.24
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. 3",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 195,
+          "formula_count": 43,
+          "formula_density": 0.2205
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Earned Inc WS",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 128,
+          "formula_count": 16,
+          "formula_density": 0.125
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Lines 5ab (Simplified Meth WS)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 207,
+          "formula_count": 50,
+          "formula_density": 0.2415
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Line 6ab (SS Bene)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 171,
+          "formula_count": 67,
+          "formula_density": 0.3918
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Line 12 (SD Depnts)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 81,
+          "formula_count": 35,
+          "formula_density": 0.4321
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Line 16 (QDCG Tax)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 668,
+          "formula_count": 301,
+          "formula_density": 0.4506
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Line 27 (EIC)",
+          "canonical_form": "EIC",
+          "role": "target",
+          "cell_count": 865,
+          "formula_count": 341,
+          "formula_density": 0.3942
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. A",
+          "canonical_form": "Schedule A",
+          "role": "target",
+          "cell_count": 363,
+          "formula_count": 115,
+          "formula_density": 0.3168
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. B",
+          "canonical_form": "Schedule B",
+          "role": "target",
+          "cell_count": 192,
+          "formula_count": 86,
+          "formula_density": 0.4479
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. C",
+          "canonical_form": "Schedule C",
+          "role": "target",
+          "cell_count": 822,
+          "formula_count": 160,
+          "formula_density": 0.1946
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. D",
+          "canonical_form": "Schedule D",
+          "role": "target",
+          "cell_count": 440,
+          "formula_count": 238,
+          "formula_density": 0.5409
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. D WS",
+          "canonical_form": "Schedule D",
+          "role": "support",
+          "cell_count": 792,
+          "formula_count": 356,
+          "formula_density": 0.4495
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. E",
+          "canonical_form": "Schedule E",
+          "role": "target",
+          "cell_count": 910,
+          "formula_count": 197,
+          "formula_density": 0.2165
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. E (2)",
+          "canonical_form": "Schedule E",
+          "role": "support",
+          "cell_count": 912,
+          "formula_count": 199,
+          "formula_density": 0.2182
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. F",
+          "canonical_form": "Schedule F",
+          "role": "target",
+          "cell_count": 411,
+          "formula_count": 46,
+          "formula_density": 0.1119
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. R",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 331,
+          "formula_count": 91,
+          "formula_density": 0.2749
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Sch. SE",
+          "canonical_form": "Schedule SE",
+          "role": "target",
+          "cell_count": 677,
+          "formula_count": 258,
+          "formula_density": 0.3811
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "1116",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 1353,
+          "formula_count": 332,
+          "formula_density": 0.2454
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "2210",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 899,
+          "formula_count": 513,
+          "formula_density": 0.5706
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "2441",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 777,
+          "formula_count": 193,
+          "formula_density": 0.2484
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "2555",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 994,
+          "formula_count": 198,
+          "formula_density": 0.1992
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "4562",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 382,
+          "formula_count": 54,
+          "formula_density": 0.1414
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "5695",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 586,
+          "formula_count": 155,
+          "formula_density": 0.2645
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "6251",
+          "canonical_form": "6251",
+          "role": "target",
+          "cell_count": 729,
+          "formula_count": 330,
+          "formula_density": 0.4527
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8283",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 190,
+          "formula_count": 6,
+          "formula_density": 0.0316
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8582",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 482,
+          "formula_count": 188,
+          "formula_density": 0.39
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8606",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 608,
+          "formula_count": 169,
+          "formula_density": 0.278
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8812",
+          "canonical_form": "8812",
+          "role": "target",
+          "cell_count": 569,
+          "formula_count": 154,
+          "formula_density": 0.2707
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8829",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 351,
+          "formula_count": 81,
+          "formula_density": 0.2308
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8863",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 838,
+          "formula_count": 195,
+          "formula_density": 0.2327
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8880",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 220,
+          "formula_count": 89,
+          "formula_density": 0.4045
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8889",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 802,
+          "formula_count": 434,
+          "formula_density": 0.5411
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8949A",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 1098,
+          "formula_count": 992,
+          "formula_density": 0.9035
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8949B",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 1098,
+          "formula_count": 992,
+          "formula_density": 0.9035
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8949C",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 1098,
+          "formula_count": 992,
+          "formula_density": 0.9035
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8949D",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 1098,
+          "formula_count": 992,
+          "formula_density": 0.9035
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8959",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 220,
+          "formula_count": 76,
+          "formula_density": 0.3455
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8960",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 314,
+          "formula_count": 77,
+          "formula_density": 0.2452
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8962",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 530,
+          "formula_count": 105,
+          "formula_density": 0.1981
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "8995",
+          "canonical_form": "8995",
+          "role": "target",
+          "cell_count": 151,
+          "formula_count": 41,
+          "formula_density": 0.2715
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "EIC Table",
+          "canonical_form": "EIC",
+          "role": "support",
+          "cell_count": 13463,
+          "formula_count": 1,
+          "formula_density": 0.0001
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Tax Table",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 14815,
+          "formula_count": 10492,
+          "formula_density": 0.7082
+        },
+        {
+          "workbook_label": "2024",
+          "workbook_path": "/Users/tkhan/Downloads/24_1040.xlsx",
+          "sheet_name": "Changes",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 374,
+          "formula_count": 1,
+          "formula_density": 0.0027
+        }
+      ]
+    },
+    {
+      "workbook_label": "2025",
+      "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+      "sheet_count": 66,
+      "target_sheet_count": 25,
+      "support_sheet_count": 14,
+      "excluded_sheet_count": 27,
+      "total_cells": 61916,
+      "total_formulas": 36081,
+      "sheets": [
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Coversheet",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 75,
+          "formula_count": 25,
+          "formula_density": 0.3333
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Table of Contents",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 543,
+          "formula_count": 127,
+          "formula_density": 0.2339
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Instructions",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 100,
+          "formula_count": 0,
+          "formula_density": 0.0
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "W-2s",
+          "canonical_form": "W-2",
+          "role": "target",
+          "cell_count": 444,
+          "formula_count": 164,
+          "formula_density": 0.3694
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "1099-INT",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 492,
+          "formula_count": 325,
+          "formula_density": 0.6606
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "1099-DIV",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 753,
+          "formula_count": 542,
+          "formula_density": 0.7198
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "1099-G",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 131,
+          "formula_count": 40,
+          "formula_density": 0.3053
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "1099-MISC",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 8,
+          "formula_count": 0,
+          "formula_density": 0.0
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "1099-NEC",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 103,
+          "formula_count": 24,
+          "formula_density": 0.233
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "1099-R",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 1445,
+          "formula_count": 1248,
+          "formula_density": 0.8637
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Lines 4ab (IRA Dist.)",
+          "canonical_form": "1099s",
+          "role": "support",
+          "cell_count": 116,
+          "formula_count": 39,
+          "formula_density": 0.3362
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "SSA-1099",
+          "canonical_form": "1099s",
+          "role": "support",
+          "cell_count": 92,
+          "formula_count": 31,
+          "formula_density": 0.337
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "1040",
+          "canonical_form": "1040",
+          "role": "target",
+          "cell_count": 969,
+          "formula_count": 395,
+          "formula_density": 0.4076
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Dependents",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 892,
+          "formula_count": 725,
+          "formula_density": 0.8128
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. 1",
+          "canonical_form": "Schedule 1",
+          "role": "target",
+          "cell_count": 466,
+          "formula_count": 148,
+          "formula_density": 0.3176
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. 1-A",
+          "canonical_form": "Schedule 1-A",
+          "role": "target",
+          "cell_count": 545,
+          "formula_count": 247,
+          "formula_density": 0.4532
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch 1, Line 1 (SALT)",
+          "canonical_form": "Schedule 1",
+          "role": "support",
+          "cell_count": 162,
+          "formula_count": 76,
+          "formula_density": 0.4691
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. 1, Line 20 (IRA)",
+          "canonical_form": "Schedule 1",
+          "role": "support",
+          "cell_count": 251,
+          "formula_count": 90,
+          "formula_density": 0.3586
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. 1, Line 21 (Stu Loan)",
+          "canonical_form": "Schedule 1",
+          "role": "support",
+          "cell_count": 73,
+          "formula_count": 25,
+          "formula_density": 0.3425
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. 2",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 335,
+          "formula_count": 82,
+          "formula_density": 0.2448
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. 3",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 201,
+          "formula_count": 47,
+          "formula_density": 0.2338
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Earned Inc WS",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 128,
+          "formula_count": 16,
+          "formula_density": 0.125
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Lines 5ab (Simplified Meth WS)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 207,
+          "formula_count": 50,
+          "formula_density": 0.2415
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Line 6ab (SS Bene)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 153,
+          "formula_count": 58,
+          "formula_density": 0.3791
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Line 12e (SD Depnts)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 85,
+          "formula_count": 37,
+          "formula_density": 0.4353
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Line 16 (QDCG Tax)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 668,
+          "formula_count": 294,
+          "formula_density": 0.4401
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Line 27a (EIC)",
+          "canonical_form": "EIC",
+          "role": "target",
+          "cell_count": 884,
+          "formula_count": 356,
+          "formula_density": 0.4027
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. A",
+          "canonical_form": "Schedule A",
+          "role": "target",
+          "cell_count": 551,
+          "formula_count": 190,
+          "formula_density": 0.3448
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. B",
+          "canonical_form": "Schedule B",
+          "role": "target",
+          "cell_count": 195,
+          "formula_count": 87,
+          "formula_density": 0.4462
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. C",
+          "canonical_form": "Schedule C",
+          "role": "target",
+          "cell_count": 858,
+          "formula_count": 190,
+          "formula_density": 0.2214
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. D",
+          "canonical_form": "Schedule D",
+          "role": "target",
+          "cell_count": 556,
+          "formula_count": 345,
+          "formula_density": 0.6205
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. D WS",
+          "canonical_form": "Schedule D",
+          "role": "support",
+          "cell_count": 789,
+          "formula_count": 363,
+          "formula_density": 0.4601
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. E",
+          "canonical_form": "Schedule E",
+          "role": "target",
+          "cell_count": 928,
+          "formula_count": 213,
+          "formula_density": 0.2295
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. E (2)",
+          "canonical_form": "Schedule E",
+          "role": "support",
+          "cell_count": 930,
+          "formula_count": 215,
+          "formula_density": 0.2312
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. F",
+          "canonical_form": "Schedule F",
+          "role": "target",
+          "cell_count": 411,
+          "formula_count": 46,
+          "formula_density": 0.1119
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. R",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 332,
+          "formula_count": 91,
+          "formula_density": 0.2741
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Sch. SE",
+          "canonical_form": "Schedule SE",
+          "role": "target",
+          "cell_count": 702,
+          "formula_count": 270,
+          "formula_density": 0.3846
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "1116",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 1375,
+          "formula_count": 345,
+          "formula_density": 0.2509
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "2210",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 898,
+          "formula_count": 514,
+          "formula_density": 0.5724
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "2441",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 803,
+          "formula_count": 207,
+          "formula_density": 0.2578
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "2555",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 1017,
+          "formula_count": 198,
+          "formula_density": 0.1947
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "4137",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 251,
+          "formula_count": 86,
+          "formula_density": 0.3426
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "4562",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 414,
+          "formula_count": 57,
+          "formula_density": 0.1377
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "5695",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 771,
+          "formula_count": 212,
+          "formula_density": 0.275
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "6251",
+          "canonical_form": "6251",
+          "role": "target",
+          "cell_count": 745,
+          "formula_count": 338,
+          "formula_density": 0.4537
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8283",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 185,
+          "formula_count": 6,
+          "formula_density": 0.0324
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8582",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 481,
+          "formula_count": 190,
+          "formula_density": 0.395
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8606",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 618,
+          "formula_count": 171,
+          "formula_density": 0.2767
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8801",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 775,
+          "formula_count": 280,
+          "formula_density": 0.3613
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8812",
+          "canonical_form": "8812",
+          "role": "target",
+          "cell_count": 573,
+          "formula_count": 152,
+          "formula_density": 0.2653
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8829",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 351,
+          "formula_count": 81,
+          "formula_density": 0.2308
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8863",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 850,
+          "formula_count": 195,
+          "formula_density": 0.2294
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8880",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 225,
+          "formula_count": 91,
+          "formula_density": 0.4044
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8889",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 749,
+          "formula_count": 395,
+          "formula_density": 0.5274
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8919",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 261,
+          "formula_count": 91,
+          "formula_density": 0.3487
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8949A",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 617,
+          "formula_count": 506,
+          "formula_density": 0.8201
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8949B",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 618,
+          "formula_count": 506,
+          "formula_density": 0.8188
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8949C",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 618,
+          "formula_count": 506,
+          "formula_density": 0.8188
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8949D",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 618,
+          "formula_count": 506,
+          "formula_density": 0.8188
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8959",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 220,
+          "formula_count": 76,
+          "formula_density": 0.3455
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8960",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 314,
+          "formula_count": 76,
+          "formula_density": 0.242
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8962",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 531,
+          "formula_count": 105,
+          "formula_density": 0.1977
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "8995",
+          "canonical_form": "8995",
+          "role": "target",
+          "cell_count": 163,
+          "formula_count": 50,
+          "formula_density": 0.3067
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "EIC Table",
+          "canonical_form": "EIC",
+          "role": "support",
+          "cell_count": 15289,
+          "formula_count": 12423,
+          "formula_density": 0.8125
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Tax Table",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 14811,
+          "formula_count": 10495,
+          "formula_density": 0.7086
+        },
+        {
+          "workbook_label": "2025",
+          "workbook_path": "/Users/tkhan/Downloads/25_1040.xlsx",
+          "sheet_name": "Changes",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 202,
+          "formula_count": 2,
+          "formula_density": 0.0099
+        }
+      ]
+    },
+    {
+      "workbook_label": "2026",
+      "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+      "sheet_count": 66,
+      "target_sheet_count": 25,
+      "support_sheet_count": 14,
+      "excluded_sheet_count": 27,
+      "total_cells": 62293,
+      "total_formulas": 36378,
+      "sheets": [
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Coversheet",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 73,
+          "formula_count": 22,
+          "formula_density": 0.3014
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Table of Contents",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 530,
+          "formula_count": 125,
+          "formula_density": 0.2358
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Instructions",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 100,
+          "formula_count": 0,
+          "formula_density": 0.0
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "W-2s",
+          "canonical_form": "W-2",
+          "role": "target",
+          "cell_count": 444,
+          "formula_count": 164,
+          "formula_density": 0.3694
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "1099-INT",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 492,
+          "formula_count": 325,
+          "formula_density": 0.6606
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "1099-DIV",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 753,
+          "formula_count": 542,
+          "formula_density": 0.7198
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "1099-G",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 131,
+          "formula_count": 40,
+          "formula_density": 0.3053
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "1099-MISC",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 8,
+          "formula_count": 0,
+          "formula_density": 0.0
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "1099-NEC",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 98,
+          "formula_count": 23,
+          "formula_density": 0.2347
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "1099-R",
+          "canonical_form": "1099s",
+          "role": "target",
+          "cell_count": 1445,
+          "formula_count": 1248,
+          "formula_density": 0.8637
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Lines 4ab (IRA Dist.)",
+          "canonical_form": "1099s",
+          "role": "support",
+          "cell_count": 116,
+          "formula_count": 39,
+          "formula_density": 0.3362
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "SSA-1099",
+          "canonical_form": "1099s",
+          "role": "support",
+          "cell_count": 92,
+          "formula_count": 31,
+          "formula_density": 0.337
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "1040",
+          "canonical_form": "1040",
+          "role": "target",
+          "cell_count": 979,
+          "formula_count": 398,
+          "formula_density": 0.4065
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Dependents",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 893,
+          "formula_count": 725,
+          "formula_density": 0.8119
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. 1",
+          "canonical_form": "Schedule 1",
+          "role": "target",
+          "cell_count": 455,
+          "formula_count": 138,
+          "formula_density": 0.3033
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. 1-A",
+          "canonical_form": "Schedule 1-A",
+          "role": "target",
+          "cell_count": 544,
+          "formula_count": 246,
+          "formula_density": 0.4522
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch 1, Line 1 (SALT)",
+          "canonical_form": "Schedule 1",
+          "role": "support",
+          "cell_count": 162,
+          "formula_count": 76,
+          "formula_density": 0.4691
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. 1, Line 20 (IRA)",
+          "canonical_form": "Schedule 1",
+          "role": "support",
+          "cell_count": 251,
+          "formula_count": 90,
+          "formula_density": 0.3586
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. 1, Line 21 (Stu Loan)",
+          "canonical_form": "Schedule 1",
+          "role": "support",
+          "cell_count": 73,
+          "formula_count": 25,
+          "formula_density": 0.3425
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. 2",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 335,
+          "formula_count": 82,
+          "formula_density": 0.2448
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. 3",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 201,
+          "formula_count": 47,
+          "formula_density": 0.2338
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Earned Inc WS",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 128,
+          "formula_count": 16,
+          "formula_density": 0.125
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Lines 5ab (Simplified Meth WS)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 207,
+          "formula_count": 50,
+          "formula_density": 0.2415
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Line 6ab (SS Bene)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 153,
+          "formula_count": 58,
+          "formula_density": 0.3791
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Line 12e (SD Depnts)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 85,
+          "formula_count": 37,
+          "formula_density": 0.4353
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Line 16 (QDCG Tax)",
+          "canonical_form": "1040",
+          "role": "support",
+          "cell_count": 668,
+          "formula_count": 295,
+          "formula_density": 0.4416
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Line 27a (EIC)",
+          "canonical_form": "EIC",
+          "role": "target",
+          "cell_count": 883,
+          "formula_count": 356,
+          "formula_density": 0.4032
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. A",
+          "canonical_form": "Schedule A",
+          "role": "target",
+          "cell_count": 554,
+          "formula_count": 191,
+          "formula_density": 0.3448
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. B",
+          "canonical_form": "Schedule B",
+          "role": "target",
+          "cell_count": 195,
+          "formula_count": 87,
+          "formula_density": 0.4462
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. C",
+          "canonical_form": "Schedule C",
+          "role": "target",
+          "cell_count": 856,
+          "formula_count": 190,
+          "formula_density": 0.222
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. D",
+          "canonical_form": "Schedule D",
+          "role": "target",
+          "cell_count": 556,
+          "formula_count": 345,
+          "formula_density": 0.6205
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. D WS",
+          "canonical_form": "Schedule D",
+          "role": "support",
+          "cell_count": 789,
+          "formula_count": 363,
+          "formula_density": 0.4601
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. E",
+          "canonical_form": "Schedule E",
+          "role": "target",
+          "cell_count": 928,
+          "formula_count": 211,
+          "formula_density": 0.2274
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. E (2)",
+          "canonical_form": "Schedule E",
+          "role": "support",
+          "cell_count": 930,
+          "formula_count": 213,
+          "formula_density": 0.229
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. F",
+          "canonical_form": "Schedule F",
+          "role": "target",
+          "cell_count": 411,
+          "formula_count": 46,
+          "formula_density": 0.1119
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. R",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 332,
+          "formula_count": 91,
+          "formula_density": 0.2741
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Sch. SE",
+          "canonical_form": "Schedule SE",
+          "role": "target",
+          "cell_count": 702,
+          "formula_count": 270,
+          "formula_density": 0.3846
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "1116",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 1374,
+          "formula_count": 345,
+          "formula_density": 0.2511
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "2210",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 897,
+          "formula_count": 513,
+          "formula_density": 0.5719
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "2441",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 803,
+          "formula_count": 207,
+          "formula_density": 0.2578
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "2555",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 1017,
+          "formula_count": 197,
+          "formula_density": 0.1937
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "4137",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 252,
+          "formula_count": 87,
+          "formula_density": 0.3452
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "4562",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 414,
+          "formula_count": 57,
+          "formula_density": 0.1377
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "5695",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 774,
+          "formula_count": 212,
+          "formula_density": 0.2739
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "6251",
+          "canonical_form": "6251",
+          "role": "target",
+          "cell_count": 745,
+          "formula_count": 339,
+          "formula_density": 0.455
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8283",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 185,
+          "formula_count": 6,
+          "formula_density": 0.0324
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8582",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 482,
+          "formula_count": 191,
+          "formula_density": 0.3963
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8606",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 608,
+          "formula_count": 169,
+          "formula_density": 0.278
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8801",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 773,
+          "formula_count": 281,
+          "formula_density": 0.3635
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8812",
+          "canonical_form": "8812",
+          "role": "target",
+          "cell_count": 573,
+          "formula_count": 152,
+          "formula_density": 0.2653
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8829",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 351,
+          "formula_count": 81,
+          "formula_density": 0.2308
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8863",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 850,
+          "formula_count": 195,
+          "formula_density": 0.2294
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8880",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 209,
+          "formula_count": 60,
+          "formula_density": 0.2871
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8889",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 805,
+          "formula_count": 436,
+          "formula_density": 0.5416
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8919",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 261,
+          "formula_count": 91,
+          "formula_density": 0.3487
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8949A",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 617,
+          "formula_count": 506,
+          "formula_density": 0.8201
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8949B",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 618,
+          "formula_count": 506,
+          "formula_density": 0.8188
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8949C",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 618,
+          "formula_count": 506,
+          "formula_density": 0.8188
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8949D",
+          "canonical_form": "8949",
+          "role": "target",
+          "cell_count": 618,
+          "formula_count": 506,
+          "formula_density": 0.8188
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8959",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 220,
+          "formula_count": 76,
+          "formula_density": 0.3455
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8960",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 314,
+          "formula_count": 76,
+          "formula_density": 0.242
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8962",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 514,
+          "formula_count": 105,
+          "formula_density": 0.2043
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "8995",
+          "canonical_form": "8995",
+          "role": "target",
+          "cell_count": 162,
+          "formula_count": 50,
+          "formula_density": 0.3086
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "EIC Table",
+          "canonical_form": "EIC",
+          "role": "support",
+          "cell_count": 15630,
+          "formula_count": 12733,
+          "formula_density": 0.8147
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Tax Table",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 14811,
+          "formula_count": 10489,
+          "formula_density": 0.7082
+        },
+        {
+          "workbook_label": "2026",
+          "workbook_path": "/Users/tkhan/Downloads/26_1040 Forecast (Rev. 41).xlsx",
+          "sheet_name": "Changes",
+          "canonical_form": null,
+          "role": "excluded",
+          "cell_count": 246,
+          "formula_count": 1,
+          "formula_density": 0.0041
+        }
+      ]
+    }
+  ]
+}
