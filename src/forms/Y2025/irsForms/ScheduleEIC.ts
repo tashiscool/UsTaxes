@@ -14,13 +14,40 @@ import { Field } from 'ustaxes/core/pdfFiller'
 
 type PrecludesEIC<F> = (f: F) => boolean
 
-// TODO: check F2555
-const checks2555: PrecludesEIC<F2555> = (): boolean => false
+const normalizeTin = (value?: string): string => value?.replace(/\D/g, '') ?? ''
+
+const hasValidTin = (value?: string): boolean => {
+  const normalized = normalizeTin(value)
+  if (normalized.length !== 9) return false
+
+  const area = normalized.slice(0, 3)
+  const group = normalized.slice(3, 5)
+  const serial = normalized.slice(5)
+
+  return area !== '000' && area !== '666' && group !== '00' && serial !== '0000'
+}
+
+const isLikelyItin = (value?: string): boolean => {
+  const normalized = normalizeTin(value)
+  if (normalized.length !== 9 || !normalized.startsWith('9')) return false
+  const middle = Number(normalized.slice(3, 5))
+  return (
+    (middle >= 70 && middle <= 88) ||
+    (middle >= 90 && middle <= 92) ||
+    (middle >= 94 && middle <= 99)
+  )
+}
+
+const hasValidEicSsn = (value?: string): boolean =>
+  hasValidTin(value) && !isLikelyItin(value)
+
+const checks2555: PrecludesEIC<F2555> = (f): boolean => f.hasForeignEarnedIncome()
 
 // TODO: check F4797
 const checks4797: PrecludesEIC<F4797> = (): boolean => false
 
-// TODO: check F8814
+// F8814 is a placeholder in the local model today; it does not carry enough
+// detail to distinguish a real kiddie-tax filing from the empty attachment.
 const checks8814: PrecludesEIC<F8814> = (): boolean => false
 
 const checksPub596: PrecludesEIC<Pub596Worksheet1> = (f): boolean =>
@@ -69,7 +96,13 @@ export default class ScheduleEIC extends F1040Attachment {
   //
   // TODO: ('Step 1.2 (valid SSNs) unchecked') and without work restriction and valid for eic purpos
   validSSNs = (): boolean => {
-    return true
+    const primary = this.f1040.info.taxPayer.primaryPerson
+    const spouse = this.f1040.info.taxPayer.spouse
+    return (
+      hasValidEicSsn(primary.ssid) &&
+      (spouse === undefined || hasValidEicSsn(spouse.ssid)) &&
+      this.qualifyingDependents().every((dep) => hasValidEicSsn(dep.ssid))
+    )
   }
 
   // Step 1.3
@@ -83,7 +116,7 @@ export default class ScheduleEIC extends F1040Attachment {
   //
   // TODO: ('Step 1.5, Not checking non-resident alien') Step 1.5 nonResidentAli
   allowedNonresidentAlien = (): boolean => {
-    return true
+    return !this.f1040.f1040nr?.hasNonresidentInfo()
   }
 
   // step 2, question 1
@@ -107,7 +140,10 @@ export default class ScheduleEIC extends F1040Attachment {
   //
   // TODO: ('Not checking personal property income') 2.4
   passIncomeFromPersonalProperty = (): boolean => {
-    return true
+    return (
+      this.f1040.scheduleE.totalRoyaltyIncome() === 0 &&
+      (this.f1040.scheduleE.royaltyExpenses() ?? 0) === 0
+    )
   }
 
   // 2.4.3
@@ -116,7 +152,15 @@ export default class ScheduleEIC extends F1040Attachment {
   //
   // TODO: ('Not checking passive activity') 2.4
   incomeOrLossFromPassiveActivity = (): boolean => {
-    return false
+    return (
+      sumFields([
+        this.f1040.scheduleE.l29ah(),
+        this.f1040.scheduleE.l29bg(),
+        this.f1040.scheduleE.l34ad(),
+        this.f1040.scheduleE.l34bc(),
+        this.f1040.scheduleE.l40()
+      ]) !== 0
+    )
   }
 
   // 2.4.5

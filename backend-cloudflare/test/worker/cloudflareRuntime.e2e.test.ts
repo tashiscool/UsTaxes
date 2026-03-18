@@ -1661,6 +1661,177 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect((updatedPrintMail.returnSummary as JsonObject).amountOwed).toBe(600)
   })
 
+  it(
+    'preserves richer 1099 detail, itemized deductions, and nonresident facts through TaxFlow sync',
+    async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sub: 'taxflow-user-workbook-parity',
+        email: 'workbook-parity@example.com',
+        displayName: 'Workbook Parity User'
+      })
+    })
+    expect(response.status).toBe(201)
+    const sessionCookie = extractCookieHeader(response)
+
+    response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionCookie
+      },
+      body: JSON.stringify({
+        taxYear: 2025,
+        filingStatus: 'single',
+        formType: '1040',
+        screenData: {
+          '/taxpayer-profile': {
+            firstName: 'Dana',
+            lastName: 'Parity',
+            ssn: '400-02-9999',
+            filingStatus: 'single',
+            address: {
+              line1: '44 Harbor St',
+              city: 'Portland',
+              state: 'OR',
+              zip: '97201'
+            }
+          },
+          '/w2': {
+            w2s: [
+              {
+                id: 'w2-1',
+                employerName: 'Employer Inc',
+                ein: '12-3456789',
+                box1: 150000,
+                box2: 35000,
+                owner: 'taxpayer'
+              }
+            ]
+          },
+          '/1099': {
+            records: [
+              {
+                id: 'div-1',
+                type: '1099-DIV',
+                payer: 'Brokerage',
+                amount: 3200,
+                qualifiedDividends: 1800,
+                capitalGainDistributions: 450,
+                section199ADividends: 300
+              },
+              {
+                id: 'b-1',
+                type: '1099-B',
+                payer: 'Schwab',
+                transactions: [
+                  {
+                    description: 'ABC',
+                    term: 'short',
+                    proceeds: 15000,
+                    costBasis: 10000
+                  },
+                  {
+                    description: 'XYZ',
+                    term: 'long',
+                    proceeds: 20000,
+                    costBasis: 15000
+                  }
+                ]
+              }
+            ]
+          },
+          '/deductions': {
+            form: {
+              stateIncomeTaxes: 30000,
+              realEstateTaxes: 8000,
+              mortgageInterest: 10000,
+              cashContributions: 2000,
+              noncashContributionsTotal: 1000
+            }
+          },
+          '/nonresident': {
+            visaType: 'H1B',
+            countryOfCitizenship: 'GB',
+            daysInUS2024: '120',
+            daysInUS2023: '60',
+            daysInUS2022: '30',
+            hasTreaty: false
+          },
+          '/intl-advanced/schedule-nec': {
+            items: [
+              {
+                id: 'nec-1',
+                incomeType: 'US dividends',
+                grossAmount: 3200,
+                netTax: 960
+              }
+            ]
+          },
+          '/intl-advanced/schedule-oi': {
+            countryOfResidence: 'GB',
+            dateEnteredUS: '2025-01-15'
+          }
+        }
+      })
+    })
+    expect(response.status).toBe(201)
+    const created = await parseJsonResponse<JsonObject>(response)
+    const filingSessionId = String((created.filingSession as JsonObject).id)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+      {
+        method: 'POST',
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const syncResult = await parseJsonResponse<JsonObject>(response)
+    const facts = syncResult.facts as JsonObject
+    const form1099Records = facts.form1099Records as JsonObject[]
+    const divRecord = form1099Records.find(
+      (record) => record.type === '1099-DIV'
+    ) as JsonObject
+    const brokerRecord = form1099Records.find(
+      (record) => record.type === '1099-B'
+    ) as JsonObject
+    const incomeSummary = facts.incomeSummary as JsonObject
+    const itemized = facts.itemizedDeductions as JsonObject
+    const taxSummary = syncResult.taxSummary as JsonObject
+
+    expect(divRecord.amount).toBe(3200)
+    expect(divRecord.qualifiedDividends).toBe(1800)
+    expect(divRecord.capitalGainDistributions).toBe(450)
+    expect(divRecord.section199ADividends).toBe(300)
+    expect(brokerRecord.shortTermProceeds).toBe(15000)
+    expect(brokerRecord.shortTermCostBasis).toBe(10000)
+    expect(brokerRecord.longTermProceeds).toBe(20000)
+    expect(brokerRecord.longTermCostBasis).toBe(15000)
+    expect(brokerRecord.summaryAmount).toBe(0)
+    expect(incomeSummary.total1099Amount).toBe(3200)
+    expect((incomeSummary.totalsByType as JsonObject)['1099-DIV']).toBe(3200)
+    expect((incomeSummary.totalsByType as JsonObject)['1099-B']).toBe(0)
+    expect(itemized.stateAndLocalTaxes).toBe(30000)
+    expect(itemized.stateAndLocalRealEstateTaxes).toBe(8000)
+    expect(itemized.interest8a).toBe(10000)
+    expect(itemized.charityCashCheck).toBe(2000)
+    expect(itemized.charityOther).toBe(1000)
+    expect(
+      Array.isArray(facts.nonresidentScheduleNecItems)
+        ? facts.nonresidentScheduleNecItems.length
+        : 0
+    ).toBe(1)
+    expect((facts.nonresidentScheduleOi as JsonObject).countryOfResidence).toBe(
+      'GB'
+    )
+    expect((taxSummary.schedules as string[]).includes('f1040nr')).toBe(true)
+    },
+    15_000
+  )
+
   it('derives business, rental, and foreign/nonresident facts from advanced TaxFlow data', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
       method: 'POST',

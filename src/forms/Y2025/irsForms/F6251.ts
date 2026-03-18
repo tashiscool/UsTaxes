@@ -2,7 +2,7 @@ import F1040Attachment from './F1040Attachment'
 import { FilingStatus, PersonRole } from 'ustaxes/core/data'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { Field } from 'ustaxes/core/pdfFiller'
-import { amt } from '../data/federal'
+import federalBrackets, { amt } from '../data/federal'
 
 type Part3 = Partial<{
   l12: number
@@ -195,8 +195,8 @@ export default class F6251 extends F1040Attachment {
     // or you had a gain on both lines 15 and 16 of Schedule D (Form 1040) (as refigured for the AMT, if necessary),
     // complete Part III on the back and enter the amount from line 40 here.
     return (
-      this.f1040.l7() !== undefined ||
-      this.f1040.l3a() !== undefined ||
+      (this.f1040.l7() ?? 0) > 0 ||
+      (this.f1040.l3a() ?? 0) > 0 ||
       (this.f1040.scheduleD.l15() > 0 && this.f1040.scheduleD.l16() > 0)
     )
   }
@@ -276,27 +276,11 @@ export default class F6251 extends F1040Attachment {
     const usingTaxWorksheet = schDWksht.isNeeded()
 
     const l18Consts: [number, number] = (() => {
-      if (this.f1040.info.taxPayer.filingStatus === FilingStatus.MFS) {
-        return [110350, 2207]
-      }
-      return [220700, 4414]
+      const breakpoint = amt.cap(fs)
+      return [breakpoint, breakpoint * 0.02]
     })()
 
-    const l19Value: { [k in FilingStatus]: number } = {
-      [FilingStatus.MFJ]: 89950,
-      [FilingStatus.W]: 89950,
-      [FilingStatus.S]: 446275,
-      [FilingStatus.MFS]: 44625,
-      [FilingStatus.HOH]: 59750
-    }
-
-    const l25Value: { [k in FilingStatus]: number } = {
-      [FilingStatus.MFJ]: 553850,
-      [FilingStatus.W]: 553850,
-      [FilingStatus.S]: 492300,
-      [FilingStatus.MFS]: 276900,
-      [FilingStatus.HOH]: 523050
-    }
+    const [l19, l25] = federalBrackets.longTermCapGains.status[fs].brackets
 
     const l12 = this.l6()
 
@@ -331,8 +315,6 @@ export default class F6251 extends F1040Attachment {
       return l17 * 0.28 - c2
     })()
 
-    const l19 = l19Value[fs]
-
     const l20 = (() => {
       if (usingTaxWorksheet) {
         return schDWksht.l14() ?? 0
@@ -352,8 +334,6 @@ export default class F6251 extends F1040Attachment {
     const l23 = Math.min(l21, l22)
 
     const l24 = Math.max(0, l22 - l23)
-
-    const l25 = l25Value[fs]
 
     const l26 = l21
 

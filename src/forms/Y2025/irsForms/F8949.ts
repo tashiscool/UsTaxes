@@ -1,5 +1,5 @@
 import { FormTag } from 'ustaxes/core/irsForms/Form'
-import { Asset, isSold, SoldAsset } from 'ustaxes/core/data'
+import { Asset, Income1099B, isSold, SoldAsset } from 'ustaxes/core/data'
 import F1040Attachment from './F1040Attachment'
 import F1040 from './F1040'
 import { CURRENT_YEAR } from '../data/federal'
@@ -19,6 +19,15 @@ type EmptyLine = [
 type Line =
   | [string, string, string, number, number, undefined, undefined, number]
   | EmptyLine
+type Form8949Row = {
+  description: string
+  dateAcquired?: Date
+  dateSold?: Date
+  proceeds: number
+  costBasis: number
+  adjustments: number
+  gainLoss: number
+}
 const emptyLine: EmptyLine = [
   undefined,
   undefined,
@@ -33,15 +42,15 @@ const emptyLine: EmptyLine = [
 const showDate = (date: Date): string =>
   `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`
 
-const toLine = (position: SoldAsset<Date>): Line => [
-  position.name,
-  showDate(position.openDate),
-  showDate(position.closeDate),
-  position.closePrice * position.quantity,
-  position.openPrice * position.quantity,
+const rowToLine = (row: Form8949Row): Line => [
+  row.description,
+  row.dateAcquired ? showDate(row.dateAcquired) : '',
+  row.dateSold ? showDate(row.dateSold) : '',
+  row.proceeds,
+  row.costBasis,
   undefined,
   undefined,
-  (position.closePrice - position.openPrice) * position.quantity
+  row.gainLoss
 ]
 
 const NUM_SHORT_LINES = 14
@@ -52,6 +61,41 @@ const padUntil = <A, B>(xs: A[], v: B, n: number): (A | B)[] => {
     return xs
   }
   return [...xs, ...Array.from(Array(n - xs.length)).map(() => v)]
+}
+
+const hasRowAmounts = (proceeds: number, costBasis: number): boolean =>
+  proceeds !== 0 || costBasis !== 0
+
+const summaryRowFrom1099B = (
+  payer: string,
+  proceeds: number,
+  costBasis: number
+): Form8949Row | undefined => {
+  if (!hasRowAmounts(proceeds, costBasis)) {
+    return undefined
+  }
+
+  return {
+    description: payer || '1099-B summary',
+    proceeds,
+    costBasis,
+    adjustments: 0,
+    gainLoss: proceeds - costBasis
+  }
+}
+
+const soldAssetRow = (position: SoldAsset<Date>): Form8949Row => {
+  const proceeds = position.closePrice * position.quantity - (position.closeFee ?? 0)
+  const costBasis = position.openPrice * position.quantity + position.openFee
+  return {
+    description: position.name,
+    dateAcquired: position.openDate,
+    dateSold: position.closeDate,
+    proceeds,
+    costBasis,
+    adjustments: 0,
+    gainLoss: proceeds - costBasis
+  }
 }
 
 export default class F8949 extends F1040Attachment {
@@ -65,16 +109,26 @@ export default class F8949 extends F1040Attachment {
     this.index = index
   }
 
-  isNeeded = (): boolean => this.thisYearSales().length > 0
+  hasSummarySales = (): boolean =>
+    this.f1040.f1099Bs().some((f1099b: Income1099B) =>
+      hasRowAmounts(
+        f1099b.form.shortTermProceeds,
+        f1099b.form.shortTermCostBasis
+      )
+    ) ||
+    this.f1040.f1099Bs().some((f1099b: Income1099B) =>
+      hasRowAmounts(
+        f1099b.form.longTermProceeds,
+        f1099b.form.longTermCostBasis
+      )
+    )
+
+  isNeeded = (): boolean =>
+    this.hasSummarySales() || this.thisYearSales().length > 0
 
   copies = (): F8949[] => {
     if (this.index === 0) {
-      const extraCopiesNeeded = Math.round(
-        Math.max(
-          this.thisYearShortTermSales().length / NUM_SHORT_LINES,
-          this.thisYearLongTermSales().length / NUM_LONG_LINES
-        )
-      )
+      const extraCopiesNeeded = Math.max(this.totalPages() - 1, 0)
       return Array.from(Array(extraCopiesNeeded)).map(
         (_, i) => new F8949(this.f1040, i + 1)
       )
@@ -82,13 +136,90 @@ export default class F8949 extends F1040Attachment {
     return []
   }
 
-  // Assuming we're only handling non-reported transactions
-  part1BoxA = (): boolean => false
+  reportedSales = (): Income1099B[] => this.f1040.f1099Bs()
+
+  reportedShortTermRows = (): Form8949Row[] =>
+    this.reportedSales()
+      .map((f1099b) =>
+        summaryRowFrom1099B(
+          f1099b.payer,
+          f1099b.form.shortTermProceeds,
+          f1099b.form.shortTermCostBasis
+        )
+      )
+      .filter((row): row is Form8949Row => row !== undefined)
+
+  reportedLongTermRows = (): Form8949Row[] =>
+    this.reportedSales()
+      .map((f1099b) =>
+        summaryRowFrom1099B(
+          f1099b.payer,
+          f1099b.form.longTermProceeds,
+          f1099b.form.longTermCostBasis
+        )
+      )
+      .filter((row): row is Form8949Row => row !== undefined)
+
+  shortTermAssetRows = (): Form8949Row[] =>
+    this.thisYearShortTermSales().map((position) => soldAssetRow(position))
+
+  longTermAssetRows = (): Form8949Row[] =>
+    this.thisYearLongTermSales().map((position) => soldAssetRow(position))
+
+  hasSummaryPage = (): boolean => this.hasSummarySales()
+
+  summaryPageCount = (): number =>
+    this.hasSummaryPage()
+      ? Math.max(
+          Math.ceil(this.reportedShortTermRows().length / NUM_SHORT_LINES),
+          Math.ceil(this.reportedLongTermRows().length / NUM_LONG_LINES)
+        )
+      : 0
+
+  assetPageCount = (): number =>
+    Math.max(
+      Math.ceil(this.shortTermAssetRows().length / NUM_SHORT_LINES),
+      Math.ceil(this.longTermAssetRows().length / NUM_LONG_LINES)
+    )
+
+  totalPages = (): number =>
+    this.summaryPageCount() > 0
+      ? this.summaryPageCount() + this.assetPageCount()
+      : this.assetPageCount()
+
+  isSummaryPage = (): boolean =>
+    this.summaryPageCount() > 0 && this.index < this.summaryPageCount()
+
+  pageIndex = (): number =>
+    this.isSummaryPage() ? this.index : this.index - this.summaryPageCount()
+
+  pageShortTermRows = (): Form8949Row[] => {
+    const rows = this.isSummaryPage()
+      ? this.reportedShortTermRows()
+      : this.shortTermAssetRows()
+    return rows.slice(
+      this.pageIndex() * NUM_SHORT_LINES,
+      (this.pageIndex() + 1) * NUM_SHORT_LINES
+    )
+  }
+
+  pageLongTermRows = (): Form8949Row[] => {
+    const rows = this.isSummaryPage()
+      ? this.reportedLongTermRows()
+      : this.longTermAssetRows()
+    return rows.slice(
+      this.pageIndex() * NUM_LONG_LINES,
+      (this.pageIndex() + 1) * NUM_LONG_LINES
+    )
+  }
+
+  // Summary pages are reported to IRS, asset pages are not reported.
+  part1BoxA = (): boolean => this.isSummaryPage()
   part1BoxB = (): boolean => false
-  part1BoxC = (): boolean => true
-  part2BoxD = (): boolean => false
+  part1BoxC = (): boolean => !this.isSummaryPage()
+  part2BoxD = (): boolean => this.isSummaryPage()
   part2BoxE = (): boolean => false
-  part2BoxF = (): boolean => true
+  part2BoxF = (): boolean => !this.isSummaryPage()
 
   thisYearSales = (): SoldAsset<Date>[] =>
     this.f1040.assets.filter(
@@ -113,69 +244,55 @@ export default class F8949 extends F1040Attachment {
   /**
    * Take the short term transactions that fit on this copy of the 8949
    */
-  shortTermSales = (): SoldAsset<Date>[] =>
-    this.thisYearShortTermSales().slice(
-      this.index * NUM_SHORT_LINES,
-      (this.index + 1) * NUM_SHORT_LINES
-    )
+  shortTermSales = (): Form8949Row[] => this.pageShortTermRows()
 
   /**
    * Take the long term transactions that fit on this copy of the 8949
    */
-  longTermSales = (): SoldAsset<Date>[] =>
-    this.thisYearLongTermSales().slice(
-      this.index * NUM_LONG_LINES,
-      (this.index + 1) * NUM_LONG_LINES
-    )
+  longTermSales = (): Form8949Row[] => this.pageLongTermRows()
 
   shortTermLines = (): Line[] =>
     padUntil(
-      this.shortTermSales().map((p) => toLine(p)),
+      this.shortTermSales().map((p) => rowToLine(p)),
       emptyLine,
       NUM_SHORT_LINES
     )
   longTermLines = (): Line[] =>
     padUntil(
-      this.longTermSales().map((p) => toLine(p)),
+      this.longTermSales().map((p) => rowToLine(p)),
       emptyLine,
       NUM_LONG_LINES
     )
 
   shortTermTotalProceeds = (): number =>
     this.shortTermSales().reduce(
-      (acc, p) => acc + p.closePrice * p.quantity - (p.closeFee ?? 0),
+      (acc, p) => acc + p.proceeds,
       0
     )
 
   shortTermTotalCost = (): number =>
-    this.shortTermSales().reduce(
-      (acc, p) => acc + p.openPrice * p.quantity + p.openFee,
-      0
-    )
+    this.shortTermSales().reduce((acc, p) => acc + p.costBasis, 0)
 
   shortTermTotalGain = (): number =>
     this.shortTermTotalProceeds() - this.shortTermTotalCost()
 
-  // TODO: handle adjustments column.
-  shortTermTotalAdjustments = (): number | undefined => undefined
+  shortTermTotalAdjustments = (): number =>
+    this.shortTermSales().reduce((acc, p) => acc + p.adjustments, 0)
 
   longTermTotalProceeds = (): number =>
     this.longTermSales().reduce(
-      (acc, p) => acc + p.closePrice * p.quantity - (p.closeFee ?? 0),
+      (acc, p) => acc + p.proceeds,
       0
     )
 
   longTermTotalCost = (): number =>
-    this.longTermSales().reduce(
-      (acc, p) => acc + p.openPrice * p.quantity + p.openFee,
-      0
-    )
+    this.longTermSales().reduce((acc, p) => acc + p.costBasis, 0)
 
   longTermTotalGain = (): number =>
     this.longTermTotalProceeds() - this.longTermTotalCost()
 
-  // TODO: handle adjustments column.
-  longTermTotalAdjustments = (): number | undefined => undefined
+  longTermTotalAdjustments = (): number =>
+    this.longTermSales().reduce((acc, p) => acc + p.adjustments, 0)
 
   fields = (): Field[] => [
     this.f1040.namesString(),

@@ -148,6 +148,62 @@ describe('TaxCalculationService', () => {
       expect(info.f1099s).toHaveLength(1)
       expect(info.f1099s[0].type).toBe('INT')
     })
+
+    it('maps richer 1099-DIV and 1099-B detail for workbook parity', () => {
+      const facts = baseFacts({
+        form1099Records: [
+          {
+            id: '1099-div-1',
+            type: 'DIV',
+            payer: 'Brokerage',
+            amount: 3200,
+            qualifiedDividends: 1800,
+            capitalGainDistributions: 450,
+            section199ADividends: 300,
+            owner: 'spouse',
+            isComplete: true
+          },
+          {
+            id: '1099-b-1',
+            type: 'B',
+            payer: 'Schwab',
+            transactions: [
+              {
+                description: 'ABC',
+                term: 'short',
+                proceeds: 15000,
+                costBasis: 10000
+              },
+              {
+                description: 'XYZ',
+                term: 'long',
+                proceeds: 20000,
+                costBasis: 15000
+              }
+            ],
+            isComplete: true
+          }
+        ]
+      })
+
+      const info = adaptFactsToInformation(facts)
+      expect(info.f1099s).toHaveLength(2)
+
+      const div = info.f1099s.find((entry) => entry.type === 'DIV')
+      expect(div).toBeDefined()
+      expect(div?.form.dividends).toBe(3200)
+      expect(div?.form.qualifiedDividends).toBe(1800)
+      expect(div?.form.totalCapitalGainsDistributions).toBe(450)
+      expect(div?.form.section199ADividends).toBe(300)
+      expect(div?.personRole).toBe('SPOUSE')
+
+      const broker = info.f1099s.find((entry) => entry.type === 'B')
+      expect(broker).toBeDefined()
+      expect(broker?.form.shortTermProceeds).toBe(15000)
+      expect(broker?.form.shortTermCostBasis).toBe(10000)
+      expect(broker?.form.longTermProceeds).toBe(20000)
+      expect(broker?.form.longTermCostBasis).toBe(15000)
+    })
   })
 
   describe('calculate', () => {
@@ -337,6 +393,219 @@ describe('TaxCalculationService', () => {
           expect(withState.stateResults[0].stateTax).toBeGreaterThan(2000)
           expect(withState.stateResults[0].stateTax).toBeLessThan(5000)
         }
+      }
+    })
+
+    it('uses 1099-B basis detail so only net gains reach AGI', () => {
+      const result = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-gains',
+              employerName: 'Employer Inc',
+              ein: '12-3456789',
+              box1Wages: 100000,
+              box2FederalWithheld: 15000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          form1099Records: [
+            {
+              id: '1099-b-net',
+              type: 'B',
+              payer: 'Broker',
+              shortTermProceeds: 15000,
+              shortTermCostBasis: 10000,
+              longTermProceeds: 20000,
+              longTermCostBasis: 15000,
+              amount: 35000,
+              isComplete: true
+            }
+          ]
+        })
+      )
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.agi).toBe(110000)
+      }
+    })
+
+    it('normalizes workbook-style Schedule A aliases into canonical itemized deductions', () => {
+      const canonical = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-itemized-canonical',
+              employerName: 'Employer Inc',
+              ein: '12-3456789',
+              box1Wages: 120000,
+              box2FederalWithheld: 12000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          itemizedDeductions: {
+            stateAndLocalTaxes: 30000,
+            stateAndLocalRealEstateTaxes: 8000,
+            stateAndLocalPropertyTaxes: 0,
+            interest8a: 10000,
+            interest8b: 0,
+            interest8c: 0,
+            interest8d: 0,
+            investmentInterest: 0,
+            charityCashCheck: 2000,
+            charityOther: 1000,
+            medicalAndDental: 0,
+            isSalesTax: false
+          }
+        })
+      )
+
+      const aliased = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-itemized-aliased',
+              employerName: 'Employer Inc',
+              ein: '12-3456789',
+              box1Wages: 120000,
+              box2FederalWithheld: 12000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          itemizedDeductions: {
+            stateIncomeTaxes: 30000,
+            realEstateTaxes: 8000,
+            mortgageInterest: 10000,
+            cashContributions: 2000,
+            noncashContributionsTotal: 1000
+          }
+        })
+      )
+
+      expect(canonical.success).toBe(true)
+      expect(aliased.success).toBe(true)
+      if (canonical.success && aliased.success) {
+        expect(aliased.taxableIncome).toBe(canonical.taxableIncome)
+        expect(aliased.totalTax).toBe(canonical.totalTax)
+      }
+    })
+
+    it('switches to a nonresident calculation branch when 1040-NR facts are present', () => {
+      const result = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-nr',
+              employerName: 'Employer Inc',
+              ein: '12-3456789',
+              box1Wages: 150000,
+              box2FederalWithheld: 35000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          businessRecords: [
+            {
+              id: 'biz-nr',
+              name: 'Consulting LLC',
+              principalBusinessCode: '541000',
+              businessDescription: 'Consulting',
+              accountingMethod: 'cash',
+              materialParticipation: true,
+              startedOrAcquired: false,
+              madePaymentsRequiring1099: false,
+              filed1099s: false,
+              income: { grossReceipts: 10000, returns: 0, otherIncome: 0 },
+              expenses: {
+                advertising: 0,
+                carAndTruck: 0,
+                commissions: 0,
+                contractLabor: 0,
+                depletion: 0,
+                depreciation: 0,
+                employeeBenefits: 0,
+                insurance: 0,
+                interestMortgage: 0,
+                interestOther: 0,
+                legal: 0,
+                office: 0,
+                pensionPlans: 0,
+                rentVehicles: 0,
+                rentOther: 0,
+                repairs: 0,
+                supplies: 0,
+                taxes: 0,
+                travel: 0,
+                deductibleMeals: 0,
+                utilities: 0,
+                wages: 0,
+                otherExpenses: 0
+              },
+              personRole: 'PRIMARY',
+              owner: 'taxpayer'
+            }
+          ],
+          form1099Records: [
+            {
+              id: '1099-div-nr',
+              type: 'DIV',
+              payer: 'Broker',
+              ordinaryDividends: 1000,
+              amount: 1000,
+              isComplete: true
+            },
+            {
+              id: '1099-misc-nr',
+              type: 'MISC',
+              payer: 'Studio',
+              amount: 500,
+              notes: 'royalties',
+              isComplete: true
+            },
+            {
+              id: '1099-b-nr',
+              type: 'B',
+              payer: 'Broker',
+              longTermProceeds: 5000,
+              longTermCostBasis: 0,
+              amount: 5000,
+              isComplete: true
+            }
+          ],
+          itemizedDeductions: {
+            stateAndLocalTaxes: 6000,
+            charityCashCheck: 4000
+          },
+          nonresidentProfile: {
+            hasData: true,
+            requires1040NR: true,
+            visaType: 'H1B',
+            countryOfCitizenship: 'GB',
+            daysInUS2024: 120,
+            daysInUS2023: 60,
+            daysInUS2022: 30,
+            hasTreaty: false
+          },
+          nonresidentScheduleOi: {
+            countryOfResidence: 'GB',
+            dateEnteredUS: '2025-01-15'
+          }
+        })
+      )
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.schedules).toContain('f1040nr')
+        expect(result.agi).toBe(166500)
+        expect(result.taxableIncome).toBe(155000)
+        expect(result.totalTax).toBe(30497)
+        expect(result.totalPayments).toBe(35000)
+        expect(result.refund).toBe(4503)
+        expect(result.amountOwed).toBe(0)
       }
     })
   })

@@ -89,6 +89,22 @@ export default class Schedule8812 extends F1040Attachment {
       .qualifyingChildren()
       .filter((dep) => hasValidChildTaxCreditSsn(dep.ssid))
 
+  otherCreditDependents = (): Dependent<Date | string>[] =>
+    this.f1040.info.taxPayer.dependents.filter(
+      (dep) =>
+        this.f1040.qualifyingDependents.qualifiesOther(dep) ||
+        (this.f1040.qualifyingDependents.qualifiesChild(dep) &&
+          !hasValidChildTaxCreditSsn(dep.ssid))
+    )
+
+  isPuertoRicoResident = (): boolean => false
+
+  canUsePart2B = (): boolean =>
+    this.isPuertoRicoResident() || this.qualifyingChildrenCount() >= 3
+
+  canClaimAdditionalChildTaxCredit = (): boolean =>
+    !(this.f1040.f2555?.isNeeded() ?? false)
+
   l4 = (): number => this.creditDependents().length
 
   // TY2025: $2,200 per qualifying child with a valid SSN
@@ -98,7 +114,7 @@ export default class Schedule8812 extends F1040Attachment {
   // Number of other dependents, including any qualifying children, who are not under age 18 or who do not have the required SSN. Do not include yourself, your spouse,
   // or anyone who is not a US citizen/national/resident alien,
   // or do not have the required SSN.
-  l6 = (): number => this.f1040.info.taxPayer.dependents.length - this.l4()
+  l6 = (): number => this.otherCreditDependents().length
 
   l7 = (): number => this.l6() * childTaxCredit.amountPerOtherDependent
 
@@ -121,8 +137,7 @@ export default class Schedule8812 extends F1040Attachment {
   l14 = (): number => (this.l12no() ? 0 : Math.min(this.l12(), this.l13()))
 
   // Check this box if you do not want to file the additional tax credit
-  // TODO: Assuming that people do right now
-  l15 = (): boolean => true
+  l15 = (): boolean => false
 
   creditLimitWorksheetB = (): number | undefined => undefined
 
@@ -205,6 +220,10 @@ export default class Schedule8812 extends F1040Attachment {
   }
 
   part2a = (): Part2a => {
+    if (!this.canClaimAdditionalChildTaxCredit()) {
+      return { allowed: false }
+    }
+
     const l16a = Math.max(0, this.l12() - this.l14())
     const l16bdeps = this.l4()
 
@@ -213,20 +232,21 @@ export default class Schedule8812 extends F1040Attachment {
     const l17 = Math.min(l16a, l16b)
     const l18a = this.earnedIncomeWorksheet()
     const l18b = this.f1040.nonTaxableCombatPay() ?? 0
-    const l19No = l18a > childTaxCredit.phaseInThreshold
-    const l19Yes = l18a <= childTaxCredit.phaseInThreshold
+    const l19No = l18a <= childTaxCredit.phaseInThreshold
+    const l19Yes = l18a > childTaxCredit.phaseInThreshold
     const l19 = Math.max(0, l18a - childTaxCredit.phaseInThreshold)
     const l20 = l19 * childTaxCredit.phaseInRate
     // Check if 3+ children (threshold = 3 * refundable amount)
     const threeChildThreshold = 3 * childTaxCredit.refundableAmount
-    const l20No = l16b >= threeChildThreshold
-    const l20Yes = l16b < threeChildThreshold
+    const l20No = l16b < threeChildThreshold
+    const l20Yes = l16b >= threeChildThreshold
 
-    // TODO: check for Puerto Rico residency
     const toLine27 = (() => {
-      if (l20No && l20 > 0) {
+      if (!this.canUsePart2B()) {
         return Math.min(l17, l20)
-      } else if (l20Yes && l20 >= l17) {
+      }
+
+      if (!this.isPuertoRicoResident() && l20 >= l17) {
         return l17
       }
     })()
@@ -252,7 +272,7 @@ export default class Schedule8812 extends F1040Attachment {
   part2b = (): Part2b => {
     const part2a = this.part2a()
     // three or more qualifying children.
-    const allowed = part2a.allowed
+    const allowed = part2a.allowed && this.canUsePart2B()
 
     if (!allowed) return { allowed: false }
 
@@ -296,7 +316,9 @@ export default class Schedule8812 extends F1040Attachment {
   }
 
   l27 = (): number | undefined =>
-    this.l12no() ? 0 : this.part2a().toLine27 ?? this.part2b().toLine27
+    this.l12no() || !this.canClaimAdditionalChildTaxCredit()
+      ? 0
+      : this.part2a().toLine27 ?? this.part2b().toLine27 ?? 0
 
   qualifyingChildrenCount = (): number => this.l4()
 

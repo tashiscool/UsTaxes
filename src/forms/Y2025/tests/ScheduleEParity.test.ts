@@ -82,6 +82,7 @@ describe('Schedule E parity improvements', () => {
     expect(f1040.scheduleE.l37()).toBe(900)
     expect(f1040.scheduleE.l39()).toBe(-150)
     expect(f1040.scheduleE.l40()).toBe(400)
+    expect(f1040.scheduleE.page2NetIncomeLoss()).toBe(1150)
     expect(f1040.scheduleE.l41()).toBe(1150)
   })
 

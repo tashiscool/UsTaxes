@@ -588,6 +588,19 @@ describe('2025 federal law updates', () => {
       ubia: 90000,
       patronReduction: 5000
     })
+    expect(f8995A.overflowStatementEntries()).toEqual([
+      expect.objectContaining({
+        name: 'Delta Holdings',
+        deductionBeforePatronReduction: expect.any(Number),
+        deductionAfterPatronReduction: expect.any(Number)
+      }),
+      expect.objectContaining({
+        name: 'Echo Foods',
+        deductionBeforePatronReduction: expect.any(Number),
+        deductionAfterPatronReduction: expect.any(Number)
+      })
+    ])
+    expect(f8995A.overflowStatementDeduction()).toBeGreaterThan(0)
   })
 
   it('subtracts patron reductions from the detailed QBI component', () => {

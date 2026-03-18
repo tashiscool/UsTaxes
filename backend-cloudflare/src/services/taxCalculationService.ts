@@ -185,6 +185,546 @@ const asRecord = (v: unknown): Record<string, unknown> =>
 const asArray = <T = unknown>(v: unknown): T[] =>
   Array.isArray(v) ? (v as T[]) : []
 
+const resolvePersonRole = (
+  value: unknown
+): PersonRole.PRIMARY | PersonRole.SPOUSE => {
+  const normalized = toStr(value).toLowerCase().trim()
+  return normalized === 'spouse' || normalized === 'secondary'
+    ? PersonRole.SPOUSE
+    : PersonRole.PRIMARY
+}
+
+const parse1099BTerm = (value: unknown): 'short' | 'long' | 'unknown' => {
+  const normalized = toStr(value).toLowerCase().trim()
+  if (normalized.startsWith('s')) return 'short'
+  if (normalized.startsWith('l')) return 'long'
+  return 'unknown'
+}
+
+const buildRawItemizedDeductions = (facts: FactsRecord) => {
+  const d = asRecord(facts.itemizedDeductions)
+  const raw = {
+    medicalAndDental: toNum(
+      d.medicalAndDental ??
+        d.medicalDental ??
+        d.medicalExpenses ??
+        facts.medicalAndDental ??
+        facts.medicalExpenses
+    ),
+    stateAndLocalTaxes: toNum(
+      d.stateAndLocalTaxes ??
+        d.stateLocalIncomeTax ??
+        d.stateTax ??
+        d.stateTaxes ??
+        d.stateIncomeTaxes ??
+        d.salesTaxes ??
+        facts.stateAndLocalTaxes ??
+        facts.stateIncomeTaxes ??
+        facts.stateTaxes
+    ),
+    isSalesTax: toBool(
+      d.isSalesTax ?? d.useSalesTax ?? d.salesTaxElection ?? facts.isSalesTax
+    ),
+    stateAndLocalRealEstateTaxes: toNum(
+      d.stateAndLocalRealEstateTaxes ??
+        d.realEstateTaxes ??
+        d.propertyTaxes ??
+        facts.realEstateTaxes ??
+        facts.propertyTaxes
+    ),
+    stateAndLocalPropertyTaxes: toNum(
+      d.stateAndLocalPropertyTaxes ??
+        d.personalPropertyTaxes ??
+        facts.personalPropertyTaxes
+    ),
+    interest8a: toNum(
+      d.interest8a ??
+        d.mortgageInterest ??
+        d.homeMortgageInterest ??
+        facts.mortgageInterest
+    ),
+    interest8b: toNum(
+      d.interest8b ?? d.pointsNotReported ?? d.points ?? facts.pointsNotReported
+    ),
+    interest8c: toNum(
+      d.interest8c ??
+        d.mortgageInsurancePremiums ??
+        d.homeEquityInterest ??
+        facts.homeEquityInterest
+    ),
+    interest8d: toNum(d.interest8d ?? facts.interest8d),
+    investmentInterest: toNum(
+      d.investmentInterest ?? d.marginInterest ?? facts.investmentInterest
+    ),
+    charityCashCheck: toNum(
+      d.charityCashCheck ??
+        d.charityCash ??
+        d.cashContributions ??
+        d.charitableContributions ??
+        facts.charityCashCheck ??
+        facts.cashContributions
+    ),
+    charityOther: toNum(
+      d.charityOther ??
+        d.charityNonCash ??
+        d.noncashContributionsTotal ??
+        facts.charityOther ??
+        facts.charityNonCash
+    ),
+    casualtyLosses: toNum(
+      d.casualtyLosses ?? facts.casualtyLosses ?? facts.disasterLosses
+    ),
+    otherDeductions: toNum(
+      d.otherDeductions ??
+        d.miscellaneousDeductions ??
+        facts.otherDeductions ??
+        facts.miscellaneousDeductions
+    )
+  }
+
+  const hasAnyValue =
+    raw.isSalesTax ||
+    Object.entries(raw).some(
+      ([key, value]) => key !== 'isSalesTax' && typeof value === 'number' && value > 0
+    )
+
+  return hasAnyValue ? raw : undefined
+}
+
+const normalizeVisaStatus = (value: unknown) => {
+  const normalized = toStr(value).toUpperCase().replace(/[^A-Z0-9]/g, '')
+  const supported = new Set([
+    'F1',
+    'J1',
+    'M1',
+    'Q1',
+    'H1B',
+    'L1',
+    'O1',
+    'TN'
+  ])
+  return supported.has(normalized) ? normalized : 'other'
+}
+
+type FdapIncomeCategory =
+  | 'dividends'
+  | 'interest'
+  | 'rents'
+  | 'royalties'
+  | 'gambling'
+  | 'socialSecurity'
+  | 'capitalGains'
+  | 'otherIncome'
+
+const classifyScheduleNecIncomeType = (
+  value: unknown
+): FdapIncomeCategory => {
+  const normalized = toStr(value).toLowerCase()
+  if (normalized.includes('dividend')) return 'dividends'
+  if (normalized.includes('interest')) return 'interest'
+  if (normalized.includes('rent')) return 'rents'
+  if (normalized.includes('royalt')) return 'royalties'
+  if (normalized.includes('gambl')) return 'gambling'
+  if (normalized.includes('social security')) return 'socialSecurity'
+  if (normalized.includes('capital')) return 'capitalGains'
+  return 'otherIncome'
+}
+
+const buildNonresidentAlienReturn = (
+  facts: FactsRecord,
+  rawItemizedDeductions?: ReturnType<typeof buildRawItemizedDeductions>
+) => {
+  const explicit = asRecord(facts.nonresidentAlienReturn)
+  if (Object.keys(explicit).length > 0) {
+    return explicit
+  }
+
+  const nonresidentProfile = asRecord(facts.nonresidentProfile)
+  const foreignSummary = asRecord(facts.foreignSummary)
+  const scheduleOi = asRecord(facts.nonresidentScheduleOi)
+  const scheduleNecItems = asArray<Record<string, unknown>>(
+    facts.nonresidentScheduleNecItems
+  )
+  const treatyClaims = asArray<Record<string, unknown>>(facts.treatyClaims)
+
+  const hasNonresidentActivity =
+    toBool(nonresidentProfile.hasData) ||
+    toBool(nonresidentProfile.requires1040NR) ||
+    toBool(foreignSummary.requires1040NR) ||
+    scheduleNecItems.length > 0 ||
+    Object.keys(scheduleOi).length > 0
+
+  if (!hasNonresidentActivity) {
+    return undefined
+  }
+
+  const w2Records = asArray<Record<string, unknown>>(facts.w2Records)
+  const form1099Records = asArray<Record<string, unknown>>(facts.form1099Records)
+  const businessRecords = asArray<Record<string, unknown>>(facts.businessRecords)
+  const rentalProperties = asArray<Record<string, unknown>>(facts.rentalProperties)
+  const taxLots = asArray<Record<string, unknown>>(facts.taxLots)
+  const unemploymentRecords = asArray<Record<string, unknown>>(
+    facts.unemploymentRecords
+  )
+  const socialSecurityRecords = asArray<Record<string, unknown>>(
+    facts.socialSecurityRecords
+  )
+
+  const eciWages = w2Records.reduce(
+    (sum, record) => sum + toNum(record.box1Wages),
+    0
+  )
+  const eciBusinessIncome = businessRecords.reduce((sum, record) => {
+    const entityType = toStr(record.entityType)
+    const isScheduleCRecord =
+      entityType === 'schedule_c' ||
+      (!entityType &&
+        (record.income != null ||
+          record.businessDescription != null ||
+          record.principalBusinessCode != null))
+    if (!isScheduleCRecord) return sum
+    if (record.netBusinessIncome != null) {
+      return sum + toNum(record.netBusinessIncome)
+    }
+    const incomeRecord = asRecord(record.income)
+    const expenseRecord = asRecord(record.expenses)
+    const income =
+      toNum(record.grossReceipts) +
+      toNum(record.otherIncome) +
+      toNum(incomeRecord.grossReceipts) +
+      toNum(incomeRecord.otherIncome)
+    const expenses =
+      toNum(record.totalExpenses) +
+      toNum(record.cogs) +
+      toNum(record.homeOfficeDeduction) +
+      Object.values(expenseRecord).reduce<number>(
+        (total, value) => total + toNum(value),
+        0
+      )
+    return sum + Math.max(0, income - expenses)
+  }, 0)
+  const eciPartnershipIncome = businessRecords.reduce((sum, record) => {
+    const entityType = toStr(record.entityType)
+    const isK1Record =
+      entityType === 'k1_entity' ||
+      (!entityType &&
+        (record.k1Box1 != null ||
+          record.ordinaryIncome != null ||
+          record.guaranteedPayments != null))
+    if (!isK1Record) return sum
+    return (
+      sum +
+      toNum(record.ordinaryIncome) +
+      toNum(record.rentalIncome) +
+      toNum(record.guaranteedPayments)
+    )
+  }, 0)
+  const eciRentalIncome = rentalProperties.reduce(
+    (sum, property) => sum + toNum(property.netIncomeLoss),
+    0
+  )
+  const taxLotNetCapitalGain = taxLots.reduce(
+    (sum, lot) => sum + (toNum(lot.proceeds) - toNum(lot.costBasis)),
+    0
+  )
+  const form1099BNetCapitalGain = form1099Records.reduce((sum, record) => {
+    const type = toStr(record.type).toUpperCase().replace('-', '')
+    if (type !== '1099B' && type !== 'B') return sum
+    const shortTermGain =
+      toNum(record.shortTermProceeds) - toNum(record.shortTermCostBasis)
+    const longTermGain =
+      toNum(record.longTermProceeds) - toNum(record.longTermCostBasis)
+    return sum + shortTermGain + longTermGain
+  }, 0)
+  const eciCapitalGains =
+    form1099BNetCapitalGain !== 0 ? form1099BNetCapitalGain : taxLotNetCapitalGain
+
+  const fdapIncome = {
+    dividends: 0,
+    interest: 0,
+    rents: 0,
+    royalties: 0,
+    gambling: 0,
+    socialSecurity: 0,
+    capitalGains: 0,
+    otherIncome: 0
+  }
+
+  if (scheduleNecItems.length > 0) {
+    for (const item of scheduleNecItems) {
+      const category = classifyScheduleNecIncomeType(item.incomeType)
+      fdapIncome[category] += toNum(item.grossAmount)
+    }
+  } else {
+    for (const record of form1099Records) {
+      const type = toStr(record.type).toUpperCase().replace('-', '')
+      if (type === '1099DIV' || type === 'DIV') {
+        fdapIncome.dividends += toNum(
+          record.ordinaryDividends ?? record.dividends ?? record.amount
+        )
+      } else if (type === '1099INT' || type === 'INT') {
+        fdapIncome.interest += toNum(record.amount)
+      } else if (type === '1099SSA' || type === 'SSA') {
+        fdapIncome.socialSecurity += toNum(record.amount)
+      } else if (type === '1099MISC' || type === 'MISC') {
+        const notes = toStr(record.notes).toLowerCase()
+        if (notes.includes('royalt')) {
+          fdapIncome.royalties += toNum(record.amount)
+        } else if (notes.includes('rent')) {
+          fdapIncome.rents += toNum(record.amount)
+        } else {
+          fdapIncome.otherIncome += toNum(record.amount)
+        }
+      }
+    }
+  }
+
+  const firstTreatyClaim = treatyClaims[0] ?? {}
+  const nrItemized =
+    Object.keys(asRecord(scheduleOi.itemizedDeductions)).length > 0
+      ? asRecord(scheduleOi.itemizedDeductions)
+      : scheduleOi
+  const itemizedDeductions = {
+    stateTaxes:
+      toNum(nrItemized.stateTaxes) ||
+      toNum(nrItemized.stateAndLocalTaxes) ||
+      toNum(rawItemizedDeductions?.stateAndLocalTaxes) +
+        toNum(rawItemizedDeductions?.stateAndLocalRealEstateTaxes) +
+        toNum(rawItemizedDeductions?.stateAndLocalPropertyTaxes),
+    charitableContributions:
+      toNum(nrItemized.charitableContributions) ||
+      toNum(rawItemizedDeductions?.charityCashCheck) +
+        toNum(rawItemizedDeductions?.charityOther),
+    casualtyLosses:
+      toNum(nrItemized.casualtyLosses) ||
+      toNum(rawItemizedDeductions?.casualtyLosses),
+    otherDeductions:
+      toNum(nrItemized.otherDeductions) ||
+      toNum(rawItemizedDeductions?.otherDeductions)
+  }
+
+  const totalWithholding =
+    w2Records.reduce((sum, record) => sum + toNum(record.box2FederalWithheld), 0) +
+    form1099Records.reduce(
+      (sum, record) =>
+        sum + toNum(record.federalWithheld ?? record.federalTaxWithheld),
+      0
+    ) +
+    unemploymentRecords.reduce(
+      (sum, record) => sum + toNum(record.federalWithheld),
+      0
+    ) +
+    socialSecurityRecords.reduce(
+      (sum, record) => sum + toNum(record.federalWithheld),
+      0
+    )
+
+  return {
+    nonresidentInfo: {
+      countryOfCitizenship: toStr(
+        nonresidentProfile.countryOfCitizenship ??
+          scheduleOi.countryOfCitizenship ??
+          scheduleOi.countryOfResidence
+      ),
+      countryOfResidence: toStr(
+        scheduleOi.countryOfResidence ??
+          scheduleOi.countryOfTaxResidence ??
+          nonresidentProfile.countryOfCitizenship
+      ),
+      visaType: normalizeVisaStatus(
+        nonresidentProfile.visaType ?? scheduleOi.visaType
+      ),
+      dateEnteredUS: toDate(
+        scheduleOi.dateEnteredUS ??
+          scheduleOi.firstDateEnteredUS ??
+          nonresidentProfile.dateEnteredUS
+      ),
+      daysInUSThisYear: toNum(nonresidentProfile.daysInUS2024),
+      daysInUSPriorYear: toNum(nonresidentProfile.daysInUS2023),
+      daysInUS2YearsPrior: toNum(nonresidentProfile.daysInUS2022),
+      claimsTaxTreaty: toBool(
+        nonresidentProfile.hasTreaty ?? treatyClaims.length > 0
+      ),
+      treatyCountry: toStr(
+        nonresidentProfile.treatyCountry ??
+          firstTreatyClaim.country ??
+          scheduleOi.treatyCountry
+      ),
+      treatyArticle: toStr(
+        nonresidentProfile.treatyArticle ??
+          firstTreatyClaim.articleNumber ??
+          scheduleOi.treatyArticle
+      ),
+      treatyBenefitAmount: toNum(
+        scheduleOi.treatyBenefitAmount ??
+          scheduleOi.treatyExemptAmount ??
+          firstTreatyClaim.exemptAmount
+      ),
+      reducedTreatyRate: toNum(
+        scheduleOi.reducedTreatyRate ?? scheduleOi.treatyRate
+      ),
+      hasEffectivelyConnectedIncome:
+        eciWages +
+          eciBusinessIncome +
+          eciPartnershipIncome +
+          eciRentalIncome +
+          eciCapitalGains >
+        0,
+      hasFDAPIncome: Object.values(fdapIncome).some((amount) => amount > 0),
+      fdapIncome
+    },
+    effectivelyConnectedIncome: {
+      wages: eciWages,
+      businessIncome: eciBusinessIncome,
+      scholarshipIncome: toNum(scheduleOi.scholarshipIncome),
+      treatyExemptScholarship: toNum(
+        scheduleOi.treatyExemptScholarship ?? scheduleOi.scholarshipTreatyExempt
+      ),
+      capitalGains: eciCapitalGains,
+      rentalIncome: eciRentalIncome,
+      partnershipIncome: eciPartnershipIncome,
+      otherIncome: toNum(
+        scheduleOi.otherEffectivelyConnectedIncome ??
+          scheduleOi.otherEciIncome ??
+          scheduleOi.otherIncome
+      )
+    },
+    itemizedDeductions,
+    taxWithheld:
+      toNum(scheduleOi.taxWithheld) ||
+      toNum(asRecord(facts.incomeSummary).totalW2Withholding) +
+        toNum(asRecord(facts.incomeSummary).total1099FederalWithholding) +
+        totalWithholding,
+    estimatedTaxPayments: toNum(
+      scheduleOi.estimatedTaxPayments ?? facts.estimatedTaxPayments
+    )
+  }
+}
+
+const buildInvestmentAssets = (facts: FactsRecord): Asset<Date>[] => {
+  const taxLotAssets = asArray<Record<string, unknown>>(facts.taxLots).flatMap(
+    (lot, index) => {
+      const proceeds = toNum(lot.proceeds)
+      const costBasis = toNum(lot.costBasis)
+      if (proceeds === 0 && costBasis === 0) return []
+      return [
+        {
+          name: toStr(lot.asset ?? lot.security ?? `Tax lot ${index + 1}`),
+          positionType: 'Security',
+          openDate: toDate(lot.acquisitionDate ?? lot.acquired),
+          closeDate: toDate(lot.saleDate ?? lot.sold),
+          openPrice: costBasis,
+          openFee: 0,
+          closePrice: proceeds,
+          closeFee: 0,
+          quantity: 1
+        } satisfies Asset<Date>
+      ]
+    }
+  )
+
+  const brokerAssets = asArray<Record<string, unknown>>(facts.form1099Records).flatMap(
+    (record, recordIndex) => {
+      const type = toStr(record.type).toUpperCase().replace('-', '')
+      if (type !== '1099B' && type !== 'B') return []
+
+      const transactions = asArray<Record<string, unknown>>(
+        record.transactions ?? asRecord(record.amounts).transactions
+      )
+
+      const syntheticDatesForTerm = (term: 'short' | 'long' | 'unknown') => {
+        const saleDate = new Date('2025-12-31')
+        const acquisitionDate =
+          term === 'long' ? new Date('2024-01-01') : new Date('2025-01-01')
+        return { acquisitionDate, saleDate }
+      }
+
+      const transactionAssets = transactions.flatMap((transaction, txIndex) => {
+        const proceeds = toNum(transaction.proceeds)
+        const costBasis = toNum(
+          transaction.costBasis ?? transaction.basis ?? transaction.cost
+        )
+        if (proceeds === 0 && costBasis === 0) return []
+        const term = parse1099BTerm(
+          transaction.term ??
+            transaction.shortTermLongTerm ??
+            transaction.holdingPeriod
+        )
+        const dates = syntheticDatesForTerm(term)
+        return [
+          {
+            name: toStr(
+              transaction.description ??
+                transaction.security ??
+                `${toStr(record.payer) || '1099-B'} transaction ${txIndex + 1}`
+            ),
+            positionType: 'Security',
+            openDate: transaction.dateAcquired
+              ? toDate(transaction.dateAcquired)
+              : dates.acquisitionDate,
+            closeDate: transaction.dateSold
+              ? toDate(transaction.dateSold)
+              : dates.saleDate,
+            openPrice: costBasis,
+            openFee: 0,
+            closePrice: proceeds,
+            closeFee: 0,
+            quantity: 1
+          } satisfies Asset<Date>
+        ]
+      })
+
+      if (transactionAssets.length > 0) {
+        return transactionAssets
+      }
+
+      const summaryRows = [
+        {
+          label: 'short-term',
+          proceeds: toNum(
+            record.shortTermProceeds ?? asRecord(record.amounts).shortTermProceeds
+          ),
+          costBasis: toNum(
+            record.shortTermCostBasis ??
+              asRecord(record.amounts).shortTermCostBasis
+          ),
+          term: 'short' as const
+        },
+        {
+          label: 'long-term',
+          proceeds: toNum(
+            record.longTermProceeds ?? asRecord(record.amounts).longTermProceeds
+          ),
+          costBasis: toNum(
+            record.longTermCostBasis ?? asRecord(record.amounts).longTermCostBasis
+          ),
+          term: 'long' as const
+        }
+      ]
+
+      return summaryRows.flatMap((row) => {
+        if (row.proceeds === 0 && row.costBasis === 0) return []
+        const dates = syntheticDatesForTerm(row.term)
+        return [
+          {
+            name: `${toStr(record.payer) || `1099-B ${recordIndex + 1}`} ${row.label}`,
+            positionType: 'Security',
+            openDate: dates.acquisitionDate,
+            closeDate: dates.saleDate,
+            openPrice: row.costBasis,
+            openFee: 0,
+            closePrice: row.proceeds,
+            closeFee: 0,
+            quantity: 1
+          } satisfies Asset<Date>
+        ]
+      })
+    }
+  )
+
+  return [...taxLotAssets, ...brokerAssets]
+}
+
 // ─── Filing status mapping ───────────────────────────────────────────────────
 
 const mapFilingStatus = (status: string): FilingStatus => {
@@ -240,7 +780,8 @@ const adapt1099s = (facts: FactsRecord): Supported1099[] => {
     const type = toStr(r.type).toUpperCase().replace('-', '')
     const payer = toStr(r.payer)
     const amount = toNum(r.amount)
-    const personRole = PersonRole.PRIMARY
+    const personRole = resolvePersonRole(r.owner ?? r.personRole)
+    const amounts = asRecord(r.amounts)
 
     switch (type) {
       case 'INT':
@@ -255,33 +796,95 @@ const adapt1099s = (facts: FactsRecord): Supported1099[] => {
         ]
       case 'DIV':
       case '1099DIV':
+        {
+          const dividends = toNum(
+            r.ordinaryDividends ?? r.dividends ?? amounts.ordinaryDividends ?? amount
+          )
+          const qualifiedDividends = toNum(
+            r.qualifiedDividends ?? amounts.qualifiedDividends
+          )
+          const totalCapitalGainsDistributions = toNum(
+            r.totalCapitalGainsDistributions ??
+              r.capitalGainDistributions ??
+              amounts.totalCapitalGainsDistributions ??
+              amounts.capitalGainDistributions
+          )
+          const section199ADividends = toNum(
+            r.section199ADividends ?? amounts.section199ADividends
+          )
         return [
           {
             payer,
             type: Income1099Type.DIV,
             form: {
-              dividends: amount,
-              qualifiedDividends: 0,
-              totalCapitalGainsDistributions: 0
+              dividends,
+              qualifiedDividends,
+              totalCapitalGainsDistributions,
+              section199ADividends:
+                section199ADividends > 0 ? section199ADividends : undefined
             } as F1099DivData,
             personRole
           }
         ]
+        }
       case 'B':
       case '1099B':
+        {
+          const transactions = asArray<Record<string, unknown>>(
+            r.transactions ?? amounts.transactions
+          ).map((transaction) => ({
+            term: parse1099BTerm(
+              transaction.term ??
+                transaction.shortTermLongTerm ??
+                transaction.holdingPeriod
+            ),
+            proceeds: toNum(transaction.proceeds),
+            costBasis: toNum(
+              transaction.costBasis ?? transaction.basis ?? transaction.cost
+            )
+          }))
+          const shortTermProceeds =
+            transactions
+              .filter((transaction) => transaction.term === 'short')
+              .reduce((sum, transaction) => sum + transaction.proceeds, 0) ||
+            toNum(
+              r.shortTermProceeds ??
+                amounts.shortTermProceeds ??
+                (parse1099BTerm(r.term) === 'short' ? amount : 0)
+            )
+          const shortTermCostBasis =
+            transactions
+              .filter((transaction) => transaction.term === 'short')
+              .reduce((sum, transaction) => sum + transaction.costBasis, 0) ||
+            toNum(r.shortTermCostBasis ?? amounts.shortTermCostBasis)
+          const longTermProceeds =
+            transactions
+              .filter((transaction) => transaction.term === 'long')
+              .reduce((sum, transaction) => sum + transaction.proceeds, 0) ||
+            toNum(
+              r.longTermProceeds ??
+                amounts.longTermProceeds ??
+                (parse1099BTerm(r.term) !== 'short' ? amount : 0)
+            )
+          const longTermCostBasis =
+            transactions
+              .filter((transaction) => transaction.term === 'long')
+              .reduce((sum, transaction) => sum + transaction.costBasis, 0) ||
+            toNum(r.longTermCostBasis ?? amounts.longTermCostBasis)
         return [
           {
             payer,
             type: Income1099Type.B,
             form: {
-              shortTermProceeds: 0,
-              shortTermCostBasis: 0,
-              longTermProceeds: amount,
-              longTermCostBasis: 0
+              shortTermProceeds,
+              shortTermCostBasis,
+              longTermProceeds,
+              longTermCostBasis
             } as F1099BData,
             personRole
           }
         ]
+        }
       case 'R':
       case '1099R':
         return [
@@ -680,35 +1283,30 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
 
   // Adapt itemized deductions (Schedule A — SALT, mortgage interest, charity, etc.)
   // SALT cap ($40,000 for TY2025, $20,000 MFS) is enforced by the engine via ScheduleA.ts
+  const rawItemizedDeductions = buildRawItemizedDeductions(facts)
   const itemizedDeductions: ItemizedDeductions | undefined = (() => {
-    const d = asRecord(facts.itemizedDeductions)
-    if (!d || Object.keys(d).length === 0) return undefined
+    if (!rawItemizedDeductions) return undefined
     return {
-      medicalAndDental: toNum(d.medicalAndDental ?? d.medicalDental ?? 0),
-      stateAndLocalTaxes: toNum(
-        d.stateAndLocalTaxes ?? d.stateLocalIncomeTax ?? d.stateTax ?? 0
-      ),
-      isSalesTax: toBool(d.isSalesTax ?? false),
-      stateAndLocalRealEstateTaxes: toNum(
-        d.stateAndLocalRealEstateTaxes ??
-          d.realEstateTaxes ??
-          d.propertyTaxes ??
-          0
-      ),
-      stateAndLocalPropertyTaxes: toNum(
-        d.stateAndLocalPropertyTaxes ?? d.personalPropertyTaxes ?? 0
-      ),
-      interest8a: toNum(d.interest8a ?? d.mortgageInterest ?? 0),
-      interest8b: toNum(d.interest8b ?? 0),
-      interest8c: toNum(d.interest8c ?? 0),
-      interest8d: toNum(d.interest8d ?? 0),
-      investmentInterest: toNum(d.investmentInterest ?? 0),
-      charityCashCheck: toNum(
-        d.charityCashCheck ?? d.charityCash ?? d.charitableContributions ?? 0
-      ),
-      charityOther: toNum(d.charityOther ?? d.charityNonCash ?? 0)
+      medicalAndDental: rawItemizedDeductions.medicalAndDental,
+      stateAndLocalTaxes: rawItemizedDeductions.stateAndLocalTaxes,
+      isSalesTax: rawItemizedDeductions.isSalesTax,
+      stateAndLocalRealEstateTaxes:
+        rawItemizedDeductions.stateAndLocalRealEstateTaxes,
+      stateAndLocalPropertyTaxes:
+        rawItemizedDeductions.stateAndLocalPropertyTaxes,
+      interest8a: rawItemizedDeductions.interest8a,
+      interest8b: rawItemizedDeductions.interest8b,
+      interest8c: rawItemizedDeductions.interest8c,
+      interest8d: rawItemizedDeductions.interest8d,
+      investmentInterest: rawItemizedDeductions.investmentInterest,
+      charityCashCheck: rawItemizedDeductions.charityCashCheck,
+      charityOther: rawItemizedDeductions.charityOther
     }
   })()
+  const nonresidentAlienReturn = buildNonresidentAlienReturn(
+    facts,
+    rawItemizedDeductions
+  )
 
   // Adapt Schedule C businesses
   // If explicit businessRecords exist, use them; otherwise synthesize from 1099-NEC records
@@ -1492,7 +2090,8 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     passiveActivityLossAllowance:
       toNum(facts.passiveActivityLossAllowance) > 0
         ? toNum(facts.passiveActivityLossAllowance)
-        : undefined
+        : undefined,
+    nonresidentAlienReturn
   }
 
   return info
@@ -2163,8 +2762,16 @@ export class TaxCalculationService {
   /** Individual (1040-family) tax calculation with optional state returns */
   calculate(facts: FactsRecord): TaxCalcOutcome {
     try {
-      const info = adaptFactsToInformation(facts)
-      const assets: Asset<Date>[] = []
+      const detailedAssets = buildInvestmentAssets(facts)
+      const rawInfo = adaptFactsToInformation(facts)
+      const info: Information = {
+        ...rawInfo,
+        f1099s:
+          detailedAssets.length > 0
+            ? rawInfo.f1099s.filter((entry) => entry.type !== Income1099Type.B)
+            : rawInfo.f1099s
+      }
+      const assets: Asset<Date>[] = detailedAssets
       const result = create1040(info, assets)
 
       if (isLeft(result)) {
@@ -2176,17 +2783,37 @@ export class TaxCalculationService {
 
       if (isRight(result)) {
         const [f1040, schedules] = result.right as [F1040, Form[]]
-        const agi = f1040.l11()
-        const taxableIncome = f1040.l15()
-        const totalTax = f1040.l24()
-        const totalPayments = f1040.l33()
-        const refund = Math.max(0, f1040.l34() ?? 0)
-        const amountOwed = Math.max(0, f1040.l37() ?? 0)
+        const f1040nr =
+          f1040.f1040nr && f1040.f1040nr.isNeeded() ? f1040.f1040nr : undefined
+        const useNonresidentBranch = Boolean(
+          info.nonresidentAlienReturn && f1040nr
+        )
+        const agi = useNonresidentBranch
+          ? f1040nr!.totalEffectivelyConnectedIncome() + f1040nr!.totalFDAPIncome()
+          : f1040.l11()
+        const taxableIncome = useNonresidentBranch
+          ? f1040nr!.taxableIncome()
+          : f1040.l15()
+        const totalTax = useNonresidentBranch ? f1040nr!.totalTax() : f1040.l24()
+        const totalPayments = useNonresidentBranch
+          ? f1040nr!.totalPayments()
+          : f1040.l33()
+        const refund = useNonresidentBranch
+          ? Math.max(0, f1040nr!.refund())
+          : Math.max(0, f1040.l34() ?? 0)
+        const amountOwed = useNonresidentBranch
+          ? Math.max(0, f1040nr!.amountOwed())
+          : Math.max(0, f1040.l37() ?? 0)
         const effectiveTaxRate =
           agi > 0 ? Math.round((totalTax / agi) * 10000) / 10000 : 0
 
         // Compute state returns
         const stateResults = this.computeStateReturns(f1040)
+        const scheduleTags = new Set([
+          f1040.tag,
+          ...schedules.map((s) => s.tag),
+          ...(useNonresidentBranch ? ['f1040nr'] : [])
+        ])
 
         const calcResult: TaxCalcWithStateResult = {
           success: true,
@@ -2200,7 +2827,7 @@ export class TaxCalculationService {
           amountOwed,
           effectiveTaxRate,
           marginalTaxRate: 0,
-          schedules: [f1040.tag, ...schedules.map((s) => s.tag)],
+          schedules: Array.from(scheduleTags),
           stateResults: stateResults.length > 0 ? stateResults : undefined
         }
 
@@ -2406,8 +3033,7 @@ export class TaxCalculationService {
         return {
           success: false,
           errors: [
-            capability.reason ??
-              `Unsupported business form type: ${formType}`
+            capability.reason ?? `Unsupported business form type: ${formType}`
           ]
         }
       }

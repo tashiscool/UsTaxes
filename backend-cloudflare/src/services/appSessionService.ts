@@ -404,7 +404,9 @@ const BUSINESS_RETURN_ARRAY_KEYS = [
 
 const hasAnyBusinessReturnKeys = (data: Record<string, unknown>) =>
   BUSINESS_RETURN_SCALAR_KEYS.some((key) => data[key] != null) ||
-  BUSINESS_RETURN_RECORD_KEYS.some((key) => Object.keys(asRecord(data[key])).length > 0) ||
+  BUSINESS_RETURN_RECORD_KEYS.some(
+    (key) => Object.keys(asRecord(data[key])).length > 0
+  ) ||
   BUSINESS_RETURN_ARRAY_KEYS.some((key) => asArray(data[key]).length > 0)
 
 const mergeNumericFactRecord = (
@@ -521,7 +523,10 @@ const extractBusinessReturnFacts = (
 ): Record<string, unknown> => {
   const extracted: Record<string, unknown> = {}
   for (const data of Object.values(snapshot.screenData ?? {})) {
-    const derivedWorkflowFacts = deriveBusinessEntityWorkflowFacts(snapshot, data)
+    const derivedWorkflowFacts = deriveBusinessEntityWorkflowFacts(
+      snapshot,
+      data
+    )
     if (
       !hasAnyBusinessReturnKeys(data) &&
       Object.keys(derivedWorkflowFacts).length === 0
@@ -1439,38 +1444,187 @@ const get1099Records = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
 ) => {
+  const normalize1099BTransactions = (value: unknown) =>
+    asArray<Record<string, unknown>>(value)
+      .map((transaction) => {
+        const term = toText(
+          transaction.term ??
+            transaction.shortTermLongTerm ??
+            transaction.holdingPeriod
+        ).toLowerCase()
+
+        return {
+          description: toText(transaction.description ?? transaction.security),
+          dateAcquired: toText(
+            transaction.dateAcquired ?? transaction.acquired ?? ''
+          ),
+          dateSold: toText(transaction.dateSold ?? transaction.sold ?? ''),
+          proceeds: toMoney(transaction.proceeds),
+          costBasis: toMoney(
+            transaction.costBasis ?? transaction.basis ?? transaction.cost
+          ),
+          washSaleLossDisallowed: toMoney(
+            transaction.washSaleLossDisallowed ?? transaction.washSale ?? 0
+          ),
+          federalTaxWithheld: toMoney(
+            transaction.federalTaxWithheld ?? transaction.withholding ?? 0
+          ),
+          term:
+            term.startsWith('s')
+              ? 'short'
+              : term.startsWith('l')
+              ? 'long'
+              : 'unknown'
+        }
+      })
+      .filter(
+        (transaction) =>
+          transaction.proceeds > 0 ||
+          transaction.costBasis > 0 ||
+          transaction.washSaleLossDisallowed > 0
+      )
+
+  const build1099Record = (record: Record<string, unknown>) => {
+    const rawAmounts = asRecord(record.amounts)
+    const transactions = normalize1099BTransactions(
+      record.transactions ?? rawAmounts.transactions
+    )
+    const type = toText(record.type)
+    const normalizedType = type.toUpperCase()
+    const shortTermProceeds =
+      transactions
+        .filter((transaction) => transaction.term === 'short')
+        .reduce((sum, transaction) => sum + transaction.proceeds, 0) ||
+      toMoney(rawAmounts.shortTermProceeds ?? record.shortTermProceeds)
+    const shortTermCostBasis =
+      transactions
+        .filter((transaction) => transaction.term === 'short')
+        .reduce((sum, transaction) => sum + transaction.costBasis, 0) ||
+      toMoney(
+        rawAmounts.shortTermCostBasis ??
+          record.shortTermCostBasis ??
+          rawAmounts.shortTermBasis
+      )
+    const longTermProceeds =
+      transactions
+        .filter((transaction) => transaction.term === 'long')
+        .reduce((sum, transaction) => sum + transaction.proceeds, 0) ||
+      toMoney(rawAmounts.longTermProceeds ?? record.longTermProceeds)
+    const longTermCostBasis =
+      transactions
+        .filter((transaction) => transaction.term === 'long')
+        .reduce((sum, transaction) => sum + transaction.costBasis, 0) ||
+      toMoney(
+        rawAmounts.longTermCostBasis ??
+          record.longTermCostBasis ??
+          rawAmounts.longTermBasis
+      )
+    const ordinaryDividends = toMoney(
+      rawAmounts.ordinaryDividends ??
+        rawAmounts.dividends ??
+        rawAmounts.amount ??
+        record.ordinaryDividends ??
+        record.dividends ??
+        record.amount
+    )
+    const qualifiedDividends = toMoney(
+      rawAmounts.qualifiedDividends ??
+        record.qualifiedDividends ??
+        record.box1b
+    )
+    const capitalGainDistributions = toMoney(
+      rawAmounts.capitalGainDistributions ??
+        rawAmounts.totalCapitalGainsDistributions ??
+        record.capitalGainDistributions ??
+        record.totalCapitalGainsDistributions ??
+        record.box2a
+    )
+    const section199ADividends = toMoney(
+      rawAmounts.section199ADividends ??
+        record.section199ADividends ??
+        record.box5
+    )
+    const scalarAmount = toMoney(rawAmounts.amount ?? record.amount)
+    const amount =
+      normalizedType === '1099-DIV' || normalizedType === 'DIV'
+        ? ordinaryDividends
+        : normalizedType === '1099-B' || normalizedType === 'B'
+        ? shortTermProceeds + longTermProceeds || scalarAmount
+        : scalarAmount
+    // 1099-B gross proceeds are useful for detail review, but they should not
+    // inflate generic "total 1099 income" summaries that are meant to reflect
+    // income-like amounts rather than brokerage turnover.
+    const summaryAmount =
+      normalizedType === '1099-B' || normalizedType === 'B' ? 0 : amount
+
+    return {
+      id: toText(record.id) || crypto.randomUUID(),
+      type,
+      payer: toText(record.payer ?? record.payerName),
+      amount,
+      summaryAmount,
+      federalWithheld: toMoney(
+        record.federalWithheld ??
+          rawAmounts.federalWithheld ??
+          record.federalTaxWithheld
+      ),
+      stateWithheld: toMoney(
+        record.stateWithheld ??
+          rawAmounts.stateWithheld ??
+          record.stateTaxWithheld
+      ),
+      notes: toText(record.notes),
+      owner: toText(record.owner) || 'taxpayer',
+      qualifiedDividends,
+      capitalGainDistributions,
+      section199ADividends,
+      shortTermProceeds,
+      shortTermCostBasis,
+      longTermProceeds,
+      longTermCostBasis,
+      transactions,
+      isComplete: Boolean(
+        (record.type || record.payer || record.payerName) &&
+          ((normalizedType === '1099-B' || normalizedType === 'B'
+            ? shortTermProceeds + longTermProceeds
+            : amount) ||
+            record.federalWithheld ||
+            record.stateWithheld)
+      )
+    }
+  }
+
   const screen1099 = asArray<Record<string, unknown>>(
     requireScreen(snapshot, '/1099').records
-  ).map((record) => ({
-    id: toText(record.id) || crypto.randomUUID(),
-    type: toText(record.type),
-    payer: toText(record.payer),
-    amount: toMoney(record.amount),
-    federalWithheld: toMoney(record.federalWithheld),
-    stateWithheld: toMoney(record.stateWithheld),
-    notes: toText(record.notes),
-    isComplete: Boolean(record.type && record.payer && record.amount)
-  }))
+  ).map(build1099Record)
 
   const entity1099 = entities
     .filter((entity) => FORM_1099_TYPES.has(entity.entityType))
-    .map((entity) => ({
-      id: entity.id,
-      type: entity.entityType.replace('_', '-').toUpperCase(),
-      payer: toText(entity.data.payerName ?? entity.data.payer),
-      amount: toMoney(
-        asRecord(entity.data.amounts).amount ?? entity.data.amount
-      ),
-      federalWithheld: toMoney(entity.data.federalWithheld),
-      stateWithheld: toMoney(entity.data.stateWithheld),
-      notes: toText(entity.data.notes),
-      isComplete: Boolean(
-        (entity.data.payerName ?? entity.data.payer) &&
-          (asRecord(entity.data.amounts).amount ??
-            entity.data.amount ??
-            entity.data.federalWithheld)
-      )
-    }))
+    .map((entity) =>
+      build1099Record({
+        id: entity.id,
+        type: entity.entityType.replace('_', '-').toUpperCase(),
+        payer: entity.data.payerName ?? entity.data.payer,
+        payerName: entity.data.payerName,
+        amounts: entity.data.amounts,
+        amount: entity.data.amount,
+        federalWithheld:
+          entity.data.federalWithheld ?? entity.data.federalTaxWithheld,
+        stateWithheld: entity.data.stateWithheld,
+        notes: entity.data.notes,
+        owner: entity.data.owner,
+        qualifiedDividends: entity.data.qualifiedDividends,
+        capitalGainDistributions:
+          entity.data.capitalGainDistributions ??
+          entity.data.totalCapitalGainsDistributions,
+        section199ADividends: entity.data.section199ADividends,
+        shortTermProceeds: entity.data.shortTermProceeds,
+        shortTermCostBasis: entity.data.shortTermCostBasis,
+        longTermProceeds: entity.data.longTermProceeds,
+        longTermCostBasis: entity.data.longTermCostBasis,
+        transactions: entity.data.transactions
+      })
+    )
 
   return mergeCollectionById(screen1099, entity1099)
 }
@@ -2223,7 +2377,7 @@ const getIncomeSummary = (
 ) => {
   const totalsByType = form1099Records.reduce<Record<string, number>>(
     (acc, record) => {
-      acc[record.type] = (acc[record.type] ?? 0) + record.amount
+      acc[record.type] = (acc[record.type] ?? 0) + record.summaryAmount
       return acc
     },
     {}
@@ -2240,7 +2394,7 @@ const getIncomeSummary = (
     form1099Count: form1099Records.length,
     form1099CompleteCount: countCompleted(form1099Records),
     total1099Amount: form1099Records.reduce(
-      (sum, record) => sum + record.amount,
+      (sum, record) => sum + record.summaryAmount,
       0
     ),
     total1099FederalWithholding: form1099Records.reduce(
@@ -2524,6 +2678,121 @@ const getNoncashContributions = (
   }
 }
 
+const getItemizedDeductions = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[],
+  noncashContributions?: Record<string, unknown>
+) => {
+  const entity =
+    entities.find((item) => item.entityType === 'itemized_deductions') ??
+    entities.find((item) => item.entityType === 'schedule_a')
+  const entityData = asRecord(entity?.data)
+  const screenCandidates = [
+    requireScreen(snapshot, '/deductions'),
+    requireScreen(snapshot, '/schedule-a'),
+    asRecord(requireScreen(snapshot, '/your-taxes').itemizedDeductions)
+  ]
+  const screenData =
+    screenCandidates.find((candidate) => Object.keys(candidate).length > 0) ??
+    {}
+  const nestedScreenForm = asRecord(screenData.form)
+  const source =
+    Object.keys(entityData).length > 0
+      ? entityData
+      : Object.keys(nestedScreenForm).length > 0
+      ? { ...screenData, ...nestedScreenForm }
+      : screenData
+
+  const noncashTotal = (() => {
+    const contributions = asRecord(noncashContributions)
+    const buckets = [
+      ...asArray<Record<string, unknown>>(contributions.sectionADonations),
+      ...asArray<Record<string, unknown>>(contributions.sectionBDonations),
+      ...asArray<Record<string, unknown>>(contributions.vehicleDonations)
+    ]
+    return buckets.reduce((sum, item) => {
+      const deduction = toMoney(item.deductionClaimed)
+      const fallback = toMoney(item.fairMarketValue)
+      return sum + (deduction || fallback)
+    }, 0)
+  })()
+
+  const deductions = {
+    medicalAndDental: toMoney(
+      source.medicalAndDental ??
+        source.medicalDental ??
+        source.medicalExpenses ??
+        source.unreimbursedMedical
+    ),
+    stateAndLocalTaxes: toMoney(
+      source.stateAndLocalTaxes ??
+        source.stateLocalIncomeTax ??
+        source.stateTaxes ??
+        source.stateTax ??
+        source.stateIncomeTaxes ??
+        source.salesTaxes
+    ),
+    isSalesTax: Boolean(
+      source.isSalesTax ?? source.useSalesTax ?? source.salesTaxElection
+    ),
+    stateAndLocalRealEstateTaxes: toMoney(
+      source.stateAndLocalRealEstateTaxes ??
+        source.realEstateTaxes ??
+        source.propertyTaxesRealEstate
+    ),
+    stateAndLocalPropertyTaxes: toMoney(
+      source.stateAndLocalPropertyTaxes ??
+        source.personalPropertyTaxes ??
+        source.vehiclePropertyTaxes
+    ),
+    interest8a: toMoney(
+      source.interest8a ??
+        source.mortgageInterest ??
+        source.homeMortgageInterest ??
+        source.mortgageInterestReported
+    ),
+    interest8b: toMoney(
+      source.interest8b ?? source.pointsNotReported ?? source.points
+    ),
+    interest8c: toMoney(
+      source.interest8c ??
+        source.mortgageInsurancePremiums ??
+        source.homeEquityInterest
+    ),
+    interest8d: toMoney(source.interest8d),
+    investmentInterest: toMoney(
+      source.investmentInterest ?? source.marginInterest
+    ),
+    charityCashCheck: toMoney(
+      source.charityCashCheck ??
+        source.charityCash ??
+        source.cashContributions ??
+        source.charitableContributionsCash
+    ),
+    charityOther: Math.max(
+      toMoney(
+        source.charityOther ??
+          source.charityNonCash ??
+          source.noncashContributionsTotal ??
+          source.charitableContributionsNoncash
+      ),
+      noncashTotal
+    ),
+    casualtyLosses: toMoney(source.casualtyLosses),
+    otherDeductions: toMoney(
+      source.otherDeductions ?? source.miscellaneousDeductions
+    )
+  }
+
+  const hasAnyValue =
+    deductions.isSalesTax ||
+    Object.entries(deductions).some(
+      ([key, value]) => key !== 'isSalesTax' && typeof value === 'number' && value > 0
+    )
+
+  return hasAnyValue ? deductions : undefined
+}
+
 const toFacts = (
   row: FilingSessionRow,
   snapshot: FilingSessionSnapshot,
@@ -2620,9 +2889,16 @@ const toFacts = (
   const amtCreditData = getAmtCreditData(snapshot, entities)
   // Form 8283 — noncash charitable contributions
   const noncashContributions = getNoncashContributions(snapshot, entities)
+  const itemizedDeductions = getItemizedDeductions(
+    snapshot,
+    entities,
+    noncashContributions
+  )
   // Schedule R — Credit for Elderly or Disabled
   const scheduleRData = getScheduleRData(snapshot, entities)
   const businessReturnFacts = extractBusinessReturnFacts(snapshot)
+  const scheduleNecState = asRecord(intlAdvancedData.scheduleNec)
+  const scheduleOiState = asRecord(intlAdvancedData.scheduleOi)
 
   return {
     ...businessReturnFacts,
@@ -2652,6 +2928,11 @@ const toFacts = (
     businessSummary,
     rentalSummary,
     foreignSummary,
+    itemizedDeductions,
+    nonresidentScheduleNecItems: asArray<Record<string, unknown>>(
+      scheduleNecState.items
+    ),
+    nonresidentScheduleOi: scheduleOiState,
     creditSummary: creditSummary.summary,
     // OBBBA 2025 fields
     overtimeIncome: obbbaData.overtimeIncome,
@@ -3029,20 +3310,19 @@ const buildChecklist = (
             ? 'complete'
             : 'in_progress'
           : buildStatusFromCollection(businessRecords, true),
-        sublabel:
-          businessReturnCapability
-            ? businessReturnCapability.supportLevel === 'expert_required'
-              ? businessReturnCapability.smallNonprofitHint
-                ? 'Expert-required: this nonprofit may qualify for 990-N, but Form 990 self-service is not available here yet'
-                : 'Expert-required: Form 990 self-service is not available in the production backend'
-              : businessReturnCapability.hasMinimumData
-              ? `${snapshot.formType} entity return facts are ready for calculation`
-              : `${snapshot.formType} is supported, but core entity return facts are still missing`
-            : businessRecords.length > 0
-            ? `${countCompleted(businessRecords)}/${
-                businessRecords.length
-              } businesses complete`
-            : undefined,
+        sublabel: businessReturnCapability
+          ? businessReturnCapability.supportLevel === 'expert_required'
+            ? businessReturnCapability.smallNonprofitHint
+              ? 'Expert-required: this nonprofit may qualify for 990-N, but Form 990 self-service is not available here yet'
+              : 'Expert-required: Form 990 self-service is not available in the production backend'
+            : businessReturnCapability.hasMinimumData
+            ? `${snapshot.formType} entity return facts are ready for calculation`
+            : `${snapshot.formType} is supported, but core entity return facts are still missing`
+          : businessRecords.length > 0
+          ? `${countCompleted(businessRecords)}/${
+              businessRecords.length
+            } businesses complete`
+          : undefined,
         warnings: findings
           .filter(
             (finding) =>
@@ -3220,7 +3500,7 @@ const buildChecklist = (
               | Record<string, unknown>
               | undefined
           )?.filingPathTreeCollapsed
-      ) || false
+        ) || false
     },
     businessReturnCapability: businessReturnCapability ?? undefined
   }
@@ -3308,8 +3588,7 @@ const buildReview = (
                 value:
                   businessReturnCapability.readiness === 'ready'
                     ? 'Ready for calculation'
-                    : businessReturnCapability.readiness ===
-                      'expert_required'
+                    : businessReturnCapability.readiness === 'expert_required'
                     ? 'Handled by expert workflow'
                     : 'Missing required entity facts',
                 editPath:
@@ -3335,8 +3614,7 @@ const buildReview = (
             warnings: findings
               .filter(
                 (finding) =>
-                  finding.code ===
-                    'BUSINESS-ENTITY-RETURN-INCOMPLETE' ||
+                  finding.code === 'BUSINESS-ENTITY-RETURN-INCOMPLETE' ||
                   finding.code === 'BUSINESS-FORM-EXPERT-REQUIRED'
               )
               .map((finding) => ({
@@ -4014,7 +4292,9 @@ const toFindingRows = (
       code: 'BUSINESS-ENTITY-RETURN-INCOMPLETE',
       severity: 'error',
       title: `Finish ${snapshot.formType} entity return details`,
-      message: `Your ${snapshot.formType} return is missing required facts: ${businessReturnCapability.missingInputs.join(
+      message: `Your ${
+        snapshot.formType
+      } return is missing required facts: ${businessReturnCapability.missingInputs.join(
         ', '
       )}.`,
       fix_path: '/business-entity',
@@ -4701,7 +4981,9 @@ export class AppSessionService {
     ) {
       throw new HttpError(
         422,
-        `${snapshot.formType} is missing required entity-return facts: ${businessReturnCapability.missingInputs.join(
+        `${
+          snapshot.formType
+        } is missing required entity-return facts: ${businessReturnCapability.missingInputs.join(
           ', '
         )}`
       )

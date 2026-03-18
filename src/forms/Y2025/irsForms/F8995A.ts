@@ -41,6 +41,25 @@ export default class F8995A extends F8995 {
       { qbi: 0, w2Wages: 0, ubia: 0, patronReduction: 0 }
     )
 
+  overflowStatementEntries = (): Array<
+    ReturnType<F8995['qbiEntries']>[number] & {
+      deductionBeforePatronReduction: number
+      deductionAfterPatronReduction: number
+    }
+  > =>
+    this.overflowEntries().map((entry) => ({
+      ...entry,
+      deductionBeforePatronReduction: this.deductionForEntry(entry),
+      deductionAfterPatronReduction: this.deductionAfterPatronReduction(entry)
+    }))
+
+  overflowStatementDeduction = (): number =>
+    sumFields(
+      this.overflowStatementEntries().map(
+        (entry) => entry.deductionAfterPatronReduction
+      )
+    )
+
   deductionForEntry = (
     entry: ReturnType<F8995['qbiEntries']>[number]
   ): number => {

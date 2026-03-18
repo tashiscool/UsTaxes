@@ -208,6 +208,9 @@ export default class ScheduleE extends F1040Attachment {
 
   l26 = (): number => sumFields([this.l24(), this.l25()])
 
+  page2NetIncomeLoss = (): number =>
+    sumFields([this.l37(), this.l39(), this.l40()])
+
   k1ScheduleEAmount = (
     k1: (typeof this.f1040.info.scheduleK1Form1065s)[number]
   ): number =>
@@ -267,7 +270,7 @@ export default class ScheduleE extends F1040Attachment {
     this.f1040.info.scheduleEPage2?.farmRentalIncomeLoss
 
   l41 = (): number =>
-    sumFields([this.l26(), this.l32(), this.l37(), this.l39(), this.l40()])
+    sumFields([this.l26(), this.l32(), this.page2NetIncomeLoss()])
 
   fields = (): Field[] => {
     const [p0, p1, p2] = [0, 1, 2].map((i) => this.propForRow(i))

@@ -1,7 +1,7 @@
 /* eslint @typescript-eslint/no-empty-function: "off" */
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
-import { FilingStatus, PersonRole } from 'ustaxes/core/data'
+import { FilingStatus, Income1099Type, PersonRole } from 'ustaxes/core/data'
 import F1040 from '../irsForms/F1040'
 import F6251 from '../irsForms/F6251'
 import { cloneDeep } from 'lodash'
@@ -99,5 +99,60 @@ describe('AMT', () => {
     const f6251 = new F6251(f1040)
     expect(f6251.isNeeded()).toEqual(false)
     expect(Math.round(f6251.l11())).toEqual(0)
+  })
+
+  it('does not require Part III when there are no qualified dividends or capital gains', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+
+    expect(f1040.l7()).toBe(0)
+    expect(f1040.l3a()).toBe(0)
+    expect(f6251.requiresPartIII()).toBe(false)
+  })
+
+  it('uses 2025 capital gain thresholds and AMT breakpoint math in Part III', () => {
+    const information = cloneDeep(baseInformation)
+    information.taxPayer.filingStatus = FilingStatus.MFJ
+    information.taxPayer.spouse = {
+      firstName: 'Jordan',
+      lastName: 'Payer',
+      isTaxpayerDependent: false,
+      role: PersonRole.SPOUSE,
+      ssid: '222222222',
+      dateOfBirth: new Date('1972-01-01'),
+      isBlind: false
+    }
+    information.w2s[0].income = 450000
+    information.w2s[0].medicareIncome = 450000
+    information.w2s[0].ssWages = 176100
+    information.w2s[0].stateWages = 450000
+    information.f1099s = [
+      {
+        payer: 'Northwind Income Fund',
+        type: Income1099Type.DIV,
+        personRole: PersonRole.PRIMARY,
+        form: {
+          dividends: 12000,
+          qualifiedDividends: 12000,
+          totalCapitalGainsDistributions: 0,
+          section199ADividends: 0
+        }
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+    void f1040.l16()
+    const f6251 = new F6251(f1040)
+    const p3 = f6251.part3()
+
+    expect(f6251.requiresPartIII()).toBe(true)
+    expect(p3.l19).toBe(federalBrackets.longTermCapGains.status[FilingStatus.MFJ].brackets[0])
+    expect(p3.l25).toBe(federalBrackets.longTermCapGains.status[FilingStatus.MFJ].brackets[1])
+    expect((p3.l17 ?? 0) > amt.cap(FilingStatus.MFJ)).toBe(true)
+    expect(p3.l18).toBe((p3.l17 ?? 0) * 0.28 - amt.cap(FilingStatus.MFJ) * 0.02)
+    expect(p3.l39).toBe((p3.l12 ?? 0) * 0.28 - amt.cap(FilingStatus.MFJ) * 0.02)
   })
 })
