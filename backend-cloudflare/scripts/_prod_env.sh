@@ -129,6 +129,60 @@ backend_worker_env() {
   printf '%s\n' "${CLOUDFLARE_WORKER_ENV:-production}"
 }
 
+backend_require_supported_worker_env() {
+  local worker_env
+  worker_env="$(backend_worker_env)"
+  case "${worker_env}" in
+    production|staging) return 0 ;;
+    *)
+      echo "Unsupported CLOUDFLARE_WORKER_ENV=${worker_env}; use staging or production." >&2
+      return 1
+      ;;
+  esac
+}
+
+backend_is_protected_worker_env() {
+  local worker_env
+  worker_env="$(backend_worker_env)"
+  [[ "${worker_env}" == "production" || "${worker_env}" == "staging" ]]
+}
+
+backend_secret_value_is_weak() {
+  local value="${1:-}"
+  case "${value}" in
+    ""|ustaxes-local-dev-secret|dev-secret-change-in-production|integration-secret-token)
+      return 0
+      ;;
+  esac
+
+  if [[ ${#value} -lt 32 ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+backend_require_secret() {
+  local name="$1"
+  backend_require_var "${name}" || return 1
+
+  local value="${!name:-}"
+  if backend_is_protected_worker_env && backend_secret_value_is_weak "${value}"; then
+    echo "Secret ${name} is too weak for env=$(backend_worker_env). Use a random value with at least 32 characters." >&2
+    return 1
+  fi
+}
+
+backend_require_worker_secrets() {
+  if ! backend_is_protected_worker_env; then
+    return 0
+  fi
+
+  backend_require_secret APP_AUTH_SECRET
+  backend_require_secret INTERNAL_API_TOKEN
+  backend_require_secret SESSION_SECRET_HMAC_KEY
+}
+
 backend_worker_service_name() {
   local worker_env
   worker_env="$(backend_worker_env)"

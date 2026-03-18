@@ -877,9 +877,54 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(typeof authorization.authorizationCode).toBe('string')
   })
 
-  it(
-    'surfaces Form 990 as expert-required and blocks self-serve submit',
-    async () => {
+  it('prepares and completes a signed auth callback flow', async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/prepare`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        redirectUri: 'http://localhost:5173/review-confirm'
+      })
+    })
+
+    expect(response.status).toBe(201)
+    const authFlowCookie = extractCookieHeader(response)
+    const prepared = await parseJsonResponse<{ state?: string }>(response)
+    expect(prepared.state).toBeTruthy()
+    expect(authFlowCookie).toContain('app_auth_flow=')
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/auth/callback?state=${encodeURIComponent(
+        String(prepared.state)
+      )}&sub=callback-user-1&email=callback.user%40example.com&tin=400011032&name=Callback%20User`,
+      {
+        redirect: 'manual',
+        headers: {
+          cookie: authFlowCookie
+        }
+      }
+    )
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:5173/review-confirm'
+    )
+    const callbackSetCookie = response.headers.get('set-cookie')
+    expect(callbackSetCookie).toContain('app_session_id=')
+    expect(callbackSetCookie).toContain('app_auth_flow=;')
+
+    const sessionCookie = extractCookieHeader(response)
+    response = await worker.fetch(`${baseUrl}/app/v1/auth/me`, {
+      headers: {
+        cookie: sessionCookie
+      }
+    })
+
+    expect(response.status).toBe(200)
+    const me = await parseJsonResponse<JsonObject>(response)
+    expect((me.user as JsonObject).email).toBe('callback.user@example.com')
+  })
+
+  it('surfaces Form 990 as expert-required and blocks self-serve submit', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -941,7 +986,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(200)
     const checklist = await parseJsonResponse<JsonObject>(response)
     expect(
-      ((checklist.businessFormCapability as JsonObject).supportLevel as string)
+      (checklist.businessFormCapability as JsonObject).supportLevel as string
     ).toBe('expert_required')
     expect(
       (checklist.findings as JsonObject[]).some(
@@ -960,7 +1005,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(200)
     const review = await parseJsonResponse<JsonObject>(response)
     expect(
-      ((review.businessFormCapability as JsonObject).supportLevel as string)
+      (review.businessFormCapability as JsonObject).supportLevel as string
     ).toBe('expert_required')
 
     response = await worker.fetch(
@@ -979,9 +1024,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(409)
     const blocked = await parseJsonResponse<JsonObject>(response)
     expect(String(blocked.error)).toContain('Form 990')
-    },
-    120_000
-  )
+  }, 120_000)
 
   it('supports app-level rejection repair and retry orchestration', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {

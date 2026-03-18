@@ -702,7 +702,7 @@ describe('Business Entity Tax Calculations', () => {
       const result = taxCalcService.calculateEntity({}, '990')
       expect(result.success).toBe(false)
       if (result.success) return
-      expect(result.errors[0]).toContain('Unsupported')
+      expect(result.errors[0]).toContain('expert')
     })
   })
 

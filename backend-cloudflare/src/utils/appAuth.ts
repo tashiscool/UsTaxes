@@ -11,11 +11,29 @@ export interface AppUserClaims {
   exp: number
 }
 
+export interface AuthFlowStateClaims {
+  redirectUri?: string
+  nonce?: string
+  issuedAt?: number
+  exp?: number
+}
+
 const SESSION_COOKIE = 'app_session_id'
 const AUTH_FLOW_COOKIE = 'app_auth_flow'
 const DEV_LOCAL_SECRET = 'ustaxes-local-dev-secret'
 const ONE_WEEK_SECONDS = 60 * 60 * 24 * 7
 const TEN_MINUTES_SECONDS = 60 * 10
+const DEVELOPMENT_ENVIRONMENTS = new Set([
+  'development',
+  'dev',
+  'local',
+  'test'
+])
+const WEAK_SECRETS = new Set([
+  DEV_LOCAL_SECRET,
+  'dev-secret-change-in-production',
+  'integration-secret-token'
+])
 
 const encoder = new TextEncoder()
 
@@ -41,10 +59,40 @@ const timingSafeEqual = (left: string, right: string): boolean => {
   return result === 0
 }
 
-const resolveSecret = (env: Env): string =>
-  env.APP_AUTH_SECRET?.trim() ||
-  env.SESSION_SECRET_HMAC_KEY?.trim() ||
-  DEV_LOCAL_SECRET
+const normalizedEnvironment = (env: Env): string =>
+  env.ENVIRONMENT?.trim().toLowerCase() || 'development'
+
+export const isDevelopmentLikeEnvironment = (env: Env): boolean =>
+  DEVELOPMENT_ENVIRONMENTS.has(normalizedEnvironment(env))
+
+const isProtectedEnvironment = (env: Env): boolean =>
+  !isDevelopmentLikeEnvironment(env)
+
+const resolveSecret = (env: Env): string => {
+  const configuredSecret =
+    env.APP_AUTH_SECRET?.trim() || env.SESSION_SECRET_HMAC_KEY?.trim()
+  if (configuredSecret) {
+    if (
+      isProtectedEnvironment(env) &&
+      (WEAK_SECRETS.has(configuredSecret) || configuredSecret.length < 32)
+    ) {
+      throw new HttpError(
+        500,
+        'App auth secret is too weak for this environment'
+      )
+    }
+    return configuredSecret
+  }
+
+  if (isDevelopmentLikeEnvironment(env)) {
+    return DEV_LOCAL_SECRET
+  }
+
+  throw new HttpError(
+    500,
+    'App auth secret is not configured for this environment'
+  )
+}
 
 const importHmacKey = async (env: Env): Promise<CryptoKey> =>
   crypto.subtle.importKey(
@@ -88,7 +136,7 @@ const parseCookie = (
 }
 
 const cookieSecurityAttributes = (env: Env): string =>
-  env.ENVIRONMENT && env.ENVIRONMENT !== 'development' ? '; Secure' : ''
+  isProtectedEnvironment(env) ? '; Secure' : ''
 
 export const issueAppSessionCookie = async (
   env: Env,
@@ -118,12 +166,12 @@ export const issueAuthFlowCookie = (
   nonce: string,
   ttlSeconds = TEN_MINUTES_SECONDS
 ): string =>
-  `${AUTH_FLOW_COOKIE}=${nonce}; Path=/; SameSite=Lax; Max-Age=${ttlSeconds}${cookieSecurityAttributes(
+  `${AUTH_FLOW_COOKIE}=${nonce}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ttlSeconds}${cookieSecurityAttributes(
     env
   )}`
 
 export const clearAuthFlowCookie = (env: Env): string =>
-  `${AUTH_FLOW_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0${cookieSecurityAttributes(
+  `${AUTH_FLOW_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${cookieSecurityAttributes(
     env
   )}`
 
@@ -131,6 +179,124 @@ export const readCookieValue = (
   cookieHeader: string | null | undefined,
   name: string
 ): string | null => parseCookie(cookieHeader, name)
+
+const parseAuthFlowStatePayload = (
+  encodedPayload: string
+): AuthFlowStateClaims | null => {
+  try {
+    const decoded = fromBase64Url(encodedPayload)
+    const parsed = JSON.parse(decoded) as Record<string, unknown>
+    return {
+      redirectUri:
+        typeof parsed.redirectUri === 'string' ? parsed.redirectUri : undefined,
+      nonce: typeof parsed.nonce === 'string' ? parsed.nonce : undefined,
+      issuedAt:
+        typeof parsed.issuedAt === 'number' ? parsed.issuedAt : undefined,
+      exp: typeof parsed.exp === 'number' ? parsed.exp : undefined
+    }
+  } catch {
+    return null
+  }
+}
+
+export const verifyAuthFlowState = async (
+  env: Env,
+  state: string | undefined,
+  ttlSeconds = TEN_MINUTES_SECONDS
+): Promise<AuthFlowStateClaims | null> => {
+  if (!state) {
+    return null
+  }
+
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  const signedSeparatorIndex = state.lastIndexOf('.')
+  if (signedSeparatorIndex > 0) {
+    const encodedPayload = state.slice(0, signedSeparatorIndex)
+    const providedSignature = state.slice(signedSeparatorIndex + 1)
+    if (!encodedPayload || !providedSignature) {
+      return null
+    }
+
+    const expectedSignature = await sign(env, encodedPayload)
+    if (!timingSafeEqual(expectedSignature, providedSignature)) {
+      return null
+    }
+
+    const parsed = parseAuthFlowStatePayload(encodedPayload)
+    if (!parsed) {
+      return null
+    }
+
+    if (typeof parsed.exp === 'number' && parsed.exp < nowSeconds) {
+      return null
+    }
+    if (typeof parsed.issuedAt === 'number') {
+      const issuedAtSeconds = Math.floor(parsed.issuedAt / 1000)
+      if (
+        issuedAtSeconds > nowSeconds + 60 ||
+        issuedAtSeconds < nowSeconds - ttlSeconds
+      ) {
+        return null
+      }
+    }
+
+    return parsed
+  }
+
+  if (isProtectedEnvironment(env)) {
+    return null
+  }
+
+  try {
+    const decoded = atob(state)
+    const parsed = JSON.parse(decoded) as Record<string, unknown>
+    const issuedAt =
+      typeof parsed.issuedAt === 'number' ? parsed.issuedAt : undefined
+    const redirectUri =
+      typeof parsed.redirectUri === 'string' ? parsed.redirectUri : undefined
+    const nonce = typeof parsed.nonce === 'string' ? parsed.nonce : undefined
+    if (typeof issuedAt === 'number') {
+      const issuedAtSeconds = Math.floor(issuedAt / 1000)
+      if (
+        issuedAtSeconds > nowSeconds + 60 ||
+        issuedAtSeconds < nowSeconds - ttlSeconds
+      ) {
+        return null
+      }
+    }
+
+    return {
+      redirectUri,
+      nonce,
+      issuedAt
+    }
+  } catch {
+    if (isProtectedEnvironment(env)) {
+      return null
+    }
+    try {
+      return { redirectUri: atob(state) }
+    } catch {
+      return null
+    }
+  }
+}
+
+export const issueSignedAuthFlowState = async (
+  env: Env,
+  claims: AuthFlowStateClaims,
+  ttlSeconds = TEN_MINUTES_SECONDS
+): Promise<string> => {
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  const payload: AuthFlowStateClaims = {
+    ...claims,
+    issuedAt: claims.issuedAt ?? Date.now(),
+    exp: claims.exp ?? nowSeconds + ttlSeconds
+  }
+  const encodedPayload = toBase64Url(JSON.stringify(payload))
+  const signature = await sign(env, encodedPayload)
+  return `${encodedPayload}.${signature}`
+}
 
 export const readAppUserFromRequest = async (
   c: Context<{ Bindings: Env }>
@@ -150,12 +316,16 @@ export const readAppUserFromRequest = async (
     return null
   }
 
-  const parsed = JSON.parse(fromBase64Url(encodedPayload)) as AppUserClaims
-  if (parsed.exp < Math.floor(Date.now() / 1000)) {
+  try {
+    const parsed = JSON.parse(fromBase64Url(encodedPayload)) as AppUserClaims
+    if (parsed.exp < Math.floor(Date.now() / 1000)) {
+      return null
+    }
+
+    return parsed
+  } catch {
     return null
   }
-
-  return parsed
 }
 
 export const requireAppUser = async (
@@ -169,6 +339,10 @@ export const requireAppUser = async (
 }
 
 export const localDevAuthAllowed = (env: Env): boolean => {
+  if (!isDevelopmentLikeEnvironment(env)) {
+    return false
+  }
+
   const explicitFlag = env.APP_DEV_ALLOW_LOCAL_LOGIN?.trim()
   if (explicitFlag) {
     return explicitFlag !== 'false'

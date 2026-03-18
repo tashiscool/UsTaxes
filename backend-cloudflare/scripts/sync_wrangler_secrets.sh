@@ -8,11 +8,17 @@ BACKEND_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 source "${SCRIPT_DIR}/_prod_env.sh"
 
 backend_load_prod_env "${1:-}"
+backend_require_supported_worker_env
 backend_prepare_wrangler_env
 backend_require_cmd npx
 
 WORKER_ENV="${CLOUDFLARE_WORKER_ENV:-production}"
-ALLOW_MISSING_SECRETS="${ALLOW_MISSING_SECRETS:-1}"
+if backend_is_protected_worker_env; then
+  ALLOW_MISSING_SECRETS="${ALLOW_MISSING_SECRETS:-0}"
+  backend_require_worker_secrets
+else
+  ALLOW_MISSING_SECRETS="${ALLOW_MISSING_SECRETS:-1}"
+fi
 
 declare -a SECRET_NAMES=(
   "APP_AUTH_SECRET"

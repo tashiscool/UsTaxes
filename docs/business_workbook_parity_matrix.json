@@ -1,0 +1,198 @@
+[
+  {
+    "canonical_form": "1120",
+    "workbook_present": false,
+    "workbook_paths": [],
+    "workbook_sheet_names": [],
+    "workbook_sheet_count": 0,
+    "irs_reference_present": true,
+    "irs_reference_count": 83,
+    "irs_reference_sample_paths": [
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Known_Issues/ty2025-atskis-1120formfamily.xls",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120EliminationsOrAdj.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120EliminationsOrAdjStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120F.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120FScheduleH.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120FScheduleHStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120FScheduleI.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120FScheduleIStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120FScheduleM1M2.xsl"
+    ],
+    "local_files": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1120.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/efile/mef/businessEntitySerializer.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/mefComplianceService.ts"
+    ],
+    "local_file_count": 4,
+    "local_present": true,
+    "local_test_files": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/ccorp.test.ts"
+    ],
+    "local_test_count": 3,
+    "local_tests_present": true,
+    "coverage_status": "irs_reference_only",
+    "notes": "C-corporation parity should track Form 1120 computation, MeF serialization, and backend entity-return handling.",
+    "last_audited": "2026-03-18T21:03:13.135868+00:00"
+  },
+  {
+    "canonical_form": "1120-S",
+    "workbook_present": false,
+    "workbook_paths": [],
+    "workbook_sheet_names": [],
+    "workbook_sheet_count": 0,
+    "irs_reference_present": true,
+    "irs_reference_count": 35,
+    "irs_reference_sample_paths": [
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Known_Issues/ty2025-atskis-1120formfamily.xls",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120S.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120SScheduleB1.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120SScheduleD.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120SScheduleDStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120SScheduleK1.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120SScheduleK1Style.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120SScheduleK2.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120SScheduleK2Style.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1120SScheduleK3.xsl"
+    ],
+    "local_files": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1120S.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/efile/mef/businessEntitySerializer.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/k1GenerationService.ts"
+    ],
+    "local_file_count": 4,
+    "local_present": true,
+    "local_test_files": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/scorp.test.ts"
+    ],
+    "local_test_count": 3,
+    "local_tests_present": true,
+    "coverage_status": "irs_reference_only",
+    "notes": "S-corp parity should include ordinary business income, Schedule K/K-1 allocation, and shareholder ownership inputs.",
+    "last_audited": "2026-03-18T21:03:13.135868+00:00"
+  },
+  {
+    "canonical_form": "1065",
+    "workbook_present": false,
+    "workbook_paths": [],
+    "workbook_sheet_names": [],
+    "workbook_sheet_count": 0,
+    "irs_reference_present": true,
+    "irs_reference_count": 25,
+    "irs_reference_sample_paths": [
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Known_Issues/ty2025-atskis-form-1065.xls",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1065.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1065BScheduleK1.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1065BScheduleK1Style.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1065ScheduleB1.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1065ScheduleB1Style.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1065ScheduleB2.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1065ScheduleB2Style.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1065ScheduleC.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1065ScheduleCStyle.xsl"
+    ],
+    "local_files": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1065.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/efile/mef/businessEntitySerializer.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/k1GenerationService.ts"
+    ],
+    "local_file_count": 4,
+    "local_present": true,
+    "local_test_files": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/partnership.test.ts"
+    ],
+    "local_test_count": 3,
+    "local_tests_present": true,
+    "coverage_status": "irs_reference_only",
+    "notes": "Partnership parity should cover guaranteed payments, partner allocations, Schedule K/K-1, and liabilities.",
+    "last_audited": "2026-03-18T21:03:13.135868+00:00"
+  },
+  {
+    "canonical_form": "1041",
+    "workbook_present": false,
+    "workbook_paths": [],
+    "workbook_sheet_names": [],
+    "workbook_sheet_count": 0,
+    "irs_reference_present": true,
+    "irs_reference_count": 14,
+    "irs_reference_sample_paths": [
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1041.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1041ScheduleD.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1041ScheduleDStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1041ScheduleI.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1041ScheduleIStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1041ScheduleJ.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1041ScheduleJStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1041ScheduleK1.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1041ScheduleK1Style.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS1041Style.xsl"
+    ],
+    "local_files": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1041.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1041A.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1041ES.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/k1GenerationService.ts"
+    ],
+    "local_file_count": 5,
+    "local_present": true,
+    "local_test_files": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts"
+    ],
+    "local_test_count": 2,
+    "local_tests_present": true,
+    "coverage_status": "irs_reference_only",
+    "notes": "Trust and estate parity is driven by fiduciary, beneficiary, distribution, and compressed-bracket logic.",
+    "last_audited": "2026-03-18T21:03:13.135868+00:00"
+  },
+  {
+    "canonical_form": "990",
+    "workbook_present": false,
+    "workbook_paths": [],
+    "workbook_sheet_names": [],
+    "workbook_sheet_count": 0,
+    "irs_reference_present": true,
+    "irs_reference_count": 48,
+    "irs_reference_sample_paths": [
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS990.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS990EZ.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS990EZStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS990N.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS990NStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS990PF.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS990PFStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS990ScheduleA.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS990ScheduleAStyle.xsl",
+      "/Users/tkhan/Downloads/IRS_MeF_Materials/Schema_Package/extracted/PY2026R8/mef/Stylesheets/2025/IRS990ScheduleB.xsl"
+    ],
+    "local_files": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F990.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F990EZ.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F990N.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F990PF.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F990T.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts"
+    ],
+    "local_file_count": 6,
+    "local_present": true,
+    "local_test_files": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts"
+    ],
+    "local_test_count": 2,
+    "local_tests_present": true,
+    "coverage_status": "irs_reference_only",
+    "notes": "Nonprofit parity is partially implemented in local forms, but Cloudflare still routes Form 990-family work to expert handling.",
+    "last_audited": "2026-03-18T21:03:13.135868+00:00"
+  }
+]

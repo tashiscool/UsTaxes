@@ -1,6 +1,6 @@
 name = "ustaxes-backend"
 main = "src/index.ts"
-compatibility_date = "2026-03-12"
+compatibility_date = "2026-03-10"
 
 [observability]
 enabled = true
@@ -8,7 +8,6 @@ enabled = true
 [vars]
 ENVIRONMENT = "development"
 CORS_ORIGIN = "http://localhost:5173"
-SESSION_SECRET_HMAC_KEY = "dev-secret-change-in-production"
 LOCAL_DEV_AUTH_ENABLED = "true"
 APP_DEV_ALLOW_LOCAL_LOGIN = "true"
 LOG_LEVEL = "debug"
@@ -98,6 +97,10 @@ CORS_ORIGIN = "https://freetaxflow.com"
 LOCAL_DEV_AUTH_ENABLED = "false"
 APP_DEV_ALLOW_LOCAL_LOGIN = "false"
 LOG_LEVEL = "warn"
+# Production secrets must be injected with `wrangler secret put`, not committed here:
+# - APP_AUTH_SECRET
+# - SESSION_SECRET_HMAC_KEY
+# - INTERNAL_API_TOKEN
 
 [[env.production.d1_databases]]
 binding = "USTAXES_DB"

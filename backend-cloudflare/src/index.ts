@@ -16,10 +16,13 @@ import { DirectFileCompatibilityService } from './services/directFileCompatibili
 import {
   clearAuthFlowCookie,
   clearAppSessionCookie,
+  issueAuthFlowCookie,
   issueAppSessionCookie,
+  issueSignedAuthFlowState,
   localDevAuthAllowed,
   readCookieValue,
-  requireAppUser
+  requireAppUser,
+  verifyAuthFlowState
 } from './utils/appAuth'
 import { HttpError, jsonResponse } from './utils/http'
 import { assertInternalAuth } from './utils/auth'
@@ -51,6 +54,10 @@ app.use('*', async (c, next) => {
 
 const internalProcessSchema = z.object({
   taxReturnId: z.string().min(2)
+})
+
+const authPrepareSchema = z.object({
+  redirectUri: z.string().max(2048).optional()
 })
 
 const directFilePrefixes = ['/api/v1', '/df/file/api/v1'] as const
@@ -109,27 +116,41 @@ const requireParam = (value: string | undefined, name: string): string => {
   return value
 }
 
-const parseAuthState = (
-  state: string | undefined
-): { redirectUri?: string; nonce?: string } | null => {
-  if (!state) {
-    return null
+const setNoStoreHeaders = (c: Context<{ Bindings: Env }>) => {
+  c.header('cache-control', 'no-store')
+  c.header('pragma', 'no-cache')
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const SUBJECT_PATTERN = /^[A-Za-z0-9:_@.\-]{2,128}$/
+
+const normalizeCallbackIdentity = (
+  rawSub: string | undefined,
+  rawEmail: string | undefined,
+  rawTin: string | undefined,
+  rawDisplayName: string | undefined
+) => {
+  const sub = rawSub?.trim()
+  if (!sub || !SUBJECT_PATTERN.test(sub)) {
+    throw new HttpError(400, 'Invalid callback subject identifier.')
   }
 
-  try {
-    const decoded = atob(state)
-    try {
-      const parsed = JSON.parse(decoded) as Record<string, unknown>
-      return {
-        redirectUri:
-          typeof parsed.redirectUri === 'string' ? parsed.redirectUri : undefined,
-        nonce: typeof parsed.nonce === 'string' ? parsed.nonce : undefined
-      }
-    } catch {
-      return { redirectUri: decoded }
-    }
-  } catch {
-    return null
+  const email = rawEmail?.trim().toLowerCase()
+  if (!email || email.length > 320 || !EMAIL_PATTERN.test(email)) {
+    throw new HttpError(400, 'Invalid callback email address.')
+  }
+
+  const tinDigits = rawTin?.replace(/\D/g, '')
+  if (rawTin && tinDigits && tinDigits.length !== 9) {
+    throw new HttpError(400, 'Invalid callback TIN format.')
+  }
+
+  const displayName = rawDisplayName?.trim()
+  return {
+    sub,
+    email,
+    tin: tinDigits && tinDigits.length === 9 ? tinDigits : undefined,
+    displayName: displayName ? displayName.slice(0, 120) : undefined
   }
 }
 
@@ -149,12 +170,12 @@ const resolveSafeRedirect = (
   try {
     const target = new URL(requestedRedirect)
     if (!fallbackOrigin) {
-      return target.origin
+      return fallback
     }
 
     const allowedOrigin = new URL(fallbackOrigin)
     if (target.origin === allowedOrigin.origin) {
-      return requestedRedirect
+      return target.toString()
     }
   } catch {
     return fallback
@@ -272,6 +293,7 @@ app.post('/api/v1/internal/submissions/:submissionId/retry', async (c) => {
 })
 
 app.post('/app/v1/auth/dev-login', async (c) => {
+  setNoStoreHeaders(c)
   if (!localDevAuthAllowed(c.env)) {
     throw new HttpError(403, 'Local development login is disabled')
   }
@@ -301,50 +323,69 @@ app.post('/app/v1/auth/dev-login', async (c) => {
   return c.json({ user: authenticatedUser }, 201)
 })
 
+app.post('/app/v1/auth/prepare', async (c) => {
+  setNoStoreHeaders(c)
+  const body = authPrepareSchema.parse(await c.req.json().catch(() => ({})))
+  const nonce = crypto.randomUUID()
+  const state = await issueSignedAuthFlowState(c.env, {
+    redirectUri: body.redirectUri,
+    nonce,
+    issuedAt: Date.now()
+  })
+  c.header('set-cookie', issueAuthFlowCookie(c.env, nonce))
+  return c.json({ state }, 201)
+})
+
 app.get('/app/v1/auth/callback', async (c) => {
+  setNoStoreHeaders(c)
+  const callbackError = c.req.query('error')
+  if (callbackError) {
+    throw new HttpError(400, `Authentication callback failed: ${callbackError}`)
+  }
+
   const state = c.req.query('state')
-  const sub = c.req.query('sub') ?? c.req.query('userId') ?? c.req.query('id')
-  const email = c.req.query('email')
-  const tin = c.req.query('tin') ?? undefined
-  const displayName = c.req.query('name') ?? undefined
-
-  if (!sub || !email) {
-    throw new HttpError(
-      400,
-      'Missing callback identity data. Expected sub/userId and email query parameters.'
-    )
+  const parsedState = await verifyAuthFlowState(c.env, state)
+  if (!parsedState) {
+    throw new HttpError(400, 'Invalid or expired authentication flow state.')
   }
-
-  const parsedState = parseAuthState(state)
   const authFlowNonce = readCookieValue(c.req.header('cookie'), 'app_auth_flow')
-  if (parsedState?.nonce) {
-    if (!authFlowNonce || authFlowNonce !== parsedState.nonce) {
-      throw new HttpError(400, 'Invalid or expired authentication flow state.')
-    }
-  } else if (!localDevAuthAllowed(c.env)) {
-    throw new HttpError(400, 'Missing signed authentication flow state.')
+  if (
+    !parsedState.nonce ||
+    !authFlowNonce ||
+    authFlowNonce !== parsedState.nonce
+  ) {
+    throw new HttpError(400, 'Invalid or expired authentication flow state.')
   }
+
+  const callbackIdentity = normalizeCallbackIdentity(
+    c.req.query('sub') ?? c.req.query('userId') ?? c.req.query('id'),
+    c.req.query('email'),
+    c.req.query('tin') ?? undefined,
+    c.req.query('name') ?? undefined
+  )
 
   const cookie = await issueAppSessionCookie(c.env, {
-    sub,
-    email,
-    tin,
-    displayName
+    sub: callbackIdentity.sub,
+    email: callbackIdentity.email,
+    tin: callbackIdentity.tin,
+    displayName: callbackIdentity.displayName
   })
   c.header('set-cookie', cookie)
   c.header('set-cookie', clearAuthFlowCookie(c.env), { append: true })
   return c.redirect(
-    resolveSafeRedirect(parsedState?.redirectUri, c.env.CORS_ORIGIN)
+    resolveSafeRedirect(parsedState.redirectUri, c.env.CORS_ORIGIN)
   )
 })
 
 app.post('/app/v1/auth/logout', async (c) => {
+  setNoStoreHeaders(c)
   c.header('set-cookie', clearAppSessionCookie(c.env))
   c.header('set-cookie', clearAuthFlowCookie(c.env), { append: true })
   return c.json({ loggedOut: true })
 })
 
 app.get('/app/v1/auth/me', async (c) => {
+  setNoStoreHeaders(c)
   const user = await requireAppUser(c)
   const { appSessionService } = buildServices(c)
   const authenticatedUser = await appSessionService.getAuthenticatedUser(user)

@@ -10,10 +10,10 @@ source "${SCRIPT_DIR}/_prod_env.sh"
 TAXFLOW_DIR="$(taxflow_root_dir)"
 
 backend_load_prod_env "${1:-}"
+backend_require_supported_worker_env
 backend_prepare_wrangler_env
-if ! backend_verify_cloudflare_token; then
-  echo "[warn] Cloudflare token preflight failed; continuing because the deploy may still succeed." >&2
-fi
+backend_require_worker_secrets
+backend_verify_cloudflare_token
 
 backend_require_cmd npm
 backend_require_cmd npx
@@ -33,6 +33,7 @@ echo "=== FreeTaxFlow Cloudflare Deploy ==="
 echo "Worker env: ${WORKER_ENV}"
 echo "Account: ${CLOUDFLARE_ACCOUNT_ID}"
 echo "Env file: ${BACKEND_ENV_FILE_LOADED}"
+echo "Wrangler secrets sync: ${SYNC_WRANGLER_SECRETS}"
 
 backend_step "Workers deploy access preflight"
 backend_verify_workers_deploy_access
@@ -49,6 +50,7 @@ if [[ "${SYNC_WRANGLER_SECRETS}" == "1" ]]; then
   CLOUDFLARE_WORKER_ENV="${WORKER_ENV}" bash "${SCRIPT_DIR}/sync_wrangler_secrets.sh"
 else
   echo "[skip] SYNC_WRANGLER_SECRETS=0"
+  echo "[info] Assuming APP_AUTH_SECRET, SESSION_SECRET_HMAC_KEY, and INTERNAL_API_TOKEN are already present in Wrangler for env=${WORKER_ENV}"
 fi
 
 if [[ "${RUN_PREDEPLOY_TESTS}" == "1" ]]; then
