@@ -35,6 +35,7 @@ export interface CasualtyEvent {
   fairMarketValueAfter?: number
   insuranceReimbursement: number
   repairCosts?: number
+  repairCostsAcceptedAsFmvEvidence?: boolean
 }
 
 export default class F4684 extends F1040Attachment {
@@ -87,6 +88,24 @@ export default class F4684 extends F1040Attachment {
   private eventFmvAfter = (event: CasualtyEvent): number =>
     event.fairMarketValueAfter ?? event.fmvAfter ?? 0
 
+  private hasExplicitFmvEvidence = (event: CasualtyEvent): boolean =>
+    event.fairMarketValueBefore !== undefined ||
+    event.fairMarketValueAfter !== undefined ||
+    event.fmvBefore !== undefined ||
+    event.fmvAfter !== undefined
+
+  private eventLossValue = (event: CasualtyEvent): number => {
+    if (this.hasExplicitFmvEvidence(event)) {
+      return Math.max(0, this.eventFmvBefore(event) - this.eventFmvAfter(event))
+    }
+
+    if (event.repairCostsAcceptedAsFmvEvidence === true) {
+      return Math.max(0, event.repairCosts ?? 0)
+    }
+
+    return 0
+  }
+
   private eventDisasterNumber = (event: CasualtyEvent): string | undefined =>
     event.femaDisasterNumber ?? event.disasterDesignation
 
@@ -99,6 +118,9 @@ export default class F4684 extends F1040Attachment {
   private federallyDeclaredPersonalEvents = (): CasualtyEvent[] =>
     this.personalEvents().filter((e) => this.isFederallyDeclaredDisaster(e))
 
+  private nonDisasterPersonalEvents = (): CasualtyEvent[] =>
+    this.personalEvents().filter((e) => !this.isFederallyDeclaredDisaster(e))
+
   private qualifiedPersonalLossAfterFloors = (): number =>
     this.federallyDeclaredPersonalEvents()
       .filter((event) => this.isQualifiedDisasterLoss(event))
@@ -109,15 +131,18 @@ export default class F4684 extends F1040Attachment {
       .filter((event) => !this.isQualifiedDisasterLoss(event))
       .reduce((sum, event) => sum + this.lossAfterPerEventFloor(event), 0)
 
+  private nonDisasterPersonalLossAfterFloors = (): number =>
+    this.nonDisasterPersonalEvents().reduce(
+      (sum, event) => sum + this.lossAfterPerEventFloor(event),
+      0
+    )
+
   // Section A - Personal Use Property (disasters only under TCJA)
 
   // Calculate loss per event
   calculateLoss = (event: CasualtyEvent): number => {
     // Loss = Lesser of (cost basis) or (FMV decline) - insurance
-    const fmvDecline = Math.max(
-      0,
-      this.eventFmvBefore(event) - this.eventFmvAfter(event)
-    )
+    const fmvDecline = this.eventLossValue(event)
     const deductibleLoss = Math.min(event.costBasis, fmvDecline)
     return Math.max(0, deductibleLoss - event.insuranceReimbursement)
   }
@@ -152,7 +177,8 @@ export default class F4684 extends F1040Attachment {
 
   // Line 7: Subtract line 6 from line 5
   l7 = (eventIndex: number): number => {
-    return Math.max(0, this.l5(eventIndex) - this.l6(eventIndex))
+    const event = this.personalEvents()[eventIndex]
+    return event === undefined ? 0 : this.eventLossValue(event)
   }
 
   // Line 8: Enter smaller of line 2 or line 7
@@ -195,10 +221,8 @@ export default class F4684 extends F1040Attachment {
 
   // Line 14: If losses exceed gains
   l14 = (): number => {
-    if (this.l12() > this.l13()) {
-      return this.l12() - this.l13()
-    }
-    return 0
+    const nondisasterLosses = this.nonDisasterPersonalLossAfterFloors()
+    return this.l12() + Math.min(nondisasterLosses, this.l13())
   }
 
   // Line 15: 10% of AGI floor
@@ -207,11 +231,22 @@ export default class F4684 extends F1040Attachment {
   // Line 16: Subtract line 15 from line 14 (deductible personal loss)
   l16 = (): number => {
     const totalGains = this.l13()
+    const nondisasterLosses = this.nonDisasterPersonalLossAfterFloors()
+    const remainingGainsAfterNondisasterLosses = Math.max(
+      0,
+      totalGains - nondisasterLosses
+    )
     const ordinaryLosses = this.ordinaryPersonalLossAfterFloors()
     const qualifiedLosses = this.qualifiedPersonalLossAfterFloors()
 
-    const ordinaryLossesAfterGains = Math.max(0, ordinaryLosses - totalGains)
-    const remainingGains = Math.max(0, totalGains - ordinaryLosses)
+    const ordinaryLossesAfterGains = Math.max(
+      0,
+      ordinaryLosses - remainingGainsAfterNondisasterLosses
+    )
+    const remainingGains = Math.max(
+      0,
+      remainingGainsAfterNondisasterLosses - ordinaryLosses
+    )
     const qualifiedLossesAfterGains = Math.max(
       0,
       qualifiedLosses - remainingGains

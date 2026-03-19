@@ -902,4 +902,69 @@ describe('2025 federal law updates', () => {
     expect(f1040.f4684?.l15()).toBe(10000)
     expect(f1040.f4684?.personalCasualtyLossDeduction()).toBe(500)
   })
+
+  it('uses Worksheet 1-1 style netting so non-disaster personal losses offset casualty gains first', () => {
+    const information = cloneDeep(baseInformation)
+    information.casualtyEvents = [
+      {
+        description: 'Non-disaster storm loss',
+        dateOfEvent: new Date('2025-03-01'),
+        federallyDeclaredDisaster: false,
+        costBasis: 1000,
+        insuranceReimbursement: 0,
+        fairMarketValueBefore: 1000,
+        fairMarketValueAfter: 0
+      },
+      {
+        description: 'Qualified flood loss',
+        dateOfEvent: new Date('2025-04-01'),
+        federallyDeclaredDisaster: true,
+        femaDisasterNumber: 'DR-7777',
+        qualifiedDisasterLoss: true,
+        costBasis: 2000,
+        insuranceReimbursement: 0,
+        fairMarketValueBefore: 2000,
+        fairMarketValueAfter: 0
+      },
+      {
+        description: 'Insurance reimbursement gain',
+        dateOfEvent: new Date('2025-05-01'),
+        federallyDeclaredDisaster: false,
+        costBasis: 1000,
+        insuranceReimbursement: 1600,
+        fairMarketValueBefore: 1000,
+        fairMarketValueAfter: 1000
+      }
+    ] as never
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.f4684?.l13()).toBe(600)
+    expect(f1040.f4684?.l14()).toBe(2100)
+    expect(f1040.f4684?.personalCasualtyLossDeduction()).toBe(1500)
+  })
+
+  it('accepts eligible repair costs as FMV evidence when explicit FMV values are unavailable', () => {
+    const information = cloneDeep(baseInformation)
+    information.casualtyEvents = [
+      {
+        description: 'Repair-cost appraisal substitute',
+        dateOfEvent: new Date('2025-06-15'),
+        federallyDeclaredDisaster: true,
+        femaDisasterNumber: 'DR-4321',
+        costBasis: 10000,
+        insuranceReimbursement: 500,
+        repairCosts: 3500,
+        repairCostsAcceptedAsFmvEvidence: true
+      }
+    ] as never
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.f4684?.l5(0)).toBe(0)
+    expect(f1040.f4684?.l6(0)).toBe(0)
+    expect(f1040.f4684?.l7(0)).toBe(3500)
+    expect(f1040.f4684?.l9(0)).toBe(3000)
+    expect(f1040.f4684?.l10()).toBe(3000)
+  })
 })

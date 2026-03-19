@@ -2576,6 +2576,36 @@ export const getBusinessFormCapability = (
   }
 }
 
+const describeNonprofitExpertGuidance = (facts: FactsRecord): string => {
+  const income = asRecord(facts.income)
+  const balanceSheet = asRecord(facts.balanceSheet)
+  const grossReceipts = toNum(
+    facts.grossReceipts ??
+      facts.totalRevenue ??
+      income?.grossReceipts ??
+      income?.grossReceiptsOrSales ??
+      income?.totalRevenue ??
+      0
+  )
+  const totalAssets = toNum(
+    facts.totalAssets ?? balanceSheet?.totalAssets ?? balanceSheet?.assets ?? 0
+  )
+
+  if (grossReceipts > 0 && grossReceipts <= 50_000) {
+    return 'Form 990 family returns still require expert preparation in the Cloudflare production path. Based on the provided facts, this organization may qualify to submit Form 990-N if its gross receipts are normally $50,000 or less.'
+  }
+
+  if (grossReceipts > 0 && grossReceipts < 200_000 && totalAssets > 0) {
+    if (totalAssets < 500_000) {
+      return 'Form 990 family returns still require expert preparation in the Cloudflare production path. Based on the provided facts, this organization fits the Form 990-EZ size thresholds because gross receipts are under $200,000 and year-end total assets are under $500,000.'
+    }
+
+    return 'Form 990 family returns still require expert preparation in the Cloudflare production path. Gross receipts are under $200,000, but the provided year-end total assets are at or above $500,000, so the organization may need the full Form 990 instead of Form 990-EZ.'
+  }
+
+  return 'Form 990 family returns still require expert preparation in the Cloudflare production path. TaxFlow can identify nonprofit filings, but Form 990 self-service computation and submission are not implemented in backend-cloudflare yet.'
+}
+
 const defaultBusinessEntity = (facts: FactsRecord) => ({
   entityName: toStr(facts.entityName) || 'Business Entity',
   ein: toStr(facts.ein).replace(/\D/g, ''),
@@ -3290,7 +3320,9 @@ export class TaxCalculationService {
         return {
           success: false,
           errors: [
-            capability.reason ?? `Unsupported business form type: ${formType}`
+            formType === '990'
+              ? describeNonprofitExpertGuidance(facts)
+              : capability.reason ?? `Unsupported business form type: ${formType}`
           ]
         }
       }

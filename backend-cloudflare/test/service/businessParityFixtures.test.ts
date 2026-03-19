@@ -21,14 +21,23 @@ interface OwnerAllocationExpectation {
   [key: string]: string | number
 }
 
+interface BusinessParityExpectedFailure {
+  success: false
+  errors?: string[]
+  errorsContain?: string[]
+}
+
+interface BusinessParityExpectedSuccess extends Record<string, unknown> {
+  success?: true
+  ownerAllocations?: OwnerAllocationExpectation[]
+}
+
 interface BusinessParityFixture {
   scenarioId: string
   formType: string
   description: string
   facts: Record<string, unknown>
-  expected: Record<string, unknown> & {
-    ownerAllocations?: OwnerAllocationExpectation[]
-  }
+  expected: BusinessParityExpectedFailure | BusinessParityExpectedSuccess
 }
 
 const service = new TaxCalculationService()
@@ -61,6 +70,20 @@ describe('business parity fixtures', () => {
         fixture.formType,
         fixture.facts
       )
+
+      if (fixture.expected.success === false) {
+        expect(result.success).toBe(false)
+        if (result.success) return
+
+        if (fixture.expected.errors !== undefined) {
+          expect(result.errors).toEqual(fixture.expected.errors)
+        }
+
+        for (const errorFragment of fixture.expected.errorsContain ?? []) {
+          expect(result.errors.join(' ')).toContain(errorFragment)
+        }
+        return
+      }
 
       expect(result.success).toBe(true)
       if (!result.success) return

@@ -1,0 +1,24 @@
+{
+  "scenarioId": "990-scenario-02-990n-sizing",
+  "formType": "990",
+  "description": "Small exempt organization that may qualify for Form 990-N but still remains expert-routed in the Cloudflare path.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts",
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessParityFixtures.test.ts"
+  ],
+  "facts": {
+    "entityName": "Neighborhood Arts Circle",
+    "entityType": "501(c)(3)",
+    "taxYear": 2025,
+    "grossReceipts": 40000,
+    "totalAssets": 12000
+  },
+  "expected": {
+    "success": false,
+    "errorsContain": [
+      "expert preparation",
+      "990-N",
+      "$50,000"
+    ]
+  }
+}

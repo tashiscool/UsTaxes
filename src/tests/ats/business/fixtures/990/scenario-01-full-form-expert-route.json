@@ -1,0 +1,24 @@
+{
+  "scenarioId": "990-scenario-01-full-form-expert-route",
+  "formType": "990",
+  "description": "Larger exempt organization that exceeds the 990-EZ size thresholds and must stay expert-routed.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts",
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessParityFixtures.test.ts"
+  ],
+  "facts": {
+    "entityName": "Community Health Foundation",
+    "entityType": "501(c)(3)",
+    "taxYear": 2025,
+    "grossReceipts": 325000,
+    "totalAssets": 650000
+  },
+  "expected": {
+    "success": false,
+    "errorsContain": [
+      "expert preparation",
+      "Form 990 family returns",
+      "self-service computation and submission are not implemented"
+    ]
+  }
+}

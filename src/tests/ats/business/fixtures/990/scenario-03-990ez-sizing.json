@@ -1,0 +1,25 @@
+{
+  "scenarioId": "990-scenario-03-990ez-sizing",
+  "formType": "990",
+  "description": "Mid-sized exempt organization that fits the Form 990-EZ size thresholds but still remains expert-routed.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts",
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessParityFixtures.test.ts"
+  ],
+  "facts": {
+    "entityName": "Friends of the Public Library",
+    "entityType": "501(c)(4)",
+    "taxYear": 2025,
+    "grossReceipts": 150000,
+    "totalAssets": 250000
+  },
+  "expected": {
+    "success": false,
+    "errorsContain": [
+      "expert preparation",
+      "990-EZ",
+      "$200,000",
+      "$500,000"
+    ]
+  }
+}

@@ -60,6 +60,21 @@
       "scenarioId": "1041-scenario-03-distribution-deduction",
       "formType": "1041",
       "path": "src/tests/ats/business/fixtures/1041/scenario-03-distribution-deduction.json"
+    },
+    {
+      "scenarioId": "990-scenario-01-full-form-expert-route",
+      "formType": "990",
+      "path": "src/tests/ats/business/fixtures/990/scenario-01-full-form-expert-route.json"
+    },
+    {
+      "scenarioId": "990-scenario-02-990n-sizing",
+      "formType": "990",
+      "path": "src/tests/ats/business/fixtures/990/scenario-02-990n-sizing.json"
+    },
+    {
+      "scenarioId": "990-scenario-03-990ez-sizing",
+      "formType": "990",
+      "path": "src/tests/ats/business/fixtures/990/scenario-03-990ez-sizing.json"
     }
   ]
 }

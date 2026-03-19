@@ -1131,6 +1131,66 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(String(blocked.error)).toContain('Form 990')
   }, 120_000)
 
+  it('surfaces 990-EZ sizing hints for midsize nonprofits in review flows', async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sub: 'taxflow-user-990ez',
+        email: 'nonprofit.990ez@example.com',
+        displayName: 'Nonprofit EZ User'
+      })
+    })
+    expect(response.status).toBe(201)
+    const sessionCookie = extractCookieHeader(response)
+
+    response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionCookie
+      },
+      body: JSON.stringify({
+        taxYear: 2025,
+        filingStatus: 'single',
+        formType: '990',
+        currentPhase: 'review',
+        screenData: {
+          '/taxpayer-profile': {
+            firstName: 'Maya',
+            lastName: 'Midsize',
+            ssn: '400-01-2299',
+            filingStatus: 'single'
+          },
+          '/business-entity': {
+            entityName: 'Friends of the Public Library',
+            ein: '98-7654321',
+            grossReceipts: 150000,
+            totalAssets: 250000
+          }
+        }
+      })
+    })
+    expect(response.status).toBe(201)
+    const created = await parseJsonResponse<JsonObject>(response)
+    const filingSessionId = String((created.filingSession as JsonObject).id)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,
+      { headers: { cookie: sessionCookie } }
+    )
+    expect(response.status).toBe(200)
+    const checklist = await parseJsonResponse<JsonObject>(response)
+    expect(
+      (checklist.businessFormCapability as JsonObject).nonprofitReturnHint
+    ).toBe('990EZ')
+    expect(
+      (checklist.findings as JsonObject[]).some((finding) =>
+        String((finding as JsonObject).message).includes('990-EZ')
+      )
+    ).toBe(true)
+  }, 120_000)
+
   it(
     'supports self-service 1120, 1120-S, 1065, and 1041 entity-return sync and review flows',
     async () => {

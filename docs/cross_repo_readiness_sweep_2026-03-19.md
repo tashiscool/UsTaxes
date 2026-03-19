@@ -61,6 +61,10 @@ This sweep covers the active filing stack:
 - Canonical business parity fixtures are now executable and green:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/business_fixture_manifest.json`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessParityFixtures.test.ts`
+- Nonprofit expert-route evidence is now fixture-backed too:
+  - `990-N`-sized, `990-EZ`-sized, and full-`990` organizations all execute through the fixture harness and surface sized guidance instead of only generic expert routing
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
 - Protected auth callbacks now require a signed upstream identity assertion
   instead of trusting raw query params:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/utils/appAuth.ts`
@@ -101,6 +105,7 @@ This sweep covers the active filing stack:
 
 - `1120`, `1120-S`, `1065`, and `1041` now have audited computed output surfaces in the Cloudflare path, not just capability flags.
 - They also now have canonical JSON parity-input fixtures that execute cleanly against the backend calculator.
+- `990` is still expert-routed, but it is no longer only a prose claim: the parity harness now proves honest `990-N`, `990-EZ`, and full-`990` sizing guidance in the service/runtime path.
 - See:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/docs/business_entity_output_audit_2026-03-19.md`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/docs/business_workbook_parity_harness.md`
@@ -156,7 +161,7 @@ Evidence:
 
 Why this still blocks the claim:
 
-- `1120`, `1120-S`, `1065`, and `1041` are no longer only `IRS-reference-led`; they are now fixture-backed and executable through the backend test harness
+- `1120`, `1120-S`, `1065`, `1041`, and the expert-routed `990` family are no longer only `IRS-reference-led`; they are now fixture-backed and executable through the backend test harness
 - none of the business/nonprofit forms are backed by private workbook sources the way the `1040` family is
 - `990` remains expert-routed, not self-serve
 

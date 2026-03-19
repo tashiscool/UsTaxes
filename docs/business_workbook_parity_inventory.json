@@ -381,8 +381,28 @@
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts"
     ],
-    "fixture_entries": [],
-    "fixture_paths": [],
+    "fixture_entries": [
+      {
+        "scenarioId": "990-scenario-01-full-form-expert-route",
+        "formType": "990",
+        "path": "src/tests/ats/business/fixtures/990/scenario-01-full-form-expert-route.json"
+      },
+      {
+        "scenarioId": "990-scenario-02-990n-sizing",
+        "formType": "990",
+        "path": "src/tests/ats/business/fixtures/990/scenario-02-990n-sizing.json"
+      },
+      {
+        "scenarioId": "990-scenario-03-990ez-sizing",
+        "formType": "990",
+        "path": "src/tests/ats/business/fixtures/990/scenario-03-990ez-sizing.json"
+      }
+    ],
+    "fixture_paths": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/990/scenario-01-full-form-expert-route.json",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/990/scenario-02-990n-sizing.json",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/990/scenario-03-990ez-sizing.json"
+    ],
     "notes": "Nonprofit parity is partially implemented in local forms, but Cloudflare still routes Form 990-family work to expert handling."
   }
 ]

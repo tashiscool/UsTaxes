@@ -72,6 +72,41 @@ describe('getBusinessFormCapability', () => {
   })
 })
 
+describe('Form 990 expert guidance', () => {
+  it('surfaces 990-N sizing guidance for low-gross-receipt nonprofits', () => {
+    const result = svc.calculateBusinessEntity(
+      '990',
+      baseBizFacts({
+        entityType: '501(c)(3)',
+        grossReceipts: 40_000,
+        totalAssets: 20_000
+      })
+    )
+
+    expect(result.success).toBe(false)
+    if (result.success) return
+    expect(result.errors[0]).toContain('990-N')
+    expect(result.errors[0]).toContain('$50,000')
+  })
+
+  it('surfaces 990-EZ sizing guidance for midsize nonprofits', () => {
+    const result = svc.calculateBusinessEntity(
+      '990',
+      baseBizFacts({
+        entityType: '501(c)(4)',
+        grossReceipts: 150_000,
+        totalAssets: 250_000
+      })
+    )
+
+    expect(result.success).toBe(false)
+    if (result.success) return
+    expect(result.errors[0]).toContain('990-EZ')
+    expect(result.errors[0]).toContain('$200,000')
+    expect(result.errors[0]).toContain('$500,000')
+  })
+})
+
 // ---------------------------------------------------------------------------
 // C-Corp (Form 1120) — 21 % flat rate
 // ---------------------------------------------------------------------------

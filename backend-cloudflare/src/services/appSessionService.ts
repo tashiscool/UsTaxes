@@ -641,17 +641,25 @@ const getBusinessReturnCapabilityView = (snapshot: FilingSessionSnapshot) => {
       ? 'ready'
       : 'needs_input'
 
-  const smallNonprofitHint =
-    snapshot.formType === '990' && toMoney(facts.grossReceipts) > 0
-      ? toMoney(facts.grossReceipts) <= 50_000
-      : false
+  const grossReceipts = toMoney(facts.grossReceipts)
+  const totalAssets = toMoney(facts.totalAssets)
+  const nonprofitReturnHint =
+    snapshot.formType === '990' && grossReceipts > 0
+      ? grossReceipts <= 50_000
+        ? '990N'
+        : grossReceipts < 200_000 && totalAssets > 0 && totalAssets < 500_000
+        ? '990EZ'
+        : null
+      : null
+  const smallNonprofitHint = nonprofitReturnHint === '990N'
 
   return {
     ...capability,
     hasMinimumData,
     readiness,
     missingInputs,
-    smallNonprofitHint
+    smallNonprofitHint,
+    nonprofitReturnHint
   }
 }
 
@@ -3858,8 +3866,10 @@ const buildChecklist = (
           : buildStatusFromCollection(businessRecords, true),
         sublabel: businessReturnCapability
           ? businessReturnCapability.supportLevel === 'expert_required'
-            ? businessReturnCapability.smallNonprofitHint
+            ? businessReturnCapability.nonprofitReturnHint === '990N'
               ? 'Expert-required: this nonprofit may qualify for 990-N, but Form 990 self-service is not available here yet'
+              : businessReturnCapability.nonprofitReturnHint === '990EZ'
+              ? 'Expert-required: this nonprofit fits the 990-EZ size thresholds, but Form 990-family self-service is not available here yet'
               : 'Expert-required: Form 990 self-service is not available in the production backend'
             : businessReturnCapability.hasMinimumData
             ? `${snapshot.formType} entity return facts are ready for calculation`
@@ -5023,8 +5033,10 @@ const toFindingRows = (
       code: 'BUSINESS-FORM-EXPERT-REQUIRED',
       severity: 'warning',
       title: `${snapshot.formType} requires expert help`,
-      message: businessReturnCapability.smallNonprofitHint
+      message: businessReturnCapability.nonprofitReturnHint === '990N'
         ? 'This nonprofit may qualify for 990-N, but TaxFlow still routes Form 990-family work to expert help today.'
+        : businessReturnCapability.nonprofitReturnHint === '990EZ'
+        ? 'This nonprofit fits the 990-EZ size thresholds, but TaxFlow still routes Form 990-family work to expert help today.'
         : businessReturnCapability.reason ??
           `${snapshot.formType} self-service filing is not available in TaxFlow today.`,
       fix_path: '/situation',
