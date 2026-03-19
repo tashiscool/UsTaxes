@@ -178,8 +178,11 @@ backend_require_worker_secrets() {
     return 0
   fi
 
+  backend_require_var APP_OIDC_ISSUER_URL
+  backend_require_var APP_OIDC_CLIENT_ID
+  backend_require_var APP_AUTH_CALLBACK_URL
   backend_require_secret APP_AUTH_SECRET
-  backend_require_secret APP_AUTH_CALLBACK_SHARED_SECRET
+  backend_require_secret APP_OIDC_CLIENT_SECRET
   backend_require_secret INTERNAL_API_TOKEN
   backend_require_secret SESSION_SECRET_HMAC_KEY
 

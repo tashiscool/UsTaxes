@@ -53,9 +53,15 @@ This package now uses the same production ergonomics pattern as the sibling
 Recommended production-only secrets to keep out of `wrangler.toml`:
 
 - `APP_AUTH_SECRET`
-- `APP_AUTH_CALLBACK_SHARED_SECRET`
+- `APP_OIDC_CLIENT_SECRET`
 - `INTERNAL_API_TOKEN`
 - `SESSION_SECRET_HMAC_KEY`
+
+Recommended production OIDC configuration:
+
+- `APP_OIDC_ISSUER_URL`
+- `APP_OIDC_CLIENT_ID`
+- `APP_AUTH_CALLBACK_URL`
 
 ### Production commands
 
@@ -162,3 +168,6 @@ These run locally with in-memory adapters while production code uses D1/R2/Queue
 - `appAuth` now accepts `APP_AUTH_SECRET` first and `SESSION_SECRET_HMAC_KEY`
   second, which lets production use Wrangler-managed secrets without breaking the
   current local setup.
+- protected environments now use a backend-owned OIDC flow with signed state,
+  PKCE, authorization-code exchange, and ID token verification instead of the
+  older custom signed callback-assertion bridge.

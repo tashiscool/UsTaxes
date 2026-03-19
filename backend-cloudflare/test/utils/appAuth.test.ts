@@ -5,12 +5,9 @@ import {
   issueAppSessionCookie,
   issueAuthFlowCookie,
   issueSignedAuthFlowState,
-  issueTrustedCallbackIdentityAssertion,
   localDevAuthAllowed,
-  trustedCallbackIdentityHeaderName,
-  trustedCallbackSignatureHeaderName,
-  verifyAuthFlowState,
-  verifyTrustedCallbackIdentityAssertion
+  verifyAuthFlowCookie,
+  verifyAuthFlowState
 } from '../../src/utils/appAuth'
 import { HttpError } from '../../src/utils/http'
 import type { SubmissionQueueMessage } from '../../src/domain/types'
@@ -56,13 +53,45 @@ describe('app auth utilities', () => {
     ).rejects.toBeInstanceOf(HttpError)
   })
 
-  it('issues auth flow cookies as HttpOnly', () => {
-    const cookie = issueAuthFlowCookie(
-      makeEnv({ ENVIRONMENT: 'production', APP_AUTH_SECRET: 'x'.repeat(48) }),
-      'nonce-1'
+  it('issues auth flow cookies as HttpOnly and round-trips signed PKCE claims', async () => {
+    const env = makeEnv({
+      ENVIRONMENT: 'production',
+      APP_AUTH_SECRET: 'x'.repeat(48)
+    })
+    const cookie = await issueAuthFlowCookie(
+      env,
+      {
+        nonce: 'nonce-1',
+        codeVerifier: 'pkce-verifier-1'
+      }
+    )
+    const verified = await verifyAuthFlowCookie(env, cookie)
+
+    expect(verified).toEqual(
+      expect.objectContaining({
+        nonce: 'nonce-1',
+        codeVerifier: 'pkce-verifier-1'
+      })
     )
     expect(cookie).toContain('HttpOnly')
     expect(cookie).toContain('Secure')
+  })
+
+  it('rejects tampered auth flow cookies in protected environments', async () => {
+    const env = makeEnv({
+      ENVIRONMENT: 'production',
+      APP_AUTH_SECRET: 'x'.repeat(48)
+    })
+    const cookie = await issueAuthFlowCookie(env, {
+      nonce: 'nonce-1',
+      codeVerifier: 'pkce-verifier-1'
+    })
+
+    const tamperedCookie = cookie.replace(
+      /^app_auth_flow=([^;]+)/,
+      (_match, token: string) => `app_auth_flow=${token}tampered`
+    )
+    await expect(verifyAuthFlowCookie(env, tamperedCookie)).resolves.toBeNull()
   })
 
   it('round-trips signed auth flow state', async () => {
@@ -96,58 +125,5 @@ describe('app auth utilities', () => {
     )
 
     await expect(verifyAuthFlowState(env, unsignedState)).resolves.toBeNull()
-  })
-
-  it('round-trips trusted callback identity assertions in protected environments', async () => {
-    const env = makeEnv({
-      ENVIRONMENT: 'production',
-      APP_AUTH_SECRET: 'x'.repeat(48),
-      APP_AUTH_CALLBACK_SHARED_SECRET: 'y'.repeat(48)
-    })
-    const assertion = await issueTrustedCallbackIdentityAssertion(env, {
-      sub: 'callback-user-1',
-      email: 'callback.user@example.com',
-      tin: '400011032',
-      displayName: 'Callback User'
-    })
-
-    const verified = await verifyTrustedCallbackIdentityAssertion(
-      env,
-      assertion.payload,
-      assertion.signature
-    )
-
-    expect(verified).toEqual({
-      sub: 'callback-user-1',
-      email: 'callback.user@example.com',
-      tin: '400011032',
-      displayName: 'Callback User'
-    })
-    expect(trustedCallbackIdentityHeaderName(env)).toBe(
-      'x-ustaxes-authenticated-user'
-    )
-    expect(trustedCallbackSignatureHeaderName(env)).toBe(
-      'x-ustaxes-authenticated-user-signature'
-    )
-  })
-
-  it('rejects tampered trusted callback identity assertions', async () => {
-    const env = makeEnv({
-      ENVIRONMENT: 'production',
-      APP_AUTH_SECRET: 'x'.repeat(48),
-      APP_AUTH_CALLBACK_SHARED_SECRET: 'y'.repeat(48)
-    })
-    const assertion = await issueTrustedCallbackIdentityAssertion(env, {
-      sub: 'callback-user-1',
-      email: 'callback.user@example.com'
-    })
-
-    await expect(
-      verifyTrustedCallbackIdentityAssertion(
-        env,
-        assertion.payload,
-        `${assertion.signature}tampered`
-      )
-    ).resolves.toBeNull()
   })
 })

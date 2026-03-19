@@ -21,13 +21,17 @@ import {
   issueSignedAuthFlowState,
   isDevelopmentLikeEnvironment,
   localDevAuthAllowed,
-  readCookieValue,
   requireAppUser,
-  trustedCallbackIdentityHeaderName,
-  trustedCallbackSignatureHeaderName,
-  verifyTrustedCallbackIdentityAssertion,
+  verifyAuthFlowCookie,
   verifyAuthFlowState
 } from './utils/appAuth'
+import {
+  buildOidcAuthorizationUrl,
+  exchangeOidcCodeForIdentity,
+  generatePkceChallenge,
+  generatePkceVerifier,
+  oidcConfigured
+} from './utils/oidc'
 import { HttpError, jsonResponse } from './utils/http'
 import { assertInternalAuth } from './utils/auth'
 import { nowIso } from './utils/time'
@@ -158,7 +162,25 @@ const normalizeCallbackIdentity = (
   }
 }
 
-const resolveCallbackIdentity = async (c: Context<{ Bindings: Env }>) => {
+const resolveCallbackIdentity = async (
+  c: Context<{ Bindings: Env }>,
+  options: { nonce: string; codeVerifier?: string }
+) => {
+  const code = c.req.query('code')?.trim()
+  if (code) {
+    if (!options.codeVerifier) {
+      throw new HttpError(
+        400,
+        'Authentication flow cookie is missing the PKCE verifier.'
+      )
+    }
+    return exchangeOidcCodeForIdentity(c.env, {
+      code,
+      nonce: options.nonce,
+      codeVerifier: options.codeVerifier
+    })
+  }
+
   if (isDevelopmentLikeEnvironment(c.env)) {
     return normalizeCallbackIdentity(
       c.req.query('sub') ?? c.req.query('userId') ?? c.req.query('id'),
@@ -168,25 +190,14 @@ const resolveCallbackIdentity = async (c: Context<{ Bindings: Env }>) => {
     )
   }
 
-  const trustedIdentity = await verifyTrustedCallbackIdentityAssertion(
-    c.env,
-    c.req.header(trustedCallbackIdentityHeaderName(c.env)) ?? undefined,
-    c.req.header(trustedCallbackSignatureHeaderName(c.env)) ?? undefined
-  )
-
-  if (!trustedIdentity) {
+  if (!oidcConfigured(c.env)) {
     throw new HttpError(
-      400,
-      'Protected callback identity is missing or invalid.'
+      500,
+      'OIDC is not configured for this protected environment.'
     )
   }
 
-  return normalizeCallbackIdentity(
-    trustedIdentity.sub,
-    trustedIdentity.email,
-    trustedIdentity.tin,
-    trustedIdentity.displayName
-  )
+  throw new HttpError(400, 'Protected callback is missing an authorization code.')
 }
 
 const resolveSafeRedirect = (
@@ -362,13 +373,35 @@ app.post('/app/v1/auth/prepare', async (c) => {
   setNoStoreHeaders(c)
   const body = authPrepareSchema.parse(await c.req.json().catch(() => ({})))
   const nonce = crypto.randomUUID()
+  const shouldUseOidc =
+    oidcConfigured(c.env) || !isDevelopmentLikeEnvironment(c.env)
+  const codeVerifier = shouldUseOidc ? generatePkceVerifier() : undefined
   const state = await issueSignedAuthFlowState(c.env, {
     redirectUri: body.redirectUri,
     nonce,
     issuedAt: Date.now()
   })
-  c.header('set-cookie', issueAuthFlowCookie(c.env, nonce))
-  return c.json({ state }, 201)
+  c.header(
+    'set-cookie',
+    await issueAuthFlowCookie(c.env, {
+      nonce,
+      codeVerifier
+    })
+  )
+
+  let authorizationUrl: string | undefined
+  if (shouldUseOidc) {
+    if (!codeVerifier) {
+      throw new HttpError(500, 'OIDC PKCE verifier generation failed.')
+    }
+    authorizationUrl = await buildOidcAuthorizationUrl(c.env, {
+      state,
+      nonce,
+      codeChallenge: await generatePkceChallenge(codeVerifier)
+    })
+  }
+
+  return c.json({ state, authorizationUrl }, 201)
 })
 
 app.get('/app/v1/auth/callback', async (c) => {
@@ -383,16 +416,16 @@ app.get('/app/v1/auth/callback', async (c) => {
   if (!parsedState) {
     throw new HttpError(400, 'Invalid or expired authentication flow state.')
   }
-  const authFlowNonce = readCookieValue(c.req.header('cookie'), 'app_auth_flow')
+  const authFlow = await verifyAuthFlowCookie(c.env, c.req.header('cookie'))
   if (
     !parsedState.nonce ||
-    !authFlowNonce ||
-    authFlowNonce !== parsedState.nonce
+    !authFlow ||
+    authFlow.nonce !== parsedState.nonce
   ) {
     throw new HttpError(400, 'Invalid or expired authentication flow state.')
   }
 
-  const callbackIdentity = await resolveCallbackIdentity(c)
+  const callbackIdentity = await resolveCallbackIdentity(c, authFlow)
 
   const cookie = await issueAppSessionCookie(c.env, {
     sub: callbackIdentity.sub,

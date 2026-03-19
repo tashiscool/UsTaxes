@@ -494,6 +494,9 @@ export interface Property {
   qbiUbia?: number
   activeParticipation?: boolean
   priorYearPassiveLossCarryover?: number
+  qbiAggregationGroup?: string
+  qbiHasAggregationElection?: boolean
+  qbiIsCooperative?: boolean
 }
 
 export interface ScheduleEPage2Data {
@@ -544,6 +547,9 @@ export interface ScheduleK1Form1065 {
   section199AUbia?: number // Form 8995-A UBIA limitation support
   section199APatronReduction?: number // Form 8995-A line 14 patron reduction
   isSpecifiedServiceTradeOrBusiness?: boolean
+  section199AAggregationGroup?: string
+  section199AHasAggregationElection?: boolean
+  isAgriculturalOrHorticulturalCooperative?: boolean
   priorYearUnallowedLoss?: number
   isPubliclyTradedPartnership?: boolean
   ptpSection199AIncome?: number
@@ -2932,6 +2938,8 @@ export interface Information<D = Date> {
   exemptOrgReturn?: Record<string, unknown>
   // Form 990-EZ - Short Form Exempt Organization
   exemptOrgReturnEZ?: Record<string, unknown>
+  // Form 990-N - Electronic Notice
+  exemptOrgReturnN?: Record<string, unknown>
   // Form 990-T - Exempt Organization Business Income Tax
   ubitReturn?: Record<string, unknown>
   // Form 990-PF - Private Foundation Return

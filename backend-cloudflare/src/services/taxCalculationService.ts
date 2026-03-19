@@ -1507,6 +1507,19 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
           homeOfficeDeduction: toNum(b.homeOfficeDeduction) || undefined,
           qbiW2Wages: toNum(b.qbiW2Wages ?? b.qbiWages) || undefined,
           qbiUbia: toNum(b.qbiUbia ?? b.qbiProperty) || undefined,
+          qbiAggregationGroup:
+            toStr(b.qbiAggregationGroup ?? b.aggregationGroup) || undefined,
+          qbiHasAggregationElection:
+            toBool(
+              b.qbiHasAggregationElection ?? b.hasAggregationElection ?? false
+            ) || undefined,
+          qbiIsCooperative:
+            toBool(
+              b.qbiIsCooperative ??
+                b.isCooperative ??
+                b.isAgriculturalOrHorticulturalCooperative ??
+                false
+            ) || undefined,
           isSpecifiedServiceTradeOrBusiness: toBool(
             b.isSpecifiedServiceTradeOrBusiness ?? b.isSSTB ?? false
           ),
@@ -1832,6 +1845,20 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
       section199AQBI: toNum(r.section199AQBI ?? r.qbiIncome ?? 0),
       section199AW2Wages: toNum(r.section199AW2Wages ?? 0) || undefined,
       section199AUbia: toNum(r.section199AUbia ?? 0) || undefined,
+      section199AAggregationGroup:
+        toStr(r.section199AAggregationGroup ?? r.aggregationGroup) || undefined,
+      section199AHasAggregationElection:
+        toBool(
+          r.section199AHasAggregationElection ??
+            r.hasAggregationElection ??
+            false
+        ) || undefined,
+      isAgriculturalOrHorticulturalCooperative:
+        toBool(
+          r.isAgriculturalOrHorticulturalCooperative ??
+            r.isCooperative ??
+            false
+        ) || undefined,
       isSpecifiedServiceTradeOrBusiness:
         toBool(r.isSpecifiedServiceTradeOrBusiness ?? r.isSSTB ?? false) ||
         undefined,

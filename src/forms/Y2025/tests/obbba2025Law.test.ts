@@ -567,7 +567,9 @@ describe('2025 federal law updates', () => {
         qbi: 40000,
         w2Wages: 40000,
         ubia: 40000,
-        patronReduction: 2000
+        patronReduction: 2000,
+        aggregationGroup: 'Group A',
+        hasAggregationElection: true
       },
       {
         name: 'Echo Foods',
@@ -575,7 +577,10 @@ describe('2025 federal law updates', () => {
         qbi: 30000,
         w2Wages: 30000,
         ubia: 50000,
-        patronReduction: 3000
+        patronReduction: 3000,
+        aggregationGroup: 'Group A',
+        hasAggregationElection: true,
+        isCooperative: true
       }
     ])
 
@@ -591,11 +596,22 @@ describe('2025 federal law updates', () => {
     expect(f8995A.overflowStatementEntries()).toEqual([
       expect.objectContaining({
         name: 'Delta Holdings',
+        statementRowNumber: 1,
+        statementSection: 'Form 8995-A additional statement',
+        isAttachmentRow: true,
+        aggregationGroup: 'Group A',
+        hasAggregationElection: true,
         deductionBeforePatronReduction: expect.any(Number),
         deductionAfterPatronReduction: expect.any(Number)
       }),
       expect.objectContaining({
         name: 'Echo Foods',
+        statementRowNumber: 2,
+        statementSection: 'Form 8995-A additional statement',
+        isAttachmentRow: true,
+        aggregationGroup: 'Group A',
+        hasAggregationElection: true,
+        isCooperative: true,
         deductionBeforePatronReduction: expect.any(Number),
         deductionAfterPatronReduction: expect.any(Number)
       })
@@ -607,6 +623,8 @@ describe('2025 federal law updates', () => {
         visibleBusinessCount: 3,
         overflowBusinessCount: 2,
         totalBusinessCount: 5,
+        aggregationElectionCount: 2,
+        cooperativeCount: 1,
         thresholdStart: expect.any(Number),
         thresholdEnd: expect.any(Number),
         overflowTotals: {
@@ -861,7 +879,9 @@ describe('2025 federal law updates', () => {
         ptpLossCarryforward: 700,
         dpadReduction: 300,
         applicablePercentage: 0,
-        sstbApplicablePercentage: 1
+        sstbApplicablePercentage: 1,
+        aggregationElectionCount: 0,
+        cooperativeCount: 0
       })
     )
   })

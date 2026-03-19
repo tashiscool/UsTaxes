@@ -50,7 +50,7 @@ if [[ "${SYNC_WRANGLER_SECRETS}" == "1" ]]; then
   CLOUDFLARE_WORKER_ENV="${WORKER_ENV}" bash "${SCRIPT_DIR}/sync_wrangler_secrets.sh"
 else
   echo "[skip] SYNC_WRANGLER_SECRETS=0"
-  echo "[info] Assuming APP_AUTH_SECRET, APP_AUTH_CALLBACK_SHARED_SECRET, SESSION_SECRET_HMAC_KEY, and INTERNAL_API_TOKEN are already present in Wrangler for env=${WORKER_ENV}"
+  echo "[info] Assuming APP_AUTH_SECRET, APP_OIDC_CLIENT_SECRET, APP_OIDC_CLIENT_ID, APP_OIDC_ISSUER_URL, APP_AUTH_CALLBACK_URL, SESSION_SECRET_HMAC_KEY, and INTERNAL_API_TOKEN are already present in Wrangler for env=${WORKER_ENV}"
 fi
 
 if [[ "${RUN_PREDEPLOY_TESTS}" == "1" ]]; then

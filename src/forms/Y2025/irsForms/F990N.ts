@@ -63,17 +63,15 @@ export default class F990N extends F1040Attachment {
   sequenceIndex = 999
 
   isNeeded = (): boolean => {
-    return this.isEligibleForEPostcard()
+    return this.f990NData() !== undefined
   }
 
   isEligibleForEPostcard = (): boolean => {
-    // Check if organization is small enough for 990-N
-    const exemptOrg = this.f1040.info.exemptOrgReturnEZ
-    return exemptOrg !== undefined
+    return this.grossReceiptsUnderThreshold()
   }
 
   f990NData = (): F990NData | undefined => {
-    return undefined // Would be populated from organization data
+    return this.f1040.info.exemptOrgReturnN as F990NData | undefined
   }
 
   // Organization information

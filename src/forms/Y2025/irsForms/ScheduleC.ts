@@ -83,6 +83,9 @@ export interface BusinessInfo {
   qbiUbia?: number
   qbiPatronReduction?: number
   isSpecifiedServiceTradeOrBusiness?: boolean
+  qbiAggregationGroup?: string
+  qbiHasAggregationElection?: boolean
+  qbiIsCooperative?: boolean
   personRole: PersonRole
 }
 

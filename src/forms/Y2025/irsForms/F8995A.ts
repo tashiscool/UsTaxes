@@ -69,12 +69,18 @@ export default class F8995A extends F8995 {
 
   overflowStatementEntries = (): Array<
     ReturnType<F8995['qbiEntries']>[number] & {
+      statementRowNumber: number
+      statementSection: string
+      isAttachmentRow: boolean
       deductionBeforePatronReduction: number
       deductionAfterPatronReduction: number
     }
   > =>
-    this.overflowEntries().map((entry) => ({
+    this.overflowEntries().map((entry, index) => ({
       ...entry,
+      statementRowNumber: index + 1,
+      statementSection: 'Form 8995-A additional statement',
+      isAttachmentRow: true,
       deductionBeforePatronReduction: this.deductionForEntry(entry),
       deductionAfterPatronReduction: this.deductionAfterPatronReduction(entry)
     }))
@@ -96,6 +102,8 @@ export default class F8995A extends F8995 {
     applicablePercentage: number
     sstbApplicablePercentage: number
     sstbCount: number
+    aggregationElectionCount: number
+    cooperativeCount: number
     reitDividends: number
     ptpIncome: number
     ptpLossCarryforward: number
@@ -110,11 +118,19 @@ export default class F8995A extends F8995 {
       this.ptpLossCarryforward() > 0 ||
       this.l38() > 0
     const sstbCount = this.qbiEntries().filter((entry) => entry.isSSTB).length
+    const aggregationElectionCount = this.qbiEntries().filter(
+      (entry) => entry.hasAggregationElection
+    ).length
+    const cooperativeCount = this.qbiEntries().filter(
+      (entry) => entry.isCooperative
+    ).length
 
     return {
       requiresAttachment:
         this.needsAdditionalStatement() ||
         sstbCount > 0 ||
+        aggregationElectionCount > 0 ||
+        cooperativeCount > 0 ||
         hasCarryforwardOrAdjustmentData,
       visibleBusinessCount: this.visibleEntries().length,
       overflowBusinessCount: this.overflowEntries().length,
@@ -124,6 +140,8 @@ export default class F8995A extends F8995 {
       applicablePercentage: this.l24(),
       sstbApplicablePercentage: this.sstbApplicablePercentage(),
       sstbCount,
+      aggregationElectionCount,
+      cooperativeCount,
       reitDividends: this.reitDividends(),
       ptpIncome: this.currentYearPtpIncome(),
       ptpLossCarryforward: this.ptpLossCarryforward(),

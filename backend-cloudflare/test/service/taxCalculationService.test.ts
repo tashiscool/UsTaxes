@@ -1258,6 +1258,9 @@ describe('TaxCalculationService', () => {
               qbiEligible: true,
               qbiWages: 18000,
               qbiProperty: 95000,
+              aggregationGroup: 'Rental Group A',
+              hasAggregationElection: true,
+              isCooperative: true,
               homeOffice: false,
               homeOfficeMethod: 'simplified',
               homeOfficePct: 0,
@@ -1291,6 +1294,9 @@ describe('TaxCalculationService', () => {
               w2Wages: 18000,
               ubia: 95000,
               isSSTB: true,
+              aggregationGroup: 'Rental Group A',
+              hasAggregationElection: true,
+              isCooperative: true,
               qbiAmount: 140000,
               w2Limitation: 11400,
               finalDeduction: 21600,
@@ -1317,6 +1323,11 @@ describe('TaxCalculationService', () => {
       })
       expect(information.businesses?.[0]?.qbiW2Wages).toBe(18000)
       expect(information.businesses?.[0]?.qbiUbia).toBe(95000)
+      expect(information.businesses?.[0]?.qbiAggregationGroup).toBe(
+        'Rental Group A'
+      )
+      expect(information.businesses?.[0]?.qbiHasAggregationElection).toBe(true)
+      expect(information.businesses?.[0]?.qbiIsCooperative).toBe(true)
     })
 
     it('maps page-2 Schedule E K-1 facts into partnership records for the form engine', () => {

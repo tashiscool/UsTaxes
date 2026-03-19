@@ -118,10 +118,10 @@ This sweep covers the active filing stack:
 
 ## What still blocks a credible “100% ready” claim
 
-### 1. Production auth trust is still not strong enough
+### 1. Production auth now has the right verification boundary, but still needs rollout validation
 
-The worker auth layer is better than before, but it is still not a full upstream
-OAuth/OIDC verification boundary.
+The worker auth layer now has a real upstream OAuth/OIDC verification boundary,
+but production readiness still depends on operational rollout and provider-side validation.
 
 Evidence:
 
@@ -131,9 +131,10 @@ Evidence:
 Why this still blocks the claim:
 
 - local/dev login is still present
-- protected callback identity is now verified from a signed upstream assertion
-  instead of raw query params, but the stack still is not a full OIDC
-  code/token exchange boundary
+- protected environments now use backend-owned OIDC state, PKCE,
+  authorization-code exchange, and ID token verification
+- the remaining auth gap is operational: this still needs live production
+  provider rollout validation, not a different trust architecture
 - for tax-filing production readiness, auth trust is part of correctness
 
 ### 2. The 2025 tax-engine still documents important partials
@@ -210,7 +211,7 @@ But the evidence still does **not** support a clean “100% ready” claim yet.
 
 The most honest remaining blockers are:
 
-1. production auth trust
+1. production auth rollout validation
 2. residual documented 2025-law partials
 3. lack of full private-workbook-backed business/nonprofit parity, especially the entire `990` family
 4. still-partial Direct File final-form detail on the hardest advanced forms

@@ -48,9 +48,15 @@ export default class F6251 extends F1040Attachment {
       return true
     }
 
-    // TODO: 2. You claim any general business credit, and either line 6 (in Part I) of Form 3800 or line 25 of Form 3800 is more than zero.
+    // 2. You claim any general business credit.
+    if (this.f1040.f3800?.isNeeded() ?? false) {
+      return true
+    }
 
-    // TODO: 3. You claim the qualified electric vehicle credit (Form 8834), the personal use part of the alternative fuel vehicle refueling property credit (Form 8911), or the credit for prior year minimum tax (Form 8801).
+    // 3. You claim the credit for prior year minimum tax (Form 8801).
+    if (this.f1040.f8801?.isNeeded() ?? false) {
+      return true
+    }
 
     // 4. The total of Form 6251, lines 2c through 3, is negative and line 7 would be greater than line 10 if you didn’t take into account lines 2c through 3.
     const l2cTo3Total =

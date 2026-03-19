@@ -1,12 +1,14 @@
 import { execFileSync } from 'node:child_process'
 import { rmSync, mkdtempSync } from 'node:fs'
+import { createServer } from 'node:http'
+import type { AddressInfo } from 'node:net'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { SignJWT, exportJWK, generateKeyPair } from 'jose'
 import { unstable_dev } from 'wrangler'
 import type { Unstable_DevWorker } from 'wrangler'
-import { issueTrustedCallbackIdentityAssertion } from '../../src/utils/appAuth'
 
 const baseUrl = 'http://127.0.0.1'
 const internalToken = 'integration-secret-token'
@@ -939,12 +941,68 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect((me.user as JsonObject).email).toBe('callback.user@example.com')
   })
 
-  it('requires a trusted callback identity assertion in protected environments', async () => {
+  it('completes a real OIDC code-exchange callback in protected environments', async () => {
+    const { privateKey, publicKey } = await generateKeyPair('RS256')
+    const publicJwk = await exportJWK(publicKey)
+    publicJwk.alg = 'RS256'
+    publicJwk.use = 'sig'
+    publicJwk.kid = 'worker-test-key'
+
+    let expectedNonce = ''
+    const tokenServer = createServer((req, res) => {
+      if (req.method !== 'POST' || req.url !== '/token') {
+        res.statusCode = 404
+        res.end('not found')
+        return
+      }
+
+      let body = ''
+      req.on('data', (chunk) => {
+        body += String(chunk)
+      })
+      req.on('end', async () => {
+        const params = new URLSearchParams(body)
+        expect(params.get('grant_type')).toBe('authorization_code')
+        expect(params.get('code')).toBe('oidc-code-1')
+        expect(params.get('client_id')).toBe('taxflow-client')
+        expect(params.get('client_secret')).toBe('z'.repeat(48))
+        expect(params.get('redirect_uri')).toBe(
+          'https://freetaxflow.com/api/app/v1/auth/callback'
+        )
+        expect(params.get('code_verifier')).toBeTruthy()
+
+        const idToken = await new SignJWT({
+          email: 'callback.user@example.com',
+          name: 'Callback User',
+          nonce: expectedNonce
+        })
+          .setProtectedHeader({ alg: 'RS256', kid: 'worker-test-key' })
+          .setIssuer('https://identity.freetaxflow.test')
+          .setAudience('taxflow-client')
+          .setSubject('callback-user-1')
+          .setIssuedAt()
+          .setExpirationTime('5m')
+          .sign(privateKey)
+
+        res.setHeader('content-type', 'application/json')
+        res.end(JSON.stringify({ id_token: idToken }))
+      })
+    })
+
+    await new Promise<void>((resolve) => tokenServer.listen(0, '127.0.0.1', resolve))
+    const tokenPort = (tokenServer.address() as AddressInfo).port
+
     const protectedEnv = {
       ENVIRONMENT: 'production',
       CORS_ORIGIN: 'https://freetaxflow.com',
       APP_AUTH_SECRET: 'x'.repeat(48),
-      APP_AUTH_CALLBACK_SHARED_SECRET: 'y'.repeat(48),
+      APP_OIDC_ISSUER_URL: 'https://identity.freetaxflow.test',
+      APP_OIDC_CLIENT_ID: 'taxflow-client',
+      APP_OIDC_CLIENT_SECRET: 'z'.repeat(48),
+      APP_AUTH_CALLBACK_URL: 'https://freetaxflow.com/api/app/v1/auth/callback',
+      APP_OIDC_AUTHORIZATION_ENDPOINT: 'https://identity.freetaxflow.test/authorize',
+      APP_OIDC_TOKEN_ENDPOINT: `http://127.0.0.1:${tokenPort}/token`,
+      APP_OIDC_JWKS_JSON: JSON.stringify({ keys: [publicJwk] }),
       LOCAL_DEV_AUTH_ENABLED: 'false',
       APP_DEV_ALLOW_LOCAL_LOGIN: 'false'
     }
@@ -962,43 +1020,28 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
 
       expect(response.status).toBe(201)
       const authFlowCookie = extractCookieHeader(response)
-      const prepared = await parseJsonResponse<{ state?: string }>(response)
+      const prepared = await parseJsonResponse<{
+        state?: string
+        authorizationUrl?: string
+      }>(response)
       expect(prepared.state).toBeTruthy()
+      expect(prepared.authorizationUrl).toBeTruthy()
+      const authorizationUrl = new URL(String(prepared.authorizationUrl))
+      expectedNonce = String(authorizationUrl.searchParams.get('nonce') ?? '')
+      expect(expectedNonce).toBeTruthy()
+      expect(authorizationUrl.searchParams.get('client_id')).toBe(
+        'taxflow-client'
+      )
+      expect(authorizationUrl.searchParams.get('code_challenge')).toBeTruthy()
 
       response = await isolatedWorker.fetch(
         `${baseUrl}/app/v1/auth/callback?state=${encodeURIComponent(
           String(prepared.state)
-        )}&sub=callback-user-1&email=callback.user%40example.com`,
+        )}&code=oidc-code-1`,
         {
           redirect: 'manual',
           headers: {
             cookie: authFlowCookie
-          }
-        }
-      )
-
-      expect(response.status).toBe(400)
-
-      const assertion = await issueTrustedCallbackIdentityAssertion(
-        protectedEnv as never,
-        {
-          sub: 'callback-user-1',
-          email: 'callback.user@example.com',
-          tin: '400011032',
-          displayName: 'Callback User'
-        }
-      )
-
-      response = await isolatedWorker.fetch(
-        `${baseUrl}/app/v1/auth/callback?state=${encodeURIComponent(
-          String(prepared.state)
-        )}`,
-        {
-          redirect: 'manual',
-          headers: {
-            cookie: authFlowCookie,
-            'x-ustaxes-authenticated-user': assertion.payload,
-            'x-ustaxes-authenticated-user-signature': assertion.signature
           }
         }
       )
@@ -1020,6 +1063,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       expect((me.user as JsonObject).email).toBe('callback.user@example.com')
     } finally {
       await isolatedWorker.stop()
+      await new Promise<void>((resolve, reject) =>
+        tokenServer.close((error) => (error ? reject(error) : resolve()))
+      )
       if (isolated.persistTo) {
         rmSync(isolated.persistTo, { recursive: true, force: true })
       }

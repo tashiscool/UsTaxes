@@ -18,20 +18,16 @@ export interface AuthFlowStateClaims {
   exp?: number
 }
 
-export interface TrustedCallbackIdentityClaims {
-  sub: string
-  email: string
-  tin?: string
-  displayName?: string
+export interface AuthFlowCookieClaims {
+  nonce: string
+  codeVerifier?: string
+  issuedAt?: number
+  exp?: number
 }
 
 const SESSION_COOKIE = 'app_session_id'
 const AUTH_FLOW_COOKIE = 'app_auth_flow'
 const DEV_LOCAL_SECRET = 'ustaxes-local-dev-secret'
-const DEFAULT_TRUSTED_CALLBACK_IDENTITY_HEADER =
-  'x-ustaxes-authenticated-user'
-const DEFAULT_TRUSTED_CALLBACK_SIGNATURE_HEADER =
-  'x-ustaxes-authenticated-user-signature'
 const ONE_WEEK_SECONDS = 60 * 60 * 24 * 7
 const TEN_MINUTES_SECONDS = 60 * 10
 const DEVELOPMENT_ENVIRONMENTS = new Set([
@@ -105,31 +101,6 @@ const resolveSecret = (env: Env): string => {
   )
 }
 
-const resolveTrustedCallbackSecret = (env: Env): string => {
-  const configuredSecret = env.APP_AUTH_CALLBACK_SHARED_SECRET?.trim()
-  if (configuredSecret) {
-    if (
-      isProtectedEnvironment(env) &&
-      (WEAK_SECRETS.has(configuredSecret) || configuredSecret.length < 32)
-    ) {
-      throw new HttpError(
-        500,
-        'Trusted callback secret is too weak for this environment'
-      )
-    }
-    return configuredSecret
-  }
-
-  if (isDevelopmentLikeEnvironment(env)) {
-    return DEV_LOCAL_SECRET
-  }
-
-  throw new HttpError(
-    500,
-    'Trusted callback secret is not configured for this environment'
-  )
-}
-
 const importHmacKey = async (env: Env): Promise<CryptoKey> =>
   crypto.subtle.importKey(
     'raw',
@@ -139,33 +110,8 @@ const importHmacKey = async (env: Env): Promise<CryptoKey> =>
     ['sign']
   )
 
-const importTrustedCallbackHmacKey = async (env: Env): Promise<CryptoKey> =>
-  crypto.subtle.importKey(
-    'raw',
-    encoder.encode(resolveTrustedCallbackSecret(env)),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  )
-
 const sign = async (env: Env, payload: string): Promise<string> => {
   const key = await importHmacKey(env)
-  const signature = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    encoder.encode(payload)
-  )
-  const bytes = Array.from(new Uint8Array(signature))
-    .map((value) => String.fromCharCode(value))
-    .join('')
-  return toBase64Url(bytes)
-}
-
-const signTrustedCallbackPayload = async (
-  env: Env,
-  payload: string
-): Promise<string> => {
-  const key = await importTrustedCallbackHmacKey(env)
   const signature = await crypto.subtle.sign(
     'HMAC',
     key,
@@ -222,41 +168,109 @@ export const clearAppSessionCookie = (env: Env): string =>
     env
   )}`
 
-export const issueAuthFlowCookie = (
+const parseAuthFlowCookiePayload = (
+  encodedPayload: string
+): AuthFlowCookieClaims | null => {
+  try {
+    const decoded = fromBase64Url(encodedPayload)
+    const parsed = JSON.parse(decoded) as Record<string, unknown>
+    const nonce = typeof parsed.nonce === 'string' ? parsed.nonce : undefined
+    if (!nonce) {
+      return null
+    }
+    return {
+      nonce,
+      codeVerifier:
+        typeof parsed.codeVerifier === 'string'
+          ? parsed.codeVerifier
+          : undefined,
+      issuedAt:
+        typeof parsed.issuedAt === 'number' ? parsed.issuedAt : undefined,
+      exp: typeof parsed.exp === 'number' ? parsed.exp : undefined
+    }
+  } catch {
+    return null
+  }
+}
+
+export const issueAuthFlowCookie = async (
   env: Env,
-  nonce: string,
+  claimsOrNonce: AuthFlowCookieClaims | string,
   ttlSeconds = TEN_MINUTES_SECONDS
-): string =>
-  `${AUTH_FLOW_COOKIE}=${nonce}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ttlSeconds}${cookieSecurityAttributes(
+): Promise<string> => {
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  const payloadClaims: AuthFlowCookieClaims =
+    typeof claimsOrNonce === 'string'
+      ? { nonce: claimsOrNonce }
+      : claimsOrNonce
+  const payload: AuthFlowCookieClaims = {
+    ...payloadClaims,
+    issuedAt: payloadClaims.issuedAt ?? Date.now(),
+    exp: payloadClaims.exp ?? nowSeconds + ttlSeconds
+  }
+  const encodedPayload = toBase64Url(JSON.stringify(payload))
+  const signature = await sign(env, encodedPayload)
+  const token = `${encodedPayload}.${signature}`
+  return `${AUTH_FLOW_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ttlSeconds}${cookieSecurityAttributes(
     env
   )}`
+}
 
 export const clearAuthFlowCookie = (env: Env): string =>
   `${AUTH_FLOW_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${cookieSecurityAttributes(
     env
   )}`
 
-export const readCookieValue = (
+export const verifyAuthFlowCookie = async (
+  env: Env,
   cookieHeader: string | null | undefined,
-  name: string
-): string | null => parseCookie(cookieHeader, name)
+  ttlSeconds = TEN_MINUTES_SECONDS
+): Promise<AuthFlowCookieClaims | null> => {
+  const token = parseCookie(cookieHeader, AUTH_FLOW_COOKIE)
+  if (!token) {
+    return null
+  }
 
-const normalizedHeaderName = (
-  value: string | undefined,
-  fallback: string
-): string => value?.trim().toLowerCase() || fallback
+  const signedSeparatorIndex = token.lastIndexOf('.')
+  if (signedSeparatorIndex <= 0) {
+    if (isProtectedEnvironment(env)) {
+      return null
+    }
+    return { nonce: token }
+  }
 
-export const trustedCallbackIdentityHeaderName = (env: Env): string =>
-  normalizedHeaderName(
-    env.APP_TRUSTED_AUTH_USER_HEADER,
-    DEFAULT_TRUSTED_CALLBACK_IDENTITY_HEADER
-  )
+  const encodedPayload = token.slice(0, signedSeparatorIndex)
+  const providedSignature = token.slice(signedSeparatorIndex + 1)
+  if (!encodedPayload || !providedSignature) {
+    return null
+  }
 
-export const trustedCallbackSignatureHeaderName = (env: Env): string =>
-  normalizedHeaderName(
-    env.APP_TRUSTED_AUTH_SIGNATURE_HEADER,
-    DEFAULT_TRUSTED_CALLBACK_SIGNATURE_HEADER
-  )
+  const expectedSignature = await sign(env, encodedPayload)
+  if (!timingSafeEqual(expectedSignature, providedSignature)) {
+    return null
+  }
+
+  const parsed = parseAuthFlowCookiePayload(encodedPayload)
+  if (!parsed) {
+    return null
+  }
+
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  if (typeof parsed.exp === 'number' && parsed.exp < nowSeconds) {
+    return null
+  }
+  if (typeof parsed.issuedAt === 'number') {
+    const issuedAtSeconds = Math.floor(parsed.issuedAt / 1000)
+    if (
+      issuedAtSeconds > nowSeconds + 60 ||
+      issuedAtSeconds < nowSeconds - ttlSeconds
+    ) {
+      return null
+    }
+  }
+
+  return parsed
+}
 
 const parseAuthFlowStatePayload = (
   encodedPayload: string
@@ -374,59 +388,6 @@ export const issueSignedAuthFlowState = async (
   const encodedPayload = toBase64Url(JSON.stringify(payload))
   const signature = await sign(env, encodedPayload)
   return `${encodedPayload}.${signature}`
-}
-
-const parseTrustedCallbackIdentityPayload = (
-  encodedPayload: string
-): TrustedCallbackIdentityClaims | null => {
-  try {
-    const decoded = fromBase64Url(encodedPayload)
-    const parsed = JSON.parse(decoded) as Record<string, unknown>
-    const sub = typeof parsed.sub === 'string' ? parsed.sub : undefined
-    const email = typeof parsed.email === 'string' ? parsed.email : undefined
-    const tin = typeof parsed.tin === 'string' ? parsed.tin : undefined
-    const displayName =
-      typeof parsed.displayName === 'string' ? parsed.displayName : undefined
-
-    if (!sub || !email) {
-      return null
-    }
-
-    return {
-      sub,
-      email,
-      tin,
-      displayName
-    }
-  } catch {
-    return null
-  }
-}
-
-export const issueTrustedCallbackIdentityAssertion = async (
-  env: Env,
-  claims: TrustedCallbackIdentityClaims
-): Promise<{ payload: string; signature: string }> => {
-  const payload = toBase64Url(JSON.stringify(claims))
-  const signature = await signTrustedCallbackPayload(env, payload)
-  return { payload, signature }
-}
-
-export const verifyTrustedCallbackIdentityAssertion = async (
-  env: Env,
-  encodedPayload: string | undefined,
-  providedSignature: string | undefined
-): Promise<TrustedCallbackIdentityClaims | null> => {
-  if (!encodedPayload || !providedSignature) {
-    return null
-  }
-
-  const expectedSignature = await signTrustedCallbackPayload(env, encodedPayload)
-  if (!timingSafeEqual(expectedSignature, providedSignature)) {
-    return null
-  }
-
-  return parseTrustedCallbackIdentityPayload(encodedPayload)
 }
 
 export const readAppUserFromRequest = async (

@@ -818,6 +818,10 @@ const getQBIWorksheetEntities = (snapshot: FilingSessionSnapshot) =>
       entity.patronReduction ?? entity.qbiPatronReduction
     ),
     aggregationGroup: toText(entity.aggregationGroup),
+    hasAggregationElection: Boolean(entity.hasAggregationElection),
+    isCooperative: Boolean(
+      entity.isCooperative ?? entity.isAgriculturalOrHorticulturalCooperative
+    ),
     qbiAmount: toMoney(entity.qbiAmount),
     w2Limitation: toMoney(entity.w2Limitation),
     finalDeduction: toMoney(entity.finalDeduction),
@@ -1118,12 +1122,15 @@ const getQbiDetail = (
     ptpLossCarryforward: 0,
     dpadReduction: 0
   }
-  const overflowStatementEntries = overflowEntities.map((entity) => {
+  const overflowStatementEntries = overflowEntities.map((entity, index) => {
     const patronReduction = toMoney(entity.patronReduction)
     const tentativeDeduction = toMoney(entity.qbiAmount) * 0.2
     const deductionBeforePatronReduction = toMoney(entity.finalDeduction) + patronReduction
     return {
       ...entity,
+      statementRowNumber: index + 1,
+      statementSection: 'Form 8995-A additional statement',
+      isAttachmentRow: true,
       patronReduction,
       tentativeDeduction,
       deductionBeforePatronReduction,
@@ -1142,6 +1149,11 @@ const getQbiDetail = (
     visibleBusinessCount: visibleEntities.length,
     overflowBusinessCount: overflowEntities.length,
     totalBusinessCount: qbiWorksheetEntities.length,
+    aggregationElectionCount: qbiWorksheetEntities.filter(
+      (entity) => entity.hasAggregationElection
+    ).length,
+    cooperativeCount: qbiWorksheetEntities.filter((entity) => entity.isCooperative)
+      .length,
     thresholdStart,
     thresholdEnd: thresholdStart + thresholdRange,
     overflowTotals,

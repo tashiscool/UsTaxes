@@ -101,6 +101,49 @@ describe('AMT', () => {
     expect(Math.round(f6251.l11())).toEqual(0)
   })
 
+  it('requires Form 6251 when a general business credit is claimed', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.generalBusinessCredits = {
+      creditComponents: {
+        researchCredit: 2500
+      },
+      carryforwardFromPriorYears: 0,
+      carrybackFromFutureYears: 0,
+      currentYearCredits: 2500,
+      regularTaxLiability: 10000,
+      tentativeMinimumTax: 0,
+      netIncomeTax: 10000,
+      netRegularTaxLiability: 10000,
+      allowedCredit: 2500,
+      carryforwardToNextYear: 0
+    }
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+
+    expect(f1040.f3800?.isNeeded()).toBe(true)
+    expect(f6251.isNeeded()).toBe(true)
+  })
+
+  it('requires Form 6251 when Form 8801 prior-year AMT credit is present', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.priorYearAmtCredit = 3000
+    information.priorYearAmtCreditCarryforward = 1000
+    information.priorYearAmt = {
+      line6: 5000,
+      exclusionItems: 500,
+      foreignTaxCredit: 0
+    }
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+
+    expect(f1040.f8801?.isNeeded()).toBe(true)
+    expect(f6251.isNeeded()).toBe(true)
+  })
+
   it('does not require Part III when there are no qualified dividends or capital gains', () => {
     const information = cloneDeep(baseInformation)
     information.f3921s = []

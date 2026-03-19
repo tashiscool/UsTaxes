@@ -13,6 +13,9 @@ export type QBIEntry = {
   ubia: number
   patronReduction: number
   isSSTB?: boolean
+  aggregationGroup?: string
+  hasAggregationElection?: boolean
+  isCooperative?: boolean
 }
 
 export function getF8995PhaseOutIncome(filingStatus: FilingStatus): number {
@@ -50,7 +53,10 @@ export default class F8995 extends F1040Attachment {
           qbi: property.rentReceived - totalExpenses,
           w2Wages: property.qbiW2Wages ?? 0,
           ubia: property.qbiUbia ?? 0,
-          patronReduction: 0
+          patronReduction: 0,
+          aggregationGroup: property.qbiAggregationGroup,
+          hasAggregationElection: property.qbiHasAggregationElection,
+          isCooperative: property.qbiIsCooperative
         }
       })
       .filter((property) => property.qbi > 0)
@@ -105,7 +111,10 @@ export default class F8995 extends F1040Attachment {
           w2Wages: business.qbiW2Wages ?? business.expenses.wages,
           ubia: business.qbiUbia ?? 0,
           patronReduction: business.qbiPatronReduction ?? 0,
-          isSSTB: business.isSpecifiedServiceTradeOrBusiness ?? false
+          isSSTB: business.isSpecifiedServiceTradeOrBusiness ?? false,
+          aggregationGroup: business.qbiAggregationGroup,
+          hasAggregationElection: business.qbiHasAggregationElection,
+          isCooperative: business.qbiIsCooperative
         }
       })
       .filter((business) => business.qbi > 0) as QBIEntry[]
@@ -120,7 +129,10 @@ export default class F8995 extends F1040Attachment {
         w2Wages: k1.section199AW2Wages ?? 0,
         ubia: k1.section199AUbia ?? 0,
         patronReduction: k1.section199APatronReduction ?? 0,
-        isSSTB: k1.isSpecifiedServiceTradeOrBusiness ?? false
+        isSSTB: k1.isSpecifiedServiceTradeOrBusiness ?? false,
+        aggregationGroup: k1.section199AAggregationGroup,
+        hasAggregationElection: k1.section199AHasAggregationElection,
+        isCooperative: k1.isAgriculturalOrHorticulturalCooperative
       }))
 
   qbiEntries = (): QBIEntry[] => [
