@@ -3,9 +3,9 @@ import { execSync } from 'child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
 
-import { FilingStatus, PersonRole } from 'ustaxes/core/data'
-import F1040 from 'ustaxes/forms/Y2025/irsForms/F1040'
-import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
+import { FilingStatus, PersonRole } from '../../../core/data'
+import F1040 from '../irsForms/F1040'
+import { ValidatedInformation } from '../../F1040Base'
 
 type DirectFileExport = Record<string, Record<string, unknown>>
 
@@ -103,11 +103,30 @@ const baseInformation = (
 const asAmount = (value: unknown): string => {
   if (value === null || value === undefined) return ''
   if (typeof value === 'number') return value.toFixed(2)
+  if (typeof value === 'boolean') return String(value)
+  if (Array.isArray(value) || typeof value === 'object') {
+    return JSON.stringify(stableValue(value))
+  }
   return String(value)
 }
 
 const isBlankLike = (value: unknown): boolean =>
   value === null || value === undefined || String(value).trim() === ''
+
+const stableValue = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((entry) => stableValue(entry))
+  }
+  if (value && typeof value === 'object') {
+    return Object.keys(value as Record<string, unknown>)
+      .sort()
+      .reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = stableValue((value as Record<string, unknown>)[key])
+        return acc
+      }, {})
+  }
+  return value
+}
 
 const canonicalVisaType = (value: unknown): string => {
   if (isBlankLike(value)) return 'other'
@@ -140,6 +159,12 @@ const sameAmount = (
       return true
     }
     return Math.abs(leftNum - rightNum) < 0.01
+  }
+  if (
+    (Array.isArray(left) || (left !== null && typeof left === 'object')) &&
+    (Array.isArray(right) || (right !== null && typeof right === 'object'))
+  ) {
+    return JSON.stringify(stableValue(left)) === JSON.stringify(stableValue(right))
   }
   return String(left) === String(right)
 }
@@ -246,7 +271,12 @@ const createSyntheticBusiness = (
   qbi: number,
   w2Wages: number,
   ubia: number,
-  isSSTB: boolean
+  isSSTB: boolean,
+  options?: {
+    aggregationGroup?: string | null
+    hasAggregationElection?: boolean
+    isCooperative?: boolean
+  }
 ) => ({
   name,
   ein: undefined,
@@ -262,6 +292,10 @@ const createSyntheticBusiness = (
   qbiUbia: ubia,
   qbiPatronReduction: 0,
   isSpecifiedServiceTradeOrBusiness: isSSTB,
+  aggregationGroup: options?.aggregationGroup ?? null,
+  hasAggregationElection: options?.hasAggregationElection ?? false,
+  isAgriculturalOrHorticulturalCooperative: options?.isCooperative ?? false,
+  isCooperative: options?.isCooperative ?? false,
   income: {
     grossReceipts: qbi,
     returns: 0,
@@ -293,6 +327,130 @@ const createSyntheticBusiness = (
     otherExpenses: 0
   }
 })
+
+const buildQbiAttachmentBusinesses = (
+  businesses: Record<string, unknown>[],
+  qbiEntries: Array<Record<string, unknown>>
+): Array<Record<string, unknown>> =>
+  qbiEntries.map((entry, index) => {
+    const sourceBusiness = businesses[index] ?? {}
+    return {
+      businessIndex: index + 1,
+      statementRowNumber: index < 3 ? index + 1 : index - 2,
+      statementSection: index < 3 ? 'Form 8995-A' : 'Attachment Statement',
+      isAttachmentRow: index >= 3,
+      name: entry.name ?? sourceBusiness.name ?? null,
+      qbi: entry.qbi ?? 0,
+      w2Wages: entry.w2Wages ?? 0,
+      ubia: entry.ubia ?? 0,
+      patronReduction: entry.patronReduction ?? 0,
+      isSSTB: entry.isSSTB ?? false,
+      aggregationGroup:
+        sourceBusiness.aggregationGroup ??
+        sourceBusiness.aggregationGroupName ??
+        sourceBusiness.aggregationElectionGroup ??
+        null,
+      hasAggregationElection: !!sourceBusiness.hasAggregationElection,
+      isCooperative: !!(
+        sourceBusiness.isAgriculturalOrHorticulturalCooperative ??
+        sourceBusiness.isCooperative
+      )
+    }
+  })
+
+const buildScheduleOIDisclosures = (
+  scenario: any,
+  f1040nr: any
+): Array<Record<string, unknown>> => {
+  const taxpayer = scenario.primaryTaxpayer ?? {}
+  const disclosures: Array<Record<string, unknown>> = []
+  const pushDisclosure = (lineCode: string, response: unknown) => {
+    if (response === null || response === undefined || response === '') return
+    disclosures.push({ lineCode, response: String(response) })
+  }
+
+  pushDisclosure('countryOfResidence', f1040nr.countryOfResidence())
+  pushDisclosure('countryOfCitizenship', f1040nr.countryOfCitizenship())
+  pushDisclosure('visaType', taxpayer.visaType)
+  pushDisclosure('firstYearInUS', taxpayer.firstYearInUS)
+  pushDisclosure('daysInUSThisYear', taxpayer.daysInUSThisYear)
+  pushDisclosure('daysInUSPriorYear', taxpayer.daysInUSPriorYear)
+  pushDisclosure('daysInUSTwoYearsPrior', taxpayer.daysInUSTwoYearsPrior)
+  if (
+    taxpayer.daysInUSThisYear !== undefined &&
+    taxpayer.daysInUSThisYear !== null &&
+    taxpayer.daysInUSThisYear !== ''
+  ) {
+    pushDisclosure(
+      'substantialPresenceWeightedDays',
+      f1040nr.substantialPresenceDays()
+    )
+  }
+  if (typeof taxpayer.appliedForGreenCard === 'boolean') {
+    pushDisclosure(
+      'appliedForGreenCard',
+      taxpayer.appliedForGreenCard ? 'Yes' : 'No'
+    )
+  }
+  if (typeof taxpayer.filedPriorUsReturn === 'boolean') {
+    pushDisclosure(
+      'filedPriorUsReturn',
+      taxpayer.filedPriorUsReturn ? 'Yes' : 'No'
+    )
+  }
+  if (typeof taxpayer.compensationOver250k === 'boolean') {
+    pushDisclosure(
+      'compensationOver250k',
+      taxpayer.compensationOver250k ? 'Yes' : 'No'
+    )
+  }
+  if (
+    typeof taxpayer.realPropertyElectionFirstYear === 'boolean' ||
+    typeof taxpayer.realPropertyElectionPriorYear === 'boolean'
+  ) {
+    pushDisclosure(
+      'realPropertyElection',
+      taxpayer.realPropertyElectionFirstYear || taxpayer.realPropertyElectionPriorYear
+        ? 'Yes'
+        : 'No'
+    )
+  }
+  if (typeof taxpayer.realPropertyElectionFirstYear === 'boolean') {
+    pushDisclosure(
+      'realPropertyElectionFirstYear',
+      taxpayer.realPropertyElectionFirstYear ? 'Yes' : 'No'
+    )
+  }
+  if (typeof taxpayer.realPropertyElectionPriorYear === 'boolean') {
+    pushDisclosure(
+      'realPropertyElectionPriorYear',
+      taxpayer.realPropertyElectionPriorYear ? 'Yes' : 'No'
+    )
+  }
+  pushDisclosure('foreignAddress', taxpayer.foreignAddress?.street)
+
+  return disclosures
+}
+
+const buildScheduleOITreatyClaims = (scenario: any): Array<Record<string, unknown>> => {
+  const treaty = scenario.taxTreatyBenefits
+  if (!treaty) return []
+  return [
+    {
+      country: treaty.treatyCountry ?? null,
+      article: treaty.articleNumber ?? null,
+      description: treaty.description ?? '',
+      incomeType:
+        treaty.exemptIncome !== undefined && treaty.exemptIncome !== null
+          ? 'exemptIncome'
+          : treaty.reducedRate !== undefined && treaty.reducedRate !== null
+            ? 'reducedRate'
+            : 'other',
+      exemptIncome: treaty.exemptIncome ?? null,
+      reducedRate: treaty.reducedRate ?? null
+    }
+  ]
+}
 
 const createScenario18QbiOverflowOutput = (): Record<string, unknown> => {
   const scenario = loadScenario<any>('scenario-18-thompson-rental.json')
@@ -334,14 +492,20 @@ const createScenario18QbiOverflowOutput = (): Record<string, unknown> => {
     createSyntheticBusiness('Alpha Advisory', 210000, 60000, 100000, false),
     createSyntheticBusiness('Beta Logistics', 90000, 20000, 50000, false),
     createSyntheticBusiness('Gamma Studio', 50000, 10000, 20000, true),
-    createSyntheticBusiness('Delta Rentals', 40000, 5000, 15000, false),
+    createSyntheticBusiness('Delta Rentals', 40000, 5000, 15000, false, {
+      aggregationGroup: 'Rental Group A',
+      hasAggregationElection: true
+    }),
     createSyntheticBusiness('Echo Foods', 30000, 3000, 10000, false),
     createSyntheticBusiness('Foxtrot Labs', 25000, 4000, 8000, true),
-    createSyntheticBusiness('Gaia Farms', 15000, 2000, 6000, false)
+    createSyntheticBusiness('Gaia Farms', 15000, 2000, 6000, false, {
+      isCooperative: true
+    })
   ] as never
 
   const f1040 = new F1040(info, [])
   const qbiForm = f1040.f8995 as any
+  const qbiEntries = qbiForm?.qbiEntries?.() ?? []
   return {
     form8995ATotalBusinesses: qbiForm?.qbiEntries?.().length ?? 0,
     form8995AOverflowBusinesses: qbiForm?.overflowEntries?.().length ?? 0,
@@ -369,7 +533,11 @@ const createScenario18QbiOverflowOutput = (): Record<string, unknown> => {
     form8995ABusiness7IsSSTB: qbiForm?.qbiEntries?.()?.[6]?.isSSTB ?? false,
     form8995AOverflowQBI: qbiForm?.overflowTotals?.().qbi ?? 0,
     form8995AOverflowW2Wages: qbiForm?.overflowTotals?.().w2Wages ?? 0,
-    form8995AOverflowUBIA: qbiForm?.overflowTotals?.().ubia ?? 0
+    form8995AOverflowUBIA: qbiForm?.overflowTotals?.().ubia ?? 0,
+    attachmentBusinesses: buildQbiAttachmentBusinesses(
+      (info.businesses as Record<string, unknown>[]) ?? [],
+      qbiEntries
+    )
   }
 }
 
@@ -556,6 +724,8 @@ const createScenarioNr5Output = (): Record<string, unknown> => {
   const f1040 = new F1040(info, [])
   const f1040nr = f1040.f1040nr
   if (!f1040nr) throw new Error('F1040-NR required for NR scenario')
+  const scheduleOIDisclosures = buildScheduleOIDisclosures(scenario, f1040nr)
+  const scheduleOITreatyClaims = buildScheduleOITreatyClaims(scenario)
   return {
     hasScheduleOI: true,
     hasScheduleNEC: false,
@@ -584,7 +754,11 @@ const createScenarioNr5Output = (): Record<string, unknown> => {
     interestFDAPTax: 0,
     royaltiesFDAPTax: 0,
     otherFDAPTax: 0,
-    totalTaxNR: f1040nr.totalTax()
+    totalTaxNR: f1040nr.totalTax(),
+    scheduleOIDisclosuresCount: scheduleOIDisclosures.length,
+    scheduleOITreatyClaimsCount: scheduleOITreatyClaims.length,
+    scheduleOIDisclosures,
+    scheduleOITreatyClaims
   }
 }
 
@@ -630,6 +804,8 @@ const createScenarioNr12Output = (): Record<string, unknown> => {
   const f1040 = new F1040(info, [])
   const f1040nr = f1040.f1040nr
   if (!f1040nr) throw new Error('F1040-NR required for NR scenario')
+  const scheduleOIDisclosures = buildScheduleOIDisclosures(scenario, f1040nr)
+  const scheduleOITreatyClaims = buildScheduleOITreatyClaims(scenario)
   return {
     hasScheduleOI: true,
     hasScheduleNEC: false,
@@ -658,7 +834,11 @@ const createScenarioNr12Output = (): Record<string, unknown> => {
     interestFDAPTax: 0,
     royaltiesFDAPTax: 0,
     otherFDAPTax: 0,
-    totalTaxNR: f1040nr.totalTax()
+    totalTaxNR: f1040nr.totalTax(),
+    scheduleOIDisclosuresCount: scheduleOIDisclosures.length,
+    scheduleOITreatyClaimsCount: scheduleOITreatyClaims.length,
+    scheduleOIDisclosures,
+    scheduleOITreatyClaims
   }
 }
 
@@ -706,6 +886,8 @@ const createScenarioNr2Output = (): Record<string, unknown> => {
   const f1040 = new F1040(info, [])
   const f1040nr = f1040.f1040nr
   if (!f1040nr) throw new Error('F1040-NR required for NR scenario')
+  const scheduleOIDisclosures = buildScheduleOIDisclosures(scenario, f1040nr)
+  const scheduleOITreatyClaims = buildScheduleOITreatyClaims(scenario)
   return {
     hasScheduleOI: true,
     hasScheduleNEC: false,
@@ -734,7 +916,11 @@ const createScenarioNr2Output = (): Record<string, unknown> => {
     interestFDAPTax: 0,
     royaltiesFDAPTax: 0,
     otherFDAPTax: 0,
-    totalTaxNR: f1040nr.totalTax()
+    totalTaxNR: f1040nr.totalTax(),
+    scheduleOIDisclosuresCount: scheduleOIDisclosures.length,
+    scheduleOITreatyClaimsCount: scheduleOITreatyClaims.length,
+    scheduleOIDisclosures,
+    scheduleOITreatyClaims
   }
 }
 

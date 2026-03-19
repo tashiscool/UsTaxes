@@ -56,7 +56,7 @@
     "formgen": "ts-node ./scripts/formgen.ts",
     "test:workbook-audit": "python3 ./scripts/1040_workbook_gap_assertions.py",
     "prepare": "ts-node ./scripts/env.ts && husky",
-    "test:form-parity-harness": "ts-node ./scripts/env.ts && ts-node ./scripts/setup.ts && craco test --watch=false --runInBand --runTestsByPath src/forms/Y2025/manual/formParityDiffHarness.manual.ts",
+    "test:form-parity-harness": "ts-node ./scripts/env.ts && ts-node ./scripts/setup.ts && ts-node -r ./scripts/registerUstaxesAlias.js ./src/forms/Y2025/manual/formParityDiffHarness.manual.ts",
     "backend:cf:install": "npm --prefix ./backend-cloudflare install",
     "backend:cf:test": "npm --prefix ./backend-cloudflare run test",
     "backend:cf:test:all": "npm --prefix ./backend-cloudflare run test:all",

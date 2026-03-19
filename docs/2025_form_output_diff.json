@@ -408,6 +408,15 @@
       "note": ""
     },
     {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "attachmentBusinesses",
+      "usTaxes": "[{\"aggregationGroup\":null,\"businessIndex\":1,\"hasAggregationElection\":false,\"isAttachmentRow\":false,\"isCooperative\":false,\"isSSTB\":false,\"name\":\"Alpha Advisory\",\"patronReduction\":0,\"qbi\":210000,\"statementRowNumber\":1,\"statementSection\":\"Form 8995-A\",\"ubia\":100000,\"w2Wages\":60000},{\"aggregationGroup\":null,\"businessIndex\":2,\"hasAggregationElection\":false,\"isAttachmentRow\":false,\"isCooperative\":false,\"isSSTB\":false,\"name\":\"Beta Logistics\",\"patronReduction\":0,\"qbi\":90000,\"statementRowNumber\":2,\"statementSection\":\"Form 8995-A\",\"ubia\":50000,\"w2Wages\":20000},{\"aggregationGroup\":null,\"businessIndex\":3,\"hasAggregationElection\":false,\"isAttachmentRow\":false,\"isCooperative\":false,\"isSSTB\":true,\"name\":\"Gamma Studio\",\"patronReduction\":0,\"qbi\":50000,\"statementRowNumber\":3,\"statementSection\":\"Form 8995-A\",\"ubia\":20000,\"w2Wages\":10000},{\"aggregationGroup\":\"Rental Group A\",\"businessIndex\":4,\"hasAggregationElection\":true,\"isAttachmentRow\":true,\"isCooperative\":false,\"isSSTB\":false,\"name\":\"Delta Rentals\",\"patronReduction\":0,\"qbi\":40000,\"statementRowNumber\":1,\"statementSection\":\"Attachment Statement\",\"ubia\":15000,\"w2Wages\":5000},{\"aggregationGroup\":null,\"businessIndex\":5,\"hasAggregationElection\":false,\"isAttachmentRow\":true,\"isCooperative\":false,\"isSSTB\":false,\"name\":\"Echo Foods\",\"patronReduction\":0,\"qbi\":30000,\"statementRowNumber\":2,\"statementSection\":\"Attachment Statement\",\"ubia\":10000,\"w2Wages\":3000},{\"aggregationGroup\":null,\"businessIndex\":6,\"hasAggregationElection\":false,\"isAttachmentRow\":true,\"isCooperative\":false,\"isSSTB\":true,\"name\":\"Foxtrot Labs\",\"patronReduction\":0,\"qbi\":25000,\"statementRowNumber\":3,\"statementSection\":\"Attachment Statement\",\"ubia\":8000,\"w2Wages\":4000},{\"aggregationGroup\":null,\"businessIndex\":7,\"hasAggregationElection\":false,\"isAttachmentRow\":true,\"isCooperative\":true,\"isSSTB\":false,\"name\":\"Gaia Farms\",\"patronReduction\":0,\"qbi\":15000,\"statementRowNumber\":4,\"statementSection\":\"Attachment Statement\",\"ubia\":6000,\"w2Wages\":2000}]",
+      "directFile": "[{\"aggregationGroup\":null,\"businessIndex\":1,\"hasAggregationElection\":false,\"isAttachmentRow\":false,\"isCooperative\":false,\"isSSTB\":false,\"name\":\"Alpha Advisory\",\"patronReduction\":0,\"qbi\":210000,\"statementRowNumber\":1,\"statementSection\":\"Form 8995-A\",\"ubia\":100000,\"w2Wages\":60000},{\"aggregationGroup\":null,\"businessIndex\":2,\"hasAggregationElection\":false,\"isAttachmentRow\":false,\"isCooperative\":false,\"isSSTB\":false,\"name\":\"Beta Logistics\",\"patronReduction\":0,\"qbi\":90000,\"statementRowNumber\":2,\"statementSection\":\"Form 8995-A\",\"ubia\":50000,\"w2Wages\":20000},{\"aggregationGroup\":null,\"businessIndex\":3,\"hasAggregationElection\":false,\"isAttachmentRow\":false,\"isCooperative\":false,\"isSSTB\":true,\"name\":\"Gamma Studio\",\"patronReduction\":0,\"qbi\":50000,\"statementRowNumber\":3,\"statementSection\":\"Form 8995-A\",\"ubia\":20000,\"w2Wages\":10000},{\"aggregationGroup\":\"Rental Group A\",\"businessIndex\":4,\"hasAggregationElection\":true,\"isAttachmentRow\":true,\"isCooperative\":false,\"isSSTB\":false,\"name\":\"Delta Rentals\",\"patronReduction\":0,\"qbi\":40000,\"statementRowNumber\":1,\"statementSection\":\"Attachment Statement\",\"ubia\":15000,\"w2Wages\":5000},{\"aggregationGroup\":null,\"businessIndex\":5,\"hasAggregationElection\":false,\"isAttachmentRow\":true,\"isCooperative\":false,\"isSSTB\":false,\"name\":\"Echo Foods\",\"patronReduction\":0,\"qbi\":30000,\"statementRowNumber\":2,\"statementSection\":\"Attachment Statement\",\"ubia\":10000,\"w2Wages\":3000},{\"aggregationGroup\":null,\"businessIndex\":6,\"hasAggregationElection\":false,\"isAttachmentRow\":true,\"isCooperative\":false,\"isSSTB\":true,\"name\":\"Foxtrot Labs\",\"patronReduction\":0,\"qbi\":25000,\"statementRowNumber\":3,\"statementSection\":\"Attachment Statement\",\"ubia\":8000,\"w2Wages\":4000},{\"aggregationGroup\":null,\"businessIndex\":7,\"hasAggregationElection\":false,\"isAttachmentRow\":true,\"isCooperative\":true,\"isSSTB\":false,\"name\":\"Gaia Farms\",\"patronReduction\":0,\"qbi\":15000,\"statementRowNumber\":4,\"statementSection\":\"Attachment Statement\",\"ubia\":6000,\"w2Wages\":2000}]",
+      "matches": "yes",
+      "note": ""
+    },
+    {
       "scenario": "scenario-18-thompson-rental.json",
       "domain": "schedule_e",
       "metric": "hasRentalIncome",
@@ -815,6 +824,42 @@
     {
       "scenario": "scenario-nr2-desilva.json",
       "domain": "1040_nr",
+      "metric": "scheduleOIDisclosuresCount",
+      "usTaxes": "2.00",
+      "directFile": "2.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOITreatyClaimsCount",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOIDisclosures",
+      "usTaxes": "[{\"lineCode\":\"countryOfResidence\",\"response\":\"GB\"},{\"lineCode\":\"countryOfCitizenship\",\"response\":\"GB\"}]",
+      "directFile": "[{\"lineCode\":\"countryOfResidence\",\"response\":\"GB\"},{\"lineCode\":\"countryOfCitizenship\",\"response\":\"GB\"}]",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOITreatyClaims",
+      "usTaxes": "[]",
+      "directFile": "[]",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
       "metric": "dividendsFDAPRate",
       "usTaxes": "",
       "directFile": "",
@@ -1094,6 +1139,42 @@
     {
       "scenario": "scenario-nr5-chen.json",
       "domain": "1040_nr",
+      "metric": "scheduleOIDisclosuresCount",
+      "usTaxes": "15.00",
+      "directFile": "15.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOITreatyClaimsCount",
+      "usTaxes": "1.00",
+      "directFile": "1.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOIDisclosures",
+      "usTaxes": "[{\"lineCode\":\"countryOfResidence\",\"response\":\"CN\"},{\"lineCode\":\"countryOfCitizenship\",\"response\":\"CN\"},{\"lineCode\":\"visaType\",\"response\":\"F-1\"},{\"lineCode\":\"firstYearInUS\",\"response\":\"2022\"},{\"lineCode\":\"daysInUSThisYear\",\"response\":\"120\"},{\"lineCode\":\"daysInUSPriorYear\",\"response\":\"118\"},{\"lineCode\":\"daysInUSTwoYearsPrior\",\"response\":\"95\"},{\"lineCode\":\"substantialPresenceWeightedDays\",\"response\":\"174\"},{\"lineCode\":\"appliedForGreenCard\",\"response\":\"No\"},{\"lineCode\":\"filedPriorUsReturn\",\"response\":\"No\"},{\"lineCode\":\"compensationOver250k\",\"response\":\"No\"},{\"lineCode\":\"realPropertyElection\",\"response\":\"No\"},{\"lineCode\":\"realPropertyElectionFirstYear\",\"response\":\"No\"},{\"lineCode\":\"realPropertyElectionPriorYear\",\"response\":\"No\"},{\"lineCode\":\"foreignAddress\",\"response\":\"123 Nanjing Road\"}]",
+      "directFile": "[{\"lineCode\":\"countryOfResidence\",\"response\":\"CN\"},{\"lineCode\":\"countryOfCitizenship\",\"response\":\"CN\"},{\"lineCode\":\"visaType\",\"response\":\"F-1\"},{\"lineCode\":\"firstYearInUS\",\"response\":\"2022\"},{\"lineCode\":\"daysInUSThisYear\",\"response\":\"120\"},{\"lineCode\":\"daysInUSPriorYear\",\"response\":\"118\"},{\"lineCode\":\"daysInUSTwoYearsPrior\",\"response\":\"95\"},{\"lineCode\":\"substantialPresenceWeightedDays\",\"response\":\"174\"},{\"lineCode\":\"appliedForGreenCard\",\"response\":\"No\"},{\"lineCode\":\"filedPriorUsReturn\",\"response\":\"No\"},{\"lineCode\":\"compensationOver250k\",\"response\":\"No\"},{\"lineCode\":\"realPropertyElection\",\"response\":\"No\"},{\"lineCode\":\"realPropertyElectionFirstYear\",\"response\":\"No\"},{\"lineCode\":\"realPropertyElectionPriorYear\",\"response\":\"No\"},{\"lineCode\":\"foreignAddress\",\"response\":\"123 Nanjing Road\"}]",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOITreatyClaims",
+      "usTaxes": "[{\"article\":\"20\",\"country\":\"China\",\"description\":\"Student/Trainee Article - Up to $5,000 exempt\",\"exemptIncome\":5000,\"incomeType\":\"exemptIncome\",\"reducedRate\":null}]",
+      "directFile": "[{\"article\":\"20\",\"country\":\"China\",\"description\":\"Student/Trainee Article - Up to $5,000 exempt\",\"exemptIncome\":5000,\"incomeType\":\"exemptIncome\",\"reducedRate\":null}]",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
       "metric": "dividendsFDAPRate",
       "usTaxes": "",
       "directFile": "",
@@ -1367,6 +1448,42 @@
       "metric": "totalTaxNR",
       "usTaxes": "92047.00",
       "directFile": "92047.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOIDisclosuresCount",
+      "usTaxes": "2.00",
+      "directFile": "2.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOITreatyClaimsCount",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOIDisclosures",
+      "usTaxes": "[{\"lineCode\":\"countryOfResidence\",\"response\":\"AU\"},{\"lineCode\":\"countryOfCitizenship\",\"response\":\"AU\"}]",
+      "directFile": "[{\"lineCode\":\"countryOfResidence\",\"response\":\"AU\"},{\"lineCode\":\"countryOfCitizenship\",\"response\":\"AU\"}]",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOITreatyClaims",
+      "usTaxes": "[]",
+      "directFile": "[]",
       "matches": "yes",
       "note": ""
     },
