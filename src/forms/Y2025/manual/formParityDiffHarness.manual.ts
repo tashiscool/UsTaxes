@@ -335,7 +335,9 @@ const createScenario18QbiOverflowOutput = (): Record<string, unknown> => {
     createSyntheticBusiness('Beta Logistics', 90000, 20000, 50000, false),
     createSyntheticBusiness('Gamma Studio', 50000, 10000, 20000, true),
     createSyntheticBusiness('Delta Rentals', 40000, 5000, 15000, false),
-    createSyntheticBusiness('Echo Foods', 30000, 3000, 10000, false)
+    createSyntheticBusiness('Echo Foods', 30000, 3000, 10000, false),
+    createSyntheticBusiness('Foxtrot Labs', 25000, 4000, 8000, true),
+    createSyntheticBusiness('Gaia Farms', 15000, 2000, 6000, false)
   ] as never
 
   const f1040 = new F1040(info, [])
@@ -346,15 +348,25 @@ const createScenario18QbiOverflowOutput = (): Record<string, unknown> => {
     hasForm8995AAttachmentStatement: qbiForm?.needsAdditionalStatement?.() ?? false,
     form8995ABusiness4Name: qbiForm?.qbiEntries?.()?.[3]?.name ?? null,
     form8995ABusiness5Name: qbiForm?.qbiEntries?.()?.[4]?.name ?? null,
+    form8995ABusiness6Name: qbiForm?.qbiEntries?.()?.[5]?.name ?? null,
+    form8995ABusiness7Name: qbiForm?.qbiEntries?.()?.[6]?.name ?? null,
     form8995ABusiness4QBI: qbiForm?.qbiEntries?.()?.[3]?.qbi ?? 0,
     form8995ABusiness5QBI: qbiForm?.qbiEntries?.()?.[4]?.qbi ?? 0,
+    form8995ABusiness6QBI: qbiForm?.qbiEntries?.()?.[5]?.qbi ?? 0,
+    form8995ABusiness7QBI: qbiForm?.qbiEntries?.()?.[6]?.qbi ?? 0,
     form8995ABusiness4W2Wages: qbiForm?.qbiEntries?.()?.[3]?.w2Wages ?? 0,
     form8995ABusiness5W2Wages: qbiForm?.qbiEntries?.()?.[4]?.w2Wages ?? 0,
+    form8995ABusiness6W2Wages: qbiForm?.qbiEntries?.()?.[5]?.w2Wages ?? 0,
+    form8995ABusiness7W2Wages: qbiForm?.qbiEntries?.()?.[6]?.w2Wages ?? 0,
     form8995ABusiness4UBIA: qbiForm?.qbiEntries?.()?.[3]?.ubia ?? 0,
     form8995ABusiness5UBIA: qbiForm?.qbiEntries?.()?.[4]?.ubia ?? 0,
+    form8995ABusiness6UBIA: qbiForm?.qbiEntries?.()?.[5]?.ubia ?? 0,
+    form8995ABusiness7UBIA: qbiForm?.qbiEntries?.()?.[6]?.ubia ?? 0,
     form8995ABusiness3IsSSTB: qbiForm?.qbiEntries?.()?.[2]?.isSSTB ?? false,
     form8995ABusiness4IsSSTB: qbiForm?.qbiEntries?.()?.[3]?.isSSTB ?? false,
     form8995ABusiness5IsSSTB: qbiForm?.qbiEntries?.()?.[4]?.isSSTB ?? false,
+    form8995ABusiness6IsSSTB: qbiForm?.qbiEntries?.()?.[5]?.isSSTB ?? false,
+    form8995ABusiness7IsSSTB: qbiForm?.qbiEntries?.()?.[6]?.isSSTB ?? false,
     form8995AOverflowQBI: qbiForm?.overflowTotals?.().qbi ?? 0,
     form8995AOverflowW2Wages: qbiForm?.overflowTotals?.().w2Wages ?? 0,
     form8995AOverflowUBIA: qbiForm?.overflowTotals?.().ubia ?? 0
@@ -562,7 +574,7 @@ const createScenarioNr5Output = (): Record<string, unknown> => {
     treatyArticle: f1040nr.treatyArticle(),
     treatyBenefitDescription: scenario.taxTreatyBenefits.description ?? '',
     reducedTreatyRate: null,
-    otherFDAPDescription: scenario.taxTreatyBenefits.description ?? '',
+    otherFDAPDescription: '',
     scheduleNECLineItemCount: 0,
     totalECI: f1040nr.totalEffectivelyConnectedIncome(),
     totalFDAPIncome: f1040nr.totalFDAPIncome(),

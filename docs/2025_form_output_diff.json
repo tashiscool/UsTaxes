@@ -168,8 +168,8 @@
       "scenario": "scenario-18-thompson-rental-qbi-overflow",
       "domain": "qbi",
       "metric": "form8995ATotalBusinesses",
-      "usTaxes": "5.00",
-      "directFile": "5.00",
+      "usTaxes": "7.00",
+      "directFile": "7.00",
       "matches": "yes",
       "note": ""
     },
@@ -177,8 +177,8 @@
       "scenario": "scenario-18-thompson-rental-qbi-overflow",
       "domain": "qbi",
       "metric": "form8995AOverflowBusinesses",
-      "usTaxes": "2.00",
-      "directFile": "2.00",
+      "usTaxes": "4.00",
+      "directFile": "4.00",
       "matches": "yes",
       "note": ""
     },
@@ -212,6 +212,24 @@
     {
       "scenario": "scenario-18-thompson-rental-qbi-overflow",
       "domain": "qbi",
+      "metric": "form8995ABusiness6Name",
+      "usTaxes": "Foxtrot Labs",
+      "directFile": "Foxtrot Labs",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness7Name",
+      "usTaxes": "Gaia Farms",
+      "directFile": "Gaia Farms",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
       "metric": "form8995ABusiness4QBI",
       "usTaxes": "40000.00",
       "directFile": "40000.00",
@@ -224,6 +242,24 @@
       "metric": "form8995ABusiness5QBI",
       "usTaxes": "30000.00",
       "directFile": "30000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness6QBI",
+      "usTaxes": "25000.00",
+      "directFile": "25000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness7QBI",
+      "usTaxes": "15000.00",
+      "directFile": "15000.00",
       "matches": "yes",
       "note": ""
     },
@@ -248,6 +284,24 @@
     {
       "scenario": "scenario-18-thompson-rental-qbi-overflow",
       "domain": "qbi",
+      "metric": "form8995ABusiness6W2Wages",
+      "usTaxes": "4000.00",
+      "directFile": "4000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness7W2Wages",
+      "usTaxes": "2000.00",
+      "directFile": "2000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
       "metric": "form8995ABusiness4UBIA",
       "usTaxes": "15000.00",
       "directFile": "15000.00",
@@ -260,6 +314,24 @@
       "metric": "form8995ABusiness5UBIA",
       "usTaxes": "10000.00",
       "directFile": "10000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness6UBIA",
+      "usTaxes": "8000.00",
+      "directFile": "8000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness7UBIA",
+      "usTaxes": "6000.00",
+      "directFile": "6000.00",
       "matches": "yes",
       "note": ""
     },
@@ -293,9 +365,27 @@
     {
       "scenario": "scenario-18-thompson-rental-qbi-overflow",
       "domain": "qbi",
+      "metric": "form8995ABusiness6IsSSTB",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness7IsSSTB",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
       "metric": "form8995AOverflowQBI",
-      "usTaxes": "70000.00",
-      "directFile": "70000.00",
+      "usTaxes": "110000.00",
+      "directFile": "110000.00",
       "matches": "yes",
       "note": ""
     },
@@ -303,8 +393,8 @@
       "scenario": "scenario-18-thompson-rental-qbi-overflow",
       "domain": "qbi",
       "metric": "form8995AOverflowW2Wages",
-      "usTaxes": "8000.00",
-      "directFile": "8000.00",
+      "usTaxes": "14000.00",
+      "directFile": "14000.00",
       "matches": "yes",
       "note": ""
     },
@@ -312,8 +402,8 @@
       "scenario": "scenario-18-thompson-rental-qbi-overflow",
       "domain": "qbi",
       "metric": "form8995AOverflowUBIA",
-      "usTaxes": "25000.00",
-      "directFile": "25000.00",
+      "usTaxes": "39000.00",
+      "directFile": "39000.00",
       "matches": "yes",
       "note": ""
     },
@@ -723,6 +813,42 @@
       "note": ""
     },
     {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "dividendsFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "interestFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "royaltiesFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "otherFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
       "scenario": "scenario-nr5-chen.json",
       "domain": "1040_nr",
       "metric": "hasScheduleOI",
@@ -870,8 +996,8 @@
       "scenario": "scenario-nr5-chen.json",
       "domain": "1040_nr",
       "metric": "otherFDAPDescription",
-      "usTaxes": "Student/Trainee Article - Up to $5,000 exempt",
-      "directFile": "Student/Trainee Article - Up to $5,000 exempt",
+      "usTaxes": "",
+      "directFile": "",
       "matches": "yes",
       "note": ""
     },
@@ -962,6 +1088,42 @@
       "metric": "totalTaxNR",
       "usTaxes": "2645.00",
       "directFile": "2645.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "dividendsFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "interestFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "royaltiesFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "otherFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
       "matches": "yes",
       "note": ""
     },
@@ -1205,6 +1367,42 @@
       "metric": "totalTaxNR",
       "usTaxes": "92047.00",
       "directFile": "92047.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "dividendsFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "interestFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "royaltiesFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "otherFDAPRate",
+      "usTaxes": "",
+      "directFile": "",
       "matches": "yes",
       "note": ""
     }
