@@ -83,7 +83,7 @@ export default class ScheduleB extends F1040Attachment {
    * Total interest on all schedule Bs.
    */
   to1040l2b = (): number =>
-    [this, ...this.copies()].reduce((acc, f) => acc + f.l4(), 0)
+    this.index === 0 ? this.l4() : 0
 
   l5Fields = (): PayerAmount[] =>
     this.f1040.f1099Divs().map((v) => ({
@@ -109,7 +109,7 @@ export default class ScheduleB extends F1040Attachment {
    * Total dividends on all schedule Bs.
    */
   to1040l3b = (): number =>
-    [this, ...this.copies()].reduce((acc, f) => acc + f.l6(), 0)
+    this.index === 0 ? this.l6() : 0
 
   foreignAccount = (): boolean =>
     this.f1040.info.questions.FOREIGN_ACCOUNT_EXISTS ?? false

@@ -4,6 +4,8 @@ import {
   adaptFactsToInformation,
   type TaxCalcWithStateResult
 } from '../../src/services/taxCalculationService'
+import F1040 from 'ustaxes/forms/Y2025/irsForms/F1040'
+import type { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 
 const taxCalcService = new TaxCalculationService()
 
@@ -149,6 +151,48 @@ describe('TaxCalculationService', () => {
       const info = adaptFactsToInformation(facts)
       expect(info.f1099s).toHaveLength(1)
       expect(info.f1099s[0].type).toBe('INT')
+    })
+
+    it('maps workbook-grade 1099-INT and 1099-DIV tax-exempt fields into Form 1040 line 2a', () => {
+      const facts = baseFacts({
+        form1099Records: [
+          {
+            id: '1099-int-1',
+            type: 'INT',
+            payer: 'Municipal Bank',
+            amount: 1500,
+            taxExemptInterest: 250,
+            foreignTaxPaid: 10,
+            isComplete: true
+          },
+          {
+            id: '1099-div-1',
+            type: 'DIV',
+            payer: 'Bond Fund',
+            amount: 3200,
+            qualifiedDividends: 1800,
+            capitalGainDistributions: 450,
+            exemptInterestDividends: 125,
+            foreignTaxPaid: 75,
+            section199ADividends: 300,
+            isComplete: true
+          }
+        ]
+      })
+
+      const info = adaptFactsToInformation(facts)
+      const f1040 = new F1040(info as ValidatedInformation, [])
+      const interest = info.f1099s.find((entry) => entry.type === 'INT')
+      const dividends = info.f1099s.find((entry) => entry.type === 'DIV')
+
+      expect(interest?.form.taxExemptInterest).toBe(250)
+      expect(interest?.form.foreignTaxPaid).toBe(10)
+      expect(dividends?.form.exemptInterestDividends).toBe(125)
+      expect(dividends?.form.foreignTaxPaid).toBe(75)
+      expect(f1040.l2a()).toBe(375)
+      expect(f1040.l2b()).toBe(1500)
+      expect(f1040.l3a()).toBe(1800)
+      expect(f1040.l3b()).toBe(3200)
     })
 
     it('maps richer 1099-DIV and 1099-B detail for workbook parity', () => {

@@ -1000,6 +1000,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       (checklist.businessFormCapability as JsonObject).supportLevel as string
     ).toBe('expert_required')
     expect(
+      (checklist.businessFormCapability as JsonObject).smallNonprofitHint
+    ).toBe(true)
+    expect(
       (checklist.findings as JsonObject[]).some(
         (finding) =>
           String((finding as JsonObject).message).includes('expert') ||
@@ -1036,6 +1039,300 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const blocked = await parseJsonResponse<JsonObject>(response)
     expect(String(blocked.error)).toContain('Form 990')
   }, 120_000)
+
+  it(
+    'supports self-service 1120, 1120-S, 1065, and 1041 entity-return sync and review flows',
+    async () => {
+      let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sub: 'taxflow-user-business-forms',
+          email: 'business.forms@example.com',
+          displayName: 'Business Forms User'
+        })
+      })
+      expect(response.status).toBe(201)
+      const sessionCookie = extractCookieHeader(response)
+
+      const scenarios = [
+        {
+          formType: '1120',
+          entityName: 'Atlas C Corp',
+          scheduleTag: 'f1120',
+          businessScreen: {
+            entityName: 'Atlas C Corp',
+            ein: '12-3456789',
+            entityType: 'C-Corporation',
+            principalBusinessActivity: 'Software publishing',
+            principalProductOrService: 'Tax software',
+            totalAssets: '850000',
+            income: {
+              grossReceiptsOrSales: '900000',
+              interestIncome: '5000'
+            },
+            deductions: {
+              compensationOfOfficers: '120000',
+              salariesAndWages: '220000',
+              rents: '50000',
+              taxesAndLicenses: '15000',
+              interest: '8000',
+              depreciation: '12000',
+              otherDeductions: '10000'
+            }
+          }
+        },
+        {
+          formType: '1120-S',
+          entityName: 'Beacon S Corp',
+          scheduleTag: 'f1120s',
+          businessScreen: {
+            entityName: 'Beacon S Corp',
+            ein: '23-4567890',
+            entityType: 'S-Corporation',
+            principalBusinessActivity: 'Consulting',
+            principalProductOrService: 'Strategy services',
+            totalAssets: '420000',
+            income: {
+              grossReceiptsOrSales: '650000',
+              ordinaryIncome: '250000',
+              interestIncome: '4000'
+            },
+            deductions: {
+              compensation: '90000',
+              salariesAndWages: '60000',
+              rents: '25000',
+              taxesAndLicenses: '14000',
+              interest: '5000',
+              otherDeductions: '7000'
+            },
+            scheduleK: {
+              ordinaryBusinessIncome: '250000',
+              interestIncome: '4000',
+              netLongTermCapitalGain: '10000'
+            },
+            shareholders: [
+              {
+                id: 'sh-1',
+                name: 'Alice Founder',
+                tin: '111223333',
+                ownershipPercentage: '60',
+                stockOwned: '60',
+                isOfficer: true,
+                compensation: '90000'
+              },
+              {
+                id: 'sh-2',
+                name: 'Ben Operator',
+                tin: '444556666',
+                ownershipPercentage: '40',
+                stockOwned: '40',
+                isOfficer: false,
+                compensation: '0'
+              }
+            ]
+          }
+        },
+        {
+          formType: '1065',
+          entityName: 'Cedar Partners LLC',
+          scheduleTag: 'f1065',
+          businessScreen: {
+            entityName: 'Cedar Partners LLC',
+            ein: '34-5678901',
+            entityType: 'Partnership',
+            principalBusinessActivity: 'Real estate operations',
+            principalProductOrService: 'Rental management',
+            totalAssets: '980000',
+            capitalAccountMethod: 'tax',
+            income: {
+              grossReceiptsOrSales: '720000',
+              ordinaryIncome: '280000',
+              rents: '240000'
+            },
+            deductions: {
+              salariesAndWages: '70000',
+              guaranteedPaymentsToPartners: '50000',
+              rents: '18000',
+              taxesAndLicenses: '16000',
+              interest: '9000',
+              retirementPlans: '4000',
+              otherDeductions: '12000'
+            },
+            scheduleK: {
+              ordinaryBusinessIncome: '280000',
+              netRentalRealEstateIncome: '240000',
+              charitableContributions: '5000'
+            },
+            partners: [
+              {
+                id: 'p-1',
+                name: 'Nina Partner',
+                tin: '555667777',
+                tinType: 'SSN',
+                profitSharingPercent: '55',
+                lossSharingPercent: '55',
+                capitalSharingPercent: '55',
+                beginningCapitalAccount: '100000',
+                capitalContributed: '25000',
+                currentYearIncrease: '15000',
+                withdrawalsDistributions: '10000',
+                endingCapitalAccount: '130000',
+                isGeneralPartner: true
+              },
+              {
+                id: 'p-2',
+                name: 'Omar Partner',
+                tin: '888990000',
+                tinType: 'SSN',
+                profitSharingPercent: '45',
+                lossSharingPercent: '45',
+                capitalSharingPercent: '45',
+                beginningCapitalAccount: '90000',
+                capitalContributed: '15000',
+                currentYearIncrease: '12000',
+                withdrawalsDistributions: '8000',
+                endingCapitalAccount: '109000',
+                isGeneralPartner: false
+              }
+            ]
+          }
+        },
+        {
+          formType: '1041',
+          entityName: 'Harbor Family Trust',
+          scheduleTag: 'f1041',
+          businessScreen: {
+            entityName: 'Harbor Family Trust',
+            ein: '45-6789012',
+            entityType: 'complexTrust',
+            principalBusinessActivity: 'Trust administration',
+            principalProductOrService: 'Fiduciary management',
+            totalAssets: '610000',
+            dateCreated: '2021-06-01',
+            income: {
+              interestIncome: '12000',
+              ordinaryDividends: '8000',
+              qualifiedDividends: '5000',
+              capitalGainLongTerm: '15000'
+            },
+            deductions: {
+              taxes: '3000',
+              interestExpense: '1000',
+              charitableContributions: '2000',
+              attorneyAccountantFees: '4500',
+              otherDeductions: '2500'
+            },
+            fiduciary: {
+              name: 'Taylor Trustee',
+              tin: '101112222',
+              address: '10 Trustee Plaza'
+            },
+            beneficiaries: [
+              {
+                id: 'b-1',
+                name: 'Avery Beneficiary',
+                tin: '212223333',
+                address: '1 Ocean Ave',
+                percentageShare: '60',
+                ordinaryIncome: '9000',
+                qualifiedDividends: '3000',
+                capitalGains: '9000',
+                otherIncome: '0',
+                deductions: '500',
+                credits: '0'
+              }
+            ]
+          }
+        }
+      ] as const
+
+      for (const scenario of scenarios) {
+        response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            taxYear: 2025,
+            filingStatus: 'single',
+            formType: scenario.formType,
+            currentPhase: 'review',
+            screenData: {
+              '/taxpayer-profile': {
+                firstName: 'Pat',
+                lastName: 'Entity',
+                ssn: '400-01-2040',
+                filingStatus: 'single',
+                address: {
+                  line1: '500 Market St',
+                  city: 'Wilmington',
+                  state: 'DE',
+                  zip: '19801'
+                }
+              },
+              '/business-entity': scenario.businessScreen,
+              '/efile-wizard': {
+                signatureText: `Pat Entity ${scenario.formType}`,
+                agreed8879: true
+              }
+            }
+          })
+        })
+        expect(response.status).toBe(201)
+        const created = await parseJsonResponse<JsonObject>(response)
+        const filingSessionId = String((created.filingSession as JsonObject).id)
+
+        response = await worker.fetch(
+          `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,
+          {
+            headers: { cookie: sessionCookie }
+          }
+        )
+        expect(response.status).toBe(200)
+        const checklist = await parseJsonResponse<JsonObject>(response)
+        const capability = checklist.businessFormCapability as JsonObject
+        expect(capability.supportLevel).toBe('self_service_supported')
+        expect(capability.hasMinimumData).toBe(true)
+        expect(capability.readiness).toBe('ready')
+
+        response = await worker.fetch(
+          `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
+          {
+            headers: { cookie: sessionCookie }
+          }
+        )
+        expect(response.status).toBe(200)
+        const review = await parseJsonResponse<JsonObject>(response)
+        expect(
+          (review.businessFormCapability as JsonObject).supportLevel
+        ).toBe('self_service_supported')
+
+        response = await worker.fetch(
+          `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+          {
+            method: 'POST',
+            headers: { cookie: sessionCookie }
+          }
+        )
+        expect(response.status).toBe(200)
+        const sync = await parseJsonResponse<JsonObject>(response)
+        const taxSummary = sync.taxSummary as JsonObject
+        expect(taxSummary.formType).toBe(scenario.formType)
+        expect((taxSummary.schedules as string[]).includes(scenario.scheduleTag)).toBe(
+          true
+        )
+        if (scenario.formType === '1120-S' || scenario.formType === '1065') {
+          expect(Array.isArray(taxSummary.ownerAllocations)).toBe(true)
+          expect((taxSummary.ownerAllocations as JsonObject[]).length).toBeGreaterThan(
+            0
+          )
+        }
+      }
+    },
+    120_000
+  )
 
   it('supports app-level rejection repair and retry orchestration', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
@@ -2209,13 +2506,23 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           '/1099': {
             records: [
               {
+                id: 'int-1',
+                type: '1099-INT',
+                payer: 'City Bank',
+                amount: 1500,
+                taxExemptInterest: 250,
+                foreignTaxPaid: 10
+              },
+              {
                 id: 'div-1',
                 type: '1099-DIV',
                 payer: 'Brokerage',
                 amount: 3200,
                 qualifiedDividends: 1800,
                 capitalGainDistributions: 450,
-                section199ADividends: 300
+                section199ADividends: 300,
+                exemptInterestDividends: 125,
+                foreignTaxPaid: 75
               },
               {
                 id: 'b-1',
@@ -2288,6 +2595,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const facts = syncResult.facts as JsonObject
     const taxSummary = syncResult.taxSummary as JsonObject
     const form1099Records = facts.form1099Records as JsonObject[]
+    const intRecord = form1099Records.find(
+      (record) => record.type === '1099-INT'
+    ) as JsonObject
     const divRecord = form1099Records.find(
       (record) => record.type === '1099-DIV'
     ) as JsonObject
@@ -2297,16 +2607,22 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const incomeSummary = facts.incomeSummary as JsonObject
     const itemized = facts.itemizedDeductions as JsonObject
 
+    expect(intRecord.amount).toBe(1500)
+    expect(intRecord.taxExemptInterest).toBe(250)
+    expect(intRecord.foreignTaxPaid).toBe(10)
     expect(divRecord.amount).toBe(3200)
     expect(divRecord.qualifiedDividends).toBe(1800)
     expect(divRecord.capitalGainDistributions).toBe(450)
     expect(divRecord.section199ADividends).toBe(300)
+    expect(divRecord.exemptInterestDividends).toBe(125)
+    expect(divRecord.foreignTaxPaid).toBe(75)
     expect(brokerRecord.shortTermProceeds).toBe(15000)
     expect(brokerRecord.shortTermCostBasis).toBe(10000)
     expect(brokerRecord.longTermProceeds).toBe(20000)
     expect(brokerRecord.longTermCostBasis).toBe(15000)
     expect(brokerRecord.summaryAmount).toBe(0)
-    expect(incomeSummary.total1099Amount).toBe(3200)
+    expect(incomeSummary.total1099Amount).toBe(4700)
+    expect((incomeSummary.totalsByType as JsonObject)['1099-INT']).toBe(1500)
     expect((incomeSummary.totalsByType as JsonObject)['1099-DIV']).toBe(3200)
     expect((incomeSummary.totalsByType as JsonObject)['1099-B']).toBe(0)
     expect(itemized.stateAndLocalTaxes).toBe(30000)
@@ -2322,6 +2638,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect((facts.nonresidentScheduleOi as JsonObject).countryOfResidence).toBe(
       'GB'
     )
+    expect((taxSummary.schedules as string[]).includes('f1040sb')).toBe(true)
     expect((taxSummary.schedules as string[]).includes('f1040nr')).toBe(true)
     },
     15_000

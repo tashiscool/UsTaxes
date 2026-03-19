@@ -125,7 +125,7 @@ const rows = [
     directFileCoverage: 'partial',
     status: 'implemented_tested',
     notes:
-      'Core 1099 payer, amount, and withholding data now map into backend facts, review surfaces, and submission payload metadata with runtime coverage.'
+      'Core 1099 payer, amount, withholding, tax-exempt interest, exempt-interest dividends, and qualified-dividend data now map into backend facts, Schedule B-facing summaries, review surfaces, and submission payload metadata with workbook plus worker runtime coverage.'
   },
   {
     family: 'investments_and_crypto',
@@ -165,6 +165,48 @@ const rows = [
     status: 'implemented_tested',
     notes:
       'BusinessK1 now round-trips Schedule C and K-1 entities through /app/v1, and backend facts/checklist/review derive business, SE tax, and QBI summary data with worker plus local TaxFlow end-to-end coverage.'
+  },
+  {
+    family: 'business_entity_returns',
+    entityTypes: ['1120', '1120-S', '1065', '1041'],
+    taxflowRoutes: ['/business-entity'],
+    backendEndpoints: [
+      ...sharedEntityEndpoints,
+      'GET /app/v1/filing-sessions/:sessionId/checklist',
+      'GET /app/v1/filing-sessions/:sessionId/review'
+    ],
+    d1Tables: ['filing_sessions', 'review_findings', 'tax_returns'],
+    r2Artifacts: [
+      'filing-sessions/<id>/snapshot.json',
+      'returns/<id>/facts.json'
+    ],
+    orchestration:
+      'business screenData -> capability gating -> returns/sync -> review',
+    atsCoverage: 'runtime e2e',
+    directFileCoverage: 'no',
+    status: 'implemented_tested',
+    notes:
+      'TaxFlow business-entity sessions now prove self-service 1120, 1120-S, 1065, and 1041 readiness, sync, schedules, and owner-allocation outputs through worker runtime coverage.'
+  },
+  {
+    family: 'nonprofit_entity_returns',
+    entityTypes: ['990'],
+    taxflowRoutes: ['/business-entity'],
+    backendEndpoints: [
+      ...sharedEntityEndpoints,
+      'GET /app/v1/filing-sessions/:sessionId/checklist',
+      'GET /app/v1/filing-sessions/:sessionId/review',
+      'POST /app/v1/filing-sessions/:sessionId/submit'
+    ],
+    d1Tables: ['filing_sessions', 'review_findings'],
+    r2Artifacts: ['filing-sessions/<id>/snapshot.json'],
+    orchestration:
+      'business screenData -> expert-required gating -> blocked submit',
+    atsCoverage: 'runtime e2e',
+    directFileCoverage: 'no',
+    status: 'implemented_tested',
+    notes:
+      'Form 990 stays explicitly expert-required, exposes the small-nonprofit hint, and is worker-tested as a blocked self-serve submit path.'
   },
   {
     family: 'rental_property',

@@ -1,9 +1,11 @@
 {
-  "generatedAt": "2026-03-13T19:30:00.985Z",
+  "generatedAt": "2026-03-19T14:03:31.637Z",
   "rows": [
     {
       "family": "auth_and_sessions",
-      "entityTypes": ["taxpayer"],
+      "entityTypes": [
+        "taxpayer"
+      ],
       "taxflowRoutes": [
         "/session-dashboard",
         "/interview",
@@ -18,8 +20,13 @@
         "GET /app/v1/filing-sessions/:sessionId",
         "PATCH /app/v1/filing-sessions/:sessionId"
       ],
-      "d1Tables": ["users", "filing_sessions"],
-      "r2Artifacts": ["filing-sessions/<id>/snapshot.json"],
+      "d1Tables": [
+        "users",
+        "filing_sessions"
+      ],
+      "r2Artifacts": [
+        "filing-sessions/<id>/snapshot.json"
+      ],
       "orchestration": "cookie auth + filing session bootstrap",
       "atsCoverage": "runtime e2e",
       "directFileCoverage": "adapter_indirect",
@@ -28,8 +35,14 @@
     },
     {
       "family": "taxpayer_identity",
-      "entityTypes": ["taxpayer"],
-      "taxflowRoutes": ["/taxpayer-profile", "/residency", "/your-taxes"],
+      "entityTypes": [
+        "taxpayer"
+      ],
+      "taxflowRoutes": [
+        "/taxpayer-profile",
+        "/residency",
+        "/your-taxes"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -39,7 +52,11 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "review_findings", "tax_returns"],
+      "d1Tables": [
+        "filing_sessions",
+        "review_findings",
+        "tax_returns"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/snapshot.json",
         "returns/<id>/facts.json"
@@ -52,8 +69,12 @@
     },
     {
       "family": "spouse_household",
-      "entityTypes": ["spouse"],
-      "taxflowRoutes": ["/spouse"],
+      "entityTypes": [
+        "spouse"
+      ],
+      "taxflowRoutes": [
+        "/spouse"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -63,7 +84,10 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/snapshot.json",
         "filing-sessions/<id>/entities/spouse/<id>.json"
@@ -76,8 +100,12 @@
     },
     {
       "family": "dependents_and_household",
-      "entityTypes": ["dependent"],
-      "taxflowRoutes": ["/household"],
+      "entityTypes": [
+        "dependent"
+      ],
+      "taxflowRoutes": [
+        "/household"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -87,8 +115,14 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities", "review_findings"],
-      "r2Artifacts": ["filing-sessions/<id>/entities/dependent/<id>.json"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities",
+        "review_findings"
+      ],
+      "r2Artifacts": [
+        "filing-sessions/<id>/entities/dependent/<id>.json"
+      ],
       "orchestration": "dependent sync -> checklist/review credit readiness findings",
       "atsCoverage": "S2|S4|S5|S13|S17",
       "directFileCoverage": "partial",
@@ -97,8 +131,13 @@
     },
     {
       "family": "w2_wages",
-      "entityTypes": ["w2"],
-      "taxflowRoutes": ["/income", "/w2"],
+      "entityTypes": [
+        "w2"
+      ],
+      "taxflowRoutes": [
+        "/income",
+        "/w2"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -108,7 +147,11 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities", "tax_returns"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities",
+        "tax_returns"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/snapshot.json",
         "filing-sessions/<id>/entities/w2/<id>.json"
@@ -132,7 +175,10 @@
         "1099_g",
         "1099_ssa"
       ],
-      "taxflowRoutes": ["/income", "/1099"],
+      "taxflowRoutes": [
+        "/income",
+        "/1099"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -142,18 +188,32 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities", "tax_returns"],
-      "r2Artifacts": ["filing-sessions/<id>/entities/1099_*/<id>.json"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities",
+        "tax_returns"
+      ],
+      "r2Artifacts": [
+        "filing-sessions/<id>/entities/1099_*/<id>.json"
+      ],
       "orchestration": "screen/entity sync -> 1099 fact payload -> checklist/review",
       "atsCoverage": "S8|S9|S10|S14|S16|S23|S24|S30|S31",
       "directFileCoverage": "partial",
       "status": "implemented_tested",
-      "notes": "Core 1099 payer, amount, and withholding data now map into backend facts, review surfaces, and submission payload metadata with runtime coverage."
+      "notes": "Core 1099 payer, amount, withholding, tax-exempt interest, exempt-interest dividends, and qualified-dividend data now map into backend facts, Schedule B-facing summaries, review surfaces, and submission payload metadata with workbook plus worker runtime coverage."
     },
     {
       "family": "investments_and_crypto",
-      "entityTypes": ["tax_lot", "crypto_account", "1099_b"],
-      "taxflowRoutes": ["/investments", "/tax-lots", "/crypto"],
+      "entityTypes": [
+        "tax_lot",
+        "crypto_account",
+        "1099_b"
+      ],
+      "taxflowRoutes": [
+        "/investments",
+        "/tax-lots",
+        "/crypto"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -163,7 +223,10 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/entities/tax_lot/<id>.json",
         "filing-sessions/<id>/entities/crypto_account/<id>.json"
@@ -176,7 +239,10 @@
     },
     {
       "family": "business_and_k1",
-      "entityTypes": ["schedule_c", "k1_entity"],
+      "entityTypes": [
+        "schedule_c",
+        "k1_entity"
+      ],
       "taxflowRoutes": [
         "/business-k1",
         "/business-entity",
@@ -192,7 +258,10 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/entities/schedule_c/<id>.json",
         "filing-sessions/<id>/entities/k1_entity/<id>.json"
@@ -204,9 +273,83 @@
       "notes": "BusinessK1 now round-trips Schedule C and K-1 entities through /app/v1, and backend facts/checklist/review derive business, SE tax, and QBI summary data with worker plus local TaxFlow end-to-end coverage."
     },
     {
+      "family": "business_entity_returns",
+      "entityTypes": [
+        "1120",
+        "1120-S",
+        "1065",
+        "1041"
+      ],
+      "taxflowRoutes": [
+        "/business-entity"
+      ],
+      "backendEndpoints": [
+        "POST /app/v1/filing-sessions",
+        "GET /app/v1/filing-sessions/:sessionId",
+        "PATCH /app/v1/filing-sessions/:sessionId",
+        "GET /app/v1/filing-sessions/:sessionId/entities",
+        "PUT /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
+        "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
+        "POST /app/v1/filing-sessions/:sessionId/returns/sync",
+        "GET /app/v1/filing-sessions/:sessionId/checklist",
+        "GET /app/v1/filing-sessions/:sessionId/review"
+      ],
+      "d1Tables": [
+        "filing_sessions",
+        "review_findings",
+        "tax_returns"
+      ],
+      "r2Artifacts": [
+        "filing-sessions/<id>/snapshot.json",
+        "returns/<id>/facts.json"
+      ],
+      "orchestration": "business screenData -> capability gating -> returns/sync -> review",
+      "atsCoverage": "runtime e2e",
+      "directFileCoverage": "no",
+      "status": "implemented_tested",
+      "notes": "TaxFlow business-entity sessions now prove self-service 1120, 1120-S, 1065, and 1041 readiness, sync, schedules, and owner-allocation outputs through worker runtime coverage."
+    },
+    {
+      "family": "nonprofit_entity_returns",
+      "entityTypes": [
+        "990"
+      ],
+      "taxflowRoutes": [
+        "/business-entity"
+      ],
+      "backendEndpoints": [
+        "POST /app/v1/filing-sessions",
+        "GET /app/v1/filing-sessions/:sessionId",
+        "PATCH /app/v1/filing-sessions/:sessionId",
+        "GET /app/v1/filing-sessions/:sessionId/entities",
+        "PUT /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
+        "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
+        "POST /app/v1/filing-sessions/:sessionId/returns/sync",
+        "GET /app/v1/filing-sessions/:sessionId/checklist",
+        "GET /app/v1/filing-sessions/:sessionId/review",
+        "POST /app/v1/filing-sessions/:sessionId/submit"
+      ],
+      "d1Tables": [
+        "filing_sessions",
+        "review_findings"
+      ],
+      "r2Artifacts": [
+        "filing-sessions/<id>/snapshot.json"
+      ],
+      "orchestration": "business screenData -> expert-required gating -> blocked submit",
+      "atsCoverage": "runtime e2e",
+      "directFileCoverage": "no",
+      "status": "implemented_tested",
+      "notes": "Form 990 stays explicitly expert-required, exposes the small-nonprofit hint, and is worker-tested as a blocked self-serve submit path."
+    },
+    {
       "family": "rental_property",
-      "entityTypes": ["rental_property"],
-      "taxflowRoutes": ["/rental"],
+      "entityTypes": [
+        "rental_property"
+      ],
+      "taxflowRoutes": [
+        "/rental"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -216,7 +359,10 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/entities/rental_property/<id>.json"
       ],
@@ -228,8 +374,14 @@
     },
     {
       "family": "retirement_and_hsa",
-      "entityTypes": ["hsa_account", "ira_distribution"],
-      "taxflowRoutes": ["/hsa", "/ira-retirement"],
+      "entityTypes": [
+        "hsa_account",
+        "ira_distribution"
+      ],
+      "taxflowRoutes": [
+        "/hsa",
+        "/ira-retirement"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -239,7 +391,10 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/entities/hsa_account/<id>.json",
         "filing-sessions/<id>/entities/ira_distribution/<id>.json"
@@ -252,8 +407,13 @@
     },
     {
       "family": "unemployment_and_social_security",
-      "entityTypes": ["unemployment_record", "ssa_record"],
-      "taxflowRoutes": ["/unemployment-ss"],
+      "entityTypes": [
+        "unemployment_record",
+        "ssa_record"
+      ],
+      "taxflowRoutes": [
+        "/unemployment-ss"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -263,7 +423,10 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/entities/unemployment_record/<id>.json",
         "filing-sessions/<id>/entities/ssa_record/<id>.json"
@@ -296,7 +459,10 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/entities/foreign_income_record/<id>.json",
         "filing-sessions/<id>/entities/foreign_account/<id>.json",
@@ -318,7 +484,11 @@
         "home_energy_credit",
         "adoption_record"
       ],
-      "taxflowRoutes": ["/education-care", "/credits", "/credits-hub"],
+      "taxflowRoutes": [
+        "/education-care",
+        "/credits",
+        "/credits-hub"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -328,7 +498,11 @@
         "DELETE /app/v1/filing-sessions/:sessionId/entities/:entityType/:entityId",
         "POST /app/v1/filing-sessions/:sessionId/returns/sync"
       ],
-      "d1Tables": ["filing_sessions", "session_entities", "review_findings"],
+      "d1Tables": [
+        "filing_sessions",
+        "session_entities",
+        "review_findings"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/entities/education_student/<id>.json",
         "filing-sessions/<id>/entities/care_provider/<id>.json",
@@ -342,8 +516,13 @@
     },
     {
       "family": "state_and_local_tax",
-      "entityTypes": ["local_tax_obligation"],
-      "taxflowRoutes": ["/state-tax", "/local-tax"],
+      "entityTypes": [
+        "local_tax_obligation"
+      ],
+      "taxflowRoutes": [
+        "/state-tax",
+        "/local-tax"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions",
         "GET /app/v1/filing-sessions/:sessionId",
@@ -374,13 +553,21 @@
     {
       "family": "checklist_and_review",
       "entityTypes": [],
-      "taxflowRoutes": ["/checklist", "/review-confirm"],
+      "taxflowRoutes": [
+        "/checklist",
+        "/review-confirm"
+      ],
       "backendEndpoints": [
         "GET /app/v1/filing-sessions/:sessionId/checklist",
         "GET /app/v1/filing-sessions/:sessionId/review"
       ],
-      "d1Tables": ["filing_sessions", "review_findings"],
-      "r2Artifacts": ["filing-sessions/<id>/snapshot.json"],
+      "d1Tables": [
+        "filing_sessions",
+        "review_findings"
+      ],
+      "r2Artifacts": [
+        "filing-sessions/<id>/snapshot.json"
+      ],
       "orchestration": "backend-derived review findings + checklist aggregation",
       "atsCoverage": "runtime e2e",
       "directFileCoverage": "adapter_indirect",
@@ -390,13 +577,19 @@
     {
       "family": "document_intake",
       "entityTypes": [],
-      "taxflowRoutes": ["/documents", "/dump", "/extraction-review"],
+      "taxflowRoutes": [
+        "/documents",
+        "/dump",
+        "/extraction-review"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions/:sessionId/documents",
         "GET /app/v1/filing-sessions/:sessionId/documents/:documentId",
         "PATCH /app/v1/filing-sessions/:sessionId/documents/:documentId"
       ],
-      "d1Tables": ["documents"],
+      "d1Tables": [
+        "documents"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/documents/<id>/metadata.json",
         "filing-sessions/<id>/documents/<id>/content.json"
@@ -409,8 +602,15 @@
     },
     {
       "family": "efile_submission",
-      "entityTypes": ["submission", "bank_account"],
-      "taxflowRoutes": ["/efile-wizard", "/efile-status-v2", "/confirmation"],
+      "entityTypes": [
+        "submission",
+        "bank_account"
+      ],
+      "taxflowRoutes": [
+        "/efile-wizard",
+        "/efile-status-v2",
+        "/confirmation"
+      ],
       "backendEndpoints": [
         "POST /app/v1/filing-sessions/:sessionId/sign",
         "POST /app/v1/filing-sessions/:sessionId/submit",
@@ -437,15 +637,27 @@
     },
     {
       "family": "rejection_and_retry",
-      "entityTypes": ["submission", "rejection_record"],
-      "taxflowRoutes": ["/rejection-repair", "/efile-status-v2"],
+      "entityTypes": [
+        "submission",
+        "rejection_record"
+      ],
+      "taxflowRoutes": [
+        "/rejection-repair",
+        "/efile-status-v2"
+      ],
       "backendEndpoints": [
         "GET /app/v1/filing-sessions/:sessionId/submission",
         "POST /api/v1/internal/submissions/:submissionId/retry",
         "GET /api/v1/submissions/:submissionId/ack"
       ],
-      "d1Tables": ["filing_sessions", "submissions", "submission_events"],
-      "r2Artifacts": ["submissions/<id>/ack.json"],
+      "d1Tables": [
+        "filing_sessions",
+        "submissions",
+        "submission_events"
+      ],
+      "r2Artifacts": [
+        "submissions/<id>/ack.json"
+      ],
       "orchestration": "submission lookup -> classified rejection errors -> retry orchestration",
       "atsCoverage": "scenario1.reject-missing-tin|runtime retry",
       "directFileCoverage": "yes",
@@ -454,15 +666,23 @@
     },
     {
       "family": "state_transfer",
-      "entityTypes": ["submission"],
-      "taxflowRoutes": ["/state-transfer", "/state-tax"],
+      "entityTypes": [
+        "submission"
+      ],
+      "taxflowRoutes": [
+        "/state-transfer",
+        "/state-tax"
+      ],
       "backendEndpoints": [
         "GET /app/v1/filing-sessions/:sessionId/state-transfer",
         "POST /app/v1/filing-sessions/:sessionId/state-transfer/authorize",
         "GET /df/file/api/v1/state-api/state-profile",
         "GET /df/file/api/v1/state-api/state-exported-facts/:submissionId"
       ],
-      "d1Tables": ["state_transfer_authorizations", "filing_sessions"],
+      "d1Tables": [
+        "state_transfer_authorizations",
+        "filing_sessions"
+      ],
       "r2Artifacts": [
         "filing-sessions/<id>/state-transfer/<authorizationCode>.json"
       ],
@@ -474,14 +694,22 @@
     },
     {
       "family": "print_and_mail",
-      "entityTypes": ["submission"],
-      "taxflowRoutes": ["/print-mail"],
+      "entityTypes": [
+        "submission"
+      ],
+      "taxflowRoutes": [
+        "/print-mail"
+      ],
       "backendEndpoints": [
         "GET /app/v1/filing-sessions/:sessionId/print-mail",
         "POST /app/v1/filing-sessions/:sessionId/print-mail"
       ],
-      "d1Tables": ["filing_sessions"],
-      "r2Artifacts": ["filing-sessions/<id>/print-mail/packet.json"],
+      "d1Tables": [
+        "filing_sessions"
+      ],
+      "r2Artifacts": [
+        "filing-sessions/<id>/print-mail/packet.json"
+      ],
       "orchestration": "print-mail packet generation + mailed-status persistence",
       "atsCoverage": "runtime e2e",
       "directFileCoverage": "partial",

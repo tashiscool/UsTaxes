@@ -81,8 +81,20 @@ PRIORITY_LOGICAL_AREAS = {
         "test_files": ["src/forms/Y2025/tests/F1099GParity.test.ts"],
         "expected_years": {"2024", "2025", "2026_forecast"},
     },
+    "1099_interest": {
+        "test_files": ["src/forms/Y2025/tests/InterestDividendWorkbookParity.test.ts"],
+        "expected_years": {"2024", "2025", "2026_forecast"},
+    },
+    "1099_dividend": {
+        "test_files": ["src/forms/Y2025/tests/InterestDividendWorkbookParity.test.ts"],
+        "expected_years": {"2024", "2025", "2026_forecast"},
+    },
     "1099_r": {
         "test_files": ["src/forms/Y2025/tests/F1099GParity.test.ts"],
+        "expected_years": {"2024", "2025", "2026_forecast"},
+    },
+    "schedule_b": {
+        "test_files": ["src/forms/Y2025/tests/InterestDividendWorkbookParity.test.ts"],
         "expected_years": {"2024", "2025", "2026_forecast"},
     },
     "social_security_worksheet": {
@@ -91,6 +103,10 @@ PRIORITY_LOGICAL_AREAS = {
     },
     "student_loan_interest_worksheet": {
         "test_files": ["src/forms/Y2025/tests/F1099GParity.test.ts"],
+        "expected_years": {"2024", "2025", "2026_forecast"},
+    },
+    "qualified_dividend_cap_gains_tax": {
+        "test_files": ["src/forms/Y2025/tests/InterestDividendWorkbookParity.test.ts"],
         "expected_years": {"2024", "2025", "2026_forecast"},
     },
     "1099_nec": {

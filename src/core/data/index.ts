@@ -137,6 +137,8 @@ export interface F1099BData {
 
 export interface F1099IntData {
   income: number
+  taxExemptInterest?: number
+  foreignTaxPaid?: number
 }
 
 export interface F1099DivData {
@@ -144,6 +146,8 @@ export interface F1099DivData {
   qualifiedDividends: number
   totalCapitalGainsDistributions: number
   section199ADividends?: number
+  exemptInterestDividends?: number
+  foreignTaxPaid?: number
 }
 /*
  TODO: Add in logic for various different distributions

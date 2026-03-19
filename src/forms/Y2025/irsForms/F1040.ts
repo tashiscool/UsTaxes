@@ -1203,7 +1203,15 @@ export default class F1040 extends F1040Base {
       this.l1g(),
       this.l1h()
     ])
-  l2a = (): number | undefined => this.scheduleB.l3()
+  l2a = (): number =>
+    this.f1099Ints().reduce(
+      (total, form1099) => total + (form1099.form.taxExemptInterest ?? 0),
+      0
+    ) +
+    this.f1099Divs().reduce(
+      (total, form1099) => total + (form1099.form.exemptInterestDividends ?? 0),
+      0
+    )
   l2b = (): number | undefined => this.scheduleB.to1040l2b()
   l3a = (): number | undefined => this.totalQualifiedDividends()
   l3b = (): number | undefined => this.scheduleB.to1040l3b()

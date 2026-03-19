@@ -816,14 +816,27 @@ const adapt1099s = (facts: FactsRecord): Supported1099[] => {
     switch (type) {
       case 'INT':
       case '1099INT':
+        {
+          const taxExemptInterest = toNum(
+            r.taxExemptInterest ?? amounts.taxExemptInterest ?? r.box8
+          )
+          const foreignTaxPaid = toNum(
+            r.foreignTaxPaid ?? amounts.foreignTaxPaid ?? r.box6
+          )
         return [
           {
             payer,
             type: Income1099Type.INT,
-            form: { income: amount } as F1099IntData,
+            form: {
+              income: amount,
+              taxExemptInterest:
+                taxExemptInterest > 0 ? taxExemptInterest : undefined,
+              foreignTaxPaid: foreignTaxPaid > 0 ? foreignTaxPaid : undefined
+            } as F1099IntData,
             personRole
           }
         ]
+        }
       case 'DIV':
       case '1099DIV':
         {
@@ -842,6 +855,14 @@ const adapt1099s = (facts: FactsRecord): Supported1099[] => {
           const section199ADividends = toNum(
             r.section199ADividends ?? amounts.section199ADividends
           )
+          const exemptInterestDividends = toNum(
+            r.exemptInterestDividends ??
+              amounts.exemptInterestDividends ??
+              r.box12
+          )
+          const foreignTaxPaid = toNum(
+            r.foreignTaxPaid ?? amounts.foreignTaxPaid ?? r.box7
+          )
         return [
           {
             payer,
@@ -851,7 +872,12 @@ const adapt1099s = (facts: FactsRecord): Supported1099[] => {
               qualifiedDividends,
               totalCapitalGainsDistributions,
               section199ADividends:
-                section199ADividends > 0 ? section199ADividends : undefined
+                section199ADividends > 0 ? section199ADividends : undefined,
+              exemptInterestDividends:
+                exemptInterestDividends > 0
+                  ? exemptInterestDividends
+                  : undefined,
+              foreignTaxPaid: foreignTaxPaid > 0 ? foreignTaxPaid : undefined
             } as F1099DivData,
             personRole
           }

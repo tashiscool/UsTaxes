@@ -1748,6 +1748,11 @@ const get1099Records = (
         record.qualifiedDividends ??
         record.box1b
     )
+    const taxExemptInterest = toMoney(
+      rawAmounts.taxExemptInterest ??
+        record.taxExemptInterest ??
+        record.box8
+    )
     const capitalGainDistributions = toMoney(
       rawAmounts.capitalGainDistributions ??
         rawAmounts.totalCapitalGainsDistributions ??
@@ -1755,10 +1760,21 @@ const get1099Records = (
         record.totalCapitalGainsDistributions ??
         record.box2a
     )
+    const exemptInterestDividends = toMoney(
+      rawAmounts.exemptInterestDividends ??
+        record.exemptInterestDividends ??
+        record.box12
+    )
     const section199ADividends = toMoney(
       rawAmounts.section199ADividends ??
         record.section199ADividends ??
         record.box5
+    )
+    const foreignTaxPaid = toMoney(
+      rawAmounts.foreignTaxPaid ??
+        record.foreignTaxPaid ??
+        record.box6 ??
+        record.box7
     )
     const scalarAmount = toMoney(rawAmounts.amount ?? record.amount)
     const amount =
@@ -1791,9 +1807,12 @@ const get1099Records = (
       ),
       notes: toText(record.notes),
       owner: toText(record.owner) || 'taxpayer',
+      taxExemptInterest,
       qualifiedDividends,
       capitalGainDistributions,
+      exemptInterestDividends,
       section199ADividends,
+      foreignTaxPaid,
       shortTermProceeds,
       shortTermCostBasis,
       longTermProceeds,
@@ -5769,6 +5788,7 @@ export class AppSessionService {
       computed = bizOutcome.success
         ? {
             taxSummary: {
+              formType: bizOutcome.formType,
               taxableIncome: bizOutcome.taxableIncome,
               totalTax: bizOutcome.totalTax,
               totalPayments: bizOutcome.totalPayments,

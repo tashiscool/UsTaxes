@@ -201,6 +201,36 @@
     "issues": []
   },
   {
+    "logical_area": "1099_interest",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/InterestDividendWorkbookParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "1099_dividend",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/InterestDividendWorkbookParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
     "logical_area": "1099_r",
     "status": "ok",
     "observed_years": [
@@ -211,6 +241,21 @@
     "sheet_count": 3,
     "required_test_files": [
       "src/forms/Y2025/tests/F1099GParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "schedule_b",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/InterestDividendWorkbookParity.test.ts"
     ],
     "missing_tests": [],
     "issues": []
@@ -241,6 +286,21 @@
     "sheet_count": 3,
     "required_test_files": [
       "src/forms/Y2025/tests/F1099GParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "qualified_dividend_cap_gains_tax",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/InterestDividendWorkbookParity.test.ts"
     ],
     "missing_tests": [],
     "issues": []
