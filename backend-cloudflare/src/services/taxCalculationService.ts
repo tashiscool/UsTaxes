@@ -1992,6 +1992,11 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     return credits.length > 0 ? credits : undefined
   })()
 
+  const form8879 = (() => {
+    const raw = asRecord(facts.form8879)
+    return Object.keys(raw).length > 0 ? raw : undefined
+  })()
+
   // ─── IRA contribution deductibility (Form 8606, F8880) ──────────────────
   const iraContributions: IraContribution[] | undefined = (() => {
     const records = asArray<Record<string, unknown>>(facts.iraContributions)
@@ -2275,6 +2280,7 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     individualRetirementArrangements,
     schedule8812EarnedIncomeAdjustments,
     otherFederalWithholdingCredits,
+    form8879,
     // OBBBA fields
     overtimeIncome,
     tipIncome,

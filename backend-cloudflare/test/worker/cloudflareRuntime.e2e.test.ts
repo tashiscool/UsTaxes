@@ -611,8 +611,22 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           '/efile-wizard': {
             signatureText: 'Ava Tester',
             agreed8879: true,
+            form8879Consent: true,
+            primaryPIN: '12345',
             priorYearAgi: 12345,
             account: '1234567890'
+          },
+          '/schedule-8812-adjustments': {
+            scholarshipGrantsNotOnW2: 300,
+            medicaidWaiverPaymentsExcludedFromIncome: 700,
+            includeMedicaidWaiverInEarnedIncome: true,
+            w2gRecords: [
+              {
+                payerName: 'River Casino',
+                federalIncomeTaxWithheld: 125,
+                description: 'Casino withholding'
+              }
+            ]
           },
           '/household': {
             dependents: [
@@ -802,6 +816,23 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect((facts.creditSummary as JsonObject).estimatedTotal).toBe(2000)
     expect(Array.isArray(facts.w2Records)).toBe(true)
     expect(Array.isArray(facts.form1099Records)).toBe(true)
+    expect(facts.schedule8812EarnedIncomeAdjustments).toEqual({
+      scholarshipGrantsNotOnW2: 300,
+      penalIncome: 0,
+      nonqualifiedDeferredCompensation: 0,
+      medicaidWaiverPaymentsExcludedFromIncome: 700,
+      includeMedicaidWaiverInEarnedIncome: true
+    })
+    expect(facts.otherFederalWithholdingCredits).toEqual([
+      {
+        source: 'W2G',
+        amount: 125,
+        description: 'Casino withholding'
+      }
+    ])
+    expect((facts.form8879 as JsonObject).taxpayerName).toBe('Ava Tester')
+    expect((facts.form8879 as JsonObject).taxpayerPIN).toBe('12345')
+    expect((facts.form8879 as JsonObject).form8879Consent).toBe(true)
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/sign`,
@@ -1383,6 +1414,16 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(
       reviewSections.some(
         (section) =>
+          section.title === 'Nonprofit filing identity' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Rendered EIN' && row.value === '98-7654321'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
           section.title === 'Nonprofit financial package' &&
           ((section.rows as JsonObject[]) ?? []).some(
             (row) =>
@@ -1420,6 +1461,15 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           ((section.rows as JsonObject[]) ?? []).some(
             (row) =>
               row.label === 'Lead officer' && row.value === 'Jordan Smith'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit financial package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) => row.label === 'Special events net' && row.value === '$8,000'
           )
       )
     ).toBe(true)
@@ -1562,7 +1612,17 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           ((section.rows as JsonObject[]) ?? []).some(
             (row) =>
               row.label === 'Rendered change in net assets' &&
-              row.value === '$129,500'
+              row.value === '$135,500'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit filing identity' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Rendered EIN' && row.value === '12-3456789'
           )
       )
     ).toBe(true)
@@ -1593,6 +1653,27 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           section.title === 'Nonprofit governance package' &&
           ((section.rows as JsonObject[]) ?? []).some(
             (row) => row.label === 'Volunteers' && row.value === '55'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit governance package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Compensation process' && row.value === 'No'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit financial package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Rendered contributions' &&
+              row.value === '$200,000'
           )
       )
     ).toBe(true)

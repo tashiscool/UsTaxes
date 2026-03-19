@@ -400,6 +400,46 @@ describe('TaxCalculationService', () => {
       expect(f1040.l25c()).toBe(500)
     })
 
+    it('maps Form 8879 signature facts into the e-file attachment with current-return totals', () => {
+      const facts = baseFacts({
+        primaryFirstName: 'Ava',
+        primaryLastName: 'Signer',
+        w2Records: [
+          {
+            id: 'w2-1',
+            employerName: 'Acme Corp',
+            ein: '12-3456789',
+            box1Wages: 50000,
+            box2FederalWithheld: 4500,
+            owner: 'taxpayer',
+            isComplete: true
+          }
+        ],
+        form8879: {
+          form8879Consent: true,
+          agreed8879: true,
+          taxpayerPIN: '12345',
+          signatureTimestamp: '2025-04-15T12:00:00.000Z',
+          eroFirmName: 'TaxFlow Self-Service'
+        }
+      })
+
+      const info = adaptFactsToInformation(facts)
+      const f1040 = new F1040(info as ValidatedInformation, [])
+
+      expect(info.form8879).toMatchObject({
+        form8879Consent: true,
+        agreed8879: true,
+        taxpayerPIN: '12345'
+      })
+      expect(f1040.f8879?.isNeeded()).toBe(true)
+      expect(f1040.f8879?.taxpayerName()).toBe('Ava Signer')
+      expect(f1040.f8879?.taxpayerPIN()).toBe('12345')
+      expect(f1040.f8879?.adjustedGrossIncome()).toBe(f1040.l11())
+      expect(f1040.f8879?.totalTax()).toBe(f1040.l24())
+      expect(f1040.f8879?.federalIncomeTaxWithheld()).toBe(f1040.l25d())
+    })
+
     it('maps casualty and miscellaneous itemized deduction rollups into Schedule A-sensitive fields', () => {
       const facts = baseFacts({
         itemizedDeductions: {

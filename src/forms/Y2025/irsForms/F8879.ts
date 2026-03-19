@@ -58,11 +58,81 @@ export default class F8879 extends F1040Attachment {
   }
 
   hasF8879Data = (): boolean => {
-    return false // Would be true when e-filing
+    return this.f8879Data() !== undefined
   }
 
   f8879Data = (): F8879Data | undefined => {
-    return undefined
+    const raw = this.f1040.info.form8879 as
+      | (Partial<F8879Data> & {
+          form8879Consent?: boolean
+          agreed8879?: boolean
+          signatureText?: string
+          signatureTimestamp?: string | Date
+        })
+      | undefined
+    if (!raw) return undefined
+
+    const taxpayer = this.f1040.info.taxPayer.primaryPerson
+    const spouse = this.f1040.info.taxPayer.spouse
+    const hasAuthorization =
+      Boolean(raw.form8879Consent ?? raw.agreed8879) ||
+      (raw.taxpayerPIN?.length ?? 0) > 0 ||
+      (raw.signatureText?.length ?? 0) > 0
+    if (!hasAuthorization) return undefined
+
+    const signatureDate =
+      raw.signatureTimestamp instanceof Date
+        ? raw.signatureTimestamp
+        : raw.signatureTimestamp
+          ? new Date(raw.signatureTimestamp)
+          : new Date()
+    const safeDate = isNaN(signatureDate.getTime())
+      ? new Date()
+      : signatureDate
+
+    return {
+      taxpayerName:
+        raw.taxpayerName ??
+        `${taxpayer.firstName ?? ''} ${taxpayer.lastName ?? ''}`.trim(),
+      taxpayerSSN:
+        raw.taxpayerSSN ?? String(taxpayer.ssid ?? '').replace(/\D/g, ''),
+      spouseName:
+        raw.spouseName ??
+        (spouse
+          ? `${spouse.firstName ?? ''} ${spouse.lastName ?? ''}`.trim()
+          : undefined),
+      spouseSSN:
+        raw.spouseSSN ?? String(spouse?.ssid ?? '').replace(/\D/g, ''),
+      adjustedGrossIncome:
+        raw.adjustedGrossIncome ?? this.f1040.l11() ?? 0,
+      totalTax: raw.totalTax ?? this.f1040.l24() ?? 0,
+      federalIncomeTaxWithheld:
+        raw.federalIncomeTaxWithheld ?? this.f1040.l25d() ?? 0,
+      refundAmount: raw.refundAmount ?? this.f1040.l34() ?? 0,
+      amountOwed: raw.amountOwed ?? this.f1040.l37() ?? 0,
+      taxpayerPIN: raw.taxpayerPIN ?? '',
+      spousePIN: raw.spousePIN,
+      eroFirmName: raw.eroFirmName ?? 'TaxFlow Self-Service',
+      eroAddress: raw.eroAddress ?? '',
+      eroEIN: raw.eroEIN ?? '',
+      eroPIN: raw.eroPIN ?? '',
+      selfSelectPIN: raw.selfSelectPIN ?? !Boolean(raw.practitionerPIN),
+      practitionerPIN: raw.practitionerPIN ?? false,
+      taxpayerSignatureDate: raw.taxpayerSignatureDate
+        ? new Date(raw.taxpayerSignatureDate)
+        : safeDate,
+      spouseSignatureDate: raw.spouseSignatureDate
+        ? new Date(raw.spouseSignatureDate)
+        : spouse
+          ? safeDate
+          : undefined,
+      eroSignatureDate: raw.eroSignatureDate
+        ? new Date(raw.eroSignatureDate)
+        : safeDate,
+      preparerName: raw.preparerName,
+      preparerPTIN: raw.preparerPTIN,
+      selfEmployed: raw.selfEmployed ?? false
+    }
   }
 
   // Taxpayer info

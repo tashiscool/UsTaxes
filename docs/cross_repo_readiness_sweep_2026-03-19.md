@@ -47,6 +47,18 @@ This sweep covers the active filing stack:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/Schedule1.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/Schedule8812.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1040.ts`
+- The worker-backed `Schedule 8812` path is now more first-class instead of
+  only generic facts:
+  - dedicated `/schedule-8812-adjustments` facts now surface the earned-income
+    worksheet special-case inputs and W-2G-style withholding records
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/appSessionService.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
+- `Form 8879` is no longer a dead attachment stub:
+  - consent and self-select PIN facts from the e-file flow now map into a real
+    `F8879` attachment with current-return totals
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F8879.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/F8879Parity.test.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts`
 
 ### backend-cloudflare
 
@@ -77,6 +89,9 @@ This sweep covers the active filing stack:
   - financial package
   - governance package
   - program and officer package
+  - rendered EIN / variant rows
+  - richer `990` and `990-EZ` financial subtotals such as contributions,
+    special-events net, liabilities, and salaries/payroll where facts support them
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/appSessionService.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
 - Protected auth callbacks now require a signed upstream identity assertion

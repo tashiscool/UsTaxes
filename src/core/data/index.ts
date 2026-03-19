@@ -2870,6 +2870,8 @@ export interface Information<D = Date> {
   capitalGainsElectedAsInvestmentIncome?: number
   // Form 8888 - Allocation of Refund
   refundAllocations?: Record<string, unknown>[]
+  // Form 8879 - IRS e-file Signature Authorization
+  form8879?: Record<string, unknown>
   // Form 4137 - Unreported Tip Income
   unreportedTipIncome?: number
   // Schedule 1 Line 2a - Alimony received (pre-2019 agreements only)

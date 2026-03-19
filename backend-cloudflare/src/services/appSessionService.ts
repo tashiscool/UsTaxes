@@ -542,6 +542,7 @@ const buildNonprofitRenderedPreview = (
           title: 'Nonprofit filing identity',
           rows: compactRenderedRows([
             { label: 'Rendered organization', value: organizationName },
+            { label: 'Rendered EIN', value: toText(facts.ein ?? organization.ein) },
             { label: 'Doing business as', value: doingBusinessAs },
             {
               label: 'Website',
@@ -561,6 +562,10 @@ const buildNonprofitRenderedPreview = (
             {
               label: 'Rendered gross receipts',
               value: grossReceipts > 0 ? formatCurrency(grossReceipts) : ''
+            },
+            {
+              label: 'Rendered filing variant',
+              value: '990-N'
             },
             {
               label: 'Gross receipts eligibility',
@@ -652,6 +657,11 @@ const buildNonprofitRenderedPreview = (
           title: 'Nonprofit filing identity',
           rows: compactRenderedRows([
             { label: 'Rendered organization', value: organizationName },
+            { label: 'Rendered EIN', value: toText(facts.ein ?? organization.ein) },
+            {
+              label: 'Exemption type',
+              value: toText(facts.exemptionType ?? organization.exemptionType)
+            },
             { label: 'Website', value: websiteAddress },
             { label: 'Filing period', value: filingPeriod }
           ])
@@ -682,8 +692,26 @@ const buildNonprofitRenderedPreview = (
                   : ''
             },
             {
+              label: 'Rendered ending liabilities',
+              value:
+                toMoney(balanceSheet.endingLiabilities) > 0
+                  ? formatCurrency(toMoney(balanceSheet.endingLiabilities))
+                  : ''
+            },
+            {
               label: 'Rendered change in net assets',
               value: changeInNetAssets !== 0 ? formatCurrency(changeInNetAssets) : ''
+            },
+            {
+              label: 'Special events net',
+              value:
+                toMoney(revenue.specialEventsGross) ||
+                toMoney(revenue.specialEventsExpenses)
+                  ? formatCurrency(
+                      toMoney(revenue.specialEventsGross) -
+                        toMoney(revenue.specialEventsExpenses)
+                    )
+                  : ''
             }
           ])
         },
@@ -705,6 +733,10 @@ const buildNonprofitRenderedPreview = (
               label: 'Lead accomplishment grants',
               value:
                 firstProgramGrants > 0 ? formatCurrency(firstProgramGrants) : ''
+            },
+            {
+              label: 'Rendered filing variant',
+              value: '990-EZ'
             }
           ])
         },
@@ -811,6 +843,13 @@ const buildNonprofitRenderedPreview = (
         title: 'Nonprofit filing identity',
         rows: compactRenderedRows([
           { label: 'Rendered organization', value: organizationName },
+          { label: 'Rendered EIN', value: toText(facts.ein ?? organization.ein) },
+          {
+            label: 'Exemption type',
+            value: toText(
+              organization.exemptionType ?? facts.exemptionType ?? '501c3'
+            )
+          },
           { label: 'Website', value: websiteAddress },
           { label: 'Filing period', value: filingPeriod }
         ])
@@ -825,6 +864,44 @@ const buildNonprofitRenderedPreview = (
           {
             label: 'Rendered total expenses',
             value: totalExpenses > 0 ? formatCurrency(totalExpenses) : ''
+          },
+          {
+            label: 'Rendered contributions',
+            value:
+              toMoney(revenue.contributions) > 0
+                ? formatCurrency(toMoney(revenue.contributions))
+                : ''
+          },
+          {
+            label: 'Rendered program service revenue',
+            value:
+              toMoney(revenue.programServiceRevenue) > 0
+                ? formatCurrency(toMoney(revenue.programServiceRevenue))
+                : ''
+          },
+          {
+            label: 'Rendered grants expense',
+            value:
+              toMoney(expenses.grants) > 0
+                ? formatCurrency(toMoney(expenses.grants))
+                : ''
+          },
+          {
+            label: 'Rendered salaries and payroll',
+            value:
+              sumMoneyFields(expenses, [
+                'salariesAndWages',
+                'employeeBenefits',
+                'payrollTaxes'
+              ]) > 0
+                ? formatCurrency(
+                    sumMoneyFields(expenses, [
+                      'salariesAndWages',
+                      'employeeBenefits',
+                      'payrollTaxes'
+                    ])
+                  )
+                : ''
           },
           {
             label: 'Rendered net assets',
@@ -877,6 +954,10 @@ const buildNonprofitRenderedPreview = (
           {
             label: 'Document retention policy',
             value: governance.hasDocumentRetentionPolicy ? 'Yes' : 'No'
+          },
+          {
+            label: 'Compensation process',
+            value: governance.hasCompensationProcess ? 'Yes' : 'No'
           }
         ])
       },
@@ -887,7 +968,11 @@ const buildNonprofitRenderedPreview = (
           { label: 'Lead accomplishment', value: firstProgram },
           { label: 'Officer count', value: String(officers.length) },
           { label: 'Lead officer', value: leadOfficer },
-          { label: 'Lead officer title', value: leadOfficerTitle }
+          { label: 'Lead officer title', value: leadOfficerTitle },
+          {
+            label: 'Rendered filing variant',
+            value: '990'
+          }
         ])
       }
     ]
@@ -3604,6 +3689,195 @@ const getAmtCreditData = (
   }
 }
 
+const normalizeOtherFederalWithholdingCredit = (
+  record: Record<string, unknown>
+): Record<string, unknown> | undefined => {
+  const rawSource = toText(record.source)
+  const source =
+    rawSource === 'W2G' ||
+    rawSource === 'Schedule K-1' ||
+    rawSource === '1042-S' ||
+    rawSource === '8805' ||
+    rawSource === '8288-A'
+      ? rawSource
+      : 'other'
+  const amount = toMoney(record.amount)
+  if (amount <= 0) return undefined
+
+  return {
+    source,
+    amount,
+    description: toText(
+      record.description ??
+        record.label ??
+        record.payerName ??
+        record.casinoName ??
+        record.typeOfWager
+    )
+  }
+}
+
+const getSchedule8812CollectionFidelityData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+): {
+  schedule8812EarnedIncomeAdjustments?: Record<string, unknown>
+  otherFederalWithholdingCredits?: Record<string, unknown>[]
+} => {
+  const screen = requireScreen(snapshot, '/schedule-8812-adjustments')
+  const entity = entities.find(
+    (candidate) => candidate.entityType === 'schedule_8812_adjustments'
+  )
+  const data = (entity?.data ?? screen) as Record<string, unknown>
+
+  const schedule8812EarnedIncomeAdjustments = {
+    scholarshipGrantsNotOnW2: toMoney(
+      data.scholarshipGrantsNotOnW2 ??
+        data.taxableScholarshipGrantsNotOnW2 ??
+        data.scholarshipGrants
+    ),
+    penalIncome: toMoney(data.penalIncome),
+    nonqualifiedDeferredCompensation: toMoney(
+      data.nonqualifiedDeferredCompensation ??
+        data.nonqualifiedDeferredComp ??
+        data.section409ADeferrals
+    ),
+    medicaidWaiverPaymentsExcludedFromIncome: toMoney(
+      data.medicaidWaiverPaymentsExcludedFromIncome ??
+        data.medicaidWaiverPayments
+    ),
+    includeMedicaidWaiverInEarnedIncome: Boolean(
+      data.includeMedicaidWaiverInEarnedIncome ??
+        data.includeMedicaidWaiverPaymentsInEarnedIncome
+    )
+  }
+
+  const explicitCredits = asArray<Record<string, unknown>>(
+    data.otherFederalWithholdingCredits
+  )
+  const screenW2gRecords = asArray<Record<string, unknown>>(
+    screen.w2gRecords ?? screen.w2gs
+  )
+  const entityW2gRecords = entities
+    .filter((candidate) => candidate.entityType === 'w2g')
+    .map((candidate) => asRecord(candidate.data))
+
+  const otherFederalWithholdingCredits = [
+    ...explicitCredits,
+    ...screenW2gRecords.map((record) => ({
+      source: 'W2G',
+      amount:
+        record.amount ??
+        record.federalIncomeTaxWithheld ??
+        record.federalWithheld ??
+        record.withholding,
+      description:
+        record.description ??
+        record.payerName ??
+        record.casinoName ??
+        record.typeOfWager
+    })),
+    ...entityW2gRecords.map((record) => ({
+      source: 'W2G',
+      amount:
+        record.amount ??
+        record.federalIncomeTaxWithheld ??
+        record.federalWithheld ??
+        record.withholding,
+      description:
+        record.description ??
+        record.payerName ??
+        record.casinoName ??
+        record.typeOfWager
+    }))
+  ]
+    .map((record) => normalizeOtherFederalWithholdingCredit(record))
+    .filter(
+      (record): record is Record<string, unknown> => record !== undefined
+    )
+
+  const hasAdjustments = Object.values(schedule8812EarnedIncomeAdjustments).some(
+    (value) => (typeof value === 'boolean' ? value : value > 0)
+  )
+
+  return {
+    schedule8812EarnedIncomeAdjustments: hasAdjustments
+      ? schedule8812EarnedIncomeAdjustments
+      : undefined,
+    otherFederalWithholdingCredits:
+      otherFederalWithholdingCredits.length > 0
+        ? otherFederalWithholdingCredits
+        : undefined
+  }
+}
+
+const getForm8879Data = (
+  snapshot: FilingSessionSnapshot,
+  taxpayer: Record<string, unknown>,
+  spouse: Record<string, unknown> | null
+): Record<string, unknown> | undefined => {
+  const efile = requireScreen(snapshot, '/efile-wizard')
+  const identity = asRecord(efile.identityData)
+  const signature = asRecord(efile.signatureData)
+  const signatureTimestamp = toText(
+    signature.signatureTimestamp ?? efile.signatureTimestamp ?? efile.signedAt
+  )
+  const consent = Boolean(
+    signature.form8879Consent ?? efile.form8879Consent ?? efile.agreed8879
+  )
+  const taxpayerPIN = toText(
+    signature.primaryPIN ?? efile.primaryPIN ?? efile.taxpayerPIN
+  )
+  const spousePIN = toText(signature.spousePIN ?? efile.spousePIN)
+  const signatureText = toText(signature.signatureText ?? efile.signatureText)
+
+  if (!consent && !taxpayerPIN && !spousePIN && !signatureText) {
+    return undefined
+  }
+
+  return {
+    form8879Consent: consent,
+    agreed8879: consent,
+    signatureText,
+    signatureTimestamp: signatureTimestamp || undefined,
+    taxpayerName: `${toText(taxpayer.firstName)} ${toText(
+      taxpayer.lastName
+    )}`.trim(),
+    taxpayerSSN: toText(taxpayer.ssn).replace(/\D/g, ''),
+    spouseName: spouse
+      ? `${toText(spouse.firstName)} ${toText(spouse.lastName)}`.trim()
+      : undefined,
+    spouseSSN: spouse ? toText(spouse.ssn).replace(/\D/g, '') : undefined,
+    taxpayerPIN,
+    spousePIN: spousePIN || undefined,
+    primaryPriorYearAGI: toMoney(
+      identity.primaryPriorYearAGI ??
+        efile.primaryPriorYearAGI ??
+        efile.priorYearAgi ??
+        taxpayer.priorYearAgi
+    ),
+    primaryPriorYearPIN: toText(
+      identity.primaryPriorYearPIN ?? efile.primaryPriorYearPIN
+    ),
+    spousePriorYearAGI: toMoney(
+      identity.spousePriorYearAGI ?? efile.spousePriorYearAGI
+    ),
+    spousePriorYearPIN: toText(
+      identity.spousePriorYearPIN ?? efile.spousePriorYearPIN
+    ),
+    primaryIPPIN: toText(identity.primaryIPPIN ?? efile.primaryIPPIN),
+    spouseIPPIN: toText(identity.spouseIPPIN ?? efile.spouseIPPIN),
+    selfSelectPIN: !Boolean(signature.practitionerPIN ?? efile.practitionerPIN),
+    practitionerPIN: Boolean(
+      signature.practitionerPIN ?? efile.practitionerPIN
+    ),
+    eroFirmName: toText(efile.eroFirmName ?? 'TaxFlow Self-Service'),
+    eroAddress: toText(efile.eroAddress),
+    eroEIN: toText(efile.eroEIN).replace(/\D/g, ''),
+    eroPIN: toText(efile.eroPIN)
+  }
+}
+
 /** Schedule R: disability income and nontaxable pension from entity or /schedule-r screen */
 const getScheduleRData = (
   snapshot: FilingSessionSnapshot,
@@ -3904,6 +4178,10 @@ const toFacts = (
   const uncollectedSSTaxWages = getUncollectedSSTaxWages(snapshot, entities)
   // Form 8801 — AMT credit carryforward
   const amtCreditData = getAmtCreditData(snapshot, entities)
+  const schedule8812Fidelity = getSchedule8812CollectionFidelityData(
+    snapshot,
+    entities
+  )
   // Form 8283 — noncash charitable contributions
   const noncashContributions = getNoncashContributions(snapshot, entities)
   const itemizedDeductions = getItemizedDeductions(
@@ -3916,6 +4194,7 @@ const toFacts = (
   const businessReturnFacts = extractBusinessReturnFacts(snapshot)
   const scheduleNecState = asRecord(intlAdvancedData.scheduleNec)
   const scheduleOiState = asRecord(intlAdvancedData.scheduleOi)
+  const form8879 = getForm8879Data(snapshot, taxpayer, spouse)
 
   return {
     ...businessReturnFacts,
@@ -3954,6 +4233,11 @@ const toFacts = (
       scheduleNecState.items
     ),
     nonresidentScheduleOi: scheduleOiState,
+    schedule8812EarnedIncomeAdjustments:
+      schedule8812Fidelity.schedule8812EarnedIncomeAdjustments,
+    otherFederalWithholdingCredits:
+      schedule8812Fidelity.otherFederalWithholdingCredits,
+    form8879,
     creditSummary: creditSummary.summary,
     // OBBBA 2025 fields
     overtimeIncome: obbbaData.overtimeIncome,
@@ -4671,6 +4955,11 @@ const buildReview = (
   )
   const w2Box12UncollectedTaxTotal = getW2Box12UncollectedTaxTotal(w2Records)
   const amtCreditData = getAmtCreditData(snapshot, entities)
+  const schedule8812Fidelity = getSchedule8812CollectionFidelityData(
+    snapshot,
+    entities
+  )
+  const form8879 = getForm8879Data(snapshot, taxpayer, spouse)
   const form8801TrackedTotal =
     toMoney(amtCreditData.priorYearAmtCredit) +
     toMoney(amtCreditData.priorYearAmtCreditCarryforward)
@@ -5206,6 +5495,31 @@ const buildReview = (
           editPath: '/credits-v2',
           editLabel: 'Review'
         },
+        ...(schedule8812Fidelity.schedule8812EarnedIncomeAdjustments ||
+        schedule8812Fidelity.otherFederalWithholdingCredits
+          ? [
+              {
+                label: 'Schedule 8812 special-case inputs',
+                value: [
+                  schedule8812Fidelity.schedule8812EarnedIncomeAdjustments
+                    ? 'earned-income adjustments'
+                    : '',
+                  schedule8812Fidelity.otherFederalWithholdingCredits
+                    ? `${schedule8812Fidelity.otherFederalWithholdingCredits.length} withholding source${
+                        schedule8812Fidelity.otherFederalWithholdingCredits
+                          .length === 1
+                          ? ''
+                          : 's'
+                      }`
+                    : ''
+                ]
+                  .filter(Boolean)
+                  .join(', '),
+                editPath: '/schedule-8812-adjustments',
+                editLabel: 'Review'
+              }
+            ]
+          : []),
         ...(form8801TrackedTotal > 0
           ? [
               {
@@ -5273,7 +5587,37 @@ const buildReview = (
           editPath: '/efile-wizard',
           editLabel: 'Edit',
           hasError: !efile.signatureText
-        }
+        },
+        {
+          label: 'Form 8879 consent',
+          value:
+            form8879?.form8879Consent || form8879?.agreed8879
+              ? 'Confirmed'
+              : 'Not confirmed',
+          editPath: '/efile-wizard',
+          editLabel: 'Edit',
+          hasError: !form8879?.form8879Consent && !form8879?.agreed8879
+        },
+        {
+          label: 'Primary PIN',
+          value: form8879?.taxpayerPIN
+            ? `••••${String(form8879.taxpayerPIN).slice(-1)}`
+            : 'Not entered',
+          editPath: '/efile-wizard',
+          editLabel: 'Edit'
+        },
+        ...(spouse
+          ? [
+              {
+                label: 'Spouse PIN',
+                value: form8879?.spousePIN
+                  ? `••••${String(form8879.spousePIN).slice(-1)}`
+                  : 'Not entered',
+                editPath: '/efile-wizard',
+                editLabel: 'Edit'
+              }
+            ]
+          : [])
       ],
       warnings: []
     }
