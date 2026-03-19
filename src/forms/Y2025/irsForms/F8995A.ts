@@ -1,4 +1,4 @@
-import F8995, { getF8995PhaseOutIncome } from './F8995'
+import F8995, { type QBIEntry, getF8995PhaseOutIncome } from './F8995'
 
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { FilingStatus } from 'ustaxes/core/data'
@@ -60,8 +60,40 @@ export default class F8995A extends F8995 {
       )
     )
 
+  statementSummary = (): {
+    requiresAttachment: boolean
+    visibleBusinessCount: number
+    overflowBusinessCount: number
+    totalBusinessCount: number
+    thresholdStart: number
+    thresholdEnd: number
+    applicablePercentage: number
+    sstbCount: number
+    reitDividends: number
+    ptpIncome: number
+    ptpLossCarryforward: number
+    dpadReduction: number
+    overflowTotals: ReturnType<F8995A['overflowTotals']>
+    overflowStatementDeduction: number
+  } => ({
+    requiresAttachment: this.needsAdditionalStatement(),
+    visibleBusinessCount: this.visibleEntries().length,
+    overflowBusinessCount: this.overflowEntries().length,
+    totalBusinessCount: this.qbiEntries().length,
+    thresholdStart: this.l21(),
+    thresholdEnd: this.l21() + this.l23(),
+    applicablePercentage: this.l24(),
+    sstbCount: this.qbiEntries().filter((entry) => entry.isSSTB).length,
+    reitDividends: this.reitDividends(),
+    ptpIncome: this.currentYearPtpIncome(),
+    ptpLossCarryforward: this.ptpLossCarryforward(),
+    dpadReduction: this.l38(),
+    overflowTotals: this.overflowTotals(),
+    overflowStatementDeduction: this.overflowStatementDeduction()
+  })
+
   deductionForEntry = (
-    entry: ReturnType<F8995['qbiEntries']>[number]
+    entry: QBIEntry
   ): number => {
     const line3 = entry.qbi * qbid.maxRate
     const line5 = entry.w2Wages * 0.5
@@ -76,7 +108,7 @@ export default class F8995A extends F8995 {
   }
 
   deductionAfterPatronReduction = (
-    entry: ReturnType<F8995['qbiEntries']>[number]
+    entry: QBIEntry
   ): number =>
     Math.max(0, this.deductionForEntry(entry) - entry.patronReduction)
 

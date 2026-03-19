@@ -1758,6 +1758,9 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
       section199AQBI: toNum(r.section199AQBI ?? r.qbiIncome ?? 0),
       section199AW2Wages: toNum(r.section199AW2Wages ?? 0) || undefined,
       section199AUbia: toNum(r.section199AUbia ?? 0) || undefined,
+      isSpecifiedServiceTradeOrBusiness:
+        toBool(r.isSpecifiedServiceTradeOrBusiness ?? r.isSSTB ?? false) ||
+        undefined,
       priorYearUnallowedLoss:
         toNum(r.priorYearUnallowedLoss ?? r.passiveLossCarryover ?? 0) ||
         undefined
@@ -2891,7 +2894,7 @@ export class TaxCalculationService {
           ? f1040nr!.totalEffectivelyConnectedIncome() + f1040nr!.totalFDAPIncome()
           : f1040.l11()
         const taxableIncome = useNonresidentBranch
-          ? f1040nr!.taxableIncome()
+          ? f1040nr!.taxableIncome() + f1040nr!.totalFDAPIncome()
           : f1040.l15()
         const totalTax = useNonresidentBranch ? f1040nr!.totalTax() : f1040.l24()
         const totalPayments = useNonresidentBranch

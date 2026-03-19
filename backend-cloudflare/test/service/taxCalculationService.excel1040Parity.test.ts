@@ -148,6 +148,67 @@ describe('TaxCalculationService - Excel1040 / ATS parity', () => {
       )
     )
 
+    runParityTest('scenario-nr2-desilva.json')
+    it('preserves treaty-exempt scholarship facts for NR-5 through the ATS bridge', () => {
+      const scenario = loadAtsScenario('scenario-nr5-chen.json')
+      const facts = atsScenarioToFacts(scenario)
+      const scheduleOi = (facts.nonresidentScheduleOi ?? {}) as Record<
+        string,
+        unknown
+      >
+      const nonresidentProfile = (facts.nonresidentProfile ?? {}) as Record<
+        string,
+        unknown
+      >
+      const treatyClaims = Array.isArray(facts.treatyClaims)
+        ? facts.treatyClaims
+        : []
+
+      expect(nonresidentProfile.requires1040NR).toBe(true)
+      expect(nonresidentProfile.countryOfCitizenship).toBe('CN')
+      expect(scheduleOi.countryOfResidence).toBe('CN')
+      expect(scheduleOi.scholarshipIncome).toBe(5000)
+      expect(scheduleOi.scholarshipTreatyExempt).toBe(5000)
+      expect(scheduleOi.otherEffectivelyConnectedIncome).toBe(24000)
+      expect(treatyClaims).toHaveLength(1)
+
+      const result = taxCalcService.calculate(facts)
+      expect(result.success).toBe(true)
+      if (!result.success) return
+
+      expect(result.agi).toBe(24000)
+      expect(result.taxableIncome).toBe(24000)
+      expect(result.totalTax).toBe(2645)
+      expect(result.schedules).toContain('f1040nr')
+    })
+
+    it('preserves capital-gain and payment bridge facts for NR-12 through the ATS adapter', () => {
+      const scenario = loadAtsScenario('scenario-nr12-harrier.json')
+      const facts = atsScenarioToFacts(scenario)
+      const taxLots = Array.isArray(facts.taxLots) ? facts.taxLots : []
+      const scheduleOi = (facts.nonresidentScheduleOi ?? {}) as Record<
+        string,
+        unknown
+      >
+
+      expect(taxLots).toHaveLength(1)
+      expect((taxLots[0] as Record<string, unknown>).proceeds).toBe(350000)
+      expect((taxLots[0] as Record<string, unknown>).costBasis).toBe(0)
+      expect(scheduleOi.estimatedTaxPayments).toBe(95000)
+
+      const result = taxCalcService.calculate(facts)
+      expect(result.success).toBe(true)
+      if (!result.success) return
+
+      expect(result.agi).toBe(350000)
+      expect(result.taxableIncome).toBe(350000)
+      expect(result.totalPayments).toBe(95000)
+      expect(result.refund).toBeGreaterThan(0)
+      expect(result.schedules).toContain('f1040nr')
+      expect(result.schedules).toContain('f1040sd')
+      expect(result.schedules).toContain('f8949')
+    })
+
     // TODO: S1 needs Schedule H + Form 5695 in adapter; S4 needs Form 3800/8835/8936 credits
     // runParityTest('scenario-1-tara-black.json', { skipIfMissing: true })
     // runParityTest('scenario-4-smith.json', { skipIfMissing: true })

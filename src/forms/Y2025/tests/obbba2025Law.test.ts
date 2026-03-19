@@ -14,7 +14,7 @@ import {
   childTaxCredit,
   qbid
 } from '../data/federal'
-import { getF8995PhaseOutIncome } from '../irsForms/F8995'
+import F8995, { getF8995PhaseOutIncome } from '../irsForms/F8995'
 import F8995A from '../irsForms/F8995A'
 
 const baseInformation: ValidatedInformation = {
@@ -601,6 +601,89 @@ describe('2025 federal law updates', () => {
       })
     ])
     expect(f8995A.overflowStatementDeduction()).toBeGreaterThan(0)
+    expect(f8995A.statementSummary()).toEqual(
+      expect.objectContaining({
+        requiresAttachment: true,
+        visibleBusinessCount: 3,
+        overflowBusinessCount: 2,
+        totalBusinessCount: 5,
+        thresholdStart: expect.any(Number),
+        thresholdEnd: expect.any(Number),
+        overflowTotals: {
+          qbi: 70000,
+          w2Wages: 70000,
+          ubia: 90000,
+          patronReduction: 5000
+        }
+      })
+    )
+  })
+
+  it('tracks simplified-form overflow businesses for attachment parity', () => {
+    const f1040 = new F1040(cloneDeep(baseInformation), [])
+    const f8995 = new F8995(f1040)
+
+    jest.spyOn(f8995, 'qbiEntries').mockReturnValue([
+      {
+        name: 'Alpha',
+        ein: '111111111',
+        qbi: 10000,
+        w2Wages: 0,
+        ubia: 0,
+        patronReduction: 0
+      },
+      {
+        name: 'Bravo',
+        ein: '222222222',
+        qbi: 11000,
+        w2Wages: 0,
+        ubia: 0,
+        patronReduction: 0
+      },
+      {
+        name: 'Charlie',
+        ein: '333333333',
+        qbi: 12000,
+        w2Wages: 0,
+        ubia: 0,
+        patronReduction: 0
+      },
+      {
+        name: 'Delta',
+        ein: '444444444',
+        qbi: 13000,
+        w2Wages: 0,
+        ubia: 0,
+        patronReduction: 0
+      },
+      {
+        name: 'Echo',
+        ein: '555555555',
+        qbi: 14000,
+        w2Wages: 0,
+        ubia: 0,
+        patronReduction: 0
+      },
+      {
+        name: 'Foxtrot',
+        ein: '666666666',
+        qbi: 15000,
+        w2Wages: 0,
+        ubia: 0,
+        patronReduction: 0
+      }
+    ])
+
+    expect(f8995.visibleEntries()).toHaveLength(5)
+    expect(f8995.overflowEntries()).toHaveLength(1)
+    expect(f8995.needsAdditionalStatement()).toBe(true)
+    expect(f8995.overflowStatementEntries()).toEqual([
+      expect.objectContaining({
+        name: 'Foxtrot',
+        qbi: 15000
+      })
+    ])
+    expect(f8995.overflowStatementQbiTotal()).toBe(15000)
   })
 
   it('subtracts patron reductions from the detailed QBI component', () => {

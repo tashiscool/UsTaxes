@@ -845,7 +845,7 @@ describe('TaxCalculationService', () => {
       if (result.success) {
         expect(result.schedules).toContain('f1040nr')
         expect(result.agi).toBe(166500)
-        expect(result.taxableIncome).toBe(155000)
+        expect(result.taxableIncome).toBe(156500)
         expect(result.totalTax).toBe(30497)
         expect(result.totalPayments).toBe(35000)
         expect(result.refund).toBe(4503)

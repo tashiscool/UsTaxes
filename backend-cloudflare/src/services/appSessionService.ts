@@ -806,6 +806,10 @@ const getQBIWorksheetEntities = (snapshot: FilingSessionSnapshot) =>
     w2Wages: toMoney(entity.w2Wages),
     ubia: toMoney(entity.ubia),
     isSSTB: Boolean(entity.isSSTB),
+    patronReduction: toMoney(
+      entity.patronReduction ?? entity.qbiPatronReduction
+    ),
+    aggregationGroup: toText(entity.aggregationGroup),
     qbiAmount: toMoney(entity.qbiAmount),
     w2Limitation: toMoney(entity.w2Limitation),
     finalDeduction: toMoney(entity.finalDeduction),
@@ -987,6 +991,9 @@ const getK1Records = (entities: SessionEntitySnapshot[]) =>
         section199APatronReduction: toMoney(
           data.section199APatronReduction ?? data.qbiPatronReduction
         ),
+        isSpecifiedServiceTradeOrBusiness: Boolean(
+          data.isSpecifiedServiceTradeOrBusiness ?? data.isSSTB ?? false
+        ),
         priorYearUnallowedLoss: toMoney(
           data.priorYearUnallowedLoss ?? data.passiveLossCarryover
         )
@@ -1096,6 +1103,47 @@ const getQbiDetail = (
       finalDeduction: 0
     }
   )
+  const carryforwards = qbiDeductionData ?? {
+    priorYearQualifiedBusinessLossCarryforward: 0,
+    reitDividends: 0,
+    ptpIncome: 0,
+    ptpLossCarryforward: 0,
+    dpadReduction: 0
+  }
+  const overflowStatementEntries = overflowEntities.map((entity) => {
+    const patronReduction = toMoney(entity.patronReduction)
+    const tentativeDeduction = toMoney(entity.qbiAmount) * 0.2
+    const deductionBeforePatronReduction = toMoney(entity.finalDeduction) + patronReduction
+    return {
+      ...entity,
+      patronReduction,
+      tentativeDeduction,
+      deductionBeforePatronReduction,
+      limitationReduction: Math.max(
+        0,
+        tentativeDeduction - deductionBeforePatronReduction
+      )
+    }
+  })
+  const attachmentStatement = {
+    required:
+      overflowStatementEntries.length > 0 ||
+      qbiWorksheetEntities.some((entity) => entity.isSSTB) ||
+      Object.values(carryforwards).some((value) => toMoney(value) !== 0),
+    statementTitle: 'Form 8995-A additional statement',
+    visibleBusinessCount: visibleEntities.length,
+    overflowBusinessCount: overflowEntities.length,
+    totalBusinessCount: qbiWorksheetEntities.length,
+    thresholdStart,
+    thresholdEnd: thresholdStart + thresholdRange,
+    overflowTotals,
+    carryforwards,
+    overflowStatementDeduction: overflowStatementEntries.reduce(
+      (sum, entry) => sum + toMoney(entry.finalDeduction),
+      0
+    ),
+    overflowStatementEntries
+  }
 
   return {
     filingStatus,
@@ -1111,19 +1159,15 @@ const getQbiDetail = (
     visibleEntities,
     overflowEntities,
     overflowTotals,
+    overflowStatementEntries,
     needsAdditionalStatement: overflowEntities.length > 0,
     additionalStatementDeduction: overflowTotals.finalDeduction,
     sstbCount: qbiWorksheetEntities.filter((entity) => entity.isSSTB).length,
     wageLimitedCount: qbiWorksheetEntities.filter(
       (entity) => entity.w2Limitation > 0
     ).length,
-    carryforwards: qbiDeductionData ?? {
-      priorYearQualifiedBusinessLossCarryforward: 0,
-      reitDividends: 0,
-      ptpIncome: 0,
-      ptpLossCarryforward: 0,
-      dpadReduction: 0
-    }
+    carryforwards,
+    attachmentStatement
   }
 }
 
@@ -3487,6 +3531,7 @@ const toSubmissionPayload = (
         qbiWorksheet: facts.qbiWorksheetEntities,
         qbiDeductionData: facts.qbiDeductionData,
         qbiDetail: facts.qbiDetail,
+        qbiAttachmentStatement: asRecord(facts.qbiDetail).attachmentStatement,
         summary: businessSummary
       },
       rental: {

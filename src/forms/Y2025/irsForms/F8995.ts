@@ -1,17 +1,18 @@
 import F1040Attachment from './F1040Attachment'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
-import { FilingStatus, Income1099Type, F1099DivData } from 'ustaxes/core/data'
+import { FilingStatus, Income1099Type } from 'ustaxes/core/data'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { qbid } from '../data/federal'
 import { BusinessInfo } from './ScheduleC'
 
-type QBIEntry = {
+export type QBIEntry = {
   name: string
   ein?: string
   qbi: number
   w2Wages: number
   ubia: number
   patronReduction: number
+  isSSTB?: boolean
 }
 
 export function getF8995PhaseOutIncome(filingStatus: FilingStatus): number {
@@ -103,7 +104,8 @@ export default class F8995 extends F1040Attachment {
           qbi: netProfit,
           w2Wages: business.qbiW2Wages ?? business.expenses.wages,
           ubia: business.qbiUbia ?? 0,
-          patronReduction: business.qbiPatronReduction ?? 0
+          patronReduction: business.qbiPatronReduction ?? 0,
+          isSSTB: business.isSpecifiedServiceTradeOrBusiness ?? false
         }
       })
       .filter((business) => business.qbi > 0) as QBIEntry[]
@@ -117,7 +119,8 @@ export default class F8995 extends F1040Attachment {
         qbi: k1.section199AQBI,
         w2Wages: k1.section199AW2Wages ?? 0,
         ubia: k1.section199AUbia ?? 0,
-        patronReduction: k1.section199APatronReduction ?? 0
+        patronReduction: k1.section199APatronReduction ?? 0,
+        isSSTB: k1.isSpecifiedServiceTradeOrBusiness ?? false
       }))
 
   qbiEntries = (): QBIEntry[] => [
@@ -125,6 +128,17 @@ export default class F8995 extends F1040Attachment {
     ...this.rentalQbiEntries(),
     ...this.applicableK1s()
   ]
+
+  visibleEntries = (): QBIEntry[] => this.qbiEntries().slice(0, 5)
+
+  overflowEntries = (): QBIEntry[] => this.qbiEntries().slice(5)
+
+  needsAdditionalStatement = (): boolean => this.overflowEntries().length > 0
+
+  overflowStatementEntries = (): QBIEntry[] => this.overflowEntries()
+
+  overflowStatementQbiTotal = (): number =>
+    this.overflowStatementEntries().reduce((sum, entry) => sum + entry.qbi, 0)
 
   priorYearQualifiedBusinessLossCarryforward = (): number =>
     Math.abs(
@@ -207,21 +221,21 @@ export default class F8995 extends F1040Attachment {
   fields = (): Field[] => [
     this.f1040.namesString(),
     this.f1040.info.taxPayer.primaryPerson.ssid,
-    this.qbiEntries()[0]?.name,
-    this.qbiEntries()[0]?.ein,
-    this.qbiEntries()[0]?.qbi,
-    this.qbiEntries()[1]?.name,
-    this.qbiEntries()[1]?.ein,
-    this.qbiEntries()[1]?.qbi,
-    this.qbiEntries()[2]?.name,
-    this.qbiEntries()[2]?.ein,
-    this.qbiEntries()[2]?.qbi,
-    this.qbiEntries()[3]?.name,
-    this.qbiEntries()[3]?.ein,
-    this.qbiEntries()[3]?.qbi,
-    this.qbiEntries()[4]?.name,
-    this.qbiEntries()[4]?.ein,
-    this.qbiEntries()[4]?.qbi,
+    this.visibleEntries()[0]?.name,
+    this.visibleEntries()[0]?.ein,
+    this.visibleEntries()[0]?.qbi,
+    this.visibleEntries()[1]?.name,
+    this.visibleEntries()[1]?.ein,
+    this.visibleEntries()[1]?.qbi,
+    this.visibleEntries()[2]?.name,
+    this.visibleEntries()[2]?.ein,
+    this.visibleEntries()[2]?.qbi,
+    this.visibleEntries()[3]?.name,
+    this.visibleEntries()[3]?.ein,
+    this.visibleEntries()[3]?.qbi,
+    this.visibleEntries()[4]?.name,
+    this.visibleEntries()[4]?.ein,
+    this.visibleEntries()[4]?.qbi,
     this.l2(),
     this.l3(),
     this.l4(),

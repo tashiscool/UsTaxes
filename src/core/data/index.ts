@@ -538,6 +538,7 @@ export interface ScheduleK1Form1065 {
   section199AW2Wages?: number // Form 8995-A wage limitation support
   section199AUbia?: number // Form 8995-A UBIA limitation support
   section199APatronReduction?: number // Form 8995-A line 14 patron reduction
+  isSpecifiedServiceTradeOrBusiness?: boolean
   priorYearUnallowedLoss?: number
   isPubliclyTradedPartnership?: boolean
   ptpSection199AIncome?: number
