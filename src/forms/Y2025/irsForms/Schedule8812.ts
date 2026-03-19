@@ -70,10 +70,16 @@ export default class Schedule8812 extends F1040Attachment {
         this.f1040.qualifyingDependents.qualifiesOther(dep)
     )
 
+  puertoRicoExcludedIncome = (): number => {
+    if (!this.isPuertoRicoResident()) return 0
+
+    return this.f1040.f1040ss?.earnedIncome() ?? 0
+  }
+
   l1 = (): number => this.f1040.l11()
 
-  // TODO: Puerto Rico income
-  l2a = (): number => 0
+  // 2025 instructions: include Puerto Rico income excluded from U.S. tax.
+  l2a = (): number => this.puertoRicoExcludedIncome()
 
   l2b = (): number =>
     sumFields([this.f1040.f2555?.l45(), this.f1040.f2555?.l50()])
@@ -97,7 +103,17 @@ export default class Schedule8812 extends F1040Attachment {
           !hasValidChildTaxCreditSsn(dep.ssid))
     )
 
-  isPuertoRicoResident = (): boolean => false
+  isPuertoRicoResident = (): boolean => {
+    if (this.f1040.f1040ss?.isPuertoRico() ?? false) {
+      return true
+    }
+
+    const address = this.f1040.info.taxPayer.primaryPerson.address
+    const addressState = String(address.state ?? '').toUpperCase()
+    const foreignCountry = address.foreignCountry?.trim().toLowerCase()
+
+    return addressState === 'PR' || foreignCountry === 'puerto rico'
+  }
 
   canUsePart2B = (): boolean =>
     this.isPuertoRicoResident() || this.qualifyingChildrenCount() >= 3
@@ -136,8 +152,8 @@ export default class Schedule8812 extends F1040Attachment {
 
   l14 = (): number => (this.l12no() ? 0 : Math.min(this.l12(), this.l13()))
 
-  // Check this box if you do not want to file the additional tax credit
-  l15 = (): boolean => false
+  // 2025 instructions reserve line 15 for future use.
+  l15 = (): number | undefined => undefined
 
   creditLimitWorksheetB = (): number | undefined => undefined
 
@@ -166,7 +182,8 @@ export default class Schedule8812 extends F1040Attachment {
     return wsl5
   }
 
-  // TODO: Letter 6419 advance child tax credit payments
+  // Legacy 2021 advance Child Tax Credit payments may still exist in imported
+  // data, but 2025 Schedule 8812 line 15 is reserved and does not use them.
   letter6419Payments = (): number | undefined =>
     this.f1040.info.credits
       .filter((c) => c.type === CreditType.AdvanceChildTaxCredit)
@@ -179,18 +196,24 @@ export default class Schedule8812 extends F1040Attachment {
   earnedIncomeWorksheet = (): number => {
     const l1a = this.f1040.l1z()
     const l1b = this.f1040.nonTaxableCombatPay()
-    const l2a = this.f1040.scheduleC?.l1() ?? 0
-    // Todo: 1065 Schedule K-1, box 14, code A, and other
-    // data also belong here.
-    const l2b = this.f1040.scheduleC?.l31() ?? 0
-    // TODO: Net farm profit...
-    // const l2c = undefined
-    // TODO: Farm optional method for self-employment net earnings
+    const l2a = this.f1040.scheduleC?.statutoryEmployeeIncome() ?? 0
+    const l2b = sumFields([
+      this.f1040.scheduleC?.l31(),
+      this.f1040.info.scheduleK1Form1065s.reduce(
+        (total, k1) => total + k1.selfEmploymentEarningsA,
+        0
+      )
+    ])
+    const l2c = sumFields([
+      this.f1040.scheduleF?.netProfit(),
+      this.f1040.info.scheduleK1Form1065s.reduce(
+        (total, k1) => total + k1.selfEmploymentEarningsB + k1.selfEmploymentEarningsC,
+        0
+      )
+    ])
+    // Farm optional method is not modeled yet; when absent, carry line 2c through.
     const l2d = 0
-
-    // TODO: min(l2c, l2d)
-    // Allowed to be a loss:
-    const l2e = Math.min(0, l2d)
+    const l2e = l2c < 0 ? l2c : l2d > 0 ? Math.min(l2c, l2d) : l2c
 
     const l3 = sumFields([l1a, l1b, l2a, l2b, l2e])
 
@@ -208,7 +231,7 @@ export default class Schedule8812 extends F1040Attachment {
     // TODO: Amount included on 1040 that is a medicaid
     // waiver payment excluded from income, schedule 1, line 8z
     // or choose to include in earned income, then enter 0.
-    const l4d = !allowed ? undefined : 0
+    const l4d = !allowed ? undefined : this.f1040.schedule1.l8s() ?? 0
 
     const l5 = this.f1040.schedule1.l15() ?? 0
 
@@ -295,7 +318,9 @@ export default class Schedule8812 extends F1040Attachment {
 
     const l23 = sumFields([l21, l22])
 
-    const l24 = sumFields([this.f1040.l27(), this.f1040.schedule3.l11()])
+    const l24 = this.f1040.f1040nr?.hasNonresidentInfo()
+      ? this.f1040.schedule3.l11()
+      : sumFields([this.f1040.l27(), this.f1040.schedule3.l11()])
 
     const l25 = Math.max(0, l23 - l24)
 

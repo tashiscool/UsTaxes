@@ -5,7 +5,8 @@ import {
   IncomeW2,
   PersonRole,
   PlanType1099,
-  Asset
+  Asset,
+  W2Box12Code
 } from 'ustaxes/core/data'
 import federalBrackets, { CURRENT_YEAR } from '../data/federal'
 import F4972 from './F4972'
@@ -856,8 +857,14 @@ export default class F1040 extends F1040Base {
     ${JSON.stringify(this.info)}
   `
 
-  // TODO - get from W2 box 12, code Q
-  nonTaxableCombatPay = (): number | undefined => undefined
+  nonTaxableCombatPay = (): number | undefined => {
+    const total = this.validW2s().reduce(
+      (sum, w2) => sum + (w2.box12?.[W2Box12Code.Q] ?? 0),
+      0
+    )
+
+    return total > 0 ? total : undefined
+  }
 
   schedules = (): Form[] => {
     const res1: (F1040Attachment | undefined)[] = [

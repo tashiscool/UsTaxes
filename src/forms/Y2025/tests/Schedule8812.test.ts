@@ -1,9 +1,10 @@
 import { commonTests } from '.'
 import { cloneDeep } from 'lodash'
-import { FilingStatus, PersonRole } from 'ustaxes/core/data'
+import { CreditType, FilingStatus, PersonRole, W2Box12Code } from 'ustaxes/core/data'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 import Schedule8812 from '../irsForms/Schedule8812'
 import F1040 from '../irsForms/F1040'
+import { Form1040SSInfo } from '../irsForms/F1040SS'
 
 const withSchedule8812 = async (
   f: (f1040: F1040, s8812: Schedule8812) => void
@@ -193,5 +194,132 @@ describe('Schedule 8812', () => {
     expect(s8812.part2b().allowed).toBe(true)
     expect(s8812.part2b().toLine27).toBe(2459)
     expect(s8812.l27()).toBe(2459)
+  })
+
+  it('treats bona fide Puerto Rico residents as eligible for Part II-B and carries excluded income on line 2a', () => {
+    const information = cloneDeep(baseInformation)
+    information.taxPayer.dependents = [
+      {
+        firstName: 'Ava',
+        lastName: 'Payer',
+        role: PersonRole.DEPENDENT,
+        ssid: '333221111',
+        relationship: 'Child',
+        qualifyingInfo: { isStudent: false, numberOfMonths: 12 },
+        dateOfBirth: new Date('2020-02-01'),
+        isBlind: false
+      }
+    ]
+    information.territoryTaxReturn = {
+      residency: {
+        territory: 'PuertoRico',
+        yearsOfResidence: 10,
+        isPermanentResident: true,
+        hasQualifyingChildren: true,
+        numberOfQualifyingChildren: 1
+      },
+      combinedNetEarnings: 30000,
+      earnedIncome: 30000
+    } satisfies Form1040SSInfo
+
+    const f1040 = new F1040(information, [])
+    const s8812 = f1040.schedule8812
+
+    expect(s8812.isPuertoRicoResident()).toBe(true)
+    expect(s8812.l2a()).toBe(30000)
+    expect(s8812.canUsePart2B()).toBe(true)
+    expect(s8812.part2a().toLine27).toBeUndefined()
+    expect(s8812.part2b().allowed).toBe(true)
+    expect(s8812.part2b().toLine27).toBe(525)
+    expect(s8812.l27()).toBe(525)
+  })
+
+  it('includes W-2 box 12 code Q nontaxable combat pay in line 18b and the earned income worksheet', () => {
+    const information = cloneDeep(baseInformation)
+    information.taxPayer.dependents = [
+      {
+        firstName: 'Ava',
+        lastName: 'Payer',
+        role: PersonRole.DEPENDENT,
+        ssid: '333221111',
+        relationship: 'Child',
+        qualifyingInfo: { isStudent: false, numberOfMonths: 12 },
+        dateOfBirth: new Date('2020-02-01'),
+        isBlind: false
+      }
+    ]
+    information.w2s[0].box12 = {
+      [W2Box12Code.Q]: 1500
+    }
+
+    const f1040 = new F1040(information, [])
+    const s8812 = f1040.schedule8812
+
+    expect(f1040.nonTaxableCombatPay()).toBe(1500)
+    expect(s8812.part2a().l18b).toBe(1500)
+    expect(s8812.earnedIncomeWorksheet()).toBe(7500)
+  })
+
+  it('carries Schedule F profit through the earned income worksheet when no optional farm method is used', () => {
+    const information = cloneDeep(baseInformation)
+    information.w2s = []
+    information.taxPayer.dependents = [
+      {
+        firstName: 'Ava',
+        lastName: 'Payer',
+        role: PersonRole.DEPENDENT,
+        ssid: '333221111',
+        relationship: 'Child',
+        qualifyingInfo: { isStudent: false, numberOfMonths: 12 },
+        dateOfBirth: new Date('2020-02-01'),
+        isBlind: false
+      }
+    ]
+    information.farmBusiness = {
+      name: 'Workbook Farm',
+      accountingMethod: 'cash',
+      income: {
+        salesLivestock: 0,
+        salesCrops: 15000,
+        cooperativeDistributions: 0,
+        agriculturalPayments: 0,
+        cccLoans: 0,
+        cropInsurance: 0,
+        customHireIncome: 0,
+        otherIncome: 0
+      },
+      expenses: {
+        carTruck: 0,
+        chemicals: 0,
+        conservation: 0,
+        customHire: 0,
+        depreciation: 0,
+        employeeBenefit: 0,
+        feed: 0,
+        fertilizers: 0,
+        freight: 0,
+        fuel: 0,
+        insurance: 0,
+        interest: 0,
+        labor: 0,
+        pensionPlans: 0,
+        rentLease: 0,
+        repairs: 0,
+        seeds: 0,
+        storage: 0,
+        supplies: 3000,
+        taxes: 0,
+        utilities: 0,
+        veterinary: 0,
+        otherExpenses: 0
+      }
+    }
+
+    const f1040 = new F1040(information, [])
+    const s8812 = f1040.schedule8812
+
+    expect(f1040.scheduleF?.netProfit()).toBe(12000)
+    expect(f1040.scheduleSE.l1a()).toBe(12000)
+    expect(s8812.earnedIncomeWorksheet()).toBeCloseTo(11152.227, 3)
   })
 })
