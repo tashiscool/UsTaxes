@@ -439,6 +439,50 @@ const sumMoneyFields = (
 ): number =>
   keys.reduce((sum, key) => sum + toMoney(record[key]), 0)
 
+const formatCurrency = (value: number): string => `$${value.toLocaleString()}`
+
+const toDateText = (value: unknown): string => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toLocaleDateString()
+  }
+  if (typeof value === 'string' && value) {
+    const parsed = new Date(value)
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString()
+    }
+  }
+  return ''
+}
+
+const formatDateRange = (start: unknown, end: unknown): string => {
+  const startText = toDateText(start)
+  const endText = toDateText(end)
+  if (startText && endText) {
+    return `${startText} - ${endText}`
+  }
+  return startText || endText
+}
+
+const formatAddressRecord = (record: Record<string, unknown>): string => {
+  const street = toText(
+    record.street ?? record.address ?? record.line1 ?? record.mailingStreet
+  )
+  const city = toText(record.city)
+  const state = toText(record.state)
+  const zip = toText(record.zip)
+  const country = toText(record.country)
+  const locality = [city, state, zip].filter(Boolean).join(', ').replace(', ,', ',')
+  return [street, locality, country].filter(Boolean).join(', ')
+}
+
+const compactRenderedRows = <T extends { value: unknown }>(rows: T[]): T[] =>
+  rows.filter((row) => {
+    if (typeof row.value === 'string') {
+      return row.value.trim().length > 0
+    }
+    return row.value !== undefined && row.value !== null
+  })
+
 const buildNonprofitRenderedPreview = (
   facts: Record<string, unknown>,
   nonprofitReturnHint: '990N' | '990EZ' | null
@@ -468,18 +512,71 @@ const buildNonprofitRenderedPreview = (
       : '990'
 
   if (suggestedForm === '990N') {
+    const mailingAddress = formatAddressRecord(asRecord(facts.mailingAddress))
+    const principalOfficerAddress = formatAddressRecord(
+      asRecord(facts.principalOfficerAddress)
+    )
+    const taxYear = formatDateRange(facts.taxYearBeginning, facts.taxYearEnding)
+    const doingBusinessAs = toText(
+      facts.doingBusinessAs ?? organization.doingBusinessAs
+    )
+    const grossReceipts = toMoney(facts.grossReceipts)
     return {
       suggestedForm,
       organizationName,
+      doingBusinessAs,
       principalOfficerName: toText(facts.principalOfficerName),
       websiteAddress: toText(
         facts.websiteAddress ?? organization.website ?? facts.website
       ),
-      grossReceipts: toMoney(facts.grossReceipts),
+      mailingAddress,
+      principalOfficerAddress,
+      taxYear,
+      grossReceipts,
       grossReceiptsNormally50kOrLess:
         Boolean(facts.grossReceiptsNormally50kOrLess) ||
-        toMoney(facts.grossReceipts) <= 50_000,
-      hasTerminated: Boolean(facts.hasTerminated)
+        grossReceipts <= 50_000,
+      hasTerminated: Boolean(facts.hasTerminated),
+      renderedSections: [
+        {
+          title: 'Nonprofit filing identity',
+          rows: compactRenderedRows([
+            { label: 'Rendered organization', value: organizationName },
+            { label: 'Doing business as', value: doingBusinessAs },
+            {
+              label: 'Website',
+              value: toText(
+                facts.websiteAddress ?? organization.website ?? facts.website
+              )
+            },
+            { label: 'Mailing address', value: mailingAddress },
+            { label: 'Principal officer', value: toText(facts.principalOfficerName) },
+            { label: 'Principal officer address', value: principalOfficerAddress },
+            { label: 'Tax year', value: taxYear }
+          ])
+        },
+        {
+          title: 'Nonprofit filing eligibility',
+          rows: compactRenderedRows([
+            {
+              label: 'Rendered gross receipts',
+              value: grossReceipts > 0 ? formatCurrency(grossReceipts) : ''
+            },
+            {
+              label: 'Gross receipts eligibility',
+              value:
+                Boolean(facts.grossReceiptsNormally50kOrLess) ||
+                grossReceipts <= 50_000
+                  ? 'Normally $50,000 or less'
+                  : 'Above e-postcard threshold'
+            },
+            {
+              label: 'Termination status',
+              value: Boolean(facts.hasTerminated) ? 'Terminated' : 'Active'
+            }
+          ])
+        }
+      ]
     }
   }
 
@@ -514,6 +611,26 @@ const buildNonprofitRenderedPreview = (
     )
     const netAssetsEndOfYear =
       renderedNetAssetsEndOfYear || toMoney(facts.totalAssets)
+    const websiteAddress = toText(
+      facts.websiteAddress ?? organization.website ?? facts.website
+    )
+    const filingPeriod = formatDateRange(
+      facts.fiscalYearStart,
+      facts.fiscalYearEnd
+    )
+    const firstProgram = toText(programAccomplishments[0]?.description)
+    const firstProgramExpenses = toMoney(programAccomplishments[0]?.expenses)
+    const firstProgramGrants = toMoney(programAccomplishments[0]?.grants)
+    const leadOfficer = toText(officers[0]?.name)
+    const leadOfficerTitle = toText(officers[0]?.title)
+    const leadOfficerHours = toMoney(officers[0]?.hoursPerWeek)
+    const leadOfficerCompensation = toMoney(officers[0]?.compensation)
+    const totalAssetsEndOfYear = sumMoneyFields(balanceSheet, [
+      'endingCash',
+      'endingLandBuildings',
+      'endingOtherAssets'
+    ])
+    const changeInNetAssets = totalRevenue - totalExpenses
 
     return {
       suggestedForm,
@@ -521,11 +638,96 @@ const buildNonprofitRenderedPreview = (
       totalRevenue,
       totalExpenses,
       netAssetsEndOfYear,
+      totalAssetsEndOfYear,
+      changeInNetAssets,
       primaryExemptPurpose: toText(
         facts.primaryExemptPurpose ?? facts.missionStatement
       ),
       officerCount: officers.length,
-      programCount: programAccomplishments.length
+      programCount: programAccomplishments.length,
+      websiteAddress,
+      filingPeriod,
+      renderedSections: [
+        {
+          title: 'Nonprofit filing identity',
+          rows: compactRenderedRows([
+            { label: 'Rendered organization', value: organizationName },
+            { label: 'Website', value: websiteAddress },
+            { label: 'Filing period', value: filingPeriod }
+          ])
+        },
+        {
+          title: 'Nonprofit financial package',
+          rows: compactRenderedRows([
+            {
+              label: 'Rendered total revenue',
+              value: totalRevenue > 0 ? formatCurrency(totalRevenue) : ''
+            },
+            {
+              label: 'Rendered total expenses',
+              value: totalExpenses > 0 ? formatCurrency(totalExpenses) : ''
+            },
+            {
+              label: 'Rendered net assets',
+              value:
+                netAssetsEndOfYear > 0
+                  ? formatCurrency(netAssetsEndOfYear)
+                  : ''
+            },
+            {
+              label: 'Rendered total assets',
+              value:
+                totalAssetsEndOfYear > 0
+                  ? formatCurrency(totalAssetsEndOfYear)
+                  : ''
+            },
+            {
+              label: 'Rendered change in net assets',
+              value: changeInNetAssets !== 0 ? formatCurrency(changeInNetAssets) : ''
+            }
+          ])
+        },
+        {
+          title: 'Nonprofit program package',
+          rows: compactRenderedRows([
+            {
+              label: 'Primary exempt purpose',
+              value: toText(facts.primaryExemptPurpose ?? facts.missionStatement)
+            },
+            { label: 'Program accomplishments', value: String(programAccomplishments.length) },
+            { label: 'Lead accomplishment', value: firstProgram },
+            {
+              label: 'Lead accomplishment expenses',
+              value:
+                firstProgramExpenses > 0 ? formatCurrency(firstProgramExpenses) : ''
+            },
+            {
+              label: 'Lead accomplishment grants',
+              value:
+                firstProgramGrants > 0 ? formatCurrency(firstProgramGrants) : ''
+            }
+          ])
+        },
+        {
+          title: 'Nonprofit people package',
+          rows: compactRenderedRows([
+            { label: 'Officer count', value: String(officers.length) },
+            { label: 'Lead officer', value: leadOfficer },
+            { label: 'Lead officer title', value: leadOfficerTitle },
+            {
+              label: 'Lead officer hours',
+              value: leadOfficerHours > 0 ? String(leadOfficerHours) : ''
+            },
+            {
+              label: 'Lead officer compensation',
+              value:
+                leadOfficerCompensation > 0
+                  ? formatCurrency(leadOfficerCompensation)
+                  : ''
+            }
+          ])
+        }
+      ]
     }
   }
 
@@ -550,15 +752,11 @@ const buildNonprofitRenderedPreview = (
     'managementFees',
     'legalFees',
     'accountingFees',
-    'lobbyingExpenses',
     'professionalFundraising',
     'advertising',
     'officeExpenses',
-    'informationTechnology',
     'occupancy',
     'travel',
-    'conferences',
-    'interest',
     'depreciation',
     'insurance',
     'otherExpenses'
@@ -570,6 +768,28 @@ const buildNonprofitRenderedPreview = (
   ])
   const netAssetsEndOfYear =
     renderedNetAssetsEndOfYear || toMoney(facts.totalAssets)
+  const websiteAddress = toText(
+    facts.websiteAddress ?? organization.website ?? facts.website
+  )
+  const filingPeriod = formatDateRange(
+    facts.fiscalYearStart,
+    facts.fiscalYearEnd
+  )
+  const firstProgram = toText(programAccomplishments[0]?.description)
+  const leadProgramCount = programAccomplishments.length
+  const leadOfficer = toText(officers[0]?.name)
+  const leadOfficerTitle = toText(officers[0]?.title)
+  const totalEmployees = toMoney(governance.totalEmployees)
+  const totalVolunteers = toMoney(governance.totalVolunteers)
+  const changeInNetAssets = totalRevenue - totalExpenses
+  const totalLiabilitiesEndOfYear = sumMoneyFields(balanceSheet, [
+    'accountsPayable',
+    'grantsPayable',
+    'deferredRevenue',
+    'taxExemptBonds',
+    'mortgages',
+    'otherLiabilities'
+  ])
 
   return {
     suggestedForm,
@@ -577,11 +797,100 @@ const buildNonprofitRenderedPreview = (
     totalRevenue,
     totalExpenses,
     netAssetsEndOfYear,
+    changeInNetAssets,
+    totalLiabilitiesEndOfYear,
     missionStatement: toText(facts.missionStatement),
     programCount: programAccomplishments.length,
     officerCount: officers.length,
     votingMemberCount: toMoney(governance.numberOfVotingMembers),
-    independentMemberCount: toMoney(governance.numberOfIndependentMembers)
+    independentMemberCount: toMoney(governance.numberOfIndependentMembers),
+    websiteAddress,
+    filingPeriod,
+    renderedSections: [
+      {
+        title: 'Nonprofit filing identity',
+        rows: compactRenderedRows([
+          { label: 'Rendered organization', value: organizationName },
+          { label: 'Website', value: websiteAddress },
+          { label: 'Filing period', value: filingPeriod }
+        ])
+      },
+      {
+        title: 'Nonprofit financial package',
+        rows: compactRenderedRows([
+          {
+            label: 'Rendered total revenue',
+            value: totalRevenue > 0 ? formatCurrency(totalRevenue) : ''
+          },
+          {
+            label: 'Rendered total expenses',
+            value: totalExpenses > 0 ? formatCurrency(totalExpenses) : ''
+          },
+          {
+            label: 'Rendered net assets',
+            value:
+              netAssetsEndOfYear > 0
+                ? formatCurrency(netAssetsEndOfYear)
+                : ''
+          },
+          {
+            label: 'Rendered total liabilities',
+            value:
+              totalLiabilitiesEndOfYear > 0
+                ? formatCurrency(totalLiabilitiesEndOfYear)
+                : ''
+          },
+          {
+            label: 'Rendered change in net assets',
+            value: changeInNetAssets !== 0 ? formatCurrency(changeInNetAssets) : ''
+          }
+        ])
+      },
+      {
+        title: 'Nonprofit governance package',
+        rows: compactRenderedRows([
+          { label: 'Mission statement', value: toText(facts.missionStatement) },
+          {
+            label: 'Voting members',
+            value: String(toMoney(governance.numberOfVotingMembers))
+          },
+          {
+            label: 'Independent members',
+            value: String(toMoney(governance.numberOfIndependentMembers))
+          },
+          {
+            label: 'Employees',
+            value: totalEmployees > 0 ? String(totalEmployees) : ''
+          },
+          {
+            label: 'Volunteers',
+            value: totalVolunteers > 0 ? String(totalVolunteers) : ''
+          },
+          {
+            label: 'Conflict policy',
+            value: governance.hasWrittenConflictPolicy ? 'Yes' : 'No'
+          },
+          {
+            label: 'Whistleblower policy',
+            value: governance.hasWhistleblowerPolicy ? 'Yes' : 'No'
+          },
+          {
+            label: 'Document retention policy',
+            value: governance.hasDocumentRetentionPolicy ? 'Yes' : 'No'
+          }
+        ])
+      },
+      {
+        title: 'Nonprofit program and people package',
+        rows: compactRenderedRows([
+          { label: 'Program accomplishments', value: String(leadProgramCount) },
+          { label: 'Lead accomplishment', value: firstProgram },
+          { label: 'Officer count', value: String(officers.length) },
+          { label: 'Lead officer', value: leadOfficer },
+          { label: 'Lead officer title', value: leadOfficerTitle }
+        ])
+      }
+    ]
   }
 }
 
@@ -4509,6 +4818,19 @@ const buildReview = (
           }
         ]
       : []),
+    ...((businessReturnCapability?.nonprofitRenderedPreview?.renderedSections as
+      | Array<{ title: string; rows: Array<{ label: string; value: string }> }>
+      | undefined)?.map((section, index) => ({
+      id: `nonprofit-rendered-package-${index + 1}`,
+      title: section.title,
+      rows: section.rows.map((row) => ({
+        label: row.label,
+        value: row.value,
+        editPath: '/business-entity',
+        editLabel: 'Edit'
+      })),
+      warnings: []
+    })) ?? []),
     {
       id: 'filing-info',
       title: 'Filing information',

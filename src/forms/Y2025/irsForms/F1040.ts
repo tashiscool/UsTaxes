@@ -1290,7 +1290,7 @@ export default class F1040 extends F1040Base {
   otherFormBox = (): boolean => false
   otherFormName = (): string | undefined => undefined
 
-  computeTax = (): number | undefined => {
+  computeTaxWithoutScheduleJ = (): number | undefined => {
     if (
       this.scheduleD.computeTaxOnQDWorksheet() ||
       this.totalQualifiedDividends() > 0
@@ -1301,6 +1301,21 @@ export default class F1040 extends F1040Base {
 
     return computeOrdinaryTax(this.info.taxPayer.filingStatus, this.l15())
   }
+
+  computeTax = (): number | undefined => {
+    if (
+      (this.scheduleJ?.isNeeded() ?? false) &&
+      !this.scheduleD.computeTaxOnQDWorksheet() &&
+      this.totalQualifiedDividends() <= 0
+    ) {
+      return this.scheduleJ?.tax()
+    }
+
+    return this.computeTaxWithoutScheduleJ()
+  }
+
+  incomeTaxBeforeScheduleJ = (): number | undefined =>
+    sumFields([this.f8814?.tax(), this.f4972?.tax(), this.computeTaxWithoutScheduleJ()])
 
   l16 = (): number | undefined =>
     sumFields([this.f8814?.tax(), this.f4972?.tax(), this.computeTax()])

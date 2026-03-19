@@ -1114,8 +1114,23 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             ein: '12-3456789',
             grossReceipts: 42000,
             principalOfficerName: 'Nora Nonprofit',
+            mailingAddress: {
+              street: '88 Charity Way',
+              city: 'Boston',
+              state: 'MA',
+              zip: '02110',
+              country: 'United States'
+            },
+            principalOfficerAddress: {
+              street: '90 Charity Way',
+              city: 'Boston',
+              state: 'MA',
+              zip: '02110'
+            },
             websiteAddress: 'https://helpinghands.example',
-            grossReceiptsNormally50kOrLess: true
+            grossReceiptsNormally50kOrLess: true,
+            taxYearBeginning: '2025-01-01',
+            taxYearEnding: '2025-12-31'
           },
           '/efile-wizard': {
             signatureText: 'Nora Nonprofit',
@@ -1155,6 +1170,14 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           .nonprofitRenderedPreview as JsonObject
       ).suggestedForm
     ).toBe('990N')
+    expect(
+      (
+        (
+          (checklist.businessFormCapability as JsonObject)
+            .nonprofitRenderedPreview as JsonObject
+        ).renderedSections as JsonObject[]
+      ).some((section) => section.title === 'Nonprofit filing eligibility')
+    ).toBe(true)
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
@@ -1175,6 +1198,28 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             row.label === 'Principal officer' &&
             row.value === 'Nora Nonprofit'
         )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit filing identity' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Mailing address' &&
+              row.value === '88 Charity Way, Boston, MA, 02110, United States'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit filing eligibility' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Rendered gross receipts' &&
+              row.value === '$42,000'
+          )
       )
     ).toBe(true)
 
@@ -1232,6 +1277,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             ein: '98-7654321',
             grossReceipts: 150000,
             totalAssets: 250000,
+            websiteAddress: 'https://libraryfriends.example',
+            fiscalYearStart: '2025-01-01',
+            fiscalYearEnd: '2025-12-31',
             primaryExemptPurpose: 'Support public library services',
             revenue: {
               contributions: 90000,
@@ -1303,6 +1351,14 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       ).netAssetsEndOfYear
     ).toBe(126000)
     expect(
+      (
+        (
+          (checklist.businessFormCapability as JsonObject)
+            .nonprofitRenderedPreview as JsonObject
+        ).renderedSections as JsonObject[]
+      ).some((section) => section.title === 'Nonprofit program package')
+    ).toBe(true)
+    expect(
       (checklist.findings as JsonObject[]).some((finding) =>
         String((finding as JsonObject).message).includes('990-EZ')
       )
@@ -1322,6 +1378,233 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             row.label === 'Rendered total revenue' &&
             row.value === '$153,500'
         )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit financial package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Rendered change in net assets' &&
+              row.value === '$67,500'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit program package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Primary exempt purpose' &&
+              row.value === 'Support public library services'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit people package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Lead officer title' &&
+              row.value === 'Treasurer'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit people package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Lead officer' && row.value === 'Jordan Smith'
+          )
+      )
+    ).toBe(true)
+  }, 120_000)
+
+  it('surfaces fuller rendered Form 990 package sections for larger nonprofits', async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sub: 'taxflow-user-990-full',
+        email: 'nonprofit.990full@example.com',
+        displayName: 'Nonprofit Full User'
+      })
+    })
+    expect(response.status).toBe(201)
+    const sessionCookie = extractCookieHeader(response)
+
+    response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionCookie
+      },
+      body: JSON.stringify({
+        taxYear: 2025,
+        filingStatus: 'single',
+        formType: '990',
+        currentPhase: 'review',
+        screenData: {
+          '/taxpayer-profile': {
+            firstName: 'Harper',
+            lastName: 'Foundation',
+            ssn: '400-01-3399',
+            filingStatus: 'single'
+          },
+          '/business-entity': {
+            entityName: 'Community Health Foundation',
+            ein: '12-3456789',
+            grossReceipts: 348000,
+            totalAssets: 383000,
+            websiteAddress: 'https://communityhealth.example',
+            fiscalYearStart: '2025-01-01',
+            fiscalYearEnd: '2025-12-31',
+            missionStatement: 'Expand community health access',
+            revenue: {
+              contributions: 200000,
+              programServiceRevenue: 120000,
+              membershipDues: 5000,
+              investmentIncome: 7000,
+              netRentalIncome: 8000,
+              netGainFromSales: 1500,
+              fundraisingEvents: 2500,
+              otherRevenue: 4000
+            },
+            expenses: {
+              grants: 60000,
+              benefitsPaid: 5000,
+              salariesAndWages: 80000,
+              employeeBenefits: 12000,
+              payrollTaxes: 6000,
+              managementFees: 4000,
+              legalFees: 3000,
+              accountingFees: 2000,
+              professionalFundraising: 5000,
+              advertising: 2500,
+              officeExpenses: 7000,
+              informationTechnology: 3000,
+              occupancy: 10000,
+              travel: 4000,
+              conferences: 2000,
+              interest: 1000,
+              depreciation: 3500,
+              insurance: 2500,
+              otherExpenses: 6000
+            },
+            balanceSheet: {
+              unrestrictedNetAssets: 220000,
+              temporarilyRestricted: 80000,
+              permanentlyRestricted: 20000
+            },
+            governance: {
+              numberOfVotingMembers: 9,
+              numberOfIndependentMembers: 7,
+              totalEmployees: 18,
+              totalVolunteers: 55,
+              hasWrittenConflictPolicy: true,
+              hasDocumentRetentionPolicy: true,
+              hasWhistleblowerPolicy: true
+            },
+            programAccomplishments: [
+              {
+                description: 'Expanded rural clinic hours'
+              }
+            ],
+            officers: [
+              {
+                name: 'Taylor Director',
+                title: 'Executive Director'
+              }
+            ]
+          }
+        }
+      })
+    })
+    expect(response.status).toBe(201)
+    const created = await parseJsonResponse<JsonObject>(response)
+    const filingSessionId = String((created.filingSession as JsonObject).id)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,
+      { headers: { cookie: sessionCookie } }
+    )
+    expect(response.status).toBe(200)
+    const checklist = await parseJsonResponse<JsonObject>(response)
+    const nonprofitPreview = (
+      (checklist.businessFormCapability as JsonObject)
+        .nonprofitRenderedPreview as JsonObject
+    )
+    expect(nonprofitPreview.suggestedForm).toBe('990')
+    expect(nonprofitPreview.totalRevenue).toBe(348000)
+    expect(nonprofitPreview.netAssetsEndOfYear).toBe(320000)
+    expect(
+      ((nonprofitPreview.renderedSections as JsonObject[]) ?? []).some(
+        (section) => section.title === 'Nonprofit governance package'
+      )
+    ).toBe(true)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
+      { headers: { cookie: sessionCookie } }
+    )
+    expect(response.status).toBe(200)
+    const review = await parseJsonResponse<JsonObject>(response)
+    const reviewSections = (review.review as JsonObject).sections as JsonObject[]
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit financial package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Rendered change in net assets' &&
+              row.value === '$129,500'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit governance package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Independent members' && row.value === '7'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit program and people package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Lead officer title' &&
+              row.value === 'Executive Director'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit governance package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) => row.label === 'Volunteers' && row.value === '55'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Nonprofit program and people package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Lead officer' &&
+              row.value === 'Taylor Director'
+          )
       )
     ).toBe(true)
   }, 120_000)

@@ -101,6 +101,87 @@ describe('AMT', () => {
     expect(Math.round(f6251.l11())).toEqual(0)
   })
 
+  it('backs Schedule J out of AMT line 10 while still using it on Form 1040 line 16', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.w2s[0].income = 60000
+    information.w2s[0].medicareIncome = 60000
+    information.w2s[0].ssWages = 60000
+    information.w2s[0].stateWages = 60000
+    information.farmBusiness = {
+      name: 'Prairie Family Farm',
+      accountingMethod: 'cash',
+      income: {
+        salesLivestock: 0,
+        salesCrops: 90000,
+        cooperativeDistributions: 0,
+        agriculturalPayments: 0,
+        cccLoans: 0,
+        cropInsurance: 0,
+        customHireIncome: 0,
+        otherIncome: 0
+      },
+      expenses: {
+        carTruck: 0,
+        chemicals: 0,
+        conservation: 0,
+        customHire: 0,
+        depreciation: 0,
+        employeeBenefit: 0,
+        feed: 0,
+        fertilizers: 0,
+        freight: 0,
+        fuel: 0,
+        insurance: 0,
+        interest: 0,
+        labor: 0,
+        pensionPlans: 0,
+        rentLease: 0,
+        repairs: 0,
+        seeds: 0,
+        storage: 0,
+        supplies: 0,
+        taxes: 0,
+        utilities: 0,
+        veterinary: 0,
+        otherExpenses: 0
+      }
+    }
+    information.electFarmIncomeAveraging = true
+    information.priorYearTaxInfo = [
+      {
+        year: 2024,
+        taxableIncome: 20000,
+        tax: 2180,
+        filingStatus: FilingStatus.S
+      },
+      {
+        year: 2023,
+        taxableIncome: 18000,
+        tax: 1940,
+        filingStatus: FilingStatus.S
+      },
+      {
+        year: 2022,
+        taxableIncome: 16000,
+        tax: 1700,
+        filingStatus: FilingStatus.S
+      }
+    ]
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+    const scheduleJTax = f1040.scheduleJ?.tax()
+    const baseTax = f1040.computeTaxWithoutScheduleJ()
+
+    expect(f1040.scheduleJ?.isNeeded()).toBe(true)
+    expect(scheduleJTax).toBeDefined()
+    expect(baseTax).toBeDefined()
+    expect(f1040.l16()).toBe(scheduleJTax)
+    expect(f6251.l10()).toBe(baseTax)
+    expect(f6251.l10()).not.toBe(f1040.l16())
+  })
+
   it('requires Form 6251 when a general business credit is claimed', () => {
     const information = cloneDeep(baseInformation)
     information.f3921s = []
@@ -265,5 +346,83 @@ describe('AMT', () => {
     expect(p3.l13).toBe(expectedL13)
     expect(p3.l20).toBe(expectedL14)
     expect(p3.l27).toBe(expectedL21)
+  })
+
+  it('refigures line 10 without Schedule J when farm income averaging is elected', () => {
+    const information = cloneDeep(baseInformation)
+    information.w2s[0].income = 85000
+    information.w2s[0].medicareIncome = 85000
+    information.w2s[0].ssWages = 85000
+    information.w2s[0].stateWages = 85000
+    information.farmBusiness = {
+      name: 'Prairie Ridge Farm',
+      accountingMethod: 'cash',
+      income: {
+        salesLivestock: 0,
+        salesCrops: 150000,
+        cooperativeDistributions: 0,
+        agriculturalPayments: 0,
+        cccLoans: 0,
+        cropInsurance: 0,
+        customHireIncome: 0,
+        otherIncome: 0
+      },
+      expenses: {
+        carTruck: 0,
+        chemicals: 0,
+        conservation: 0,
+        customHire: 0,
+        depreciation: 0,
+        employeeBenefit: 0,
+        feed: 0,
+        fertilizers: 0,
+        freight: 0,
+        fuel: 0,
+        insurance: 0,
+        interest: 0,
+        labor: 0,
+        pensionPlans: 0,
+        rentLease: 0,
+        repairs: 0,
+        seeds: 0,
+        storage: 0,
+        supplies: 0,
+        taxes: 0,
+        utilities: 0,
+        veterinary: 0,
+        otherExpenses: 0
+      }
+    }
+    information.electFarmIncomeAveraging = true
+    information.priorYearTaxInfo = [
+      {
+        year: 2024,
+        taxableIncome: 25000,
+        tax: 2750,
+        filingStatus: FilingStatus.S
+      },
+      {
+        year: 2023,
+        taxableIncome: 28000,
+        tax: 3080,
+        filingStatus: FilingStatus.S
+      },
+      {
+        year: 2022,
+        taxableIncome: 30000,
+        tax: 3300,
+        filingStatus: FilingStatus.S
+      }
+    ]
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+
+    expect(f1040.scheduleJ?.isNeeded()).toBe(true)
+    expect(f1040.l16()).toBe(f1040.scheduleJ?.tax())
+    expect(f1040.computeTaxWithoutScheduleJ()).toBeGreaterThan(
+      f1040.scheduleJ?.tax() ?? 0
+    )
+    expect(f6251.l10()).toBe(f1040.computeTaxWithoutScheduleJ())
   })
 })

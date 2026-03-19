@@ -31,6 +31,12 @@ This sweep covers the active filing stack:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/worksheets/SDTaxWorksheet.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/worksheets/ScheduleDTaxWorksheet.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/f6251.test.ts`
+- The deeper `Form 6251` farm-income-averaging branch is now real too:
+  - `Form 1040 line 16` can use `Schedule J` when farm income averaging is elected
+  - `Form 6251 line 10` now explicitly refigures that comparison without `Schedule J`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1040.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F6251.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/f6251.test.ts`
 - `ScheduleEIC` childless-filer gating now has explicit age and U.S.-home coverage:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/ScheduleEIC.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/ScheduleEIC.test.ts`
@@ -46,8 +52,8 @@ This sweep covers the active filing stack:
 
 - Full backend gate passed:
   - `npm run test:all`
-  - `24/24` test files
-  - `197/197` tests
+  - `25/25` test files
+  - `213/213` tests
 - Runtime smoke passed:
   - `workbook`
   - `advanced`
@@ -64,6 +70,14 @@ This sweep covers the active filing stack:
 - Nonprofit expert-route evidence is now fixture-backed too:
   - `990-N`-sized, `990-EZ`-sized, and full-`990` organizations all execute through the fixture harness and surface sized guidance instead of only generic expert routing
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
+- The expert-routed `990` family now exposes fuller rendered-package sections in
+  review flows, not just a couple of preview totals:
+  - filing identity
+  - financial package
+  - governance package
+  - program and officer package
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/appSessionService.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
 - Protected auth callbacks now require a signed upstream identity assertion
   instead of trusting raw query params:
@@ -96,6 +110,8 @@ This sweep covers the active filing stack:
 - The capital-gains / AMT bridge is also narrower now:
   - the Schedule D tax worksheet no longer feeds `F6251 Part III` through
     undefined line methods for the core `l10`, `l13`, `l14`, and `l21` values
+- the farm-income averaging / AMT bridge is narrower too:
+  - `Schedule J` is no longer a dead branch when comparing regular tax against tentative minimum tax on `Form 6251 line 10`
 - The next workbook-led unaudited cluster we closed today was `EIC` childless eligibility gating:
   - age-at-year-end
   - U.S.-home residency proxy
@@ -105,7 +121,7 @@ This sweep covers the active filing stack:
 
 - `1120`, `1120-S`, `1065`, and `1041` now have audited computed output surfaces in the Cloudflare path, not just capability flags.
 - They also now have canonical JSON parity-input fixtures that execute cleanly against the backend calculator.
-- `990` is still expert-routed, but it is no longer only a prose claim: the parity harness now proves honest `990-N`, `990-EZ`, and full-`990` sizing guidance in the service/runtime path.
+- `990` is still expert-routed, but it is no longer only a prose claim: the parity harness now proves honest `990-N`, `990-EZ`, and full-`990` sizing guidance in the service/runtime path, and the worker review now surfaces fuller rendered-package sections instead of just a couple of summary rows.
 - See:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/docs/business_entity_output_audit_2026-03-19.md`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/docs/business_workbook_parity_harness.md`

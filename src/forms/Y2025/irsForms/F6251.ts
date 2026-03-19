@@ -254,9 +254,8 @@ export default class F6251 extends F1040Attachment {
   // Subtract from the result Schedule 3 (Form 1040), line 1
   // and any negative amount reported on Form 8978, line 14 (treated as a positive number).
   // If zero or less, enter -0-.
-  // TODO: If you used Schedule J to figure your tax on Form 1040 or 1040-SR, line 16, refigure that tax without using Schedule J before completing this line. See instructions
   l10 = (): number => {
-    const f1040L16 = this.f1040.l16() ?? 0
+    const f1040L16 = this.f1040.incomeTaxBeforeScheduleJ() ?? 0
     const f4972 = this.f1040.f4972?.tax() ?? 0
     const sch2L2 = this.f1040.schedule2.l1z()
     const sch3L1 = this.f1040.schedule3.l1() ?? 0
