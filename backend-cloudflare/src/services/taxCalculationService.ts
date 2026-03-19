@@ -119,6 +119,10 @@ export interface BusinessEntityResult {
   effectiveTaxRate: number
   /** For pass-through entities: per-owner allocation breakdown */
   ownerAllocations?: OwnerAllocation[]
+  adjustedTotalIncome?: number
+  distributionDeduction?: number
+  exemption?: number
+  beneficiaryCount?: number
   schedules: string[]
 }
 
@@ -3357,6 +3361,10 @@ export class TaxCalculationService {
       amountOwed: result.amountOwed,
       overpayment: result.overpayment,
       effectiveTaxRate,
+      adjustedTotalIncome: result.adjustedTotalIncome,
+      distributionDeduction: result.distributionDeduction,
+      exemption: result.exemption,
+      beneficiaryCount: info.beneficiaries.length,
       schedules: ['f1041']
     }
   }

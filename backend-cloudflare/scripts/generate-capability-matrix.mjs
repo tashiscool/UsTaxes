@@ -186,7 +186,7 @@ const rows = [
     directFileCoverage: 'no',
     status: 'implemented_tested',
     notes:
-      'TaxFlow business-entity sessions now prove self-service 1120, 1120-S, 1065, and 1041 readiness, sync, schedules, and owner-allocation outputs through worker runtime coverage.'
+      'TaxFlow business-entity sessions now prove self-service 1120, 1120-S, 1065, and 1041 readiness, sync, schedules, entity name/income/deduction summaries, pass-through owner allocations, and 1041 trust-specific outputs through worker runtime coverage.'
   },
   {
     family: 'nonprofit_entity_returns',

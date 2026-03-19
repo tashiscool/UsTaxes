@@ -194,4 +194,48 @@ describe('ScheduleEIC', () => {
     expect(f1040.scheduleEIC.incomeOrLossFromPassiveActivity()).toBe(true)
     expect(f1040.scheduleEIC.allowed()).toBe(false)
   })
+
+  it('allows childless EIC when age and home tests are met', () => {
+    const information = cloneDeep(baseInformation)
+    information.taxPayer.dependents = []
+    information.taxPayer.primaryPerson.dateOfBirth = new Date('1995-06-15')
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.scheduleEIC.atLeastOneChild()).toBe(false)
+    expect(f1040.scheduleEIC.over25Under65()).toBe(true)
+    expect(f1040.scheduleEIC.mainHomeInsideUsBothPeople()).toBe(true)
+    expect(f1040.scheduleEIC.allowed()).toBe(true)
+    expect(f1040.scheduleEIC.credit()).toBeGreaterThan(0)
+  })
+
+  it('rejects childless EIC when the taxpayer is under 25 at year end', () => {
+    const information = cloneDeep(baseInformation)
+    information.taxPayer.dependents = []
+    information.taxPayer.primaryPerson.dateOfBirth = new Date('2006-03-01')
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.scheduleEIC.atLeastOneChild()).toBe(false)
+    expect(f1040.scheduleEIC.over25Under65()).toBe(false)
+    expect(f1040.scheduleEIC.allowed()).toBe(false)
+  })
+
+  it('rejects childless EIC when the filer lacks a main home in the United States', () => {
+    const information = cloneDeep(baseInformation)
+    information.taxPayer.dependents = []
+    information.taxPayer.primaryPerson.dateOfBirth = new Date('1990-02-02')
+    information.taxPayer.primaryPerson.address = {
+      address: '1 Rue Example',
+      city: 'Montreal',
+      foreignCountry: 'CA',
+      postalCode: 'H1A 1A1'
+    }
+    information.stateResidencies = []
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.scheduleEIC.mainHomeInsideUsBothPeople()).toBe(false)
+    expect(f1040.scheduleEIC.allowed()).toBe(false)
+  })
 })

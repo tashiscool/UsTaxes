@@ -66,6 +66,7 @@ export default class ScheduleEIC extends F1040Attachment {
   tag: FormTag = 'f1040sei'
   sequenceIndex = 43
   pub596Worksheet1: Pub596Worksheet1
+  taxYear = 2025
   // 2025: Qualifying students must be under 24 at end of year (born 2002+)
   qualifyingStudentCutoffYear = 2002
   // 2025: Qualifying children must be under 19 at end of year (born 2007+)
@@ -180,16 +181,32 @@ export default class ScheduleEIC extends F1040Attachment {
   }
 
   // 4.1 - covered by income limit check
-  //
-  // TODO: ('4.2: Not checking taxpayer age') 4
-  over25Under65 = (): boolean => {
-    return true
+  private ageAtTaxYearEnd = (dateOfBirth?: Date): number | undefined => {
+    if (!(dateOfBirth instanceof Date) || Number.isNaN(dateOfBirth.getTime())) {
+      return undefined
+    }
+    return this.taxYear - dateOfBirth.getFullYear()
   }
 
-  //
-  // TODO: ('4.3: Not checking residency') 4
+  over25Under65 = (): boolean => {
+    const ages = [
+      this.ageAtTaxYearEnd(this.f1040.info.taxPayer.primaryPerson.dateOfBirth),
+      this.ageAtTaxYearEnd(this.f1040.info.taxPayer.spouse?.dateOfBirth)
+    ].filter((age): age is number => age !== undefined)
+
+    return ages.length > 0 && ages.every((age) => age >= 25 && age < 65)
+  }
+
   mainHomeInsideUsBothPeople = (): boolean => {
-    return true
+    const address = this.f1040.info.taxPayer.primaryPerson.address
+    const hasForeignCountry = Boolean(address.foreignCountry?.trim())
+    const hasDomesticState = Boolean(address.state) || this.f1040.info.stateResidencies.length > 0
+
+    return (
+      !hasForeignCountry &&
+      hasDomesticState &&
+      !this.f1040.f1040nr?.hasNonresidentInfo()
+    )
   }
 
   // 4.4 covered above
@@ -323,6 +340,8 @@ export default class ScheduleEIC extends F1040Attachment {
     )
 
   allowed = (): boolean => {
+    const noQualifyingChild = !this.atLeastOneChild()
+
     return (
       // Step 1
       this.passIncomeLimit() &&
@@ -349,6 +368,11 @@ export default class ScheduleEIC extends F1040Attachment {
           this.dependentOfAnother()
         )
       ) &&
+      (!noQualifyingChild ||
+        (!this.qualifyingChildOfAnother() &&
+          this.over25Under65() &&
+          this.mainHomeInsideUsBothPeople() &&
+          !this.dependentOfAnother())) &&
       this.credit() > 0
     )
   }

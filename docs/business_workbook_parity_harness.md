@@ -4,6 +4,10 @@ This inventory extends the workbook parity approach beyond the 1040 family.
 When a private workbook is unavailable locally, the matrix records the workbook gap
 and inventories local IRS MeF/ATS materials instead so parity work stays evidence-based.
 
+For the richer Cloudflare-backed output proof that goes beyond simple capability
+flags, see
+[`business_entity_output_audit_2026-03-19.md`](/Users/tkhan/IdeaProjects/taxes/UsTaxes/docs/business_entity_output_audit_2026-03-19.md).
+
 | Form   | Workbook | IRS refs | Local impl | Tests | Status             | Notes                                                                                                                          |
 | ------ | -------- | -------- | ---------- | ----- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
 | 1120   | no       | 83       | 4          | 3     | irs_reference_only | C-corporation parity should track Form 1120 computation, MeF serialization, and backend entity-return handling.                |

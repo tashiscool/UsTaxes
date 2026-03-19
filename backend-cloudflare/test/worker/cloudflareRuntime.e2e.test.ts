@@ -1320,14 +1320,33 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
         const sync = await parseJsonResponse<JsonObject>(response)
         const taxSummary = sync.taxSummary as JsonObject
         expect(taxSummary.formType).toBe(scenario.formType)
+        expect(taxSummary.entityName).toBe(scenario.entityName)
+        expect(Number(taxSummary.totalIncome ?? 0)).toBeGreaterThan(0)
+        expect(Number(taxSummary.totalDeductions ?? 0)).toBeGreaterThanOrEqual(0)
         expect((taxSummary.schedules as string[]).includes(scenario.scheduleTag)).toBe(
           true
         )
         if (scenario.formType === '1120-S' || scenario.formType === '1065') {
           expect(Array.isArray(taxSummary.ownerAllocations)).toBe(true)
-          expect((taxSummary.ownerAllocations as JsonObject[]).length).toBeGreaterThan(
-            0
+          const ownerAllocations = taxSummary.ownerAllocations as JsonObject[]
+          expect(ownerAllocations.length).toBeGreaterThan(0)
+          const ownerNames = ownerAllocations.map((allocation) =>
+            String(allocation.name)
           )
+          if (scenario.formType === '1120-S') {
+            expect(ownerNames).toContain('Alice Founder')
+            expect(ownerNames).toContain('Ben Operator')
+          } else {
+            expect(ownerNames).toContain('Nina Partner')
+            expect(ownerNames).toContain('Omar Partner')
+          }
+        }
+
+        if (scenario.formType === '1041') {
+          expect(Number(taxSummary.adjustedTotalIncome ?? 0)).toBeGreaterThan(0)
+          expect(Number(taxSummary.distributionDeduction ?? 0)).toBeGreaterThanOrEqual(0)
+          expect(Number(taxSummary.exemption ?? 0)).toBe(100)
+          expect(Number(taxSummary.beneficiaryCount ?? 0)).toBe(1)
         }
       }
     },

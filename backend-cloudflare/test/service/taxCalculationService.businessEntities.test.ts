@@ -235,6 +235,9 @@ describe('S-Corp (Form 1120-S)', () => {
     if (!result.success) return
 
     expect(result.formType).toBe('1120-S')
+    expect(result.entityName).toBe('Test Corp')
+    expect(result.totalIncome).toBe(500_000)
+    expect(result.totalDeductions).toBe(200_000)
     // S-Corps generally have no entity-level tax (unless built-in gains)
     expect(result.totalTax).toBe(0)
 
@@ -398,6 +401,7 @@ describe('Partnership (Form 1065)', () => {
     if (!result.success) return
 
     expect(result.formType).toBe('1065')
+    expect(result.entityName).toBe('Test Corp')
     // Partnerships have no entity-level tax
     expect(result.totalTax).toBe(0)
     expect(result.amountOwed).toBe(0)
@@ -523,6 +527,10 @@ describe('Estate/Trust (Form 1041)', () => {
     //                        Total = $14,599.50 -> rounded to $14,600
     expect(result.totalIncome).toBe(50_000)
     expect(result.totalDeductions).toBe(5_000)
+    expect(result.adjustedTotalIncome).toBe(45_000)
+    expect(result.distributionDeduction).toBe(0)
+    expect(result.exemption).toBe(100)
+    expect(result.beneficiaryCount).toBe(0)
     expect(result.taxableIncome).toBe(44_900)
     expect(result.totalTax).toBe(14_600)
     expect(result.amountOwed).toBe(14_600)

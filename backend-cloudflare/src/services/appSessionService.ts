@@ -3574,6 +3574,10 @@ const toSubmissionPayload = (
               totalIncome: bizCalcResult.totalIncome,
               totalDeductions: bizCalcResult.totalDeductions,
               taxableIncome: bizCalcResult.taxableIncome,
+              adjustedTotalIncome: bizCalcResult.adjustedTotalIncome,
+              distributionDeduction: bizCalcResult.distributionDeduction,
+              exemption: bizCalcResult.exemption,
+              beneficiaryCount: bizCalcResult.beneficiaryCount,
               effectiveTaxRate: bizCalcResult.effectiveTaxRate,
               ownerAllocations: bizCalcResult.ownerAllocations,
               schedules: bizCalcResult.schedules
@@ -5789,12 +5793,19 @@ export class AppSessionService {
         ? {
             taxSummary: {
               formType: bizOutcome.formType,
+              entityName: bizOutcome.entityName,
+              totalIncome: bizOutcome.totalIncome,
+              totalDeductions: bizOutcome.totalDeductions,
               taxableIncome: bizOutcome.taxableIncome,
               totalTax: bizOutcome.totalTax,
               totalPayments: bizOutcome.totalPayments,
               amountOwed: bizOutcome.amountOwed,
               overpayment: bizOutcome.overpayment,
               effectiveTaxRate: bizOutcome.effectiveTaxRate,
+              adjustedTotalIncome: bizOutcome.adjustedTotalIncome,
+              distributionDeduction: bizOutcome.distributionDeduction,
+              exemption: bizOutcome.exemption,
+              beneficiaryCount: bizOutcome.beneficiaryCount,
               schedules: bizOutcome.schedules,
               ownerAllocations: bizOutcome.ownerAllocations
             },
