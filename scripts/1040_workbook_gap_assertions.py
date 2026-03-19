@@ -12,11 +12,17 @@ AUDIT_DIR = ROOT / "docs" / "1040_workbook_deep_audit"
 
 PRIORITY_LOGICAL_AREAS = {
     "schedule_e": {
-        "test_files": ["src/forms/Y2025/tests/ScheduleEParity.test.ts"],
+        "test_files": [
+            "src/forms/Y2025/tests/ScheduleEParity.test.ts",
+            "src/forms/Y2025/tests/F8582Parity.test.ts",
+        ],
         "expected_years": {"2024", "2025", "2026_forecast"},
     },
     "schedule_e_page_2": {
-        "test_files": ["src/forms/Y2025/tests/ScheduleEParity.test.ts"],
+        "test_files": [
+            "src/forms/Y2025/tests/ScheduleEParity.test.ts",
+            "src/forms/Y2025/tests/F8582Parity.test.ts",
+        ],
         "expected_years": {"2024", "2025", "2026_forecast"},
     },
     "form_6251": {

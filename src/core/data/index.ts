@@ -487,6 +487,8 @@ export interface Property {
   qbiBusinessName?: string
   qbiW2Wages?: number
   qbiUbia?: number
+  activeParticipation?: boolean
+  priorYearPassiveLossCarryover?: number
 }
 
 export interface ScheduleEPage2Data {
@@ -494,6 +496,10 @@ export interface ScheduleEPage2Data {
   estateTrustIncomeLoss?: number
   remicIncomeLoss?: number
   farmRentalIncomeLoss?: number
+  activeParticipationRentalRealEstate?: boolean
+  mfsLivedApartAllYear?: boolean
+  priorYearRentalRealEstateLosses?: number
+  priorYearOtherPassiveLosses?: number
 }
 
 export interface F1098e {
@@ -532,6 +538,7 @@ export interface ScheduleK1Form1065 {
   section199AW2Wages?: number // Form 8995-A wage limitation support
   section199AUbia?: number // Form 8995-A UBIA limitation support
   section199APatronReduction?: number // Form 8995-A line 14 patron reduction
+  priorYearUnallowedLoss?: number
   isPubliclyTradedPartnership?: boolean
   ptpSection199AIncome?: number
   ptpSection199ALossCarryforward?: number

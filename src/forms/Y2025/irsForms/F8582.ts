@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-import { MatrixRow } from './ScheduleE'
+import { MatrixRow, scheduleEK1Amount } from './ScheduleE'
 import F1040Attachment from './F1040Attachment'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { Field } from 'ustaxes/core/pdfFiller'
@@ -53,9 +53,7 @@ export default class F8582 extends F1040Attachment {
   }
 
   hasPassiveLosses = (): boolean => {
-    const rentalLoss = this.totalRentalLoss()
-    const otherPassiveLoss = this.otherPassiveLoss()
-    return rentalLoss < 0 || otherPassiveLoss < 0
+    return this.l1b() + this.l2b() + this.l1c() + this.l2c() > 0
   }
 
   // Get rental income/loss from Schedule E
@@ -79,28 +77,83 @@ export default class F8582 extends F1040Attachment {
 
   // Other passive activity income/loss (K-1, etc.)
   otherPassiveIncome = (): number => {
-    // From Schedule K-1s marked as passive
     const k1Income = this.f1040.info.scheduleK1Form1065s
       .filter((k) => k.isPassive)
-      .reduce((sum, k) => sum + Math.max(0, k.ordinaryBusinessIncome), 0)
+      .reduce((sum, k) => sum + Math.max(0, scheduleEK1Amount(k)), 0)
     return k1Income
   }
 
   otherPassiveLoss = (): number => {
     const k1Loss = this.f1040.info.scheduleK1Form1065s
       .filter((k) => k.isPassive)
-      .reduce((sum, k) => sum + Math.min(0, k.ordinaryBusinessIncome), 0)
+      .reduce((sum, k) => sum + Math.min(0, scheduleEK1Amount(k)), 0)
     return k1Loss
   }
 
-  // Modified AGI for passive loss limitations
-  modifiedAgi = (): number => {
-    // Start with AGI
-    const magi = this.f1040.l11()
+  scheduleEPage2 = () => this.f1040.info.scheduleEPage2
 
-    // Add back certain deductions
-    // (Simplified - full calculation would include IRA deductions, etc.)
-    return magi
+  hasActiveParticipation = (): boolean =>
+    this.f1040.info.realEstate.some((property) => property.activeParticipation) ||
+    Boolean(this.scheduleEPage2()?.activeParticipationRentalRealEstate)
+
+  marriedFilingSeparatelyLivedApartAllYear = (): boolean => {
+    const status = this.f1040.info.taxPayer.filingStatus ?? FilingStatus.S
+    if (status !== FilingStatus.MFS) {
+      return true
+    }
+    return Boolean(this.scheduleEPage2()?.mfsLivedApartAllYear)
+  }
+
+  qualifiesForSpecialAllowance = (): boolean => {
+    if (!this.hasActiveParticipation()) {
+      return false
+    }
+    return this.marriedFilingSeparatelyLivedApartAllYear()
+  }
+
+  // Modified AGI for passive loss limitations
+  rawScheduleEIncome = (): number => {
+    const rentalNet = this.f1040.scheduleE.rentalNet()
+    const rentalIncomeLoss = rentalNet.reduce<number>(
+      (sum, value) => sum + (value ?? 0),
+      0
+    )
+    const royaltyIncomeLoss =
+      this.f1040.scheduleE.totalRoyaltyIncome() -
+      (this.f1040.scheduleE.royaltyExpenses() ?? 0)
+
+    return (
+      rentalIncomeLoss +
+      royaltyIncomeLoss +
+      (this.f1040.scheduleE.l32() ?? 0) +
+      this.f1040.scheduleE.page2NetIncomeLoss()
+    )
+  }
+
+  modifiedAgi = (): number => {
+    const estimatedTaxableSocialSecurity =
+      this.f1040
+        .f1099ssas()
+        .reduce((sum, form) => sum + (form.form.netBenefits ?? 0), 0) * 0.85
+
+    const incomeBeforeAdjustments =
+      (this.f1040.l1z() ?? 0) +
+      (this.f1040.l2b() ?? 0) +
+      (this.f1040.l3b() ?? 0) +
+      (this.f1040.l4b() ?? 0) +
+      (this.f1040.l5b() ?? 0) +
+      estimatedTaxableSocialSecurity +
+      (this.f1040.l7() ?? 0) +
+      ((this.f1040.schedule1.l1() ?? 0) +
+        (this.f1040.schedule1.l2a() ?? 0) +
+        (this.f1040.schedule1.l3() ?? 0) +
+        (this.f1040.schedule1.l4() ?? 0) +
+        this.rawScheduleEIncome() +
+        (this.f1040.schedule1.l6() ?? 0) +
+        (this.f1040.schedule1.l7() ?? 0) +
+        this.f1040.schedule1.l9())
+
+    return Math.max(0, incomeBeforeAdjustments - (this.f1040.l10() ?? 0))
   }
 
   // Part I - 2025 Passive Activity Loss
@@ -112,7 +165,12 @@ export default class F8582 extends F1040Attachment {
   l1b = (): number => Math.abs(this.totalRentalLoss())
 
   // Line 1c: Prior year unallowed losses (rental real estate)
-  l1c = (): number => 0 // Would need carryover tracking
+  l1c = (): number =>
+    this.f1040.info.realEstate.reduce(
+      (sum, property) =>
+        sum + Math.abs(property.priorYearPassiveLossCarryover ?? 0),
+      0
+    ) + Math.abs(this.scheduleEPage2()?.priorYearRentalRealEstateLosses ?? 0)
 
   // Line 1d: Combine lines 1a, 1b, and 1c
   l1d = (): number => this.l1a() - this.l1b() - this.l1c()
@@ -124,7 +182,13 @@ export default class F8582 extends F1040Attachment {
   l2b = (): number => Math.abs(this.otherPassiveLoss())
 
   // Line 2c: Prior year unallowed losses (other passive)
-  l2c = (): number => 0 // Would need carryover tracking
+  l2c = (): number =>
+    this.f1040.info.scheduleK1Form1065s
+      .filter((k1) => k1.isPassive)
+      .reduce(
+        (sum, k1) => sum + Math.abs(k1.priorYearUnallowedLoss ?? 0),
+        0
+      ) + Math.abs(this.scheduleEPage2()?.priorYearOtherPassiveLosses ?? 0)
 
   // Line 2d: Combine lines 2a, 2b, and 2c
   l2d = (): number => this.l2a() - this.l2b() - this.l2c()
@@ -161,6 +225,9 @@ export default class F8582 extends F1040Attachment {
 
   // Line 9: Enter $25,000 (or $12,500 if MFS)
   l9 = (): number => {
+    if (!this.qualifiesForSpecialAllowance()) {
+      return 0
+    }
     const status = this.f1040.info.taxPayer.filingStatus ?? FilingStatus.S
     if (status === FilingStatus.MFS) {
       return 12500

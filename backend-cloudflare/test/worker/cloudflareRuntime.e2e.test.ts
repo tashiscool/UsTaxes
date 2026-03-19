@@ -28,6 +28,47 @@ const extractCookieHeader = (response: WorkerResponse): string => {
   return String(setCookie).split(';')[0]
 }
 
+const createWorkerHarness = async (): Promise<{
+  worker: Unstable_DevWorker
+  persistTo: string
+}> => {
+  const persistTo = mkdtempSync(join(tmpdir(), 'ustaxes-cf-e2e-'))
+
+  execFileSync(
+    'npx',
+    [
+      'wrangler',
+      'd1',
+      'migrations',
+      'apply',
+      'USTAXES_DB',
+      '--local',
+      '--config',
+      'wrangler.toml',
+      '--persist-to',
+      persistTo
+    ],
+    {
+      cwd: process.cwd(),
+      stdio: 'pipe'
+    }
+  )
+
+  const worker = await unstable_dev('src/index.ts', {
+    config: 'wrangler.toml',
+    local: true,
+    persistTo,
+    vars: {
+      INTERNAL_API_TOKEN: internalToken
+    },
+    experimental: {
+      disableExperimentalWarning: true
+    }
+  })
+
+  return { worker, persistTo }
+}
+
 const directFileFacts = (taxYear = 2025): JsonObject => ({
   '/taxYear': {
     $type: 'gov.irs.factgraph.persisters.IntWrapper',
@@ -75,39 +116,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
   let persistTo = ''
 
   beforeAll(async () => {
-    persistTo = mkdtempSync(join(tmpdir(), 'ustaxes-cf-e2e-'))
-
-    execFileSync(
-      'npx',
-      [
-        'wrangler',
-        'd1',
-        'migrations',
-        'apply',
-        'USTAXES_DB',
-        '--local',
-        '--config',
-        'wrangler.toml',
-        '--persist-to',
-        persistTo
-      ],
-      {
-        cwd: process.cwd(),
-        stdio: 'pipe'
-      }
-    )
-
-    worker = await unstable_dev('src/index.ts', {
-      config: 'wrangler.toml',
-      local: true,
-      persistTo,
-      vars: {
-        INTERNAL_API_TOKEN: internalToken
-      },
-      experimental: {
-        disableExperimentalWarning: true
-      }
-    })
+    const harness = await createWorkerHarness()
+    worker = harness.worker
+    persistTo = harness.persistTo
   }, 120_000)
 
   afterAll(async () => {
@@ -1398,7 +1409,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
 
   it(
     'derives spouse, unemployment, and investment facts from TaxFlow entities',
-    { timeout: 120000 },
+    { timeout: 240000 },
     async () => {
       let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
         method: 'POST',
@@ -1569,9 +1580,14 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
 
   it(
     'syncs workbook-aligned screen data for unemployment, SSA, student loans, and retirement',
-    { timeout: 120000 },
+    { timeout: 240000 },
     async () => {
-      let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      const isolated = await createWorkerHarness()
+      const isolatedWorker = isolated.worker
+      const isolatedPersist = isolated.persistTo
+
+      try {
+      let response = await isolatedWorker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -1583,7 +1599,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       expect(response.status).toBe(201)
       const sessionCookie = extractCookieHeader(response)
 
-      response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      response = await isolatedWorker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -1657,7 +1673,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       const created = await parseJsonResponse<JsonObject>(response)
       const filingSessionId = String((created.filingSession as JsonObject).id)
 
-      response = await worker.fetch(
+      response = await isolatedWorker.fetch(
         `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/w2/w2-primary-${filingSessionId}`,
         {
           method: 'PUT',
@@ -1680,7 +1696,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       )
       expect(response.status).toBe(200)
 
-      response = await worker.fetch(
+      response = await isolatedWorker.fetch(
         `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
         {
           method: 'POST',
@@ -1704,7 +1720,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       expect((taxSummary.agi as number)).toBeGreaterThanOrEqual(42500)
       expect((taxSummary.totalPayments as number)).toBeGreaterThanOrEqual(4500)
 
-      response = await worker.fetch(
+      response = await isolatedWorker.fetch(
         `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,
         {
           headers: { cookie: sessionCookie }
@@ -1717,7 +1733,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       expect(checklistItems['unemployment-ss'].status).toBe('complete')
       expect(checklistItems.retirement.status).toBe('complete')
 
-      response = await worker.fetch(
+      response = await isolatedWorker.fetch(
         `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
         {
           headers: { cookie: sessionCookie }
@@ -1737,6 +1753,10 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             row.label === 'Retirement distributions' && row.value === '$9,000'
         )
       ).toBe(true)
+      } finally {
+        await isolatedWorker.stop()
+        rmSync(isolatedPersist, { recursive: true, force: true })
+      }
     }
   )
 
@@ -2266,6 +2286,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(200)
     const syncResult = await parseJsonResponse<JsonObject>(response)
     const facts = syncResult.facts as JsonObject
+    const taxSummary = syncResult.taxSummary as JsonObject
     const form1099Records = facts.form1099Records as JsonObject[]
     const divRecord = form1099Records.find(
       (record) => record.type === '1099-DIV'
@@ -2275,7 +2296,6 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     ) as JsonObject
     const incomeSummary = facts.incomeSummary as JsonObject
     const itemized = facts.itemizedDeductions as JsonObject
-    const taxSummary = syncResult.taxSummary as JsonObject
 
     expect(divRecord.amount).toBe(3200)
     expect(divRecord.qualifiedDividends).toBe(1800)
@@ -2345,6 +2365,13 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           },
           '/qbi-worksheet': {
             filingStatus: 'single',
+            qbiDeductionData: {
+              priorYearQualifiedBusinessLossCarryforward: 5000,
+              reitDividends: 1500,
+              ptpIncome: 2000,
+              ptpLossCarryforward: 500,
+              dpadReduction: 300
+            },
             entities: [
               {
                 id: 'qbi-1',
@@ -2357,6 +2384,48 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
                 qbiAmount: 98000,
                 w2Limitation: 0,
                 finalDeduction: 18000,
+                status: 'complete',
+                warnings: []
+              },
+              {
+                id: 'qbi-2',
+                name: 'Maple Partners',
+                type: 'partnership',
+                netIncome: 22000,
+                w2Wages: 24000,
+                ubia: 90000,
+                isSSTB: false,
+                qbiAmount: 22000,
+                w2Limitation: 12000,
+                finalDeduction: 4500,
+                status: 'complete',
+                warnings: ['Wage/property limitation applied']
+              },
+              {
+                id: 'qbi-3',
+                name: 'Law Practice Group',
+                type: 'partnership',
+                netIncome: 310000,
+                w2Wages: 0,
+                ubia: 0,
+                isSSTB: true,
+                qbiAmount: 310000,
+                w2Limitation: 0,
+                finalDeduction: 0,
+                status: 'blocked',
+                warnings: ['SSTB phaseout applies']
+              },
+              {
+                id: 'qbi-4',
+                name: 'Rental Overflow LLC',
+                type: 'llc',
+                netIncome: 12000,
+                w2Wages: 0,
+                ubia: 50000,
+                isSSTB: false,
+                qbiAmount: 12000,
+                w2Limitation: 0,
+                finalDeduction: 2500,
                 status: 'complete',
                 warnings: []
               }
@@ -2389,7 +2458,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
                 id: 'nec-1',
                 incomeType: 'US dividends',
                 grossAmount: 4200,
-                netTax: 630
+                netTax: 630,
+                treatyRate: 15,
+                treatyCountry: 'Germany'
               }
             ]
           }
@@ -2434,6 +2505,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           ordinaryIncome: 18000,
           rentalIncome: 2000,
           guaranteedPayments: 3000,
+          priorYearUnallowedLoss: 1400,
           qbiEligible: true,
           qbiWages: 10000,
           qbiProperty: 50000
@@ -2458,7 +2530,22 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             advertising: 300
           },
           purchasePrice: 275000,
-          purchaseYear: 2020
+          purchaseYear: 2020,
+          activeParticipation: true,
+          passiveLossCarryover: 4200
+        }
+      },
+      {
+        entityType: 'passive_activity_loss',
+        entityId: 'pal-1',
+        label: 'Passive activity loss',
+        data: {
+          activelyParticipated: true,
+          priorYearUnallowedLoss: 4200,
+          totalRentalIncome: 24000,
+          totalRentalExpenses: 22500,
+          otherPassiveIncome: 0,
+          otherPassiveLoss: 0
         }
       },
       {
@@ -2472,6 +2559,28 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           daysAbroad: 330,
           foreignTaxPaid: 8400,
           foreignTaxCountry: 'Germany'
+        }
+      },
+      {
+        entityType: '1099_div',
+        entityId: '1099-div-1',
+        label: 'US broker dividends',
+        data: {
+          payerName: 'US Broker',
+          amount: 800,
+          ordinaryDividends: 800,
+          owner: 'taxpayer'
+        }
+      },
+      {
+        entityType: '1099_misc',
+        entityId: '1099-misc-1',
+        label: 'Licensing royalties',
+        data: {
+          payerName: 'Media Studio',
+          amount: 500,
+          notes: 'royalties',
+          owner: 'taxpayer'
         }
       },
       {
@@ -2496,6 +2605,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           articleNumber: 'Article 15',
           incomeType: 'Employment income',
           exemptAmount: 0,
+          reducedTreatyRate: 15,
           confirmed: true
         }
       }
@@ -2530,10 +2640,54 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(200)
     const syncResult = await parseJsonResponse<JsonObject>(response)
     const facts = syncResult.facts as JsonObject
+    const taxSummary = syncResult.taxSummary as JsonObject
     expect((facts.businessSummary as JsonObject).recordCount).toBe(2)
-    expect((facts.businessSummary as JsonObject).finalQBIDeduction).toBe(18000)
+    expect((facts.businessSummary as JsonObject).finalQBIDeduction).toBe(25000)
+    expect((facts.businessSummary as JsonObject).sstbCount).toBe(1)
+    expect((facts.businessSummary as JsonObject).wageLimitedCount).toBe(1)
+    expect(((facts.k1Records as JsonObject[]) ?? []).length).toBe(1)
+    expect((facts.k1Records as JsonObject[])[0]).toMatchObject({
+      partnershipName: 'Maple Partners',
+      ordinaryBusinessIncome: 18000,
+      netRentalRealEstateIncome: 2000,
+      guaranteedPaymentsForServices: 3000,
+      priorYearUnallowedLoss: 1400
+    })
+    expect((facts.rentalProperties as JsonObject[])[0]).toMatchObject({
+      activeParticipation: true,
+      priorYearPassiveLossCarryover: 4200
+    })
+    expect(facts.scheduleEPage2).toEqual({
+      activeParticipationRentalRealEstate: true
+    })
+    expect(facts.qbiDeductionData).toEqual({
+      priorYearQualifiedBusinessLossCarryforward: 5000,
+      reitDividends: 1500,
+      ptpIncome: 2000,
+      ptpLossCarryforward: 500,
+      dpadReduction: 300
+    })
+    expect((facts.qbiDetail as JsonObject).formPreference).toBe('8995A')
+    expect((facts.qbiDetail as JsonObject).needsAdditionalStatement).toBe(true)
+    expect(((facts.qbiDetail as JsonObject).overflowEntities as JsonObject[]).length).toBe(1)
+    expect(
+      ((facts.qbiDetail as JsonObject).overflowTotals as JsonObject)
+        .finalDeduction
+    ).toBe(2500)
     expect((facts.rentalSummary as JsonObject).propertyCount).toBe(1)
     expect((facts.rentalSummary as JsonObject).grossRentsTotal).toBe(24000)
+    expect((facts.rentalSummary as JsonObject).k1Count).toBe(1)
+    expect((facts.rentalSummary as JsonObject).k1RentalIncomeTotal).toBe(2000)
+    expect((facts.rentalSummary as JsonObject).scheduleEPage2NetIncome).toBe(
+      23000
+    )
+    expect((facts.form1099Records as JsonObject[]).length).toBe(2)
+    expect(
+      (facts.treatyClaims as JsonObject[]).some(
+        (claim) =>
+          claim.country === 'Germany' && claim.reducedTreatyRate === 15
+      )
+    ).toBe(true)
     expect((facts.foreignSummary as JsonObject).totalForeignEarnedIncome).toBe(
       140000
     )
@@ -2543,6 +2697,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect((facts.foreignSummary as JsonObject).fbarRequired).toBe(true)
     expect((facts.foreignSummary as JsonObject).requires1040NR).toBe(true)
     expect((facts.foreignSummary as JsonObject).scheduleNecTaxTotal).toBe(630)
+    expect((taxSummary.schedules as string[]).includes('f1040nr')).toBe(true)
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,

@@ -814,6 +814,33 @@ const getQBIWorksheetEntities = (snapshot: FilingSessionSnapshot) =>
     isComplete: toText(entity.status) === 'complete'
   }))
 
+const getQbiDeductionData = (snapshot: FilingSessionSnapshot) => {
+  const screen = requireScreen(snapshot, '/qbi-worksheet')
+  const data = asRecord(screen.qbiDeductionData)
+  const fallbackMoney = (key: string) => toMoney(screen[key])
+
+  const qbiDeductionData = {
+    priorYearQualifiedBusinessLossCarryforward: toMoney(
+      data.priorYearQualifiedBusinessLossCarryforward ??
+        fallbackMoney('priorYearQualifiedBusinessLossCarryforward')
+    ),
+    reitDividends: toMoney(
+      data.reitDividends ?? fallbackMoney('reitDividends')
+    ),
+    ptpIncome: toMoney(data.ptpIncome ?? fallbackMoney('ptpIncome')),
+    ptpLossCarryforward: toMoney(
+      data.ptpLossCarryforward ?? fallbackMoney('ptpLossCarryforward')
+    ),
+    dpadReduction: toMoney(
+      data.dpadReduction ?? fallbackMoney('dpadReduction')
+    )
+  }
+
+  return Object.values(qbiDeductionData).some((value) => value !== 0)
+    ? qbiDeductionData
+    : undefined
+}
+
 const getBusinessRecords = (entities: SessionEntitySnapshot[]) =>
   entities
     .filter(
@@ -913,6 +940,59 @@ const getBusinessRecords = (entities: SessionEntitySnapshot[]) =>
       }
     })
 
+const getK1Records = (entities: SessionEntitySnapshot[]) =>
+  entities
+    .filter((entity) => entity.entityType === 'k1_entity')
+    .map((entity) => {
+      const data = asRecord(entity.data)
+      const businessType = toText(data.businessType).toLowerCase()
+      return {
+        id: entity.id,
+        partnershipName: toText(data.name ?? data.entityName ?? entity.label),
+        partnershipEin: toText(data.ein),
+        partnerOrSCorp:
+          businessType.includes('s-corp') || businessType.includes('s_corp')
+            ? 'S'
+            : 'P',
+        isForeign: Boolean(data.isForeign),
+        isPassive: Boolean(data.isPassive ?? true),
+        ordinaryBusinessIncome: toMoney(
+          data.ordinaryBusinessIncome ?? data.ordinaryIncome ?? data.k1Box1
+        ),
+        netRentalRealEstateIncome: toMoney(
+          data.netRentalRealEstateIncome ?? data.rentalIncome ?? data.k1Box2
+        ),
+        otherNetRentalIncome: toMoney(data.otherNetRentalIncome),
+        royalties: toMoney(data.royalties ?? data.k1Box3),
+        interestIncome: toMoney(data.interestIncome ?? data.k1Box4),
+        guaranteedPaymentsForServices: toMoney(
+          data.guaranteedPaymentsForServices ?? data.guaranteedPayments
+        ),
+        guaranteedPaymentsForCapital: toMoney(
+          data.guaranteedPaymentsForCapital
+        ),
+        selfEmploymentEarningsA: toMoney(
+          data.selfEmploymentEarningsA ??
+            data.seEarnings ??
+            data.selfEmploymentEarnings
+        ),
+        selfEmploymentEarningsB: toMoney(data.selfEmploymentEarningsB),
+        selfEmploymentEarningsC: toMoney(data.selfEmploymentEarningsC),
+        distributionsCodeAAmount: toMoney(data.distributionsCodeAAmount),
+        section199AQBI: toMoney(data.section199AQBI ?? data.qbiIncome),
+        section199AW2Wages: toMoney(
+          data.section199AW2Wages ?? data.qbiWages
+        ),
+        section199AUbia: toMoney(data.section199AUbia ?? data.qbiProperty),
+        section199APatronReduction: toMoney(
+          data.section199APatronReduction ?? data.qbiPatronReduction
+        ),
+        priorYearUnallowedLoss: toMoney(
+          data.priorYearUnallowedLoss ?? data.passiveLossCarryover
+        )
+      }
+    })
+
 const getBusinessSummary = (
   snapshot: FilingSessionSnapshot,
   businessRecords: ReturnType<typeof getBusinessRecords>,
@@ -989,6 +1069,64 @@ const getBusinessSummary = (
   }
 }
 
+const getQbiDetail = (
+  snapshot: FilingSessionSnapshot,
+  qbiWorksheetEntities: ReturnType<typeof getQBIWorksheetEntities>,
+  qbiDeductionData?: ReturnType<typeof getQbiDeductionData>
+) => {
+  const filingStatus = toText(snapshot.filingStatus || 'single')
+  const thresholdStart = qbiThresholdForStatus(filingStatus)
+  const thresholdRange =
+    filingStatus === 'mfj' || filingStatus === 'w' ? 100000 : 50000
+  const visibleEntities = qbiWorksheetEntities.slice(0, 3)
+  const overflowEntities = qbiWorksheetEntities.slice(3)
+  const overflowTotals = overflowEntities.reduce(
+    (totals, entity) => ({
+      qbiAmount: totals.qbiAmount + entity.qbiAmount,
+      w2Wages: totals.w2Wages + entity.w2Wages,
+      ubia: totals.ubia + entity.ubia,
+      w2Limitation: totals.w2Limitation + entity.w2Limitation,
+      finalDeduction: totals.finalDeduction + entity.finalDeduction
+    }),
+    {
+      qbiAmount: 0,
+      w2Wages: 0,
+      ubia: 0,
+      w2Limitation: 0,
+      finalDeduction: 0
+    }
+  )
+
+  return {
+    filingStatus,
+    thresholdStart,
+    thresholdEnd: thresholdStart + thresholdRange,
+    formPreference:
+      qbiWorksheetEntities.length > 3 ||
+      qbiWorksheetEntities.some(
+        (entity) => entity.isSSTB || entity.w2Wages > 0 || entity.ubia > 0
+      )
+        ? '8995A'
+        : '8995',
+    visibleEntities,
+    overflowEntities,
+    overflowTotals,
+    needsAdditionalStatement: overflowEntities.length > 0,
+    additionalStatementDeduction: overflowTotals.finalDeduction,
+    sstbCount: qbiWorksheetEntities.filter((entity) => entity.isSSTB).length,
+    wageLimitedCount: qbiWorksheetEntities.filter(
+      (entity) => entity.w2Limitation > 0
+    ).length,
+    carryforwards: qbiDeductionData ?? {
+      priorYearQualifiedBusinessLossCarryforward: 0,
+      reitDividends: 0,
+      ptpIncome: 0,
+      ptpLossCarryforward: 0,
+      dpadReduction: 0
+    }
+  }
+}
+
 const getRentalProperties = (entities: SessionEntitySnapshot[]) =>
   entities
     .filter((entity) => entity.entityType === 'rental_property')
@@ -1038,7 +1176,11 @@ const getRentalProperties = (entities: SessionEntitySnapshot[]) =>
         deductibleExpenses,
         netIncomeLoss,
         isPassive: Boolean(data.isPassive ?? true),
+        activeParticipation: Boolean(data.activeParticipation ?? false),
         passiveLossCarryover: toMoney(data.passiveLossCarryover),
+        priorYearPassiveLossCarryover: toMoney(
+          data.priorYearPassiveLossCarryover ?? data.passiveLossCarryover
+        ),
         isComplete: Boolean(
           (data.address ?? entity.label) &&
             (grossRents || expenseTotal || daysRented || daysPersonalUse)
@@ -1047,7 +1189,8 @@ const getRentalProperties = (entities: SessionEntitySnapshot[]) =>
     })
 
 const getRentalSummary = (
-  rentalProperties: ReturnType<typeof getRentalProperties>
+  rentalProperties: ReturnType<typeof getRentalProperties>,
+  k1Records: ReturnType<typeof getK1Records>
 ) => ({
   propertyCount: rentalProperties.length,
   completeCount: countCompleted(rentalProperties),
@@ -1079,6 +1222,29 @@ const getRentalSummary = (
   ).length,
   passiveLossCarryoverTotal: rentalProperties.reduce(
     (sum, property) => sum + property.passiveLossCarryover,
+    0
+  ),
+  k1Count: k1Records.length,
+  k1RentalIncomeTotal: k1Records.reduce(
+    (sum, record) =>
+      sum +
+      toMoney(record.netRentalRealEstateIncome) +
+      toMoney(record.otherNetRentalIncome),
+    0
+  ),
+  k1RoyaltyIncomeTotal: k1Records.reduce(
+    (sum, record) => sum + toMoney(record.royalties),
+    0
+  ),
+  scheduleEPage2NetIncome: k1Records.reduce(
+    (sum, record) =>
+      sum +
+      toMoney(record.ordinaryBusinessIncome) +
+      toMoney(record.netRentalRealEstateIncome) +
+      toMoney(record.otherNetRentalIncome) +
+      toMoney(record.royalties) +
+      toMoney(record.guaranteedPaymentsForServices) +
+      toMoney(record.guaranteedPaymentsForCapital),
     0
   )
 })
@@ -1206,6 +1372,7 @@ const getTreatyClaims = (
             articleNumber: toText(nonresident.treatyArticle),
             incomeType: toText(nonresident.treatyBenefit || 'Treaty benefit'),
             exemptAmount: 0,
+            reducedTreatyRate: toMoney(nonresident.reducedTreatyRate),
             confirmed: true,
             isComplete: Boolean(
               nonresident.treatyCountry || foreignIncome.treatyCountry
@@ -1226,6 +1393,11 @@ const getTreatyClaims = (
       ),
       incomeType: toText(entity.data.incomeType ?? entity.data.treatyBenefit),
       exemptAmount: toMoney(entity.data.exemptAmount),
+      reducedTreatyRate: toMoney(
+        entity.data.reducedTreatyRate ??
+          entity.data.reducedRate ??
+          entity.data.treatyRate
+      ),
       confirmed: Boolean(entity.data.confirmed ?? true),
       isComplete: Boolean(
         (entity.data.country ?? entity.data.treatyCountry ?? entity.label) &&
@@ -2511,6 +2683,52 @@ const getPassiveActivityLossData = (
   return allowance > 0 ? allowance : undefined
 }
 
+const getScheduleEPage2Data = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[],
+  rentalProperties: ReturnType<typeof getRentalProperties>,
+  k1Records: ReturnType<typeof getK1Records>
+) => {
+  const entity = entities.find((e) => e.entityType === 'passive_activity_loss')
+  const screen = requireScreen(snapshot, '/passive-activity-loss')
+  const d = (entity?.data ?? screen) as Record<string, unknown>
+  const priorYearUnallowedLoss = toMoney(d.priorYearUnallowedLoss ?? 0)
+  const hasRentalActivity =
+    rentalProperties.length > 0 ||
+    toMoney(d.totalRentalIncome ?? 0) > 0 ||
+    toMoney(d.totalRentalExpenses ?? 0) > 0
+  const hasOtherPassiveActivity =
+    k1Records.some((record) => record.isPassive) ||
+    toMoney(d.otherPassiveIncome ?? 0) > 0 ||
+    toMoney(d.otherPassiveLoss ?? 0) > 0
+
+  const fallbackRentalCarryover =
+    priorYearUnallowedLoss > 0 && hasRentalActivity && !hasOtherPassiveActivity
+      ? priorYearUnallowedLoss
+      : undefined
+  const fallbackOtherCarryover =
+    priorYearUnallowedLoss > 0 && hasOtherPassiveActivity && !hasRentalActivity
+      ? priorYearUnallowedLoss
+      : undefined
+
+  const hasValue =
+    Boolean(d.activelyParticipated) ||
+    fallbackRentalCarryover !== undefined ||
+    fallbackOtherCarryover !== undefined
+
+  if (!hasValue) {
+    return undefined
+  }
+
+  return {
+    activeParticipationRentalRealEstate: Boolean(
+      d.activelyParticipated ?? false
+    ),
+    priorYearRentalRealEstateLosses: fallbackRentalCarryover,
+    priorYearOtherPassiveLosses: fallbackOtherCarryover
+  }
+}
+
 const getIncomeSummary = (
   w2Records: ReturnType<typeof getW2Records>,
   form1099Records: ReturnType<typeof get1099Records>,
@@ -2990,14 +3208,27 @@ const toFacts = (
   const taxLots = getTaxLots(snapshot, entities)
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const businessRecords = getBusinessRecords(entities)
+  const k1Records = getK1Records(entities)
   const qbiWorksheetEntities = getQBIWorksheetEntities(snapshot)
+  const qbiDeductionData = getQbiDeductionData(snapshot)
   const businessSummary = getBusinessSummary(
     snapshot,
     businessRecords,
     qbiWorksheetEntities
   )
+  const qbiDetail = getQbiDetail(
+    snapshot,
+    qbiWorksheetEntities,
+    qbiDeductionData
+  )
   const rentalProperties = getRentalProperties(entities)
-  const rentalSummary = getRentalSummary(rentalProperties)
+  const rentalSummary = getRentalSummary(rentalProperties, k1Records)
+  const scheduleEPage2 = getScheduleEPage2Data(
+    snapshot,
+    entities,
+    rentalProperties,
+    k1Records
+  )
   const foreignIncomeRecords = getForeignIncomeRecords(snapshot, entities)
   const foreignAccounts = getForeignAccounts(snapshot, entities)
   const treatyClaims = getTreatyClaims(snapshot, entities)
@@ -3076,8 +3307,12 @@ const toFacts = (
     taxLots,
     cryptoAccounts,
     businessRecords,
+    k1Records,
     qbiWorksheetEntities,
+    qbiDeductionData,
+    qbiDetail,
     rentalProperties,
+    scheduleEPage2,
     foreignIncomeRecords,
     foreignAccounts,
     treatyClaims,
@@ -3248,7 +3483,10 @@ const toSubmissionPayload = (
       },
       business: {
         records: facts.businessRecords,
+        k1Records: facts.k1Records,
         qbiWorksheet: facts.qbiWorksheetEntities,
+        qbiDeductionData: facts.qbiDeductionData,
+        qbiDetail: facts.qbiDetail,
         summary: businessSummary
       },
       rental: {
@@ -3290,6 +3528,7 @@ const toSubmissionPayload = (
       incomeSummary,
       investmentSummary,
       businessSummary,
+      qbiDetail: facts.qbiDetail,
       rentalSummary,
       foreignSummary,
       creditSummary,
@@ -3298,6 +3537,7 @@ const toSubmissionPayload = (
       unemploymentCount: asArray(facts.unemploymentRecords).length,
       socialSecurityCount: asArray(facts.socialSecurityRecords).length,
       businessCount: asArray(facts.businessRecords).length,
+      k1Count: asArray(facts.k1Records).length,
       rentalPropertyCount: asArray(facts.rentalProperties).length,
       foreignIncomeCount: asArray(facts.foreignIncomeRecords).length,
       foreignAccountCount: asArray(facts.foreignAccounts).length
@@ -3766,6 +4006,7 @@ const buildReview = (
   const taxLots = getTaxLots(snapshot, entities)
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const businessRecords = getBusinessRecords(entities)
+  const k1Records = getK1Records(entities)
   const qbiWorksheetEntities = getQBIWorksheetEntities(snapshot)
   const businessSummary = getBusinessSummary(
     snapshot,
@@ -3773,7 +4014,7 @@ const buildReview = (
     qbiWorksheetEntities
   )
   const rentalProperties = getRentalProperties(entities)
-  const rentalSummary = getRentalSummary(rentalProperties)
+  const rentalSummary = getRentalSummary(rentalProperties, k1Records)
   const foreignIncomeRecords = getForeignIncomeRecords(snapshot, entities)
   const foreignAccounts = getForeignAccounts(snapshot, entities)
   const treatyClaims = getTreatyClaims(snapshot, entities)

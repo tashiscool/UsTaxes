@@ -19,7 +19,9 @@ const baseFacts = (overrides: Record<string, unknown> = {}) => ({
   taxLots: [],
   cryptoAccounts: [],
   businessRecords: [],
-  qbiWorksheetEntities: {},
+  k1Records: [],
+  qbiWorksheetEntities: [],
+  qbiDeductionData: {},
   rentalProperties: [],
   foreignIncomeRecords: [],
   foreignAccounts: [],
@@ -1049,6 +1051,244 @@ describe('TaxCalculationService', () => {
         expect(result.agi).toBeGreaterThan(0)
         expect(result.taxableIncome).toBeLessThan(result.agi - 15750)
       }
+    })
+
+    it('keeps QBI deduction-side inputs separate from worksheet entity rows', () => {
+      const information = adaptFactsToInformation(
+        baseFacts({
+          businessRecords: [
+            {
+              id: 'biz-qbi-detailed',
+              entityType: 'schedule_c',
+              name: 'Cedar Advisory',
+              grossReceipts: 150000,
+              cogs: 0,
+              totalExpenses: 10000,
+              expenses: {},
+              ordinaryIncome: 0,
+              rentalIncome: 0,
+              interestIncome: 0,
+              dividendIncome: 0,
+              capitalGainLoss: 0,
+              guaranteedPayments: 0,
+              section179: 0,
+              qbiEligible: true,
+              qbiWages: 18000,
+              qbiProperty: 95000,
+              homeOffice: false,
+              homeOfficeMethod: 'simplified',
+              homeOfficePct: 0,
+              homeOfficeSqFt: 0,
+              homeSqFt: 0,
+              homeOfficeMortgageInterest: 0,
+              homeOfficeRealEstateTaxes: 0,
+              homeOfficeInsurance: 0,
+              homeOfficeUtilities: 0,
+              homeOfficeRepairs: 0,
+              homeOfficeOther: 0,
+              homeOfficeHomeValue: 0,
+              homeOfficeLandValue: 0,
+              homeOfficePurchaseDate: '',
+              homeOfficePriorDepreciation: 0,
+              homeOfficeDeduction: 0,
+              netBusinessIncome: 140000,
+              selfEmploymentIncome: 140000,
+              qbiBaseIncome: 140000,
+              passiveLoss: 0,
+              atRiskBasis: 0,
+              isComplete: true
+            }
+          ],
+          qbiWorksheetEntities: [
+            {
+              id: 'worksheet-1',
+              name: 'Cedar Advisory',
+              type: 'sole_prop',
+              netIncome: 140000,
+              w2Wages: 18000,
+              ubia: 95000,
+              isSSTB: true,
+              qbiAmount: 140000,
+              w2Limitation: 11400,
+              finalDeduction: 21600,
+              status: 'complete',
+              warnings: []
+            }
+          ],
+          qbiDeductionData: {
+            priorYearQualifiedBusinessLossCarryforward: 5000,
+            reitDividends: 1500,
+            ptpIncome: 2000,
+            ptpLossCarryforward: 500,
+            dpadReduction: 300
+          }
+        })
+      )
+
+      expect(information.qbiDeductionData).toEqual({
+        priorYearQualifiedBusinessLossCarryforward: 5000,
+        reitDividends: 1500,
+        ptpIncome: 2000,
+        ptpLossCarryforward: 500,
+        dpadReduction: 300
+      })
+      expect(information.businesses?.[0]?.qbiW2Wages).toBe(18000)
+      expect(information.businesses?.[0]?.qbiUbia).toBe(95000)
+    })
+
+    it('maps page-2 Schedule E K-1 facts into partnership records for the form engine', () => {
+      const information = adaptFactsToInformation(
+        baseFacts({
+          k1Records: [
+            {
+              partnershipName: 'Maple Partners',
+              partnershipEin: '987654321',
+              partnerOrSCorp: 'P',
+              isForeign: false,
+              isPassive: true,
+              ordinaryBusinessIncome: 18000,
+              netRentalRealEstateIncome: 2000,
+              otherNetRentalIncome: 1500,
+              royalties: 800,
+              interestIncome: 250,
+              guaranteedPaymentsForServices: 3000,
+              section199AQBI: 22000,
+              section199AW2Wages: 10000,
+              section199AUbia: 50000
+            }
+          ]
+        })
+      )
+
+      expect(information.scheduleK1Form1065s?.[0]).toMatchObject({
+        partnershipName: 'Maple Partners',
+        ordinaryBusinessIncome: 18000,
+        netRentalRealEstateIncome: 2000,
+        otherNetRentalIncome: 1500,
+        royalties: 800,
+        guaranteedPaymentsForServices: 3000,
+        section199AQBI: 22000,
+        section199AW2Wages: 10000,
+        section199AUbia: 50000
+      })
+    })
+
+    it('maps passive-loss carryovers and Schedule E page-2 eligibility facts', () => {
+      const information = adaptFactsToInformation(
+        baseFacts({
+          rentalProperties: [
+            {
+              address: {
+                street: '55 Coast Hwy',
+                city: 'Newport',
+                state: 'OR',
+                zip: '97365'
+              },
+              propertyType: 'vacation',
+              rentalDays: 300,
+              personalUseDays: 20,
+              grossRents: 24000,
+              expenses: {
+                mortgage: 6000,
+                taxes: 2500
+              },
+              activeParticipation: true,
+              priorYearPassiveLossCarryover: 4200
+            }
+          ],
+          k1Records: [
+            {
+              partnershipName: 'Passive Maple Partners',
+              partnershipEin: '987654321',
+              partnerOrSCorp: 'P',
+              isForeign: false,
+              isPassive: true,
+              ordinaryBusinessIncome: 500,
+              netRentalRealEstateIncome: -800,
+              priorYearUnallowedLoss: 1500
+            }
+          ],
+          scheduleEPage2: {
+            activeParticipationRentalRealEstate: true,
+            mfsLivedApartAllYear: true,
+            priorYearRentalRealEstateLosses: 4200
+          }
+        })
+      )
+
+      expect(information.realEstate?.[0]).toMatchObject({
+        activeParticipation: true,
+        priorYearPassiveLossCarryover: 4200
+      })
+      expect(information.scheduleK1Form1065s?.[0]).toMatchObject({
+        priorYearUnallowedLoss: 1500
+      })
+      expect(information.scheduleEPage2).toEqual({
+        activeParticipationRentalRealEstate: true,
+        mfsLivedApartAllYear: true,
+        priorYearRentalRealEstateLosses: 4200,
+        priorYearOtherPassiveLosses: undefined,
+        royaltyExpenses: undefined,
+        estateTrustIncomeLoss: undefined,
+        remicIncomeLoss: undefined,
+        farmRentalIncomeLoss: undefined
+      })
+    })
+
+    it('merges Schedule NEC and 1099 FDAP sources into the nonresident return surface', () => {
+      const information = adaptFactsToInformation(
+        baseFacts({
+          nonresidentProfile: {
+            hasData: true,
+            requires1040NR: true,
+            countryOfCitizenship: 'DE',
+            daysInUS2024: 120,
+            daysInUS2023: 40,
+            daysInUS2022: 20,
+            hasTreaty: true
+          },
+          nonresidentScheduleNecItems: [
+            {
+              incomeType: 'US dividends',
+              grossAmount: 4200,
+              treatyRate: 15
+            },
+            {
+              incomeType: 'US royalties',
+              grossAmount: 1000
+            }
+          ],
+          form1099Records: [
+            {
+              type: 'DIV',
+              ordinaryDividends: 800,
+              amount: 800
+            },
+            {
+              type: 'MISC',
+              amount: 500,
+              notes: 'royalties'
+            }
+          ],
+          treatyClaims: [
+            {
+              country: 'DE',
+              articleNumber: '10',
+              exemptAmount: 0,
+              confirmed: true
+            }
+          ]
+        })
+      )
+
+      expect(information.nonresidentAlienReturn?.nonresidentInfo).toMatchObject({
+        claimsTaxTreaty: true,
+        reducedTreatyRate: 0.15,
+        fdapIncome: {
+          dividends: 5000,
+          royalties: 1500
+        }
+      })
     })
 
     it('§2.6 NIIT: investment income above $200k threshold attracts 3.8% tax', () => {

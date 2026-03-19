@@ -330,6 +330,12 @@ const classifyScheduleNecIncomeType = (
   return 'otherIncome'
 }
 
+const normalizeTreatyRate = (value: unknown): number | undefined => {
+  const rate = toNum(value)
+  if (rate <= 0) return undefined
+  return rate > 1 ? rate / 100 : rate
+}
+
 const buildNonresidentAlienReturn = (
   facts: FactsRecord,
   rawItemizedDeductions?: ReturnType<typeof buildRawItemizedDeductions>
@@ -346,6 +352,9 @@ const buildNonresidentAlienReturn = (
     facts.nonresidentScheduleNecItems
   )
   const treatyClaims = asArray<Record<string, unknown>>(facts.treatyClaims)
+  const confirmedTreatyClaims = treatyClaims.filter((claim) =>
+    toBool(claim.confirmed ?? true)
+  )
 
   const hasNonresidentActivity =
     toBool(nonresidentProfile.hasData) ||
@@ -450,36 +459,57 @@ const buildNonresidentAlienReturn = (
     otherIncome: 0
   }
 
-  if (scheduleNecItems.length > 0) {
-    for (const item of scheduleNecItems) {
-      const category = classifyScheduleNecIncomeType(item.incomeType)
-      fdapIncome[category] += toNum(item.grossAmount)
-    }
-  } else {
-    for (const record of form1099Records) {
-      const type = toStr(record.type).toUpperCase().replace('-', '')
-      if (type === '1099DIV' || type === 'DIV') {
-        fdapIncome.dividends += toNum(
-          record.ordinaryDividends ?? record.dividends ?? record.amount
-        )
-      } else if (type === '1099INT' || type === 'INT') {
-        fdapIncome.interest += toNum(record.amount)
-      } else if (type === '1099SSA' || type === 'SSA') {
-        fdapIncome.socialSecurity += toNum(record.amount)
-      } else if (type === '1099MISC' || type === 'MISC') {
-        const notes = toStr(record.notes).toLowerCase()
-        if (notes.includes('royalt')) {
-          fdapIncome.royalties += toNum(record.amount)
-        } else if (notes.includes('rent')) {
-          fdapIncome.rents += toNum(record.amount)
-        } else {
-          fdapIncome.otherIncome += toNum(record.amount)
-        }
+  for (const item of scheduleNecItems) {
+    const category = classifyScheduleNecIncomeType(item.incomeType)
+    fdapIncome[category] += toNum(item.grossAmount)
+  }
+
+  for (const record of form1099Records) {
+    const type = toStr(record.type).toUpperCase().replace('-', '')
+    if (type === '1099DIV' || type === 'DIV') {
+      fdapIncome.dividends += toNum(
+        record.ordinaryDividends ?? record.dividends ?? record.amount
+      )
+    } else if (type === '1099INT' || type === 'INT') {
+      fdapIncome.interest += toNum(record.amount)
+    } else if (type === '1099SSA' || type === 'SSA') {
+      fdapIncome.socialSecurity += toNum(record.amount)
+    } else if (type === '1099MISC' || type === 'MISC') {
+      const notes = toStr(record.notes).toLowerCase()
+      if (notes.includes('royalt')) {
+        fdapIncome.royalties += toNum(record.amount)
+      } else if (notes.includes('rent')) {
+        fdapIncome.rents += toNum(record.amount)
+      } else {
+        fdapIncome.otherIncome += toNum(record.amount)
       }
     }
   }
 
-  const firstTreatyClaim = treatyClaims[0] ?? {}
+  const firstTreatyClaim = confirmedTreatyClaims[0] ?? treatyClaims[0] ?? {}
+  const scheduleNecTreatyRates = scheduleNecItems
+    .map((item) =>
+      normalizeTreatyRate(item.treatyRate ?? item.reducedTreatyRate)
+    )
+    .filter((rate): rate is number => rate !== undefined)
+  const uniqueScheduleNecTreatyRates = Array.from(
+    new Set(scheduleNecTreatyRates.map((rate) => rate.toFixed(6)))
+  ).map((rate) => Number(rate))
+  const treatyBenefitAmountFromClaims = confirmedTreatyClaims.reduce(
+    (sum, claim) => sum + toNum(claim.exemptAmount ?? claim.treatyBenefitAmount),
+    0
+  )
+  const reducedTreatyRate =
+    normalizeTreatyRate(
+      scheduleOi.reducedTreatyRate ??
+        scheduleOi.treatyRate ??
+        firstTreatyClaim.reducedTreatyRate ??
+        firstTreatyClaim.reducedRate ??
+        firstTreatyClaim.treatyRate
+    ) ??
+    (uniqueScheduleNecTreatyRates.length === 1
+      ? uniqueScheduleNecTreatyRates[0]
+      : undefined)
   const nrItemized =
     Object.keys(asRecord(scheduleOi.itemizedDeductions)).length > 0
       ? asRecord(scheduleOi.itemizedDeductions)
@@ -543,7 +573,8 @@ const buildNonresidentAlienReturn = (
       daysInUSPriorYear: toNum(nonresidentProfile.daysInUS2023),
       daysInUS2YearsPrior: toNum(nonresidentProfile.daysInUS2022),
       claimsTaxTreaty: toBool(
-        nonresidentProfile.hasTreaty ?? treatyClaims.length > 0
+        nonresidentProfile.hasTreaty ??
+          (treatyClaims.length > 0 || reducedTreatyRate !== undefined)
       ),
       treatyCountry: toStr(
         nonresidentProfile.treatyCountry ??
@@ -558,11 +589,10 @@ const buildNonresidentAlienReturn = (
       treatyBenefitAmount: toNum(
         scheduleOi.treatyBenefitAmount ??
           scheduleOi.treatyExemptAmount ??
-          firstTreatyClaim.exemptAmount
+          firstTreatyClaim.exemptAmount ??
+          treatyBenefitAmountFromClaims
       ),
-      reducedTreatyRate: toNum(
-        scheduleOi.reducedTreatyRate ?? scheduleOi.treatyRate
-      ),
+      reducedTreatyRate,
       hasEffectivelyConnectedIncome:
         eciWages +
           eciBusinessIncome +
@@ -1296,10 +1326,18 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
   // Credits are handled by the form system based on the data provided
 
   // Adapt QBI data
-  const qbiData = asRecord(facts.qbiWorksheetEntities)
+  const qbiData = asRecord(facts.qbiDeductionData)
   const qbiDeductionData: QbiDeductionData | undefined =
     qbiData && Object.keys(qbiData).length > 0
-      ? (qbiData as unknown as QbiDeductionData)
+      ? {
+          priorYearQualifiedBusinessLossCarryforward: toNum(
+            qbiData.priorYearQualifiedBusinessLossCarryforward
+          ),
+          reitDividends: toNum(qbiData.reitDividends),
+          ptpIncome: toNum(qbiData.ptpIncome),
+          ptpLossCarryforward: toNum(qbiData.ptpLossCarryforward),
+          dpadReduction: toNum(qbiData.dpadReduction)
+        }
       : undefined
 
   // Adapt itemized deductions (Schedule A — SALT, mortgage interest, charity, etc.)
@@ -1393,9 +1431,10 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
             otherExpenses: toNum(exp.otherExpenses ?? exp.other ?? 0)
           },
           homeOfficeDeduction: toNum(b.homeOfficeDeduction) || undefined,
-          qbiW2Wages: toNum(b.qbiW2Wages) || undefined,
+          qbiW2Wages: toNum(b.qbiW2Wages ?? b.qbiWages) || undefined,
+          qbiUbia: toNum(b.qbiUbia ?? b.qbiProperty) || undefined,
           isSpecifiedServiceTradeOrBusiness: toBool(
-            b.isSpecifiedServiceTradeOrBusiness ?? false
+            b.isSpecifiedServiceTradeOrBusiness ?? b.isSSTB ?? false
           ),
           personRole: (toStr(b.owner) === 'spouse'
             ? PersonRole.SPOUSE
@@ -1588,9 +1627,44 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
           utilities: toNum(exp.utilities ?? 0) || undefined,
           depreciation: toNum(exp.depreciation ?? 0) || undefined,
           other: toNum(exp.other ?? exp.otherExpenses ?? 0) || undefined
-        }
+        },
+        activeParticipation: toBool(p.activeParticipation ?? false) || undefined,
+        priorYearPassiveLossCarryover:
+          toNum(
+            p.priorYearPassiveLossCarryover ?? p.passiveLossCarryover ?? 0
+          ) || undefined
       }
     })
+  })()
+
+  const scheduleEPage2 = (() => {
+    const raw = asRecord(facts.scheduleEPage2)
+    const hasValue = [
+      raw.royaltyExpenses,
+      raw.estateTrustIncomeLoss,
+      raw.remicIncomeLoss,
+      raw.farmRentalIncomeLoss,
+      raw.activeParticipationRentalRealEstate,
+      raw.mfsLivedApartAllYear,
+      raw.priorYearRentalRealEstateLosses,
+      raw.priorYearOtherPassiveLosses
+    ].some((value) => value !== undefined && value !== null && value !== '')
+
+    if (!hasValue) return undefined
+
+    return {
+      royaltyExpenses: toNum(raw.royaltyExpenses) || undefined,
+      estateTrustIncomeLoss: toNum(raw.estateTrustIncomeLoss) || undefined,
+      remicIncomeLoss: toNum(raw.remicIncomeLoss) || undefined,
+      farmRentalIncomeLoss: toNum(raw.farmRentalIncomeLoss) || undefined,
+      activeParticipationRentalRealEstate:
+        toBool(raw.activeParticipationRentalRealEstate) || undefined,
+      mfsLivedApartAllYear: toBool(raw.mfsLivedApartAllYear) || undefined,
+      priorYearRentalRealEstateLosses:
+        toNum(raw.priorYearRentalRealEstateLosses) || undefined,
+      priorYearOtherPassiveLosses:
+        toNum(raw.priorYearOtherPassiveLosses) || undefined
+    }
   })()
 
   // ─── Estimated tax payments (Form 2210 / F1040-ES) ────────────────────────
@@ -1683,7 +1757,10 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
       ),
       section199AQBI: toNum(r.section199AQBI ?? r.qbiIncome ?? 0),
       section199AW2Wages: toNum(r.section199AW2Wages ?? 0) || undefined,
-      section199AUbia: toNum(r.section199AUbia ?? 0) || undefined
+      section199AUbia: toNum(r.section199AUbia ?? 0) || undefined,
+      priorYearUnallowedLoss:
+        toNum(r.priorYearUnallowedLoss ?? r.passiveLossCarryover ?? 0) ||
+        undefined
     }))
   })()
 
@@ -2038,6 +2115,7 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     trumpSavingsAccounts,
     // QBI
     qbiDeductionData,
+    scheduleEPage2,
     // Schedule C / Schedule F / Schedule H
     businesses,
     farmBusiness,

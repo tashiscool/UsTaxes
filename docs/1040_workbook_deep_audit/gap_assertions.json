@@ -9,7 +9,8 @@
     ],
     "sheet_count": 3,
     "required_test_files": [
-      "src/forms/Y2025/tests/ScheduleEParity.test.ts"
+      "src/forms/Y2025/tests/ScheduleEParity.test.ts",
+      "src/forms/Y2025/tests/F8582Parity.test.ts"
     ],
     "missing_tests": [],
     "issues": []
@@ -24,7 +25,8 @@
     ],
     "sheet_count": 3,
     "required_test_files": [
-      "src/forms/Y2025/tests/ScheduleEParity.test.ts"
+      "src/forms/Y2025/tests/ScheduleEParity.test.ts",
+      "src/forms/Y2025/tests/F8582Parity.test.ts"
     ],
     "missing_tests": [],
     "issues": []

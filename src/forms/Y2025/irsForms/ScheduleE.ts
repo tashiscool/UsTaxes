@@ -4,7 +4,8 @@ import {
   PropertyType,
   PropertyExpenseTypeName,
   Income1099Type,
-  F1099MISCData
+  F1099MISCData,
+  ScheduleK1Form1065
 } from 'ustaxes/core/data'
 import { displayNegPos, sumFields } from 'ustaxes/core/irsForms/util'
 import _ from 'lodash'
@@ -37,6 +38,16 @@ const propTypeIndex = {
   [PropertyType.selfRental]: 7,
   [PropertyType.other]: 8
 }
+
+export const scheduleEK1Amount = (k1: ScheduleK1Form1065): number =>
+  sumFields([
+    k1.ordinaryBusinessIncome,
+    k1.netRentalRealEstateIncome,
+    k1.otherNetRentalIncome,
+    k1.royalties,
+    k1.guaranteedPaymentsForServices,
+    k1.guaranteedPaymentsForCapital
+  ])
 
 export default class ScheduleE extends F1040Attachment {
   tag: FormTag = 'f1040se'
@@ -213,15 +224,7 @@ export default class ScheduleE extends F1040Attachment {
 
   k1ScheduleEAmount = (
     k1: (typeof this.f1040.info.scheduleK1Form1065s)[number]
-  ): number =>
-    sumFields([
-      k1.ordinaryBusinessIncome,
-      k1.netRentalRealEstateIncome,
-      k1.otherNetRentalIncome,
-      k1.royalties,
-      k1.guaranteedPaymentsForServices,
-      k1.guaranteedPaymentsForCapital
-    ])
+  ): number => scheduleEK1Amount(k1)
 
   l29ah = (): number | undefined =>
     this.f1040.info.scheduleK1Form1065s.reduce(
