@@ -26,6 +26,11 @@ This sweep covers the active filing stack:
   - `npm run test:form-parity-harness`
   - `rowCount=169`
   - `mismatchCount=0`
+- The AMT capital-gains path now uses real Schedule D tax-worksheet lines in the
+  `F6251` Part III branch instead of stubbed worksheet methods:
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/worksheets/SDTaxWorksheet.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/worksheets/ScheduleDTaxWorksheet.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/f6251.test.ts`
 - `ScheduleEIC` childless-filer gating now has explicit age and U.S.-home coverage:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/ScheduleEIC.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/ScheduleEIC.test.ts`
@@ -71,6 +76,9 @@ This sweep covers the active filing stack:
 ### Workbook-led 1040 family
 
 - `Schedule B`, qualified dividends, `1099-G`, `1099-INT`, `1099-DIV`, `Schedule E`, `F8582`, `6251`, `8812`, `8949`, `8995`, `8995-A`, and `1040-NR` all now have stronger workbook-led or direct parity evidence than they did earlier in the week.
+- The capital-gains / AMT bridge is also narrower now:
+  - the Schedule D tax worksheet no longer feeds `F6251 Part III` through
+    undefined line methods for the core `l10`, `l13`, `l14`, and `l21` values
 - The next workbook-led unaudited cluster we closed today was `EIC` childless eligibility gating:
   - age-at-year-end
   - U.S.-home residency proxy

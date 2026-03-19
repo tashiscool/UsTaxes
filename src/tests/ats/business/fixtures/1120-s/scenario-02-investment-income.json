@@ -34,16 +34,30 @@
       {
         "name": "Alice Johnson",
         "ssn": "111-22-3333",
+        "address": {
+          "address": "100 Founder Way",
+          "city": "Wilmington",
+          "state": "DE",
+          "zip": "19801"
+        },
         "ownershipPercentage": 60,
         "stockOwned": 600,
+        "dateAcquired": "2020-01-15",
         "isOfficer": true,
         "compensation": 100000
       },
       {
         "name": "Bob Smith",
         "ssn": "444-55-6666",
+        "address": {
+          "address": "200 Operator Ln",
+          "city": "Wilmington",
+          "state": "DE",
+          "zip": "19802"
+        },
         "ownershipPercentage": 40,
         "stockOwned": 400,
+        "dateAcquired": "2020-01-15",
         "isOfficer": false
       }
     ],
@@ -52,8 +66,8 @@
       "netRentalRealEstateIncome": 0,
       "otherNetRentalIncome": 0,
       "interestIncome": 5000,
-      "dividendIncome": 0,
-      "qualifiedDividends": 0,
+      "dividendIncome": 4000,
+      "qualifiedDividends": 2000,
       "royalties": 0,
       "netShortTermCapitalGain": 0,
       "netLongTermCapitalGain": 10000,
@@ -61,8 +75,8 @@
       "unrecaptured1250Gain": 0,
       "net1231Gain": 0,
       "otherIncome": 0,
-      "section179Deduction": 0,
-      "otherDeductions": 0,
+      "section179Deduction": 12000,
+      "otherDeductions": 4000,
       "charitableContributions": 0,
       "lowIncomeHousingCredit": 0,
       "otherCredits": 0,
@@ -70,7 +84,7 @@
       "taxExemptInterest": 0,
       "otherTaxExemptIncome": 0,
       "nondeductibleExpenses": 0,
-      "cashDistributions": 0,
+      "cashDistributions": 10000,
       "propertyDistributions": 0,
       "section199AQBI": 0
     },
@@ -87,7 +101,12 @@
         "ownershipPct": 60,
         "ordinaryIncome": 180000,
         "interestIncome": 3000,
+        "dividendIncome": 2400,
+        "qualifiedDividends": 1200,
         "capitalGains": 6000,
+        "section179Deduction": 7200,
+        "otherDeductions": 2400,
+        "cashDistributions": 6000,
         "selfEmploymentEarnings": 0
       },
       {
@@ -95,9 +114,22 @@
         "ownershipPct": 40,
         "ordinaryIncome": 120000,
         "interestIncome": 2000,
+        "dividendIncome": 1600,
+        "qualifiedDividends": 800,
         "capitalGains": 4000,
+        "section179Deduction": 4800,
+        "otherDeductions": 1600,
+        "cashDistributions": 4000,
         "selfEmploymentEarnings": 0
       }
+    ],
+    "taxableIncome": 300000,
+    "effectiveTaxRate": 0,
+    "totalPayments": 0,
+    "amountOwed": 0,
+    "overpayment": 0,
+    "schedules": [
+      "f1120s"
     ]
   }
 }

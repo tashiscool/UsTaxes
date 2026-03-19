@@ -13,15 +13,41 @@ function ifNumber(
   return num !== undefined ? f(num) : undefined
 }
 
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value))
+
 export default class F8995A extends F8995 {
   tag: FormTag = 'f8995a'
   sequenceIndex = 55.5
 
+  reductionPercentage = (): number =>
+    clamp(this.l22() / this.l23(), 0, 1)
+
+  sstbApplicablePercentage = (): number => 1 - this.reductionPercentage()
+
+  adjustedEntry = (entry: QBIEntry): QBIEntry => {
+    if (!entry.isSSTB) {
+      return entry
+    }
+
+    const applicablePercentage = this.sstbApplicablePercentage()
+    return {
+      ...entry,
+      qbi: entry.qbi * applicablePercentage,
+      w2Wages: entry.w2Wages * applicablePercentage,
+      ubia: entry.ubia * applicablePercentage,
+      patronReduction: entry.patronReduction * applicablePercentage
+    }
+  }
+
+  adjustedEntries = (): ReturnType<F8995['qbiEntries']> =>
+    this.qbiEntries().map((entry) => this.adjustedEntry(entry))
+
   visibleEntries = (): ReturnType<F8995['qbiEntries']> =>
-    this.qbiEntries().slice(0, 3)
+    this.adjustedEntries().slice(0, 3)
 
   overflowEntries = (): ReturnType<F8995['qbiEntries']> =>
-    this.qbiEntries().slice(3)
+    this.adjustedEntries().slice(3)
 
   needsAdditionalStatement = (): boolean => this.overflowEntries().length > 0
 
@@ -68,6 +94,7 @@ export default class F8995A extends F8995 {
     thresholdStart: number
     thresholdEnd: number
     applicablePercentage: number
+    sstbApplicablePercentage: number
     sstbCount: number
     reitDividends: number
     ptpIncome: number
@@ -75,22 +102,36 @@ export default class F8995A extends F8995 {
     dpadReduction: number
     overflowTotals: ReturnType<F8995A['overflowTotals']>
     overflowStatementDeduction: number
-  } => ({
-    requiresAttachment: this.needsAdditionalStatement(),
-    visibleBusinessCount: this.visibleEntries().length,
-    overflowBusinessCount: this.overflowEntries().length,
-    totalBusinessCount: this.qbiEntries().length,
-    thresholdStart: this.l21(),
-    thresholdEnd: this.l21() + this.l23(),
-    applicablePercentage: this.l24(),
-    sstbCount: this.qbiEntries().filter((entry) => entry.isSSTB).length,
-    reitDividends: this.reitDividends(),
-    ptpIncome: this.currentYearPtpIncome(),
-    ptpLossCarryforward: this.ptpLossCarryforward(),
-    dpadReduction: this.l38(),
-    overflowTotals: this.overflowTotals(),
-    overflowStatementDeduction: this.overflowStatementDeduction()
-  })
+  } => {
+    const hasCarryforwardOrAdjustmentData =
+      this.priorYearQualifiedBusinessLossCarryforward() > 0 ||
+      this.reitDividends() > 0 ||
+      this.currentYearPtpIncome() > 0 ||
+      this.ptpLossCarryforward() > 0 ||
+      this.l38() > 0
+    const sstbCount = this.qbiEntries().filter((entry) => entry.isSSTB).length
+
+    return {
+      requiresAttachment:
+        this.needsAdditionalStatement() ||
+        sstbCount > 0 ||
+        hasCarryforwardOrAdjustmentData,
+      visibleBusinessCount: this.visibleEntries().length,
+      overflowBusinessCount: this.overflowEntries().length,
+      totalBusinessCount: this.adjustedEntries().length,
+      thresholdStart: this.l21(),
+      thresholdEnd: this.l21() + this.l23(),
+      applicablePercentage: this.l24(),
+      sstbApplicablePercentage: this.sstbApplicablePercentage(),
+      sstbCount,
+      reitDividends: this.reitDividends(),
+      ptpIncome: this.currentYearPtpIncome(),
+      ptpLossCarryforward: this.ptpLossCarryforward(),
+      dpadReduction: this.l38(),
+      overflowTotals: this.overflowTotals(),
+      overflowStatementDeduction: this.overflowStatementDeduction()
+    }
+  }
 
   deductionForEntry = (
     entry: QBIEntry
@@ -113,7 +154,7 @@ export default class F8995A extends F8995 {
     Math.max(0, this.deductionForEntry(entry) - entry.patronReduction)
 
   allQualifiedBusinessDeductions = (): number[] =>
-    this.qbiEntries()
+    this.adjustedEntries()
       .filter((entry) => entry.qbi > 0)
       .map((entry) => this.deductionAfterPatronReduction(entry))
 
@@ -226,7 +267,7 @@ export default class F8995A extends F8995 {
     this.f1040.info.taxPayer.filingStatus === FilingStatus.W
       ? 100000
       : 50000
-  l24 = (): number => Math.round((this.l22() / this.l23()) * 10000) / 10000 // We want xx.xx%
+  l24 = (): number => Math.round(this.reductionPercentage() * 10000) / 10000 // We want xx.xx%
 
   l25a = (): number | undefined =>
     ifNumber(this.l19a(), (num) => num * this.l24())
@@ -259,7 +300,7 @@ export default class F8995A extends F8995 {
 
   l38 = (): number => this.f1040.info.qbiDeductionData?.dpadReduction ?? 0
 
-  l39 = (): number => this.l37() - this.l38()
+  l39 = (): number => Math.max(0, this.l37() - this.l38())
   deductions = (): number => this.l39()
   l40 = (): number => Math.min(0, this.l28() + this.l29())
 

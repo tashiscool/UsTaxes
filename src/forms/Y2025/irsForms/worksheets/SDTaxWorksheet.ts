@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { Worksheet } from '../F1040Attachment'
+import LTCGQualDivReference from './ScheduleDTaxWorksheet'
 
 export default class SDTaxWorksheet extends Worksheet {
   /**
@@ -26,16 +27,33 @@ export default class SDTaxWorksheet extends Worksheet {
     return sdCondition || f4952Condition
   }
 
+  reference = (): LTCGQualDivReference =>
+    new LTCGQualDivReference({
+      qualDiv: this.f1040.l3a() ?? 0,
+      taxableIncome: this.f1040.l15(),
+      f4952l4g: this.f1040.f4952?.l4g() ?? 0,
+      f4952l4e: this.f1040.f4952?.l4e() ?? 0,
+      sdl15: this.f1040.scheduleD.l15(),
+      sdl16: this.f1040.scheduleD.l16(),
+      sdl18: this.f1040.scheduleD.l18() ?? 0,
+      sdl19: this.f1040.scheduleD.l19() ?? 0,
+      filingStatus: this.f1040.info.taxPayer.filingStatus
+    })
+
   // TODO - Required by 6251,
   // Might be refigured for AMT
-  l10 = (): number | undefined => undefined
+  l10 = (): number | undefined =>
+    this.isNeeded() ? this.reference().l10() : undefined
 
   // TODO - Required by 6251,
-  l13 = (): number | undefined => undefined
+  l13 = (): number | undefined =>
+    this.isNeeded() ? this.reference().l13() : undefined
 
   // TODO - Required by 6251,
-  l14 = (): number | undefined => undefined
+  l14 = (): number | undefined =>
+    this.isNeeded() ? this.reference().l14() : undefined
 
   // TODO - Required by 6251,
-  l21 = (): number | undefined => undefined
+  l21 = (): number | undefined =>
+    this.isNeeded() ? this.reference().l21() : undefined
 }

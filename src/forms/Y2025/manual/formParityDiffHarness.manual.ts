@@ -358,6 +358,28 @@ const buildQbiAttachmentBusinesses = (
     }
   })
 
+const summarizeQbiOverflow = (
+  attachmentBusinesses: Array<Record<string, unknown>>
+): {
+  qbi: number
+  w2Wages: number
+  ubia: number
+} =>
+  attachmentBusinesses
+    .filter((entry) => entry.isAttachmentRow)
+    .reduce<{
+      qbi: number
+      w2Wages: number
+      ubia: number
+    }>(
+      (totals, entry) => ({
+        qbi: totals.qbi + (Number(entry.qbi) || 0),
+        w2Wages: totals.w2Wages + (Number(entry.w2Wages) || 0),
+        ubia: totals.ubia + (Number(entry.ubia) || 0)
+      }),
+      { qbi: 0, w2Wages: 0, ubia: 0 }
+    )
+
 const buildScheduleOIDisclosures = (
   scenario: any,
   f1040nr: any
@@ -506,6 +528,11 @@ const createScenario18QbiOverflowOutput = (): Record<string, unknown> => {
   const f1040 = new F1040(info, [])
   const qbiForm = f1040.f8995 as any
   const qbiEntries = qbiForm?.qbiEntries?.() ?? []
+  const attachmentBusinesses = buildQbiAttachmentBusinesses(
+    (info.businesses as Record<string, unknown>[]) ?? [],
+    qbiEntries
+  )
+  const overflowTotals = summarizeQbiOverflow(attachmentBusinesses)
   return {
     form8995ATotalBusinesses: qbiForm?.qbiEntries?.().length ?? 0,
     form8995AOverflowBusinesses: qbiForm?.overflowEntries?.().length ?? 0,
@@ -531,13 +558,10 @@ const createScenario18QbiOverflowOutput = (): Record<string, unknown> => {
     form8995ABusiness5IsSSTB: qbiForm?.qbiEntries?.()?.[4]?.isSSTB ?? false,
     form8995ABusiness6IsSSTB: qbiForm?.qbiEntries?.()?.[5]?.isSSTB ?? false,
     form8995ABusiness7IsSSTB: qbiForm?.qbiEntries?.()?.[6]?.isSSTB ?? false,
-    form8995AOverflowQBI: qbiForm?.overflowTotals?.().qbi ?? 0,
-    form8995AOverflowW2Wages: qbiForm?.overflowTotals?.().w2Wages ?? 0,
-    form8995AOverflowUBIA: qbiForm?.overflowTotals?.().ubia ?? 0,
-    attachmentBusinesses: buildQbiAttachmentBusinesses(
-      (info.businesses as Record<string, unknown>[]) ?? [],
-      qbiEntries
-    )
+    form8995AOverflowQBI: overflowTotals.qbi,
+    form8995AOverflowW2Wages: overflowTotals.w2Wages,
+    form8995AOverflowUBIA: overflowTotals.ubia,
+    attachmentBusinesses
   }
 }
 

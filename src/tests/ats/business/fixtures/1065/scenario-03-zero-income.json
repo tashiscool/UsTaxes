@@ -45,6 +45,12 @@
         "ordinaryIncome": 0,
         "selfEmploymentEarnings": 0
       }
+    ],
+    "totalDeductions": 0,
+    "taxableIncome": 0,
+    "effectiveTaxRate": 0,
+    "schedules": [
+      "f1065"
     ]
   }
 }

@@ -721,6 +721,80 @@ describe('2025 federal law updates', () => {
     expect(f8995A.l27()).toBe(28000)
   })
 
+  it('reduces SSTB QBI inputs inside the 2025 phaseout band', () => {
+    const f1040 = new F1040(cloneDeep(baseInformation), [])
+    const f8995A = new F8995A(f1040)
+
+    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+      {
+        name: 'SSTB Alpha',
+        ein: '111111111',
+        qbi: 100000,
+        w2Wages: 10000,
+        ubia: 0,
+        patronReduction: 1000,
+        isSSTB: true
+      },
+      {
+        name: 'Non-SSTB Bravo',
+        ein: '222222222',
+        qbi: 100000,
+        w2Wages: 10000,
+        ubia: 0,
+        patronReduction: 0,
+        isSSTB: false
+      }
+    ])
+    jest
+      .spyOn(f8995A, 'l20')
+      .mockReturnValue(f8995A.l21() + f8995A.l23() / 2)
+    jest.spyOn(f8995A, 'l34').mockReturnValue(0)
+
+    expect(f8995A.l24()).toBe(0.5)
+    expect(f8995A.sstbApplicablePercentage()).toBe(0.5)
+    expect(f8995A.l2a()).toBe(50000)
+    expect(f8995A.l4a()).toBe(5000)
+    expect(f8995A.l14a()).toBe(500)
+    expect(f8995A.l15a()).toBe(5750)
+    expect(f8995A.l2b()).toBe(100000)
+    expect(f8995A.l15b()).toBe(12500)
+    expect(f8995A.l16()).toBe(18250)
+    expect(f8995A.statementSummary()).toEqual(
+      expect.objectContaining({
+        applicablePercentage: 0.5,
+        sstbApplicablePercentage: 0.5,
+        sstbCount: 1
+      })
+    )
+  })
+
+  it('eliminates SSTB deductions once taxable income exceeds the 2025 phaseout range', () => {
+    const f1040 = new F1040(cloneDeep(baseInformation), [])
+    const f8995A = new F8995A(f1040)
+
+    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+      {
+        name: 'SSTB Alpha',
+        ein: '111111111',
+        qbi: 100000,
+        w2Wages: 10000,
+        ubia: 0,
+        patronReduction: 0,
+        isSSTB: true
+      }
+    ])
+    jest
+      .spyOn(f8995A, 'l20')
+      .mockReturnValue(f8995A.l21() + f8995A.l23() + 1)
+    jest.spyOn(f8995A, 'l34').mockReturnValue(0)
+
+    expect(f8995A.l24()).toBe(1)
+    expect(f8995A.sstbApplicablePercentage()).toBe(0)
+    expect(f8995A.l2a()).toBe(0)
+    expect(f8995A.l15a()).toBe(0)
+    expect(f8995A.l16()).toBe(0)
+  })
+
   it('applies prior-year QBI loss carryforwards and REIT/PTP components', () => {
     const information = cloneDeep(baseInformation)
     information.f1099s = [
@@ -779,6 +853,17 @@ describe('2025 federal law updates', () => {
     expect(f8995a.l29()).toBe(-700)
     expect(f8995a.l31()).toBe(1160)
     expect(f8995a.l38()).toBe(300)
+    expect(f8995a.statementSummary()).toEqual(
+      expect.objectContaining({
+        requiresAttachment: true,
+        reitDividends: 1500,
+        ptpIncome: 5000,
+        ptpLossCarryforward: 700,
+        dpadReduction: 300,
+        applicablePercentage: 0,
+        sstbApplicablePercentage: 1
+      })
+    )
   })
 
   it('treats qualified disaster losses differently from other casualty losses in 2025', () => {

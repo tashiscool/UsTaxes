@@ -155,4 +155,72 @@ describe('AMT', () => {
     expect(p3.l18).toBe((p3.l17 ?? 0) * 0.28 - amt.cap(FilingStatus.MFJ) * 0.02)
     expect(p3.l39).toBe((p3.l12 ?? 0) * 0.28 - amt.cap(FilingStatus.MFJ) * 0.02)
   })
+
+  it('uses the Schedule D tax worksheet lines when Form 4952 keeps preferential gains in play', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.w2s[0].income = 220000
+    information.w2s[0].medicareIncome = 220000
+    information.w2s[0].ssWages = 176100
+    information.w2s[0].stateWages = 220000
+    information.f1099s = [
+      {
+        payer: 'Growth Fund',
+        type: Income1099Type.DIV,
+        personRole: PersonRole.PRIMARY,
+        form: {
+          dividends: 15000,
+          qualifiedDividends: 15000,
+          totalCapitalGainsDistributions: 0,
+          section199ADividends: 0
+        }
+      } as never,
+      {
+        payer: 'Long Term Broker',
+        type: Income1099Type.B,
+        personRole: PersonRole.PRIMARY,
+        form: {
+          shortTermProceeds: 0,
+          shortTermCostBasis: 0,
+          longTermProceeds: 60000,
+          longTermCostBasis: 10000
+        }
+      } as never
+    ]
+    information.investmentInterestExpense = 5000
+    information.capitalGainsElectedAsInvestmentIncome = 20000
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+    const worksheet = f1040.scheduleD.taxWorksheet
+    const scheduleD = f1040.scheduleD
+    const f4952 = f1040.f4952
+    const taxableIncome = f1040.l15()
+    const qdiv = f1040.l3a() ?? 0
+    const l3 = f4952?.l4g() ?? 0
+    const l4 = f4952?.l4e() ?? 0
+    const l5 = Math.max(0, l3 - l4)
+    const l6 = Math.max(0, qdiv - l5)
+    const l7 = Math.min(scheduleD.l15(), scheduleD.l16())
+    const l8 = Math.min(l3, l4)
+    const l9 = Math.max(0, l7 - l8)
+    const expectedL10 = l6 + l9
+    const l11 = (scheduleD.l18() ?? 0) + (scheduleD.l19() ?? 0)
+    const l12 = Math.min(l9, l11)
+    const expectedL13 = expectedL10 - l12
+    const expectedL14 = Math.max(0, taxableIncome - expectedL13)
+    const expectedL18 = Math.max(0, taxableIncome - expectedL10)
+    const expectedL20 = Math.min(expectedL14, 197300)
+    const expectedL21 = Math.max(expectedL18, expectedL20)
+    const p3 = f6251.part3()
+
+    expect(worksheet.isNeeded()).toBe(true)
+    expect(worksheet.l10()).toBe(expectedL10)
+    expect(worksheet.l13()).toBe(expectedL13)
+    expect(worksheet.l14()).toBe(expectedL14)
+    expect(worksheet.l21()).toBe(expectedL21)
+    expect(p3.l13).toBe(expectedL13)
+    expect(p3.l20).toBe(expectedL14)
+    expect(p3.l27).toBe(expectedL21)
+  })
 })

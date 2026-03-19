@@ -53,6 +53,10 @@
     "taxableIncome": 44900,
     "totalTax": 14600,
     "amountOwed": 14600,
-    "overpayment": 0
+    "overpayment": 0,
+    "totalPayments": 0,
+    "schedules": [
+      "f1041"
+    ]
   }
 }

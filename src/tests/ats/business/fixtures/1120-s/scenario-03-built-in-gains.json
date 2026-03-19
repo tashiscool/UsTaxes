@@ -51,6 +51,13 @@
         "ordinaryIncome": 150000,
         "selfEmploymentEarnings": 0
       }
+    ],
+    "taxableIncome": 150000,
+    "effectiveTaxRate": 0.05,
+    "totalPayments": 0,
+    "overpayment": 0,
+    "schedules": [
+      "f1120s"
     ]
   }
 }

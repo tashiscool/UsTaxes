@@ -133,6 +133,12 @@
         "ordinaryIncome": 80000,
         "selfEmploymentEarnings": 0
       }
+    ],
+    "totalDeductions": 300000,
+    "taxableIncome": 400000,
+    "effectiveTaxRate": 0,
+    "schedules": [
+      "f1065"
     ]
   }
 }

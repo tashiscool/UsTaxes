@@ -26,6 +26,16 @@
     "adjustedTotalIncome": 14000,
     "exemption": 600,
     "taxableIncome": 13400,
-    "totalTax": 2990
+    "totalTax": 2990,
+    "totalIncome": 15000,
+    "totalDeductions": 1000,
+    "distributionDeduction": 0,
+    "beneficiaryCount": 0,
+    "totalPayments": 0,
+    "amountOwed": 2990,
+    "overpayment": 0,
+    "schedules": [
+      "f1041"
+    ]
   }
 }

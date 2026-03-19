@@ -17,11 +17,11 @@ export interface TestData {
 type Bracket = [number, number, number]
 type Cutoffs = { [key in FilingStatus]: Bracket }
 const cutoffAmounts: Cutoffs = {
-  [FilingStatus.S]: [40000, 163300, 441450],
-  [FilingStatus.MFJ]: [80000, 326600, 496600],
-  [FilingStatus.MFS]: [40000, 163300, 441450],
-  [FilingStatus.W]: [80000, 326600, 496600],
-  [FilingStatus.HOH]: [53600, 163300, 469050]
+  [FilingStatus.S]: [48350, 197300, 533400],
+  [FilingStatus.MFJ]: [96700, 394600, 600050],
+  [FilingStatus.MFS]: [48350, 197300, 300000],
+  [FilingStatus.W]: [96700, 394600, 600050],
+  [FilingStatus.HOH]: [64750, 197300, 566700]
 }
 
 export default class LTCGQualDivReference {

@@ -134,10 +134,13 @@ export interface OwnerAllocation {
   netRentalIncome: number
   interestIncome: number
   dividendIncome: number
+  qualifiedDividends: number
   capitalGains: number
   otherIncome: number
   section179Deduction: number
   otherDeductions: number
+  taxExemptInterest: number
+  cashDistributions: number
   selfEmploymentEarnings: number
 }
 
@@ -2669,8 +2672,13 @@ const adaptFactsToForm1120SData = (facts: FactsRecord): Form1120SData => {
       (s): SCorpShareholder => ({
         name: toStr(s.name),
         ssn: toStr(s.ssn ?? s.tin).replace(/\D/g, ''),
+        address:
+          s.address != null
+            ? adaptAddress(asRecord(s.address))
+            : undefined,
         ownershipPercentage: toNum(s.ownershipPercentage ?? s.ownershipPct),
         stockOwned: toNum(s.stockOwned ?? s.shares),
+        dateAcquired: toStr(s.dateAcquired) || undefined,
         isOfficer: toBool(s.isOfficer),
         compensation: toNum(s.compensation) || undefined
       })
@@ -2727,6 +2735,10 @@ const adaptFactsToForm1065Data = (facts: FactsRecord): Form1065Data => {
         name: toStr(p.name),
         tin: toStr(p.tin ?? p.ssn).replace(/\D/g, ''),
         tinType: toStr(p.tinType) === 'EIN' ? 'EIN' : 'SSN',
+        address:
+          p.address != null
+            ? adaptAddress(asRecord(p.address))
+            : undefined,
         isGeneralPartner: toBool(p.isGeneralPartner ?? true),
         isLimitedPartner: toBool(p.isLimitedPartner),
         isDomestic: toBool(p.isDomestic ?? true),
@@ -2747,7 +2759,9 @@ const adaptFactsToForm1065Data = (facts: FactsRecord): Form1065Data => {
         capitalContributed: toNum(p.capitalContributed),
         currentYearIncrease: toNum(p.currentYearIncrease),
         withdrawalsDistributions: toNum(p.withdrawalsDistributions),
-        endingCapitalAccount: toNum(p.endingCapitalAccount)
+        endingCapitalAccount: toNum(p.endingCapitalAccount),
+        share179Deduction: toNum(p.share179Deduction) || undefined,
+        shareOtherDeductions: toNum(p.shareOtherDeductions) || undefined
       })
     ),
     scheduleK: defaultScheduleK(facts),
@@ -3292,11 +3306,14 @@ export class TaxCalculationService {
           alloc.netRentalRealEstateIncome + alloc.otherNetRentalIncome,
         interestIncome: alloc.interestIncome,
         dividendIncome: alloc.dividendIncome,
+        qualifiedDividends: alloc.qualifiedDividends,
         capitalGains:
           alloc.netShortTermCapitalGain + alloc.netLongTermCapitalGain,
         otherIncome: alloc.otherIncome,
         section179Deduction: alloc.section179Deduction,
         otherDeductions: alloc.otherDeductions,
+        taxExemptInterest: alloc.taxExemptInterest,
+        cashDistributions: alloc.cashDistributions,
         selfEmploymentEarnings: 0 // S-Corp shareholders don't have SE
       }
     })
@@ -3346,11 +3363,14 @@ export class TaxCalculationService {
           alloc.netRentalRealEstateIncome + alloc.otherNetRentalIncome,
         interestIncome: alloc.interestIncome,
         dividendIncome: alloc.dividendIncome,
+        qualifiedDividends: alloc.qualifiedDividends,
         capitalGains:
           alloc.netShortTermCapitalGain + alloc.netLongTermCapitalGain,
         otherIncome: alloc.otherIncome,
         section179Deduction: alloc.section179Deduction,
         otherDeductions: alloc.otherDeductions,
+        taxExemptInterest: alloc.taxExemptInterest,
+        cashDistributions: alloc.cashDistributions,
         selfEmploymentEarnings: alloc.netEarningsSE
       }
     })

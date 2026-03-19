@@ -102,6 +102,14 @@
         "ordinaryIncome": 80000,
         "selfEmploymentEarnings": 0
       }
+    ],
+    "taxableIncome": 200000,
+    "effectiveTaxRate": 0,
+    "totalPayments": 0,
+    "amountOwed": 0,
+    "overpayment": 0,
+    "schedules": [
+      "f1120s"
     ]
   }
 }

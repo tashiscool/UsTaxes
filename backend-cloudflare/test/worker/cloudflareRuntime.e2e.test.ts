@@ -1109,7 +1109,11 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             scheduleK: {
               ordinaryBusinessIncome: '250000',
               interestIncome: '4000',
-              netLongTermCapitalGain: '10000'
+              qualifiedDividends: '2000',
+              netLongTermCapitalGain: '10000',
+              section179Deduction: '12000',
+              otherDeductions: '4000',
+              cashDistributions: '10000'
             },
             shareholders: [
               {
@@ -1118,6 +1122,13 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
                 tin: '111223333',
                 ownershipPercentage: '60',
                 stockOwned: '60',
+                address: {
+                  line1: '10 Founder Plaza',
+                  city: 'Wilmington',
+                  state: 'DE',
+                  zip: '19801'
+                },
+                dateAcquired: '2020-01-15',
                 isOfficer: true,
                 compensation: '90000'
               },
@@ -1127,6 +1138,13 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
                 tin: '444556666',
                 ownershipPercentage: '40',
                 stockOwned: '40',
+                address: {
+                  line1: '20 Operator Ln',
+                  city: 'Wilmington',
+                  state: 'DE',
+                  zip: '19802'
+                },
+                dateAcquired: '2020-01-15',
                 isOfficer: false,
                 compensation: '0'
               }
@@ -1162,7 +1180,11 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             scheduleK: {
               ordinaryBusinessIncome: '280000',
               netRentalRealEstateIncome: '240000',
-              charitableContributions: '5000'
+              qualifiedDividends: '1500',
+              charitableContributions: '5000',
+              section179Deduction: '9000',
+              otherDeductions: '6000',
+              taxExemptInterest: '1200'
             },
             partners: [
               {
@@ -1178,7 +1200,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
                 currentYearIncrease: '15000',
                 withdrawalsDistributions: '10000',
                 endingCapitalAccount: '130000',
-                isGeneralPartner: true
+                isGeneralPartner: true,
+                share179Deduction: '5500',
+                shareOtherDeductions: '3200'
               },
               {
                 id: 'p-2',
@@ -1193,7 +1217,9 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
                 currentYearIncrease: '12000',
                 withdrawalsDistributions: '8000',
                 endingCapitalAccount: '109000',
-                isGeneralPartner: false
+                isGeneralPartner: false,
+                share179Deduction: '3500',
+                shareOtherDeductions: '2800'
               }
             ]
           }
@@ -1223,6 +1249,8 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
               attorneyAccountantFees: '4500',
               otherDeductions: '2500'
             },
+            estimatedTaxPayments: '12000',
+            withholding: '1000',
             fiduciary: {
               name: 'Taylor Trustee',
               tin: '101112222',
@@ -1336,9 +1364,23 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           if (scenario.formType === '1120-S') {
             expect(ownerNames).toContain('Alice Founder')
             expect(ownerNames).toContain('Ben Operator')
+            const alice = ownerAllocations.find(
+              (allocation) => String(allocation.name) === 'Alice Founder'
+            )
+            expect(Number(alice?.qualifiedDividends ?? 0)).toBe(1200)
+            expect(Number(alice?.section179Deduction ?? 0)).toBe(7200)
+            expect(Number(alice?.otherDeductions ?? 0)).toBe(2400)
+            expect(Number(alice?.cashDistributions ?? 0)).toBe(6000)
           } else {
             expect(ownerNames).toContain('Nina Partner')
             expect(ownerNames).toContain('Omar Partner')
+            const nina = ownerAllocations.find(
+              (allocation) => String(allocation.name) === 'Nina Partner'
+            )
+            expect(Number(nina?.qualifiedDividends ?? 0)).toBe(825)
+            expect(Number(nina?.section179Deduction ?? 0)).toBe(5500)
+            expect(Number(nina?.otherDeductions ?? 0)).toBe(3200)
+            expect(Number(nina?.taxExemptInterest ?? 0)).toBe(660)
           }
         }
 
@@ -1347,6 +1389,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           expect(Number(taxSummary.distributionDeduction ?? 0)).toBeGreaterThanOrEqual(0)
           expect(Number(taxSummary.exemption ?? 0)).toBe(100)
           expect(Number(taxSummary.beneficiaryCount ?? 0)).toBe(1)
+          expect(Number(taxSummary.totalPayments ?? 0)).toBe(13000)
         }
       }
     },

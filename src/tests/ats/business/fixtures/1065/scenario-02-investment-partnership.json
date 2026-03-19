@@ -45,6 +45,12 @@
         "name": "Partner Alpha",
         "tin": "111-22-3333",
         "tinType": "SSN",
+        "address": {
+          "address": "10 Market St",
+          "city": "San Francisco",
+          "state": "CA",
+          "zip": "94105"
+        },
         "isGeneralPartner": true,
         "isLimitedPartner": false,
         "isDomestic": true,
@@ -55,12 +61,20 @@
         "capitalContributed": 0,
         "currentYearIncrease": 0,
         "withdrawalsDistributions": 0,
-        "endingCapitalAccount": 100000
+        "endingCapitalAccount": 100000,
+        "share179Deduction": 4500,
+        "shareOtherDeductions": 2500
       },
       {
         "name": "Partner Beta",
         "tin": "444-55-6666",
         "tinType": "SSN",
+        "address": {
+          "address": "20 Mission St",
+          "city": "San Francisco",
+          "state": "CA",
+          "zip": "94105"
+        },
         "isGeneralPartner": true,
         "isLimitedPartner": false,
         "isDomestic": true,
@@ -71,12 +85,20 @@
         "capitalContributed": 0,
         "currentYearIncrease": 0,
         "withdrawalsDistributions": 0,
-        "endingCapitalAccount": 60000
+        "endingCapitalAccount": 60000,
+        "share179Deduction": 2700,
+        "shareOtherDeductions": 1800
       },
       {
         "name": "Partner Gamma",
         "tin": "777-88-9999",
         "tinType": "SSN",
+        "address": {
+          "address": "30 Howard St",
+          "city": "San Francisco",
+          "state": "CA",
+          "zip": "94105"
+        },
         "isGeneralPartner": false,
         "isLimitedPartner": true,
         "isDomestic": true,
@@ -87,7 +109,9 @@
         "capitalContributed": 0,
         "currentYearIncrease": 0,
         "withdrawalsDistributions": 0,
-        "endingCapitalAccount": 40000
+        "endingCapitalAccount": 40000,
+        "share179Deduction": 1800,
+        "shareOtherDeductions": 1700
       }
     ],
     "scheduleK": {
@@ -96,7 +120,7 @@
       "otherNetRentalIncome": 0,
       "interestIncome": 5000,
       "dividendIncome": 3000,
-      "qualifiedDividends": 0,
+      "qualifiedDividends": 1500,
       "royalties": 0,
       "netShortTermCapitalGain": 0,
       "netLongTermCapitalGain": 10000,
@@ -104,16 +128,16 @@
       "unrecaptured1250Gain": 0,
       "net1231Gain": 0,
       "otherIncome": 0,
-      "section179Deduction": 0,
-      "otherDeductions": 0,
+      "section179Deduction": 9000,
+      "otherDeductions": 6000,
       "charitableContributions": 0,
       "lowIncomeHousingCredit": 0,
       "otherCredits": 0,
       "netEarningsSE": 350000,
-      "taxExemptInterest": 0,
+      "taxExemptInterest": 1200,
       "otherTaxExemptIncome": 0,
       "nondeductibleExpenses": 0,
-      "cashDistributions": 0,
+      "cashDistributions": 15000,
       "propertyDistributions": 0,
       "section199AQBI": 0
     },
@@ -136,7 +160,12 @@
         "ordinaryIncome": 175000,
         "interestIncome": 2500,
         "dividendIncome": 1500,
+        "qualifiedDividends": 750,
         "capitalGains": 5000,
+        "section179Deduction": 4500,
+        "otherDeductions": 2500,
+        "taxExemptInterest": 600,
+        "cashDistributions": 0,
         "selfEmploymentEarnings": 175000
       },
       {
@@ -145,7 +174,12 @@
         "ordinaryIncome": 105000,
         "interestIncome": 1500,
         "dividendIncome": 900,
+        "qualifiedDividends": 450,
         "capitalGains": 3000,
+        "section179Deduction": 2700,
+        "otherDeductions": 1800,
+        "taxExemptInterest": 360,
+        "cashDistributions": 0,
         "selfEmploymentEarnings": 105000
       },
       {
@@ -154,9 +188,19 @@
         "ordinaryIncome": 70000,
         "interestIncome": 1000,
         "dividendIncome": 600,
+        "qualifiedDividends": 300,
         "capitalGains": 2000,
+        "section179Deduction": 1800,
+        "otherDeductions": 1700,
+        "taxExemptInterest": 240,
+        "cashDistributions": 0,
         "selfEmploymentEarnings": 0
       }
+    ],
+    "taxableIncome": 350000,
+    "effectiveTaxRate": 0,
+    "schedules": [
+      "f1065"
     ]
   }
 }

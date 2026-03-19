@@ -3,7 +3,7 @@
 This inventory extends the workbook parity approach beyond the 1040 family.
 When a private workbook is unavailable locally, the matrix records the workbook gap
 and inventories local IRS MeF/ATS materials instead so parity work stays evidence-based.
-Canonical JSON parity fixtures now back 1120-S, 1065, and 1041 so those forms are no longer IRS-reference-led only.
+Canonical JSON parity fixtures now back 1120-S, 1065, and 1041 so those forms are no longer IRS-reference-led only. The current fixture set now exercises pass-through line items such as qualified dividends, section 179 allocations, other-deduction overrides, trust payment flows, and beneficiary counts in addition to top-line totals.
 
 | Form | Workbook | IRS refs | Fixtures | Local impl | Tests | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -26,4 +26,3 @@ Canonical JSON parity fixtures now back 1120-S, 1065, and 1041 so those forms ar
 
 - Fixture manifest: `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/business_fixture_manifest.json`
 - Fixture-backed forms in this pass: `1120-S`, `1065`, `1041`.
-

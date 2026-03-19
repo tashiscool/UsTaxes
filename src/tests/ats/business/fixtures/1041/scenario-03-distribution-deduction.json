@@ -18,7 +18,14 @@
       "ein": "66-9876543",
       "phone": "555-0100"
     },
-    "beneficiaries": [],
+    "beneficiaries": [
+      {
+        "name": "Avery Beneficiary",
+        "tin": "212-22-3333",
+        "address": "1 Harbor Way",
+        "percentageShare": 100
+      }
+    ],
     "income": {
       "interest": 40000,
       "ordinaryDividends": 30000,
@@ -44,8 +51,8 @@
     "otherDistributions": 10000,
     "section645Election": false,
     "section663bElection": false,
-    "estimatedTaxPayments": 0,
-    "withholding": 0,
+    "estimatedTaxPayments": 12000,
+    "withholding": 1000,
     "taxYear": 2025
   },
   "expected": {
@@ -55,6 +62,14 @@
     "distributionDeduction": 60000,
     "exemption": 100,
     "taxableIncome": 39900,
-    "totalTax": 12750
+    "totalTax": 12750,
+    "totalDeductions": 0,
+    "beneficiaryCount": 1,
+    "totalPayments": 13000,
+    "amountOwed": 0,
+    "overpayment": 250,
+    "schedules": [
+      "f1041"
+    ]
   }
 }

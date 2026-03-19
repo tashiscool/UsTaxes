@@ -206,8 +206,8 @@ describe('S-Corp (Form 1120-S)', () => {
           netRentalRealEstateIncome: 0,
           otherNetRentalIncome: 0,
           interestIncome: 5_000,
-          dividendIncome: 0,
-          qualifiedDividends: 0,
+          dividendIncome: 4_000,
+          qualifiedDividends: 2_000,
           royalties: 0,
           netShortTermCapitalGain: 0,
           netLongTermCapitalGain: 10_000,
@@ -215,8 +215,8 @@ describe('S-Corp (Form 1120-S)', () => {
           unrecaptured1250Gain: 0,
           net1231Gain: 0,
           otherIncome: 0,
-          section179Deduction: 0,
-          otherDeductions: 0,
+          section179Deduction: 12_000,
+          otherDeductions: 4_000,
           charitableContributions: 0,
           lowIncomeHousingCredit: 0,
           otherCredits: 0,
@@ -224,7 +224,7 @@ describe('S-Corp (Form 1120-S)', () => {
           taxExemptInterest: 0,
           otherTaxExemptIncome: 0,
           nondeductibleExpenses: 0,
-          cashDistributions: 0,
+          cashDistributions: 10_000,
           propertyDistributions: 0,
           section199AQBI: 0
         }
@@ -240,6 +240,9 @@ describe('S-Corp (Form 1120-S)', () => {
     expect(result.totalDeductions).toBe(200_000)
     // S-Corps generally have no entity-level tax (unless built-in gains)
     expect(result.totalTax).toBe(0)
+    expect(result.taxableIncome).toBe(300_000)
+    expect(result.effectiveTaxRate).toBe(0)
+    expect(result.schedules).toContain('f1120s')
 
     // Should have 2 shareholder allocations
     expect(result.ownerAllocations).toBeDefined()
@@ -253,7 +256,12 @@ describe('S-Corp (Form 1120-S)', () => {
     expect(alice.ownershipPct).toBe(60)
     expect(alice.ordinaryIncome).toBe(180_000)
     expect(alice.interestIncome).toBe(3_000)
+    expect(alice.dividendIncome).toBe(2_400)
+    expect(alice.qualifiedDividends).toBe(1_200)
     expect(alice.capitalGains).toBe(6_000)
+    expect(alice.section179Deduction).toBe(7_200)
+    expect(alice.otherDeductions).toBe(2_400)
+    expect(alice.cashDistributions).toBe(6_000)
     // S-Corp shareholders don't have SE earnings
     expect(alice.selfEmploymentEarnings).toBe(0)
 
@@ -263,7 +271,12 @@ describe('S-Corp (Form 1120-S)', () => {
     expect(bob.ownershipPct).toBe(40)
     expect(bob.ordinaryIncome).toBe(120_000)
     expect(bob.interestIncome).toBe(2_000)
+    expect(bob.dividendIncome).toBe(1_600)
+    expect(bob.qualifiedDividends).toBe(800)
     expect(bob.capitalGains).toBe(4_000)
+    expect(bob.section179Deduction).toBe(4_800)
+    expect(bob.otherDeductions).toBe(1_600)
+    expect(bob.cashDistributions).toBe(4_000)
   })
 
   it('reflects entity-level built-in gains tax when present', () => {
@@ -290,6 +303,9 @@ describe('S-Corp (Form 1120-S)', () => {
     if (!result.success) return
     expect(result.totalTax).toBe(10_000)
     expect(result.amountOwed).toBe(10_000)
+    expect(result.taxableIncome).toBe(150_000)
+    expect(result.effectiveTaxRate).toBe(0.05)
+    expect(result.schedules).toContain('f1120s')
   })
 })
 
@@ -310,7 +326,10 @@ describe('Partnership (Form 1065)', () => {
           ordinaryIncome: 0,
           netFarmProfit: 0,
           netGainFromSaleOfAssets: 0,
-          otherIncome: 0
+          otherIncome: 0,
+          interestIncome: 5_000,
+          dividendIncome: 3_000,
+          qualifiedDividends: 1_500
         },
         deductions: {
           salariesAndWages: 100_000,
@@ -322,6 +341,12 @@ describe('Partnership (Form 1065)', () => {
             name: 'Partner A',
             tin: '111-22-3333',
             tinType: 'SSN',
+            address: {
+              address: '10 Main St',
+              city: 'Wilmington',
+              state: 'DE',
+              zip: '19801'
+            },
             isGeneralPartner: true,
             isLimitedPartner: false,
             isDomestic: true,
@@ -332,12 +357,20 @@ describe('Partnership (Form 1065)', () => {
             capitalContributed: 0,
             currentYearIncrease: 0,
             withdrawalsDistributions: 0,
-            endingCapitalAccount: 100_000
+            endingCapitalAccount: 100_000,
+            share179Deduction: 4_500,
+            shareOtherDeductions: 2_500
           },
           {
             name: 'Partner B',
             tin: '444-55-6666',
             tinType: 'SSN',
+            address: {
+              address: '20 Main St',
+              city: 'Wilmington',
+              state: 'DE',
+              zip: '19802'
+            },
             isGeneralPartner: true,
             isLimitedPartner: false,
             isDomestic: true,
@@ -348,12 +381,20 @@ describe('Partnership (Form 1065)', () => {
             capitalContributed: 0,
             currentYearIncrease: 0,
             withdrawalsDistributions: 0,
-            endingCapitalAccount: 60_000
+            endingCapitalAccount: 60_000,
+            share179Deduction: 2_700,
+            shareOtherDeductions: 1_800
           },
           {
             name: 'Partner C (LP)',
             tin: '777-88-9999',
             tinType: 'SSN',
+            address: {
+              address: '30 Main St',
+              city: 'Wilmington',
+              state: 'DE',
+              zip: '19803'
+            },
             isGeneralPartner: false,
             isLimitedPartner: true,
             isDomestic: true,
@@ -364,30 +405,32 @@ describe('Partnership (Form 1065)', () => {
             capitalContributed: 0,
             currentYearIncrease: 0,
             withdrawalsDistributions: 0,
-            endingCapitalAccount: 40_000
+            endingCapitalAccount: 40_000,
+            share179Deduction: 1_800,
+            shareOtherDeductions: 1_700
           }
         ],
         scheduleK: {
           ordinaryBusinessIncome: 400_000,
           netRentalRealEstateIncome: 0,
           otherNetRentalIncome: 0,
-          interestIncome: 0,
-          dividendIncome: 0,
-          qualifiedDividends: 0,
+          interestIncome: 5_000,
+          dividendIncome: 3_000,
+          qualifiedDividends: 1_500,
           royalties: 0,
           netShortTermCapitalGain: 0,
-          netLongTermCapitalGain: 0,
+          netLongTermCapitalGain: 10_000,
           collectibles28Gain: 0,
           unrecaptured1250Gain: 0,
           net1231Gain: 0,
           otherIncome: 0,
-          section179Deduction: 0,
-          otherDeductions: 0,
+          section179Deduction: 9_000,
+          otherDeductions: 6_000,
           charitableContributions: 0,
           lowIncomeHousingCredit: 0,
           otherCredits: 0,
           netEarningsSE: 400_000,
-          taxExemptInterest: 0,
+          taxExemptInterest: 1_200,
           otherTaxExemptIncome: 0,
           nondeductibleExpenses: 0,
           cashDistributions: 0,
@@ -408,6 +451,10 @@ describe('Partnership (Form 1065)', () => {
 
     // Total income: 900K - 200K COGS = 700K gross profit
     expect(result.totalIncome).toBe(700_000)
+    expect(result.totalDeductions).toBe(300_000)
+    expect(result.taxableIncome).toBe(400_000)
+    expect(result.effectiveTaxRate).toBe(0)
+    expect(result.schedules).toContain('f1065')
 
     // Should have 3 partner allocations
     expect(result.ownerAllocations).toBeDefined()
@@ -418,6 +465,13 @@ describe('Partnership (Form 1065)', () => {
     expect(a.name).toBe('Partner A')
     expect(a.ownershipPct).toBe(50)
     expect(a.ordinaryIncome).toBe(200_000)
+    expect(a.interestIncome).toBe(2_500)
+    expect(a.dividendIncome).toBe(1_500)
+    expect(a.qualifiedDividends).toBe(750)
+    expect(a.capitalGains).toBe(5_000)
+    expect(a.section179Deduction).toBe(4_500)
+    expect(a.otherDeductions).toBe(2_500)
+    expect(a.taxExemptInterest).toBe(600)
     // General partner has SE earnings
     expect(a.selfEmploymentEarnings).toBe(200_000)
 
@@ -425,12 +479,26 @@ describe('Partnership (Form 1065)', () => {
     const b = result.ownerAllocations![1]
     expect(b.name).toBe('Partner B')
     expect(b.ordinaryIncome).toBe(120_000)
+    expect(b.interestIncome).toBe(1_500)
+    expect(b.dividendIncome).toBe(900)
+    expect(b.qualifiedDividends).toBe(450)
+    expect(b.capitalGains).toBe(3_000)
+    expect(b.section179Deduction).toBe(2_700)
+    expect(b.otherDeductions).toBe(1_800)
+    expect(b.taxExemptInterest).toBe(360)
     expect(b.selfEmploymentEarnings).toBe(120_000)
 
     // Partner C (LP): 20% of $400K = $80K, but limited partner has no SE
     const c = result.ownerAllocations![2]
     expect(c.name).toBe('Partner C (LP)')
     expect(c.ordinaryIncome).toBe(80_000)
+    expect(c.interestIncome).toBe(1_000)
+    expect(c.dividendIncome).toBe(600)
+    expect(c.qualifiedDividends).toBe(300)
+    expect(c.capitalGains).toBe(2_000)
+    expect(c.section179Deduction).toBe(1_800)
+    expect(c.otherDeductions).toBe(1_700)
+    expect(c.taxExemptInterest).toBe(240)
     // Limited partner does NOT get SE earnings
     expect(c.selfEmploymentEarnings).toBe(0)
   })
@@ -454,7 +522,11 @@ describe('Partnership (Form 1065)', () => {
     expect(result.success).toBe(true)
     if (!result.success) return
     expect(result.totalIncome).toBe(0)
+    expect(result.totalDeductions).toBe(0)
     expect(result.totalTax).toBe(0)
+    expect(result.taxableIncome).toBe(0)
+    expect(result.effectiveTaxRate).toBe(0)
+    expect(result.schedules).toContain('f1065')
     expect(result.ownerAllocations!.length).toBe(1)
     expect(result.ownerAllocations![0].ordinaryIncome).toBe(0)
   })
@@ -533,6 +605,7 @@ describe('Estate/Trust (Form 1041)', () => {
     expect(result.beneficiaryCount).toBe(0)
     expect(result.taxableIncome).toBe(44_900)
     expect(result.totalTax).toBe(14_600)
+    expect(result.totalPayments).toBe(0)
     expect(result.amountOwed).toBe(14_600)
     expect(result.overpayment).toBe(0)
     expect(result.schedules).toContain('f1041')
@@ -572,8 +645,16 @@ describe('Estate/Trust (Form 1041)', () => {
     //   $3,150 - $11,450 @ 24%     = $1,992.00
     //   $11,450 - $13,400 @ 35%    = $682.50
     //                         Total = $2,989.50 -> rounded to $2,990
+    expect(result.totalIncome).toBe(15_000)
+    expect(result.totalDeductions).toBe(1_000)
     expect(result.taxableIncome).toBe(13_400)
     expect(result.totalTax).toBe(2_990)
+    expect(result.distributionDeduction).toBe(0)
+    expect(result.beneficiaryCount).toBe(0)
+    expect(result.totalPayments).toBe(0)
+    expect(result.amountOwed).toBe(2_990)
+    expect(result.overpayment).toBe(0)
+    expect(result.schedules).toContain('f1041')
   })
 
   it('simple trust distributes all income (zero entity tax)', () => {
@@ -610,6 +691,12 @@ describe('Estate/Trust (Form 1041)', () => {
     // (exemption can't create negative taxable income)
     expect(result.taxableIncome).toBe(0)
     expect(result.totalTax).toBe(0)
+    expect(result.totalDeductions).toBe(0)
+    expect(result.beneficiaryCount).toBe(1)
+    expect(result.totalPayments).toBe(0)
+    expect(result.amountOwed).toBe(0)
+    expect(result.overpayment).toBe(0)
+    expect(result.schedules).toContain('f1041')
   })
 
   it('applies estimated tax payments to produce overpayment', () => {
@@ -637,6 +724,7 @@ describe('Estate/Trust (Form 1041)', () => {
     expect(result.totalPayments).toBe(5_000)
     expect(result.overpayment).toBe(3_065)
     expect(result.amountOwed).toBe(0)
+    expect(result.schedules).toContain('f1041')
   })
 })
 
