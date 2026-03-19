@@ -17,7 +17,9 @@ const blankItemizedDeductions = {
   interest8d: 0,
   investmentInterest: 0,
   charityCashCheck: 0,
-  charityOther: 0
+  charityOther: 0,
+  casualtyLosses: 0,
+  otherDeductions: 0
 }
 
 export default class ScheduleA extends F1040Attachment {
@@ -110,13 +112,20 @@ export default class ScheduleA extends F1040Attachment {
   l13 = (): number => 0
   l14 = (): number => this.l11() + this.l12() + this.l13()
 
-  l15 = (): number => 0
+  l15 = (): number => {
+    const form4684Deduction = this.f1040.f4684?.personalCasualtyLossDeduction() ?? 0
+    if (form4684Deduction > 0) {
+      return form4684Deduction
+    }
 
-  // TODO
-  l16Other1 = (): string | undefined => undefined
+    return Number(this.itemizedDeductions.casualtyLosses ?? 0)
+  }
+
+  l16Other1 = (): string | undefined =>
+    this.l16() > 0 ? 'Other deductions' : undefined
   l16Other2 = (): string | undefined => undefined
   l16Other3 = (): string | undefined => undefined
-  l16 = (): number => 0
+  l16 = (): number => Number(this.itemizedDeductions.otherDeductions ?? 0)
 
   l17 = (): number =>
     this.l4() + this.l7() + this.l10() + this.l14() + this.l15() + this.l16()

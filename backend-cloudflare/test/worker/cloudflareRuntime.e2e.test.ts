@@ -1112,7 +1112,10 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           '/business-entity': {
             entityName: 'Helping Hands Foundation',
             ein: '12-3456789',
-            grossReceipts: 42000
+            grossReceipts: 42000,
+            principalOfficerName: 'Nora Nonprofit',
+            websiteAddress: 'https://helpinghands.example',
+            grossReceiptsNormally50kOrLess: true
           },
           '/efile-wizard': {
             signatureText: 'Nora Nonprofit',
@@ -1146,6 +1149,12 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           String((finding as JsonObject).message).includes('Form 990')
       )
     ).toBe(true)
+    expect(
+      (
+        (checklist.businessFormCapability as JsonObject)
+          .nonprofitRenderedPreview as JsonObject
+      ).suggestedForm
+    ).toBe('990N')
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
@@ -1158,6 +1167,16 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(
       (review.businessFormCapability as JsonObject).supportLevel as string
     ).toBe('expert_required')
+    const reviewSections = (review.review as JsonObject).sections as JsonObject[]
+    expect(
+      reviewSections.some((section) =>
+        ((section.rows as JsonObject[]) ?? []).some(
+          (row) =>
+            row.label === 'Principal officer' &&
+            row.value === 'Nora Nonprofit'
+        )
+      )
+    ).toBe(true)
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/submit`,
@@ -1212,7 +1231,48 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             entityName: 'Friends of the Public Library',
             ein: '98-7654321',
             grossReceipts: 150000,
-            totalAssets: 250000
+            totalAssets: 250000,
+            primaryExemptPurpose: 'Support public library services',
+            revenue: {
+              contributions: 90000,
+              programServiceRevenue: 35000,
+              membershipDues: 10000,
+              investmentIncome: 5000,
+              saleOfAssets: 2500,
+              specialEventsGross: 12000,
+              specialEventsExpenses: 4000,
+              otherRevenue: 3000
+            },
+            expenses: {
+              grantsAndSimilar: 20000,
+              benefitsPaid: 0,
+              salariesAndCompensation: 45000,
+              professionalFees: 5000,
+              occupancy: 6000,
+              printing: 3000,
+              otherExpenses: 7000
+            },
+            balanceSheet: {
+              endingCash: 55000,
+              endingLandBuildings: 68000,
+              endingOtherAssets: 15000,
+              endingLiabilities: 12000
+            },
+            officers: [
+              {
+                name: 'Jordan Smith',
+                title: 'Treasurer',
+                hoursPerWeek: 10,
+                compensation: 0
+              }
+            ],
+            programAccomplishments: [
+              {
+                description: 'Funded literacy programs',
+                expenses: 22000,
+                grants: 5000
+              }
+            ]
           }
         }
       })
@@ -1231,8 +1291,37 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       (checklist.businessFormCapability as JsonObject).nonprofitReturnHint
     ).toBe('990EZ')
     expect(
+      (
+        (checklist.businessFormCapability as JsonObject)
+          .nonprofitRenderedPreview as JsonObject
+      ).totalRevenue
+    ).toBe(153500)
+    expect(
+      (
+        (checklist.businessFormCapability as JsonObject)
+          .nonprofitRenderedPreview as JsonObject
+      ).netAssetsEndOfYear
+    ).toBe(126000)
+    expect(
       (checklist.findings as JsonObject[]).some((finding) =>
         String((finding as JsonObject).message).includes('990-EZ')
+      )
+    ).toBe(true)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
+      { headers: { cookie: sessionCookie } }
+    )
+    expect(response.status).toBe(200)
+    const review = await parseJsonResponse<JsonObject>(response)
+    const reviewSections = (review.review as JsonObject).sections as JsonObject[]
+    expect(
+      reviewSections.some((section) =>
+        ((section.rows as JsonObject[]) ?? []).some(
+          (row) =>
+            row.label === 'Rendered total revenue' &&
+            row.value === '$153,500'
+        )
       )
     ).toBe(true)
   }, 120_000)

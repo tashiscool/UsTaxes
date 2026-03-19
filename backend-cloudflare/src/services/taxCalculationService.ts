@@ -1433,7 +1433,9 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
       interest8d: rawItemizedDeductions.interest8d,
       investmentInterest: rawItemizedDeductions.investmentInterest,
       charityCashCheck: rawItemizedDeductions.charityCashCheck,
-      charityOther: rawItemizedDeductions.charityOther
+      charityOther: rawItemizedDeductions.charityOther,
+      casualtyLosses: rawItemizedDeductions.casualtyLosses,
+      otherDeductions: rawItemizedDeductions.otherDeductions
     }
   })()
   const nonresidentAlienReturn = buildNonresidentAlienReturn(

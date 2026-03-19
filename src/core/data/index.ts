@@ -577,6 +577,8 @@ export interface ItemizedDeductions {
   investmentInterest: string | number
   charityCashCheck: string | number
   charityOther: string | number
+  casualtyLosses?: string | number
+  otherDeductions?: string | number
 }
 
 export type State =

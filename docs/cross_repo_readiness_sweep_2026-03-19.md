@@ -127,12 +127,16 @@ Evidence:
 
 - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/index.ts`
 - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/utils/appAuth.ts`
+- `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/utils/oidc.ts`
+- `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/utils/oidc.test.ts`
+- `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
 
 Why this still blocks the claim:
 
 - local/dev login is still present
 - protected environments now use backend-owned OIDC state, PKCE,
   authorization-code exchange, and ID token verification
+- both the helper-level and worker-level OIDC code-exchange paths now run green locally
 - the remaining auth gap is operational: this still needs live production
   provider rollout validation, not a different trust architecture
 - for tax-filing production readiness, auth trust is part of correctness
@@ -150,7 +154,8 @@ Why this still blocks the claim:
 
 - the repo still marks major tax-law areas as `partial` or `patched_partial`
 - live source still contains TODO-backed or simplified branches
-- today’s work improved `EIC`, but not every remaining 2025-law edge case
+- recent work shrank `Schedule A` casualty/other-deduction handling and
+  `Form 1040` line-38 penalty handling, but not every remaining 2025-law edge case
 
 ### 3. Business/nonprofit families are stronger, but still not fully workbook-proven
 
@@ -163,6 +168,7 @@ Evidence:
 Why this still blocks the claim:
 
 - `1120`, `1120-S`, `1065`, `1041`, and the expert-routed `990` family are no longer only `IRS-reference-led`; they are now fixture-backed and executable through the backend test harness
+- the expert-routed `990` family now also exposes richer rendered preview fields in checklist/review flows instead of only sizing prose
 - none of the business/nonprofit forms are backed by private workbook sources the way the `1040` family is
 - `990` remains expert-routed, not self-serve
 

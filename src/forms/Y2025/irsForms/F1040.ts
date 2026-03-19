@@ -1394,8 +1394,8 @@ export default class F1040 extends F1040Base {
 
   l37 = (): number => Math.max(0, this.l24() - this.l33())
 
-  // TODO - estimated tax penalty
-  l38 = (): number | undefined => undefined
+  l38 = (): number | undefined =>
+    this.f2210?.isNeeded() ?? false ? this.f2210?.penalty() : undefined
 
   _depField = (idx: number): string | boolean => {
     const deps: Dependent[] = this.info.taxPayer.dependents

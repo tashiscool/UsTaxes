@@ -379,6 +379,11 @@ const BUSINESS_RETURN_SCALAR_KEYS = [
   'withholding',
   'dateCreated',
   'isFinalReturn',
+  'websiteAddress',
+  'principalOfficerName',
+  'primaryExemptPurpose',
+  'grossReceiptsNormally50kOrLess',
+  'hasTerminated',
   'requiredDistributions',
   'otherDistributions',
   'section645Election',
@@ -393,13 +398,22 @@ const BUSINESS_RETURN_RECORD_KEYS = [
   'specialDeductions',
   'scheduleK',
   'liabilitiesAtYearEnd',
-  'fiduciary'
+  'fiduciary',
+  'organization',
+  'revenue',
+  'expenses',
+  'balanceSheet',
+  'governance',
+  'mailingAddress',
+  'principalOfficerAddress'
 ] as const
 
 const BUSINESS_RETURN_ARRAY_KEYS = [
   'shareholders',
   'partners',
-  'beneficiaries'
+  'beneficiaries',
+  'programAccomplishments',
+  'officers'
 ] as const
 
 const hasAnyBusinessReturnKeys = (data: Record<string, unknown>) =>
@@ -418,6 +432,158 @@ const mergeNumericFactRecord = (
     Object.entries(patch).filter(([, value]) => value != null && value !== '')
   )
 })
+
+const sumMoneyFields = (
+  record: Record<string, unknown>,
+  keys: readonly string[]
+): number =>
+  keys.reduce((sum, key) => sum + toMoney(record[key]), 0)
+
+const buildNonprofitRenderedPreview = (
+  facts: Record<string, unknown>,
+  nonprofitReturnHint: '990N' | '990EZ' | null
+) => {
+  const organization = asRecord(facts.organization)
+  const revenue = asRecord(facts.revenue)
+  const expenses = asRecord(facts.expenses)
+  const balanceSheet = asRecord(facts.balanceSheet)
+  const governance = asRecord(facts.governance)
+  const officers = asArray<Record<string, unknown>>(facts.officers)
+  const programAccomplishments = asArray<Record<string, unknown>>(
+    facts.programAccomplishments
+  )
+  const organizationName = toText(
+    organization.name ?? facts.entityName ?? facts.organizationName
+  )
+
+  if (!organizationName) {
+    return undefined
+  }
+
+  const suggestedForm: '990' | '990EZ' | '990N' =
+    nonprofitReturnHint === '990N'
+      ? '990N'
+      : nonprofitReturnHint === '990EZ'
+      ? '990EZ'
+      : '990'
+
+  if (suggestedForm === '990N') {
+    return {
+      suggestedForm,
+      organizationName,
+      principalOfficerName: toText(facts.principalOfficerName),
+      websiteAddress: toText(
+        facts.websiteAddress ?? organization.website ?? facts.website
+      ),
+      grossReceipts: toMoney(facts.grossReceipts),
+      grossReceiptsNormally50kOrLess:
+        Boolean(facts.grossReceiptsNormally50kOrLess) ||
+        toMoney(facts.grossReceipts) <= 50_000,
+      hasTerminated: Boolean(facts.hasTerminated)
+    }
+  }
+
+  if (suggestedForm === '990EZ') {
+    const renderedRevenueTotal =
+      sumMoneyFields(revenue, [
+        'contributions',
+        'programServiceRevenue',
+        'membershipDues',
+        'investmentIncome',
+        'saleOfAssets',
+        'specialEventsGross',
+        'otherRevenue'
+      ]) - toMoney(revenue.specialEventsExpenses)
+    const totalRevenue = renderedRevenueTotal || toMoney(facts.grossReceipts)
+    const totalExpenses = sumMoneyFields(expenses, [
+      'grantsAndSimilar',
+      'benefitsPaid',
+      'salariesAndCompensation',
+      'professionalFees',
+      'occupancy',
+      'printing',
+      'otherExpenses'
+    ])
+    const renderedNetAssetsEndOfYear = Math.max(
+      0,
+      sumMoneyFields(balanceSheet, [
+        'endingCash',
+        'endingLandBuildings',
+        'endingOtherAssets'
+      ]) - toMoney(balanceSheet.endingLiabilities)
+    )
+    const netAssetsEndOfYear =
+      renderedNetAssetsEndOfYear || toMoney(facts.totalAssets)
+
+    return {
+      suggestedForm,
+      organizationName,
+      totalRevenue,
+      totalExpenses,
+      netAssetsEndOfYear,
+      primaryExemptPurpose: toText(
+        facts.primaryExemptPurpose ?? facts.missionStatement
+      ),
+      officerCount: officers.length,
+      programCount: programAccomplishments.length
+    }
+  }
+
+  const totalRevenue =
+    toMoney(facts.grossReceipts) ||
+    sumMoneyFields(revenue, [
+      'contributions',
+      'programServiceRevenue',
+      'membershipDues',
+      'investmentIncome',
+      'netRentalIncome',
+      'netGainFromSales',
+      'fundraisingEvents',
+      'otherRevenue'
+    ])
+  const totalExpenses = sumMoneyFields(expenses, [
+    'grants',
+    'benefitsPaid',
+    'salariesAndWages',
+    'employeeBenefits',
+    'payrollTaxes',
+    'managementFees',
+    'legalFees',
+    'accountingFees',
+    'lobbyingExpenses',
+    'professionalFundraising',
+    'advertising',
+    'officeExpenses',
+    'informationTechnology',
+    'occupancy',
+    'travel',
+    'conferences',
+    'interest',
+    'depreciation',
+    'insurance',
+    'otherExpenses'
+  ])
+  const renderedNetAssetsEndOfYear = sumMoneyFields(balanceSheet, [
+    'unrestrictedNetAssets',
+    'temporarilyRestricted',
+    'permanentlyRestricted'
+  ])
+  const netAssetsEndOfYear =
+    renderedNetAssetsEndOfYear || toMoney(facts.totalAssets)
+
+  return {
+    suggestedForm,
+    organizationName,
+    totalRevenue,
+    totalExpenses,
+    netAssetsEndOfYear,
+    missionStatement: toText(facts.missionStatement),
+    programCount: programAccomplishments.length,
+    officerCount: officers.length,
+    votingMemberCount: toMoney(governance.numberOfVotingMembers),
+    independentMemberCount: toMoney(governance.numberOfIndependentMembers)
+  }
+}
 
 const deriveBusinessEntityWorkflowFacts = (
   snapshot: FilingSessionSnapshot,
@@ -652,6 +818,10 @@ const getBusinessReturnCapabilityView = (snapshot: FilingSessionSnapshot) => {
         : null
       : null
   const smallNonprofitHint = nonprofitReturnHint === '990N'
+  const nonprofitRenderedPreview =
+    snapshot.formType === '990'
+      ? buildNonprofitRenderedPreview(facts, nonprofitReturnHint)
+      : undefined
 
   return {
     ...capability,
@@ -659,7 +829,8 @@ const getBusinessReturnCapabilityView = (snapshot: FilingSessionSnapshot) => {
     readiness,
     missingInputs,
     smallNonprofitHint,
-    nonprofitReturnHint
+    nonprofitReturnHint,
+    nonprofitRenderedPreview
   }
 }
 
@@ -4255,7 +4426,72 @@ const buildReview = (
                   businessReturnCapability.supportLevel ===
                     'self_service_supported' &&
                   !businessReturnCapability.hasMinimumData
-              }
+              },
+              ...(businessReturnCapability.nonprofitRenderedPreview
+                ? [
+                    {
+                      label: 'Suggested nonprofit form',
+                      value:
+                        businessReturnCapability.nonprofitRenderedPreview
+                          .suggestedForm,
+                      editPath: '/business-entity',
+                      editLabel: 'Review'
+                    },
+                    {
+                      label: 'Rendered organization',
+                      value:
+                        businessReturnCapability.nonprofitRenderedPreview
+                          .organizationName,
+                      editPath: '/business-entity',
+                      editLabel: 'Edit'
+                    },
+                    ...(Number(
+                      businessReturnCapability.nonprofitRenderedPreview
+                        .totalRevenue ?? 0
+                    ) > 0
+                      ? [
+                          {
+                            label: 'Rendered total revenue',
+                            value: `$${Number(
+                              businessReturnCapability.nonprofitRenderedPreview
+                                .totalRevenue ?? 0
+                            ).toLocaleString()}`,
+                            editPath: '/business-entity',
+                            editLabel: 'Edit'
+                          }
+                        ]
+                      : []),
+                    ...(Number(
+                      businessReturnCapability.nonprofitRenderedPreview
+                        .netAssetsEndOfYear ?? 0
+                    ) > 0
+                      ? [
+                          {
+                            label: 'Rendered net assets',
+                            value: `$${Number(
+                              businessReturnCapability.nonprofitRenderedPreview
+                                .netAssetsEndOfYear ?? 0
+                            ).toLocaleString()}`,
+                            editPath: '/business-entity',
+                            editLabel: 'Edit'
+                          }
+                        ]
+                      : []),
+                    ...(businessReturnCapability.nonprofitRenderedPreview
+                      .principalOfficerName
+                      ? [
+                          {
+                            label: 'Principal officer',
+                            value:
+                              businessReturnCapability.nonprofitRenderedPreview
+                                .principalOfficerName,
+                            editPath: '/business-entity',
+                            editLabel: 'Edit'
+                          }
+                        ]
+                      : [])
+                  ]
+                : [])
             ],
             warnings: findings
               .filter(

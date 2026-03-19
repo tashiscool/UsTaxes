@@ -29,6 +29,30 @@ afterEach(() => {
 })
 
 describe('oidc helpers', () => {
+  it('uses explicit configured authorization endpoints without requiring discovery', async () => {
+    const fetchSpy = vi.fn()
+
+    const authorizationUrl = await buildOidcAuthorizationUrl(
+      makeEnv({
+        APP_OIDC_AUTHORIZATION_ENDPOINT: 'https://issuer.example/authorize',
+        APP_OIDC_TOKEN_ENDPOINT: 'https://issuer.example/token',
+        APP_OIDC_JWKS_JSON: JSON.stringify({ keys: [] })
+      }),
+      {
+        state: 'signed-state',
+        nonce: 'signed-nonce',
+        codeChallenge: await generatePkceChallenge('pkce-verifier-2')
+      },
+      fetchSpy as unknown as typeof fetch
+    )
+
+    expect(fetchSpy).not.toHaveBeenCalled()
+    const parsed = new URL(authorizationUrl)
+    expect(parsed.origin).toBe('https://issuer.example')
+    expect(parsed.pathname).toBe('/authorize')
+    expect(parsed.searchParams.get('client_id')).toBe('taxflow-client')
+  })
+
   it('builds a backend-owned authorization URL with PKCE and nonce', async () => {
     vi.stubGlobal(
       'fetch',

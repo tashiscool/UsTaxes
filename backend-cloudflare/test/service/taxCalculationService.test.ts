@@ -399,6 +399,37 @@ describe('TaxCalculationService', () => {
       expect(f1040.schedule8812.earnedIncomeWorksheet()).toBe(1800)
       expect(f1040.l25c()).toBe(500)
     })
+
+    it('maps casualty and miscellaneous itemized deduction rollups into Schedule A-sensitive fields', () => {
+      const facts = baseFacts({
+        itemizedDeductions: {
+          medicalAndDental: 0,
+          stateAndLocalTaxes: 5000,
+          isSalesTax: false,
+          stateAndLocalRealEstateTaxes: 3000,
+          stateAndLocalPropertyTaxes: 0,
+          interest8a: 10000,
+          interest8b: 0,
+          interest8c: 0,
+          interest8d: 0,
+          investmentInterest: 0,
+          charityCashCheck: 1000,
+          charityOther: 0,
+          casualtyLosses: 250,
+          otherDeductions: 600
+        }
+      })
+
+      const info = adaptFactsToInformation(facts)
+      const f1040 = new F1040(info as ValidatedInformation, [])
+
+      expect(info.itemizedDeductions).toMatchObject({
+        casualtyLosses: 250,
+        otherDeductions: 600
+      })
+      expect(f1040.scheduleA.l15()).toBe(250)
+      expect(f1040.scheduleA.l16()).toBe(600)
+    })
   })
 
   describe('calculate', () => {

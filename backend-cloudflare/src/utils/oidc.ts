@@ -2,162 +2,150 @@ import {
   createLocalJWKSet,
   createRemoteJWKSet,
   jwtVerify,
-  type JWTVerifyGetKey,
+  type JSONWebKeySet,
   type JWTPayload,
-  type JWK
+  type JWTVerifyGetKey,
+  type JWTVerifyResult,
+  type RemoteJWKSetOptions
 } from 'jose'
 
 import type { Env } from '../domain/env'
 import { HttpError } from './http'
 
+const DEFAULT_SCOPES = 'openid email profile'
+const DISCOVERY_PATH = '/.well-known/openid-configuration'
 const encoder = new TextEncoder()
-const DEFAULT_OIDC_SCOPES = 'openid profile email'
 
-type OidcMetadata = {
-  issuer: string
-  authorizationEndpoint: string
-  tokenEndpoint: string
-  jwksUri: string
-}
-
-type OidcIdentity = {
-  sub: string
-  email: string
-  tin?: string
-  displayName?: string
+type OidcDiscoveryDocument = {
+  issuer?: string
+  authorization_endpoint?: string
+  token_endpoint?: string
+  jwks_uri?: string
 }
 
 type OidcTokenResponse = {
+  access_token?: string
   id_token?: string
+  token_type?: string
+  expires_in?: number
 }
 
-type OidcIdTokenClaims = JWTPayload & {
-  email?: string
-  email_verified?: boolean
-  name?: string
-  nonce?: string
-  preferred_username?: string
+type OidcIdentityClaims = {
+  sub: string
+  email: string
+  displayName?: string
   tin?: string
 }
 
 const toBase64Url = (value: Uint8Array): string =>
-  btoa(Array.from(value, (byte) => String.fromCharCode(byte)).join(''))
+  btoa(String.fromCharCode(...value))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/g, '')
 
-const requireEnvValue = (value: string | undefined, label: string): string => {
-  const normalized = value?.trim()
-  if (!normalized) {
-    throw new HttpError(500, `${label} is not configured for this environment`)
-  }
-  return normalized
-}
-
-const fetchJson = async <T>(
-  resource: string,
-  init?: RequestInit
-): Promise<T> => {
-  const response = await fetch(resource, init)
-  if (!response.ok) {
-    throw new HttpError(
-      502,
-      `OIDC upstream request failed (${response.status}) for ${resource}`
-    )
-  }
-  return (await response.json()) as T
-}
-
-const discoveryUrl = (env: Env): string => {
-  const explicit = env.APP_OIDC_DISCOVERY_URL?.trim()
-  if (explicit) {
-    return explicit
-  }
-
-  const issuer = requireEnvValue(env.APP_OIDC_ISSUER_URL, 'APP_OIDC_ISSUER_URL')
-  return `${issuer.replace(/\/+$/g, '')}/.well-known/openid-configuration`
+const trimToUndefined = (value: string | undefined): string | undefined => {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
 }
 
 export const oidcConfigured = (env: Env): boolean =>
-  Boolean(
-    env.APP_OIDC_ISSUER_URL?.trim() &&
-      env.APP_OIDC_CLIENT_ID?.trim() &&
-      env.APP_OIDC_CLIENT_SECRET?.trim() &&
-      env.APP_AUTH_CALLBACK_URL?.trim()
+  !!(
+    trimToUndefined(env.APP_OIDC_ISSUER_URL) &&
+    trimToUndefined(env.APP_OIDC_CLIENT_ID) &&
+    trimToUndefined(env.APP_OIDC_CLIENT_SECRET) &&
+    trimToUndefined(env.APP_AUTH_CALLBACK_URL)
   )
 
-const resolveMetadata = async (env: Env): Promise<OidcMetadata> => {
-  const issuer = requireEnvValue(env.APP_OIDC_ISSUER_URL, 'APP_OIDC_ISSUER_URL')
-  const authorizationEndpoint = env.APP_OIDC_AUTHORIZATION_ENDPOINT?.trim()
-  const tokenEndpoint = env.APP_OIDC_TOKEN_ENDPOINT?.trim()
-  const hasJwkSource = Boolean(
-    env.APP_OIDC_JWKS_JSON?.trim() || env.APP_OIDC_JWKS_URL?.trim()
+const requireOidcValue = (value: string | undefined, label: string): string => {
+  if (!value) {
+    throw new HttpError(500, `OIDC ${label} is not configured`)
+  }
+  return value
+}
+
+const oidcIssuer = (env: Env): string =>
+  requireOidcValue(trimToUndefined(env.APP_OIDC_ISSUER_URL), 'issuer URL')
+
+const oidcClientId = (env: Env): string =>
+  requireOidcValue(trimToUndefined(env.APP_OIDC_CLIENT_ID), 'client ID')
+
+const oidcClientSecret = (env: Env): string =>
+  requireOidcValue(trimToUndefined(env.APP_OIDC_CLIENT_SECRET), 'client secret')
+
+const oidcRedirectUri = (env: Env): string =>
+  requireOidcValue(trimToUndefined(env.APP_AUTH_CALLBACK_URL), 'callback URL')
+
+const oidcScopes = (env: Env): string =>
+  trimToUndefined(env.APP_OIDC_SCOPES) ?? DEFAULT_SCOPES
+
+const explicitAuthorizationEndpoint = (env: Env): string | undefined =>
+  trimToUndefined(env.APP_OIDC_AUTHORIZATION_ENDPOINT)
+
+const explicitTokenEndpoint = (env: Env): string | undefined =>
+  trimToUndefined(env.APP_OIDC_TOKEN_ENDPOINT)
+
+const explicitJwksUrl = (env: Env): string | undefined =>
+  trimToUndefined(env.APP_OIDC_JWKS_URL)
+
+const explicitJwksJson = (env: Env): string | undefined =>
+  trimToUndefined(env.APP_OIDC_JWKS_JSON)
+
+const explicitOidcConfigComplete = (env: Env): boolean =>
+  !!(
+    explicitAuthorizationEndpoint(env) &&
+    explicitTokenEndpoint(env) &&
+    (explicitJwksUrl(env) || explicitJwksJson(env))
   )
 
-  if (authorizationEndpoint && tokenEndpoint && hasJwkSource) {
+const loadDiscoveryDocument = async (
+  env: Env,
+  fetchImpl: typeof fetch = fetch
+): Promise<OidcDiscoveryDocument> => {
+  if (explicitOidcConfigComplete(env)) {
     return {
-      issuer,
-      authorizationEndpoint,
-      tokenEndpoint,
-      jwksUri: env.APP_OIDC_JWKS_URL?.trim() || `${issuer}/jwks`
+      issuer: oidcIssuer(env),
+      authorization_endpoint: explicitAuthorizationEndpoint(env),
+      token_endpoint: explicitTokenEndpoint(env),
+      jwks_uri: explicitJwksUrl(env)
     }
   }
 
-  const discovered = await fetchJson<{
-    issuer?: string
-    authorization_endpoint?: string
-    token_endpoint?: string
-    jwks_uri?: string
-  }>(discoveryUrl(env))
+  const discoveryUrl =
+    trimToUndefined(env.APP_OIDC_DISCOVERY_URL) ??
+    `${oidcIssuer(env).replace(/\/$/, '')}${DISCOVERY_PATH}`
 
-  return {
-    issuer: discovered.issuer?.trim() || issuer,
-    authorizationEndpoint:
-      env.APP_OIDC_AUTHORIZATION_ENDPOINT?.trim() ||
-      requireEnvValue(
-        discovered.authorization_endpoint,
-        'OIDC authorization endpoint'
-      ),
-    tokenEndpoint:
-      env.APP_OIDC_TOKEN_ENDPOINT?.trim() ||
-      requireEnvValue(discovered.token_endpoint, 'OIDC token endpoint'),
-    jwksUri:
-      env.APP_OIDC_JWKS_URL?.trim() ||
-      requireEnvValue(discovered.jwks_uri, 'OIDC JWKS endpoint')
-  }
-}
+  const response = await fetchImpl(discoveryUrl, {
+    headers: { accept: 'application/json' }
+  })
 
-const localJwksResolver = (env: Env) => {
-  const raw = env.APP_OIDC_JWKS_JSON?.trim()
-  if (!raw) {
-    return null
+  if (!response.ok) {
+    throw new HttpError(
+      502,
+      `OIDC discovery request failed with status ${response.status}`
+    )
   }
 
-  const parsed = JSON.parse(raw) as { keys?: JWK[] } | JWK[]
-  const keys = Array.isArray(parsed) ? parsed : parsed.keys
-  if (!keys || keys.length === 0) {
-    throw new HttpError(500, 'APP_OIDC_JWKS_JSON did not contain any keys')
+  const parsed = (await response.json()) as OidcDiscoveryDocument
+  parsed.authorization_endpoint =
+    trimToUndefined(env.APP_OIDC_AUTHORIZATION_ENDPOINT) ??
+    parsed.authorization_endpoint
+  parsed.token_endpoint =
+    trimToUndefined(env.APP_OIDC_TOKEN_ENDPOINT) ?? parsed.token_endpoint
+  parsed.jwks_uri = trimToUndefined(env.APP_OIDC_JWKS_URL) ?? parsed.jwks_uri
+
+  if (
+    !parsed.authorization_endpoint ||
+    !parsed.token_endpoint ||
+    !parsed.jwks_uri
+  ) {
+    throw new HttpError(502, 'OIDC discovery document is incomplete')
   }
 
-  return createLocalJWKSet({ keys })
+  return parsed
 }
 
-const jwksResolver = async (
-  env: Env,
-  metadata: OidcMetadata
-): Promise<JWTVerifyGetKey> => {
-  const local = localJwksResolver(env)
-  if (local) {
-    return local
-  }
-
-  return createRemoteJWKSet(new URL(metadata.jwksUri))
-}
-
-export const generatePkceVerifier = (): string => {
-  const bytes = crypto.getRandomValues(new Uint8Array(32))
-  return toBase64Url(bytes)
-}
+export const generatePkceVerifier = (): string =>
+  toBase64Url(crypto.getRandomValues(new Uint8Array(32)))
 
 export const generatePkceChallenge = async (
   verifier: string
@@ -172,23 +160,19 @@ export const buildOidcAuthorizationUrl = async (
     state: string
     nonce: string
     codeChallenge: string
-  }
+  },
+  fetchImpl: typeof fetch = fetch
 ): Promise<string> => {
-  const metadata = await resolveMetadata(env)
-  const url = new URL(metadata.authorizationEndpoint)
+  if (!oidcConfigured(env)) {
+    throw new HttpError(500, 'OIDC is not configured for this environment')
+  }
+
+  const discovery = await loadDiscoveryDocument(env, fetchImpl)
+  const url = new URL(discovery.authorization_endpoint as string)
   url.searchParams.set('response_type', 'code')
-  url.searchParams.set(
-    'client_id',
-    requireEnvValue(env.APP_OIDC_CLIENT_ID, 'APP_OIDC_CLIENT_ID')
-  )
-  url.searchParams.set(
-    'redirect_uri',
-    requireEnvValue(env.APP_AUTH_CALLBACK_URL, 'APP_AUTH_CALLBACK_URL')
-  )
-  url.searchParams.set(
-    'scope',
-    env.APP_OIDC_SCOPES?.trim() || DEFAULT_OIDC_SCOPES
-  )
+  url.searchParams.set('client_id', oidcClientId(env))
+  url.searchParams.set('redirect_uri', oidcRedirectUri(env))
+  url.searchParams.set('scope', oidcScopes(env))
   url.searchParams.set('state', options.state)
   url.searchParams.set('nonce', options.nonce)
   url.searchParams.set('code_challenge', options.codeChallenge)
@@ -196,64 +180,125 @@ export const buildOidcAuthorizationUrl = async (
   return url.toString()
 }
 
-export const exchangeOidcCodeForIdentity = async (
+const exchangeAuthorizationCode = async (
   env: Env,
-  options: {
-    code: string
-    nonce: string
-    codeVerifier: string
-  }
-): Promise<OidcIdentity> => {
-  const metadata = await resolveMetadata(env)
-  const response = await fetchJson<OidcTokenResponse>(metadata.tokenEndpoint, {
+  options: { code: string; codeVerifier: string },
+  fetchImpl: typeof fetch = fetch
+): Promise<OidcTokenResponse> => {
+  const discovery = await loadDiscoveryDocument(env, fetchImpl)
+  const response = await fetchImpl(discovery.token_endpoint as string, {
     method: 'POST',
     headers: {
+      accept: 'application/json',
       'content-type': 'application/x-www-form-urlencoded'
     },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
       code: options.code,
-      client_id: requireEnvValue(env.APP_OIDC_CLIENT_ID, 'APP_OIDC_CLIENT_ID'),
-      client_secret: requireEnvValue(
-        env.APP_OIDC_CLIENT_SECRET,
-        'APP_OIDC_CLIENT_SECRET'
-      ),
-      redirect_uri: requireEnvValue(
-        env.APP_AUTH_CALLBACK_URL,
-        'APP_AUTH_CALLBACK_URL'
-      ),
+      client_id: oidcClientId(env),
+      client_secret: oidcClientSecret(env),
+      redirect_uri: oidcRedirectUri(env),
       code_verifier: options.codeVerifier
     }).toString()
   })
 
-  const idToken = response.id_token?.trim()
-  if (!idToken) {
-    throw new HttpError(502, 'OIDC token exchange did not return an ID token')
+  if (!response.ok) {
+    throw new HttpError(
+      502,
+      `OIDC token exchange failed with status ${response.status}`
+    )
   }
 
-  const verified = await jwtVerify<OidcIdTokenClaims>(
-    idToken,
-    await jwksResolver(env, metadata),
-    {
-      issuer: metadata.issuer,
-      audience: requireEnvValue(env.APP_OIDC_CLIENT_ID, 'APP_OIDC_CLIENT_ID')
-    }
+  const parsed = (await response.json()) as OidcTokenResponse
+  if (!parsed.id_token) {
+    throw new HttpError(502, 'OIDC token exchange response is missing id_token')
+  }
+  return parsed
+}
+
+const resolveJwks = async (
+  env: Env,
+  fetchImpl: typeof fetch = fetch
+): Promise<JWTVerifyGetKey> => {
+  const localJwks = explicitJwksJson(env)
+  if (localJwks) {
+    return createLocalJWKSet(JSON.parse(localJwks) as JSONWebKeySet)
+  }
+
+  const discovery = await loadDiscoveryDocument(env, fetchImpl)
+  const remoteOptions: RemoteJWKSetOptions = {}
+  return createRemoteJWKSet(
+    new URL(discovery.jwks_uri as string),
+    remoteOptions
   )
+}
 
-  const claims = verified.payload
-  if (claims.nonce !== options.nonce) {
-    throw new HttpError(400, 'OIDC ID token nonce did not match the auth flow')
+const verifyIdToken = async (
+  env: Env,
+  idToken: string,
+  nonce: string,
+  fetchImpl: typeof fetch = fetch
+): Promise<JWTVerifyResult<JWTPayload>> => {
+  const keySet = await resolveJwks(env, fetchImpl)
+  const verified = await jwtVerify(idToken, keySet, {
+    issuer: oidcIssuer(env),
+    audience: oidcClientId(env)
+  })
+  if (verified.payload.nonce !== nonce) {
+    throw new HttpError(400, 'OIDC identity nonce does not match the auth flow.')
   }
-  const email = claims.email?.trim().toLowerCase()
-  if (!claims.sub || !email) {
-    throw new HttpError(502, 'OIDC ID token is missing required user claims')
+  return verified
+}
+
+const parseTin = (payload: JWTPayload): string | undefined => {
+  const candidateKeys = ['tin', 'tax_id', 'taxId', 'ssn'] as const
+  for (const key of candidateKeys) {
+    const value = payload[key]
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim()
+    }
   }
+  return undefined
+}
+
+export const exchangeOidcCodeForIdentity = async (
+  env: Env,
+  options: { code: string; nonce: string; codeVerifier: string },
+  fetchImpl: typeof fetch = fetch
+): Promise<OidcIdentityClaims> => {
+  const tokenResponse = await exchangeAuthorizationCode(
+    env,
+    { code: options.code, codeVerifier: options.codeVerifier },
+    fetchImpl
+  )
+  const verified = await verifyIdToken(
+    env,
+    tokenResponse.id_token as string,
+    options.nonce,
+    fetchImpl
+  )
+  const payload = verified.payload
+  const sub = typeof payload.sub === 'string' ? payload.sub.trim() : ''
+  const email = typeof payload.email === 'string' ? payload.email.trim() : ''
+  if (!sub || !email) {
+    throw new HttpError(
+      400,
+      'OIDC identity is missing required subject/email claims'
+    )
+  }
+
+  const displayName =
+    typeof payload.name === 'string' && payload.name.trim()
+      ? payload.name.trim()
+      : typeof payload.preferred_username === 'string' &&
+          payload.preferred_username.trim()
+        ? payload.preferred_username.trim()
+        : undefined
 
   return {
-    sub: claims.sub,
+    sub,
     email,
-    tin: claims.tin?.trim() || undefined,
-    displayName:
-      claims.name?.trim() || claims.preferred_username?.trim() || undefined
+    displayName,
+    tin: parseTin(payload)
   }
 }
