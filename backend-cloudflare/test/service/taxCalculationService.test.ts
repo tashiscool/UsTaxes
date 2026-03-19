@@ -204,6 +204,71 @@ describe('TaxCalculationService', () => {
       expect(broker?.form.longTermProceeds).toBe(20000)
       expect(broker?.form.longTermCostBasis).toBe(15000)
     })
+
+    it('maps workbook-style unemployment, SSA, student loan, and retirement facts', () => {
+      const facts = baseFacts({
+        form1099Records: [
+          {
+            id: '1099g-1',
+            type: 'G',
+            payer: 'State Labor Dept',
+            amount: 5000,
+            federalWithheld: 500,
+            isComplete: true
+          }
+        ],
+        socialSecurityRecords: [
+          {
+            id: 'ssa-1',
+            grossAmount: 12000,
+            federalWithheld: 0,
+            isComplete: true
+          }
+        ],
+        studentLoanRecords: [
+          {
+            lenderName: 'MOHELA',
+            interestPaid: 2500
+          }
+        ],
+        iraAccounts: [
+          {
+            payer: 'Vanguard',
+            accountType: 'traditional',
+            grossDistribution: 9000,
+            taxableAmount: 9000,
+            federalIncomeTaxWithheld: 900,
+            requiredMinimumDistributions: 0,
+            contributions: 3000,
+            nonDeductibleBasis: 0,
+            priorBasis: 0
+          }
+        ],
+        iraContributions: [
+          {
+            owner: 'primary',
+            traditionalContributions: 3000,
+            traditionalDeductibleAmount: 3000,
+            rothContributions: 0
+          }
+        ]
+      })
+
+      const info = adaptFactsToInformation(facts)
+      expect(info.f1099s.some((entry) => entry.type === 'G')).toBe(true)
+      expect(info.f1099s.some((entry) => entry.type === 'SSA')).toBe(true)
+      expect(info.f1098es).toHaveLength(1)
+      expect(info.f1098es?.[0].interest).toBe(2500)
+      expect(info.individualRetirementArrangements).toHaveLength(1)
+      expect(info.individualRetirementArrangements?.[0].grossDistribution).toBe(
+        9000
+      )
+      expect(info.individualRetirementArrangements?.[0].contributions).toBe(
+        3000
+      )
+      expect(info.iraContributions).toHaveLength(1)
+      expect(info.iraContributions?.[0].traditionalContributions).toBe(3000)
+    })
   })
 
   describe('calculate', () => {
@@ -326,6 +391,183 @@ describe('TaxCalculationService', () => {
       )
 
       expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.agi).toBeGreaterThan(69000)
+        expect(result.agi).toBeLessThan(70000)
+        expect(result.taxableIncome).toBeGreaterThan(43000)
+        expect(result.taxableIncome).toBeLessThan(result.agi)
+        expect(result.schedules).toContain('f1040')
+        expect(result.totalTax).toBeGreaterThan(10000)
+      }
+    })
+
+    it('applies workbook-style unemployment and student-loan adjustment flow', () => {
+      const withoutAdjustment = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-workbook-base',
+              employerName: 'Employer Inc',
+              ein: '12-3456789',
+              box1Wages: 40000,
+              box2FederalWithheld: 4000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          unemploymentRecords: [
+            {
+              id: '1099g-workbook-base',
+              amount: 5000,
+              federalWithheld: 500,
+              isComplete: true
+            }
+          ]
+        })
+      )
+      const withAdjustment = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-workbook-adjusted',
+              employerName: 'Employer Inc',
+              ein: '12-3456789',
+              box1Wages: 40000,
+              box2FederalWithheld: 4000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          unemploymentRecords: [
+            {
+              id: '1099g-workbook-adjusted',
+              amount: 5000,
+              federalWithheld: 500,
+              isComplete: true
+            }
+          ],
+          studentLoanRecords: [
+            {
+              lenderName: 'MOHELA',
+              interestPaid: 2500
+            }
+          ]
+        })
+      )
+
+      expect(withoutAdjustment.success).toBe(true)
+      expect(withAdjustment.success).toBe(true)
+      if (withoutAdjustment.success && withAdjustment.success) {
+        expect(withoutAdjustment.agi).toBe(45000)
+        expect(withAdjustment.agi).toBe(42500)
+        expect(withAdjustment.taxableIncome).toBeLessThan(
+          withoutAdjustment.taxableIncome
+        )
+      }
+    })
+
+    it('includes retirement distributions and social security in the workbook-style income flow', () => {
+      const result = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-retirement-workbook',
+              employerName: 'Employer Inc',
+              ein: '12-3456789',
+              box1Wages: 30000,
+              box2FederalWithheld: 3000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          socialSecurityRecords: [
+            {
+              id: 'ssa-workbook',
+              grossAmount: 12000,
+              federalWithheld: 0,
+              isComplete: true
+            }
+          ],
+          iraAccounts: [
+            {
+              payer: 'Vanguard',
+              accountType: 'traditional',
+              grossDistribution: 9000,
+              taxableAmount: 9000,
+              federalIncomeTaxWithheld: 900,
+              requiredMinimumDistributions: 0,
+              contributions: 3000,
+              nonDeductibleBasis: 0,
+              priorBasis: 0
+            }
+          ]
+        })
+      )
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.agi).toBeGreaterThan(39000)
+        expect(result.totalPayments).toBe(3900)
+        expect(result.schedules).toContain('f1040')
+      }
+    })
+
+    it('applies workbook-style Forms 4137, 8919, and 8801 in the combined tax flow', () => {
+      const baseline = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-form-cluster-baseline',
+              employerName: 'Metro Hospitality',
+              ein: '12-3456789',
+              box1Wages: 170000,
+              box2FederalWithheld: 24000,
+              socialSecurityWages: 170000,
+              medicareWages: 170000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ]
+        })
+      )
+
+      const withForms = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-form-cluster-with-forms',
+              employerName: 'Metro Hospitality',
+              ein: '12-3456789',
+              box1Wages: 170000,
+              box2FederalWithheld: 24000,
+              socialSecurityWages: 170000,
+              medicareWages: 170000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          unreportedTipIncome: 10000,
+          uncollectedSSTaxWages: [
+            {
+              employerName: 'Shifted Employer',
+              employerEIN: '98-7654321',
+              wagesReceived: 20000,
+              reasonCode: 'A'
+            }
+          ],
+          priorYearAmtCredit: 5000,
+          priorYearAmtCreditCarryforward: 1000
+        })
+      )
+
+      expect(baseline.success).toBe(true)
+      expect(withForms.success).toBe(true)
+      if (baseline.success && withForms.success) {
+        expect(withForms.totalTax).toBeLessThan(baseline.totalTax)
+        expect(baseline.totalTax - withForms.totalTax).toBeGreaterThan(4000)
+        expect(withForms.totalPayments).toBe(24000)
+        expect(withForms.schedules).toContain('f1040')
+      }
     })
 
     it('computes state tax for CA filer with W-2 income', () => {

@@ -1567,6 +1567,481 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     }
   )
 
+  it(
+    'syncs workbook-aligned screen data for unemployment, SSA, student loans, and retirement',
+    { timeout: 120000 },
+    async () => {
+      let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sub: 'taxflow-user-workbook-cluster',
+          email: 'workbook-cluster@example.com',
+          displayName: 'Workbook Cluster User'
+        })
+      })
+      expect(response.status).toBe(201)
+      const sessionCookie = extractCookieHeader(response)
+
+      response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          taxYear: 2025,
+          filingStatus: 'single',
+          formType: '1040',
+          screenData: {
+            '/taxpayer-profile': {
+              firstName: 'Morgan',
+              lastName: 'Workbook',
+              ssn: '400-01-4444',
+              filingStatus: 'single',
+              address: {
+                line1: '88 Ledger St',
+                city: 'Denver',
+                state: 'CO',
+                zip: '80202'
+              }
+            },
+            '/student-loan': {
+              paidStudentLoanInterest: true,
+              interestPaid: '2500',
+              lenderName: 'MOHELA',
+              loanForDegree: true,
+              filingStatus: 'single',
+              estimatedAGI: '60000'
+            },
+            '/unemployment-ss': {
+              hasUnemployment: true,
+              hasSS: true,
+              form: {
+                unemploymentAmount: '5000',
+                unemploymentWithheld: '500',
+                repaidAmount: '0',
+                ssGrossAmount: '12000',
+                ssWithheld: '0',
+                otherIncome: '40000',
+                filingStatus: 'single'
+              }
+            },
+            '/ira-retirement': {
+              sections: {
+                contributions: true,
+                rmd: false,
+                pension: true,
+                conversion: false
+              },
+              form: {
+                age: '63',
+                hasWorkplacePlan: 'no',
+                filingStatus: 'single',
+                magi: '60000',
+                traditionalContribution: '3000',
+                rothContribution: '',
+                nonDeductibleBasis: '0',
+                rmdAmount: '',
+                rmdTaken: '',
+                pensionIncome: '9000',
+                pensionTaxable: '9000',
+                conversionAmount: '',
+                priorBasis: '0'
+              }
+            }
+          }
+        })
+      })
+      expect(response.status).toBe(201)
+      const created = await parseJsonResponse<JsonObject>(response)
+      const filingSessionId = String((created.filingSession as JsonObject).id)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/w2/w2-primary-${filingSessionId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            status: 'complete',
+            label: 'Employer Inc',
+            data: {
+              employerName: 'Employer Inc',
+              ein: '12-3456789',
+              box1Wages: 40000,
+              box2FederalWithheld: 4000,
+              owner: 'taxpayer'
+            }
+          })
+        }
+      )
+      expect(response.status).toBe(200)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+        {
+          method: 'POST',
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const syncResult = await parseJsonResponse<JsonObject>(response)
+      const facts = syncResult.facts as JsonObject
+      const incomeSummary = facts.incomeSummary as JsonObject
+      const taxSummary = syncResult.taxSummary as JsonObject
+
+      expect(((facts.studentLoanRecords as JsonObject[])[0] as JsonObject).interestPaid).toBe(2500)
+      expect(((facts.unemploymentRecords as JsonObject[])[0] as JsonObject).amount).toBe(5000)
+      expect(((facts.socialSecurityRecords as JsonObject[])[0] as JsonObject).grossAmount).toBe(12000)
+      expect(((facts.iraContributions as JsonObject[])[0] as JsonObject).traditionalContributions).toBe(3000)
+      expect(((facts.iraAccounts as JsonObject[])[0] as JsonObject).grossDistribution).toBe(9000)
+      expect((incomeSummary.totalRetirementDistributions as number)).toBe(9000)
+      expect((incomeSummary.totalUnemployment as number)).toBe(5000)
+      expect((incomeSummary.totalSocialSecurityGross as number)).toBe(12000)
+      expect((taxSummary.agi as number)).toBeGreaterThanOrEqual(42500)
+      expect((taxSummary.totalPayments as number)).toBeGreaterThanOrEqual(4500)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const checklist = await parseJsonResponse<JsonObject>(response)
+      const checklistItems = (checklist.checklist as JsonObject)
+        .items as Record<string, JsonObject>
+      expect(checklistItems['unemployment-ss'].status).toBe('complete')
+      expect(checklistItems.retirement.status).toBe('complete')
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const review = await parseJsonResponse<JsonObject>(response)
+      const sections = (review.review as JsonObject).sections as JsonObject[]
+      const incomeSection = sections.find(
+        (section) => section.id === 'income'
+      ) as JsonObject | undefined
+      expect(incomeSection).toBeDefined()
+      const rows = (incomeSection?.rows as JsonObject[]) ?? []
+      expect(
+        rows.some(
+          (row) =>
+            row.label === 'Retirement distributions' && row.value === '$9,000'
+        )
+      ).toBe(true)
+    }
+  )
+
+  it(
+    'syncs workbook-aligned screen data for Forms 4137, 8919, and 8801',
+    { timeout: 120000 },
+    async () => {
+      let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sub: 'taxflow-user-workbook-tax-forms',
+          email: 'workbook-tax-forms@example.com',
+          displayName: 'Workbook Tax Forms User'
+        })
+      })
+      expect(response.status).toBe(201)
+      const sessionCookie = extractCookieHeader(response)
+
+      response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          taxYear: 2025,
+          filingStatus: 'single',
+          formType: '1040',
+          screenData: {
+            '/taxpayer-profile': {
+              firstName: 'Jordan',
+              lastName: 'Workbook',
+              ssn: '400-01-5555',
+              filingStatus: 'single',
+              address: {
+                line1: '77 Payroll Ave',
+                city: 'Phoenix',
+                state: 'AZ',
+                zip: '85004'
+              }
+            },
+            '/form-4137': {
+              hasUnreportedTips: true,
+              unreportedTips: '10000'
+            },
+            '/form-8919': {
+              hasUncollectedWages: true,
+              employers: [
+                {
+                  id: 'misclassified-1',
+                  employerName: 'Shifted Employer',
+                  employerEIN: '98-7654321',
+                  wagesReceived: '20000',
+                  reasonCode: 'A'
+                }
+              ]
+            },
+            '/form-8801': {
+              hasAmtCredit: true,
+              priorYearAmtCredit: '5000',
+              priorYearAmtCreditCarryforward: '1000'
+            }
+          }
+        })
+      })
+      expect(response.status).toBe(201)
+      const created = await parseJsonResponse<JsonObject>(response)
+      const filingSessionId = String((created.filingSession as JsonObject).id)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/w2/w2-tax-forms-${filingSessionId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            status: 'complete',
+            label: 'Metro Hospitality',
+            data: {
+              employerName: 'Metro Hospitality',
+              ein: '12-3456789',
+              box1Wages: 170000,
+              box2FederalWithheld: 24000,
+              socialSecurityWages: 170000,
+              medicareWages: 170000,
+              owner: 'taxpayer'
+            }
+          })
+        }
+      )
+      expect(response.status).toBe(200)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+        {
+          method: 'POST',
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const syncResult = await parseJsonResponse<JsonObject>(response)
+      const facts = syncResult.facts as JsonObject
+      const taxSummary = syncResult.taxSummary as JsonObject
+
+      expect(facts.unreportedTipIncome).toBe(10000)
+      expect(
+        ((facts.uncollectedSSTaxWages as JsonObject[])[0] as JsonObject)
+          .wagesReceived
+      ).toBe(20000)
+      expect(
+        ((facts.uncollectedSSTaxWages as JsonObject[])[0] as JsonObject)
+          .reasonCode
+      ).toBe('A')
+      expect(facts.priorYearAmtCredit).toBe(5000)
+      expect(facts.priorYearAmtCreditCarryforward).toBe(1000)
+      expect((taxSummary.totalTax as number)).toBeGreaterThan(0)
+      expect((taxSummary.totalPayments as number)).toBe(24000)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const checklist = await parseJsonResponse<JsonObject>(response)
+      const checklistItems = (checklist.checklist as JsonObject)
+        .items as Record<string, JsonObject>
+      expect(checklistItems['form-4137'].status).toBe('complete')
+      expect(checklistItems['form-8919'].status).toBe('complete')
+      expect(checklistItems['form-8801'].status).toBe('complete')
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const review = await parseJsonResponse<JsonObject>(response)
+      const sections = (review.review as JsonObject).sections as JsonObject[]
+      const incomeSection = sections.find(
+        (section) => section.id === 'income'
+      ) as JsonObject | undefined
+      const creditsSection = sections.find(
+        (section) => section.id === 'household-credits'
+      ) as JsonObject | undefined
+      const incomeRows = (incomeSection?.rows as JsonObject[]) ?? []
+      const creditRows = (creditsSection?.rows as JsonObject[]) ?? []
+
+      expect(
+        incomeRows.some(
+          (row) =>
+            row.label === 'Unreported tip income (Form 4137)' &&
+            row.value === '$10,000'
+        )
+      ).toBe(true)
+      expect(
+        incomeRows.some(
+          (row) =>
+            row.label === 'Uncollected SS/Medicare wages (Form 8919)' &&
+            row.value === '$20,000'
+        )
+      ).toBe(true)
+      expect(
+        creditRows.some(
+          (row) =>
+            row.label === 'Prior-year AMT credit inputs' &&
+            row.value === '$5,000 current + $1,000 carryforward'
+        )
+      ).toBe(true)
+    }
+  )
+
+  it(
+    'ignores stale Form 4137, 8919, and 8801 values when the filer opts out',
+    { timeout: 120000 },
+    async () => {
+      let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sub: 'taxflow-user-workbook-tax-forms-opt-out',
+          email: 'workbook-tax-forms-opt-out@example.com',
+          displayName: 'Workbook Tax Forms Opt Out User'
+        })
+      })
+      expect(response.status).toBe(201)
+      const sessionCookie = extractCookieHeader(response)
+
+      response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          taxYear: 2025,
+          filingStatus: 'single',
+          formType: '1040',
+          screenData: {
+            '/taxpayer-profile': {
+              firstName: 'Casey',
+              lastName: 'Optout',
+              ssn: '400-01-5566',
+              filingStatus: 'single',
+              address: {
+                line1: '12 Toggle St',
+                city: 'Tucson',
+                state: 'AZ',
+                zip: '85701'
+              }
+            },
+            '/form-4137': {
+              hasUnreportedTips: false,
+              unreportedTips: '10000'
+            },
+            '/form-8919': {
+              hasUncollectedWages: false,
+              employers: [
+                {
+                  id: 'stale-1',
+                  employerName: 'Old Employer',
+                  employerEIN: '98-7654321',
+                  wagesReceived: '20000',
+                  reasonCode: 'A'
+                }
+              ]
+            },
+            '/form-8801': {
+              hasAmtCredit: false,
+              priorYearAmtCredit: '5000',
+              priorYearAmtCreditCarryforward: '1000'
+            }
+          }
+        })
+      })
+      expect(response.status).toBe(201)
+      const created = await parseJsonResponse<JsonObject>(response)
+      const filingSessionId = String((created.filingSession as JsonObject).id)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/w2/w2-tax-forms-optout-${filingSessionId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            status: 'complete',
+            label: 'Metro Hospitality',
+            data: {
+              employerName: 'Metro Hospitality',
+              ein: '12-3456789',
+              box1Wages: 170000,
+              box2FederalWithheld: 24000,
+              socialSecurityWages: 170000,
+              medicareWages: 170000,
+              owner: 'taxpayer'
+            }
+          })
+        }
+      )
+      expect(response.status).toBe(200)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+        {
+          method: 'POST',
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const syncResult = await parseJsonResponse<JsonObject>(response)
+      const facts = syncResult.facts as JsonObject
+
+      expect(facts.unreportedTipIncome ?? null).toBeNull()
+      expect(
+        Array.isArray(facts.uncollectedSSTaxWages)
+          ? (facts.uncollectedSSTaxWages as JsonObject[]).length
+          : 0
+      ).toBe(0)
+      expect(facts.priorYearAmtCredit ?? null).toBeNull()
+      expect(facts.priorYearAmtCreditCarryforward ?? null).toBeNull()
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/checklist`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const checklist = await parseJsonResponse<JsonObject>(response)
+      const checklistItems = (checklist.checklist as JsonObject)
+        .items as Record<string, JsonObject>
+      expect(checklistItems['form-4137'].status).toBe('skipped')
+      expect(checklistItems['form-8919'].status).toBe('skipped')
+      expect(checklistItems['form-8801'].status).toBe('skipped')
+    }
+  )
+
   it('generates and updates a print-and-mail packet for TaxFlow sessions', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
       method: 'POST',

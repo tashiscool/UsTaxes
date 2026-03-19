@@ -336,8 +336,29 @@ def build_summary_markdown(
             f"- `{workbook_label}`: {len(sheets)} sheets, {formulas:,} formula cells, {sum(1 for row in all_names if row['workbook_label'] == workbook_label):,} defined names."
         )
 
+    sheets_by_year = {
+        label: {str(row["sheet"]) for row in all_sheets if row["workbook_label"] == label}
+        for label in ("2024", "2025", "2026_forecast")
+    }
+    added_2025 = sorted(sheets_by_year["2025"] - sheets_by_year["2024"])
+    removed_2025 = sorted(sheets_by_year["2024"] - sheets_by_year["2025"])
+    added_2026 = sorted(sheets_by_year["2026_forecast"] - sheets_by_year["2025"])
+    removed_2026 = sorted(sheets_by_year["2025"] - sheets_by_year["2026_forecast"])
+
     lines.extend(
         [
+            "",
+            "## Year Alignment",
+            "",
+            "- `24_1040.xlsx` is the TY2024 baseline workbook.",
+            "- `25_1040.xlsx` is the TY2025 workbook and adds 2025-only structural changes:",
+            f"  `{'`, `'.join(added_2025)}`." if added_2025 else "  No new sheets detected versus 2024.",
+            "- It also removes or renames 2024-only workbook tabs:",
+            f"  `{'`, `'.join(removed_2025)}`." if removed_2025 else "  No removed sheets detected versus 2024.",
+            "- `26_1040 Forecast (Rev. 41).xlsx` is the TY2026 forecast workbook.",
+            "- Its sheet graph matches the TY2025 workbook layout exactly."
+            if not added_2026 and not removed_2026
+            else f"- Compared with TY2025, the forecast workbook changes sheets by adding `{'`, `'.join(added_2026)}` and removing `{'`, `'.join(removed_2026)}`.",
             "",
             "## Coverage interpretation",
             "",

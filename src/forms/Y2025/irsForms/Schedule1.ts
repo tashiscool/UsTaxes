@@ -17,6 +17,11 @@ export default class Schedule1 extends F1040Attachment {
   isNeeded = (): boolean =>
     (this.f1040.scheduleC?.isNeeded() ?? false) ||
     this.f1040.scheduleE.isNeeded() ||
+    this.f1040.f1099gs().some(
+      (f1099) =>
+        (f1099.form.unemploymentCompensation ?? 0) > 0 ||
+        (f1099.form.stateLocalTaxRefund ?? 0) > 0
+    ) ||
     (this.f1040.studentLoanInterestWorksheet !== undefined &&
       this.f1040.studentLoanInterestWorksheet.notMFS() &&
       this.f1040.studentLoanInterestWorksheet.isNotDependent()) ||
@@ -39,7 +44,14 @@ export default class Schedule1 extends F1040Attachment {
   l4 = (): number | undefined => undefined
   l5 = (): number | undefined => this.f1040.scheduleE.l41()
   l6 = (): number | undefined => this.f1040.scheduleF?.netProfit() // Schedule F: Farm income
-  l7 = (): number | undefined => undefined
+  l7 = (): number | undefined => {
+    const unemployment = this.f1040.f1099gs().reduce(
+      (sum, f1099) => sum + (f1099.form.unemploymentCompensation ?? 0),
+      0
+    )
+
+    return unemployment > 0 ? unemployment : undefined
+  }
   l8a = (): number | undefined => undefined
   l8b = (): number | undefined => undefined
   l8c = (): number | undefined => undefined

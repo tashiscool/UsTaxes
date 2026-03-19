@@ -1310,8 +1310,16 @@ export default class F1040 extends F1040Base {
 
   // tax withheld from 1099s
   l25b = (): number =>
+    this.info.individualRetirementArrangements.reduce(
+      (res, ira) => res + ira.federalIncomeTaxWithheld,
+      0
+    ) +
     this.f1099rs().reduce(
       (res, f1099) => res + f1099.form.federalIncomeTaxWithheld,
+      0
+    ) +
+    this.f1099gs().reduce(
+      (res, f1099) => res + (f1099.form.federalIncomeTaxWithheld ?? 0),
       0
     ) +
     this.f1099ssas().reduce(

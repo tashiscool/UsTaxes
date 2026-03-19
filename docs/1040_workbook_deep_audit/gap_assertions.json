@@ -182,5 +182,121 @@
     ],
     "missing_tests": [],
     "issues": []
+  },
+  {
+    "logical_area": "1099_g",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/F1099GParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "1099_r",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/F1099GParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "social_security_worksheet",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/F1099GParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "student_loan_interest_worksheet",
+    "status": "ok",
+    "observed_years": [
+      "2024",
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 3,
+    "required_test_files": [
+      "src/forms/Y2025/tests/F1099GParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "1099_nec",
+    "status": "ok",
+    "observed_years": [
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 2,
+    "required_test_files": [
+      "backend-cloudflare/test/service/taxCalculationService.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "form_4137",
+    "status": "ok",
+    "observed_years": [
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 2,
+    "required_test_files": [
+      "src/forms/Y2025/tests/Workbook2025AdditionsParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "form_8801",
+    "status": "ok",
+    "observed_years": [
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 2,
+    "required_test_files": [
+      "src/forms/Y2025/tests/Workbook2025AdditionsParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
+  },
+  {
+    "logical_area": "form_8919",
+    "status": "ok",
+    "observed_years": [
+      "2025",
+      "2026_forecast"
+    ],
+    "sheet_count": 2,
+    "required_test_files": [
+      "src/forms/Y2025/tests/Workbook2025AdditionsParity.test.ts"
+    ],
+    "missing_tests": [],
+    "issues": []
   }
 ]

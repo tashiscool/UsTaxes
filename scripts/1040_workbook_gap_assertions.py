@@ -71,6 +71,40 @@ PRIORITY_LOGICAL_AREAS = {
         ],
         "expected_years": {"2024", "2025", "2026_forecast"},
     },
+    "1099_g": {
+        "test_files": ["src/forms/Y2025/tests/F1099GParity.test.ts"],
+        "expected_years": {"2024", "2025", "2026_forecast"},
+    },
+    "1099_r": {
+        "test_files": ["src/forms/Y2025/tests/F1099GParity.test.ts"],
+        "expected_years": {"2024", "2025", "2026_forecast"},
+    },
+    "social_security_worksheet": {
+        "test_files": ["src/forms/Y2025/tests/F1099GParity.test.ts"],
+        "expected_years": {"2024", "2025", "2026_forecast"},
+    },
+    "student_loan_interest_worksheet": {
+        "test_files": ["src/forms/Y2025/tests/F1099GParity.test.ts"],
+        "expected_years": {"2024", "2025", "2026_forecast"},
+    },
+    "1099_nec": {
+        "test_files": [
+            "backend-cloudflare/test/service/taxCalculationService.test.ts"
+        ],
+        "expected_years": {"2025", "2026_forecast"},
+    },
+    "form_4137": {
+        "test_files": ["src/forms/Y2025/tests/Workbook2025AdditionsParity.test.ts"],
+        "expected_years": {"2025", "2026_forecast"},
+    },
+    "form_8801": {
+        "test_files": ["src/forms/Y2025/tests/Workbook2025AdditionsParity.test.ts"],
+        "expected_years": {"2025", "2026_forecast"},
+    },
+    "form_8919": {
+        "test_files": ["src/forms/Y2025/tests/Workbook2025AdditionsParity.test.ts"],
+        "expected_years": {"2025", "2026_forecast"},
+    },
 }
 
 

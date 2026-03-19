@@ -2162,7 +2162,7 @@ const getStudentLoanData = (
   ]
 }
 
-/** IRA contribution deductibility from ira_contribution_deduction entity or /ira-contribution screen */
+/** IRA contribution deductibility from dedicated deduction entity/screen or /ira-retirement fallback */
 const getIRAContributionsData = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
@@ -2170,21 +2170,163 @@ const getIRAContributionsData = (
   const entity = entities.find(
     (e) => e.entityType === 'ira_contribution_deduction'
   )
+  const retirementEntity = entities.find((e) => e.entityType === 'ira_distribution')
   const screen = requireScreen(snapshot, '/ira-contribution')
-  const d = (entity?.data ?? screen) as Record<string, unknown>
-  const traditional = toMoney(d.traditionalAmount ?? d.contributionAmount ?? 0)
+  const retirementScreen = asRecord(requireScreen(snapshot, '/ira-retirement').form)
+  const source =
+    entity?.data ??
+    (Object.keys(screen).length > 0 ? screen : undefined) ??
+    retirementEntity?.data ??
+    retirementScreen
+  const d = source as Record<string, unknown>
+  const traditional = toMoney(
+    d.traditionalAmount ??
+      d.traditionalContribution ??
+      d.contributionAmount ??
+      0
+  )
+  const roth = toMoney(d.rothAmount ?? d.rothContribution ?? 0)
   const deductible = toMoney(
     d.deductibleAmount ?? d.traditionalDeductibleAmount ?? 0
   )
-  if (traditional <= 0) return undefined
+  if (traditional <= 0 && roth <= 0) return undefined
   return [
     {
       owner: toText(d.owner ?? 'primary'),
       traditionalContributions: traditional,
-      traditionalDeductibleAmount: deductible > 0 ? deductible : traditional,
-      rothContributions: toMoney(d.rothAmount ?? 0)
+      traditionalDeductibleAmount:
+        traditional > 0 ? (deductible > 0 ? deductible : traditional) : 0,
+      rothContributions: roth
     }
   ]
+}
+
+/** IRA/1099-R distribution facts from ira_distribution entity or /ira-retirement screen */
+const getIRAAccountsData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const screenState = requireScreen(snapshot, '/ira-retirement')
+  const screenForm = asRecord(screenState.form)
+  const screenSections = asRecord(screenState.sections)
+
+  const screenAccounts =
+    Boolean(
+      screenSections.pension ||
+        screenSections.rmd ||
+        screenSections.conversion ||
+        screenForm.pensionIncome ||
+        screenForm.pensionTaxable ||
+        screenForm.rmdAmount ||
+        screenForm.rmdTaken ||
+        screenForm.conversionAmount ||
+        screenForm.traditionalContribution ||
+        screenForm.rothContribution
+    )
+      ? [
+          {
+            id: 'retirement-primary',
+            owner: 'primary',
+            accountType:
+              toMoney(screenForm.rothContribution ?? 0) > 0 ||
+              toMoney(screenForm.conversionAmount ?? 0) > 0
+                ? 'roth'
+                : 'traditional',
+            grossDistribution: toMoney(
+              screenForm.pensionIncome ??
+                screenForm.rmdTaken ??
+                screenForm.conversionAmount
+            ),
+            taxableAmount: toMoney(
+              screenForm.pensionTaxable ??
+                screenForm.rmdTaken ??
+                screenForm.conversionAmount
+            ),
+            federalIncomeTaxWithheld: toMoney(
+              screenForm.federalWithheld ?? 0
+            ),
+            requiredMinimumDistributions: toMoney(
+              screenForm.rmdAmount ?? 0
+            ),
+            rothIraConversion: toMoney(screenForm.conversionAmount ?? 0),
+            contributions:
+              toMoney(screenForm.traditionalContribution ?? 0) +
+              toMoney(screenForm.rothContribution ?? 0),
+            nonDeductibleBasis: toMoney(
+              screenForm.nonDeductibleBasis ?? 0
+            ),
+            priorBasis: toMoney(screenForm.priorBasis ?? 0),
+            taxableAmountNotDetermined: false,
+            totalDistribution: toMoney(
+              screenForm.pensionIncome ??
+                screenForm.rmdTaken ??
+                screenForm.conversionAmount
+            )
+              ? true
+              : false
+          }
+        ]
+      : []
+
+  const entityAccounts = entities
+    .filter((entity) => entity.entityType === 'ira_distribution')
+    .map((entity) => ({
+      id: entity.id,
+      owner: toText(entity.data.owner ?? 'primary'),
+      accountType: toText(
+        entity.data.accountType ??
+          (toMoney(entity.data.rothContribution ?? 0) > 0 ||
+          toMoney(entity.data.rothConversion ?? entity.data.conversionAmount ?? 0) > 0
+            ? 'roth'
+            : 'traditional')
+      ),
+      grossDistribution: toMoney(
+        entity.data.grossDistribution ??
+          entity.data.pensionIncome ??
+          entity.data.rmdTaken ??
+          entity.data.conversionAmount
+      ),
+      taxableAmount: toMoney(
+        entity.data.taxableAmount ??
+          entity.data.pensionTaxable ??
+          entity.data.rmdTaken ??
+          entity.data.conversionAmount
+      ),
+      federalIncomeTaxWithheld: toMoney(
+        entity.data.federalIncomeTaxWithheld ?? entity.data.federalWithheld
+      ),
+      requiredMinimumDistributions: toMoney(
+        entity.data.requiredMinimumDistributions ??
+          entity.data.rmd ??
+          entity.data.rmdAmount
+      ),
+      rothIraConversion: toMoney(
+        entity.data.rothIraConversion ??
+          entity.data.rothConversion ??
+          entity.data.conversionAmount
+      ),
+      contributions: toMoney(
+        entity.data.contributions ??
+          entity.data.contributionAmount ??
+          entity.data.traditionalContribution
+      ) + toMoney(entity.data.rothContribution ?? 0),
+      nonDeductibleBasis: toMoney(entity.data.nonDeductibleBasis ?? 0),
+      priorBasis: toMoney(entity.data.priorBasis ?? 0),
+      taxableAmountNotDetermined: Boolean(
+        entity.data.taxableAmountNotDetermined
+      ),
+      totalDistribution: Boolean(
+        entity.data.totalDistribution ??
+          toMoney(
+            entity.data.grossDistribution ??
+              entity.data.pensionIncome ??
+              entity.data.rmdTaken ??
+              entity.data.conversionAmount
+          )
+      )
+    }))
+
+  return mergeCollectionById(screenAccounts, entityAccounts)
 }
 
 /** Form 5695: clean energy + home improvements from form_5695 entity or /residential-energy screen */
@@ -2373,7 +2515,8 @@ const getIncomeSummary = (
   w2Records: ReturnType<typeof getW2Records>,
   form1099Records: ReturnType<typeof get1099Records>,
   unemploymentRecords: ReturnType<typeof getUnemploymentRecords>,
-  socialSecurityRecords: ReturnType<typeof getSocialSecurityRecords>
+  socialSecurityRecords: ReturnType<typeof getSocialSecurityRecords>,
+  iraAccounts: Array<Record<string, unknown>>
 ) => {
   const totalsByType = form1099Records.reduce<Record<string, number>>(
     (acc, record) => {
@@ -2419,6 +2562,15 @@ const getIncomeSummary = (
     ),
     totalSocialSecurityTaxableEstimate: socialSecurityRecords.reduce(
       (sum, record) => sum + record.taxableEstimate,
+      0
+    ),
+    retirementAccountCount: iraAccounts.length,
+    totalRetirementDistributions: iraAccounts.reduce(
+      (sum, record) => sum + toMoney(record.grossDistribution),
+      0
+    ),
+    totalRetirementWithholding: iraAccounts.reduce(
+      (sum, record) => sum + toMoney(record.federalIncomeTaxWithheld),
       0
     ),
     totalsByType
@@ -2517,12 +2669,14 @@ const getUnreportedTipIncome = (
 ): number | undefined => {
   const entity = entities.find((e) => e.entityType === 'form_4137')
   const fromEntity = entity?.data as Record<string, unknown> | undefined
+  if (fromEntity?.hasUnreportedTips === false) return undefined
   if (fromEntity?.unreportedTips != null)
     return toMoney(fromEntity.unreportedTips)
   const screen = requireScreen(snapshot, '/form-4137') as Record<
     string,
     unknown
   >
+  if (screen.hasUnreportedTips === false) return undefined
   const amount = screen.unreportedTips ?? screen.unreportedTipIncome
   if (amount != null && amount !== '')
     return toMoney(Number(String(amount).replace(/[^\d.]/g, '')) || 0)
@@ -2535,6 +2689,8 @@ const getUncollectedSSTaxWages = (
   entities: SessionEntitySnapshot[]
 ): Record<string, unknown>[] => {
   const entityList = entities.filter((e) => e.entityType === 'form_8919')
+  if (entityList.some((e) => (e.data as Record<string, unknown>)?.hasUncollectedWages === false))
+    return []
   if (entityList.length > 0) {
     return entityList.map((e) => {
       const d = e.data as Record<string, unknown>
@@ -2550,6 +2706,7 @@ const getUncollectedSSTaxWages = (
     string,
     unknown
   >
+  if (screen.hasUncollectedWages === false) return []
   const employers = asArray<Record<string, unknown>>(
     screen.employers ?? screen.records ?? []
   )
@@ -2571,6 +2728,7 @@ const getAmtCreditData = (
   const entity = entities.find((e) => e.entityType === 'form_8801')
   const fromEntity = entity?.data as Record<string, unknown> | undefined
   if (fromEntity) {
+    if (fromEntity.hasAmtCredit === false) return {}
     return {
       priorYearAmtCredit:
         fromEntity.priorYearAmtCredit != null
@@ -2586,6 +2744,7 @@ const getAmtCreditData = (
     string,
     unknown
   >
+  if (screen.hasAmtCredit === false) return {}
   const prior = screen.priorYearAmtCredit ?? screen.amtCredit
   const carryforward =
     screen.priorYearAmtCreditCarryforward ?? screen.carryforward
@@ -2827,6 +2986,7 @@ const toFacts = (
   const spouse = getSpouse(snapshot, entities)
   const unemploymentRecords = getUnemploymentRecords(snapshot, entities)
   const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
+  const iraAccounts = getIRAAccountsData(snapshot, entities)
   const taxLots = getTaxLots(snapshot, entities)
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const businessRecords = getBusinessRecords(entities)
@@ -2851,22 +3011,22 @@ const toFacts = (
     nonresidentProfile,
     intlAdvancedData
   )
+  const studentLoanRecords = getStudentLoanData(snapshot, entities)
+  const iraContributionsData = getIRAContributionsData(snapshot, entities)
+  const iraAccountsData = getIRAAccountsData(snapshot, entities)
+  const form5695Data = getForm5695Data(snapshot, entities)
   const creditSummary = getCreditSummary(snapshot, dependents)
   const incomeSummary = getIncomeSummary(
     w2Records,
     form1099Records,
     unemploymentRecords,
-    socialSecurityRecords
+    socialSecurityRecords,
+    iraAccountsData ?? []
   )
   const investmentSummary = getInvestmentSummary(taxLots, cryptoAccounts)
 
   // OBBBA 2025 provisions
   const obbbaData = getObbbaData(snapshot, entities)
-
-  // Student loan interest, IRA contributions, Form 5695
-  const studentLoanRecords = getStudentLoanData(snapshot, entities)
-  const iraContributionsData = getIRAContributionsData(snapshot, entities)
-  const form5695Data = getForm5695Data(snapshot, entities)
 
   // Educator, alimony, SE health, capital loss, passive activity
   const educatorExpenses = getEducatorExpensesData(snapshot, entities)
@@ -2942,6 +3102,7 @@ const toFacts = (
     // Student loan, IRA contribution, Form 5695
     studentLoanRecords,
     iraContributions: iraContributionsData,
+    iraAccounts: iraAccountsData,
     cleanEnergyProperties: form5695Data?.cleanEnergyProperties,
     homeImprovements: form5695Data?.homeImprovements,
     educatorExpenses,
@@ -3158,6 +3319,7 @@ const buildChecklist = (
   const spouse = getSpouse(snapshot, entities)
   const unemploymentRecords = getUnemploymentRecords(snapshot, entities)
   const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
+  const iraAccounts = getIRAAccountsData(snapshot, entities)
   const taxLots = getTaxLots(snapshot, entities)
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const businessRecords = getBusinessRecords(entities)
@@ -3168,6 +3330,19 @@ const buildChecklist = (
   const treatyClaims = getTreatyClaims(snapshot, entities)
   const nonresidentProfile = getNonresidentProfile(snapshot)
   const creditSummary = getCreditSummary(snapshot, dependents)
+  const unreportedTipIncome = getUnreportedTipIncome(snapshot, entities) ?? 0
+  const uncollectedSSTaxWages = getUncollectedSSTaxWages(snapshot, entities)
+  const amtCreditData = getAmtCreditData(snapshot, entities)
+  const form4137Screen = requireScreen(snapshot, '/form-4137')
+  const form8919Screen = requireScreen(snapshot, '/form-8919')
+  const form8801Screen = requireScreen(snapshot, '/form-8801')
+  const form8919TotalWages = uncollectedSSTaxWages.reduce(
+    (sum, record) => sum + toMoney(record.wagesReceived),
+    0
+  )
+  const form8801TrackedTotal =
+    toMoney(amtCreditData.priorYearAmtCredit) +
+    toMoney(amtCreditData.priorYearAmtCreditCarryforward)
 
   const itemFromScreen = (
     id: string,
@@ -3342,6 +3517,71 @@ const buildChecklist = (
         'Retirement income reviewed',
         { optional: true }
       ),
+      'form-4137': {
+        status:
+          form4137Screen.hasUnreportedTips === false
+            ? 'skipped'
+            : unreportedTipIncome > 0
+            ? 'complete'
+            : form4137Screen.hasUnreportedTips === true ||
+              Object.keys(form4137Screen).length > 0
+            ? 'in_progress'
+            : 'skipped',
+        sublabel:
+          unreportedTipIncome > 0
+            ? `$${unreportedTipIncome.toLocaleString()} entered`
+            : undefined,
+        warnings: findings
+          .filter((finding) => finding.code === 'FORM4137-INCOMPLETE')
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
+      },
+      'form-8919': {
+        status:
+          form8919Screen.hasUncollectedWages === false
+            ? 'skipped'
+            : form8919TotalWages > 0
+            ? 'complete'
+            : form8919Screen.hasUncollectedWages === true ||
+              Object.keys(form8919Screen).length > 0
+            ? 'in_progress'
+            : 'skipped',
+        sublabel:
+          form8919TotalWages > 0
+            ? `${uncollectedSSTaxWages.length} wage record${
+                uncollectedSSTaxWages.length === 1 ? '' : 's'
+              }`
+            : undefined,
+        warnings: findings
+          .filter((finding) => finding.code === 'FORM8919-INCOMPLETE')
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
+      },
+      'form-8801': {
+        status:
+          form8801Screen.hasAmtCredit === false
+            ? 'skipped'
+            : form8801TrackedTotal > 0
+            ? 'complete'
+            : form8801Screen.hasAmtCredit === true ||
+              Object.keys(form8801Screen).length > 0
+            ? 'in_progress'
+            : 'skipped',
+        sublabel:
+          form8801TrackedTotal > 0
+            ? `$${form8801TrackedTotal.toLocaleString()} tracked`
+            : undefined,
+        warnings: findings
+          .filter((finding) => finding.code === 'FORM8801-INCOMPLETE')
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
+      },
       'unemployment-ss': {
         status:
           unemploymentRecords.length > 0 || socialSecurityRecords.length > 0
@@ -3522,6 +3762,7 @@ const buildReview = (
   const spouse = getSpouse(snapshot, entities)
   const unemploymentRecords = getUnemploymentRecords(snapshot, entities)
   const socialSecurityRecords = getSocialSecurityRecords(snapshot, entities)
+  const iraAccounts = getIRAAccountsData(snapshot, entities)
   const taxLots = getTaxLots(snapshot, entities)
   const cryptoAccounts = getCryptoAccounts(snapshot, entities)
   const businessRecords = getBusinessRecords(entities)
@@ -3548,6 +3789,16 @@ const buildReview = (
   )
   const creditSummary = getCreditSummary(snapshot, dependents)
   const investmentSummary = getInvestmentSummary(taxLots, cryptoAccounts)
+  const unreportedTipIncome = getUnreportedTipIncome(snapshot, entities) ?? 0
+  const uncollectedSSTaxWages = getUncollectedSSTaxWages(snapshot, entities)
+  const form8919TotalWages = uncollectedSSTaxWages.reduce(
+    (sum, record) => sum + toMoney(record.wagesReceived),
+    0
+  )
+  const amtCreditData = getAmtCreditData(snapshot, entities)
+  const form8801TrackedTotal =
+    toMoney(amtCreditData.priorYearAmtCredit) +
+    toMoney(amtCreditData.priorYearAmtCreditCarryforward)
   const sections = [
     ...(businessReturnCapability
       ? [
@@ -3732,7 +3983,39 @@ const buildReview = (
             .toLocaleString()}`,
           editPath: '/unemployment-ss',
           editLabel: 'Edit'
-        }
+        },
+        {
+          label: 'Retirement distributions',
+          value: `$${iraAccounts
+            .reduce(
+              (sum: number, record: Record<string, unknown>) =>
+                sum + toMoney(record.grossDistribution),
+              0
+            )
+            .toLocaleString()}`,
+          editPath: '/ira-retirement',
+          editLabel: 'Edit'
+        },
+        ...(unreportedTipIncome > 0
+          ? [
+              {
+                label: 'Unreported tip income (Form 4137)',
+                value: `$${unreportedTipIncome.toLocaleString()}`,
+                editPath: '/form-4137',
+                editLabel: 'Edit'
+              }
+            ]
+          : []),
+        ...(form8919TotalWages > 0
+          ? [
+              {
+                label: 'Uncollected SS/Medicare wages (Form 8919)',
+                value: `$${form8919TotalWages.toLocaleString()}`,
+                editPath: '/form-8919',
+                editLabel: 'Edit'
+              }
+            ]
+          : [])
       ],
       warnings: findings
         .filter(
@@ -3740,7 +4023,9 @@ const buildReview = (
             finding.code === 'W2-INCOMPLETE' ||
             finding.code === '1099-INCOMPLETE' ||
             finding.code === 'UNEMPLOYMENT-INCOMPLETE' ||
-            finding.code === 'SSA-INCOMPLETE'
+            finding.code === 'SSA-INCOMPLETE' ||
+            finding.code === 'FORM4137-INCOMPLETE' ||
+            finding.code === 'FORM8919-INCOMPLETE'
         )
         .map((finding) => ({
           id: finding.id,
@@ -3957,13 +4242,33 @@ const buildReview = (
           value: `$${creditSummary.summary.estimatedTotal.toLocaleString()}`,
           editPath: '/credits-v2',
           editLabel: 'Review'
-        }
+        },
+        ...(form8801TrackedTotal > 0
+          ? [
+              {
+                label: 'Prior-year AMT credit inputs',
+                value:
+                  toMoney(amtCreditData.priorYearAmtCreditCarryforward) > 0
+                    ? `$${toMoney(
+                        amtCreditData.priorYearAmtCredit
+                      ).toLocaleString()} current + $${toMoney(
+                        amtCreditData.priorYearAmtCreditCarryforward
+                      ).toLocaleString()} carryforward`
+                    : `$${toMoney(
+                        amtCreditData.priorYearAmtCredit
+                      ).toLocaleString()}`,
+                editPath: '/form-8801',
+                editLabel: 'Review'
+              }
+            ]
+          : [])
       ],
       warnings: findings
         .filter(
           (finding) =>
             finding.code.startsWith('DEPENDENT') ||
-            finding.code.startsWith('CREDIT')
+            finding.code.startsWith('CREDIT') ||
+            finding.code === 'FORM8801-INCOMPLETE'
         )
         .map((finding) => ({
           id: finding.id,
@@ -4057,6 +4362,12 @@ const toFindingRows = (
     intlAdvancedData
   )
   const creditSummary = getCreditSummary(snapshot, dependents)
+  const form4137Screen = requireScreen(snapshot, '/form-4137')
+  const form8919Screen = requireScreen(snapshot, '/form-8919')
+  const form8801Screen = requireScreen(snapshot, '/form-8801')
+  const unreportedTipIncome = getUnreportedTipIncome(snapshot, entities) ?? 0
+  const uncollectedSSTaxWages = getUncollectedSSTaxWages(snapshot, entities)
+  const amtCreditData = getAmtCreditData(snapshot, entities)
   const now = nowIso()
   const findings: ReviewFindingRow[] = []
 
@@ -4193,6 +4504,67 @@ const toFindingRows = (
         'Your Social Security record is missing the gross benefit amount.',
       fix_path: '/unemployment-ss',
       fix_label: 'Complete Social Security details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (form4137Screen.hasUnreportedTips === true && unreportedTipIncome <= 0) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'FORM4137-INCOMPLETE',
+      severity: 'warning',
+      title: 'Add your unreported tip amount',
+      message:
+        'You marked that you had unreported tips, but the amount is still missing.',
+      fix_path: '/form-4137',
+      fix_label: 'Complete Form 4137',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (
+    form8919Screen.hasUncollectedWages === true &&
+    uncollectedSSTaxWages.length === 0
+  ) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'FORM8919-INCOMPLETE',
+      severity: 'warning',
+      title: 'Add Form 8919 wage details',
+      message:
+        'You marked that you had wages without Social Security or Medicare withholding, but the employer wage records are still missing.',
+      fix_path: '/form-8919',
+      fix_label: 'Complete Form 8919',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (
+    form8801Screen.hasAmtCredit === true &&
+    toMoney(amtCreditData.priorYearAmtCredit) <= 0 &&
+    toMoney(amtCreditData.priorYearAmtCreditCarryforward) <= 0
+  ) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'FORM8801-INCOMPLETE',
+      severity: 'warning',
+      title: 'Add your prior-year AMT credit',
+      message:
+        'You marked that you have prior-year AMT credit, but the credit or carryforward amount is still missing.',
+      fix_path: '/form-8801',
+      fix_label: 'Complete Form 8801',
       acknowledged: 0,
       metadata_key: null,
       created_at: now,

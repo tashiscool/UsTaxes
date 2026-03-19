@@ -1,6 +1,7 @@
 import F1040Attachment from './F1040Attachment'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
+import { Income1099Type } from 'ustaxes/core/data'
 
 /**
  * Form 1099-G - Certain Government Payments
@@ -49,16 +50,66 @@ export default class F1099G extends F1040Attachment {
   tag: FormTag = 'f1099g'
   sequenceIndex = 999
 
+  private recipientAddressString = (): string => {
+    const address = this.f1040.info.taxPayer.primaryPerson.address
+    const line1 = [address.address, address.aptNo].filter(Boolean).join(' ')
+    const line2 = [
+      address.city,
+      address.state,
+      address.zip ?? address.postalCode,
+      address.foreignCountry
+    ]
+      .filter(Boolean)
+      .join(', ')
+
+    return [line1, line2].filter(Boolean).join(', ')
+  }
+
+  private first1099G = () =>
+    this.f1040.info.f1099s.find(
+      (entry): entry is (typeof this.f1040.info.f1099s)[number] & {
+        type: Income1099Type.G
+      } => entry.type === Income1099Type.G
+    )
+
   isNeeded = (): boolean => {
     return this.hasF1099GData()
   }
 
   hasF1099GData = (): boolean => {
-    return false
+    return this.first1099G() !== undefined
   }
 
   f1099GData = (): F1099GData | undefined => {
-    return undefined
+    const form1099G = this.first1099G()
+    if (form1099G === undefined) {
+      return undefined
+    }
+
+    const recipient = this.f1040.info.taxPayer.primaryPerson
+    const form = form1099G.form
+
+    return {
+      payerName: form1099G.payer,
+      payerAddress: '',
+      payerTIN: '',
+      payerPhone: '',
+      recipientName: this.f1040.namesString(),
+      recipientAddress: this.recipientAddressString(),
+      recipientTIN: recipient.ssid,
+      unemploymentCompensation: form.unemploymentCompensation ?? 0,
+      stateLocalTaxRefund: form.stateLocalTaxRefund ?? 0,
+      taxYearOfRefund: form.taxYear ?? 0,
+      federalTaxWithheld: form.federalIncomeTaxWithheld ?? 0,
+      rtaaPayments: form.rtaaPayments ?? 0,
+      taxableGrants: form.taxableGrants ?? 0,
+      agriculturePayments: form.agriculturePayments ?? 0,
+      tradeOrBusinessIncome: form.tradeOrBusinessIncome ?? false,
+      marketGain: form.marketGain ?? 0,
+      stateTaxWithheld: form.stateTaxWithheld ?? 0,
+      stateId: form.stateIdNumber ?? '',
+      stateIncome: 0
+    }
   }
 
   // Box 1: Unemployment compensation → Schedule 1 Line 7

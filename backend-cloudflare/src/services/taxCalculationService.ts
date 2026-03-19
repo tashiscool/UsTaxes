@@ -1199,8 +1199,29 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
       personRole: PersonRole.PRIMARY as const
     }))
 
+  // Adapt dedicated unemployment records into 1099-G entries for the main 1040 flow.
+  // These records come from the TaxFlow unemployment screen and should participate
+  // in both AGI and withholding totals even when they were not entered through
+  // the generic 1099 hub.
+  const unemploymentRecords = asArray<Record<string, unknown>>(
+    facts.unemploymentRecords
+  )
+  const unemployment1099s: Supported1099[] = unemploymentRecords
+    .filter((r) => toNum(r.amount ?? r.unemploymentAmount) > 0)
+    .map((r) => ({
+      payer: toStr(r.payer ?? r.payerName ?? 'State Labor Department'),
+      type: Income1099Type.G as const,
+      form: {
+        unemploymentCompensation: toNum(r.amount ?? r.unemploymentAmount),
+        federalIncomeTaxWithheld: toNum(
+          r.federalWithheld ?? r.unemploymentWithheld
+        )
+      } as F1099GData,
+      personRole: PersonRole.PRIMARY as const
+    }))
+
   // Merge all 1099s
-  const all1099s = [...adapt1099s(facts), ...ssa1099s]
+  const all1099s = [...adapt1099s(facts), ...ssa1099s, ...unemployment1099s]
 
   // Adapt OBBBA fields
   const overtimeIncome: OvertimeIncome | undefined = (() => {
