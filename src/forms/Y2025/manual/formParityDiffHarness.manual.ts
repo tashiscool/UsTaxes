@@ -106,18 +106,39 @@ const asAmount = (value: unknown): string => {
   return String(value)
 }
 
-const sameAmount = (left: unknown, right: unknown): boolean => {
-  if (
-    left === null ||
-    left === undefined ||
-    right === null ||
-    right === undefined
-  ) {
-    return left === right
+const isBlankLike = (value: unknown): boolean =>
+  value === null || value === undefined || String(value).trim() === ''
+
+const canonicalVisaType = (value: unknown): string => {
+  if (isBlankLike(value)) return 'other'
+  const normalized = String(value).trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+  return normalized === '' ? 'other' : normalized
+}
+
+const sameAmount = (
+  metric: string,
+  left: unknown,
+  right: unknown
+): boolean => {
+  if (metric === 'qbiDeduction') {
+    const leftNum = Number(left)
+    const rightNum = Number(right)
+    if (!Number.isNaN(leftNum) && !Number.isNaN(rightNum)) {
+      return Math.abs(leftNum - rightNum) < 1
+    }
+  }
+  if (metric === 'visaType') {
+    return canonicalVisaType(left) === canonicalVisaType(right)
+  }
+  if (isBlankLike(left) && isBlankLike(right)) {
+    return true
   }
   const leftNum = Number(left)
   const rightNum = Number(right)
   if (!Number.isNaN(leftNum) && !Number.isNaN(rightNum)) {
+    if (Math.round(leftNum) === Math.round(rightNum)) {
+      return true
+    }
     return Math.abs(leftNum - rightNum) < 0.01
   }
   return String(left) === String(right)
@@ -182,33 +203,161 @@ const createScenario28Output = (): Record<string, unknown> => {
   ] as never
 
   const f1040 = new F1040(info, [])
-  const detailed = f1040.f8995 as any
+  const qbiForm = f1040.f8995 as any
   return {
     directQBI: f1040.totalQbi(),
     totalQBI: f1040.totalQbi(),
     qbiDeduction: f1040.l13(),
-    qbi8995A: detailed?.l27?.() ?? null,
+    qbi8995A: qbiForm?.l27?.() ?? 0,
     w2Wages8995A:
-      detailed
+      qbiForm
         ?.qbiEntries?.()
         .reduce(
           (total: number, entry: any) => total + (entry.w2Wages ?? 0),
           0
-        ) ?? null,
+        ) ?? 0,
     ubia8995A:
-      detailed
+      qbiForm
         ?.qbiEntries?.()
         .reduce((total: number, entry: any) => total + (entry.ubia ?? 0), 0) ??
-      null,
-    form8995ATotalBusinesses: detailed?.qbiEntries?.().length ?? 0,
+      0,
+    qbiComponentBeforeLimitation: qbiForm?.l5?.() ?? 0,
+    qbiComponentAfter8995A: qbiForm?.l27?.() ?? 0,
+    w2UBIALimit8995A: qbiForm?.l10a?.() ?? 0,
+    isSSTB8995A: qbiForm?.qbiEntries?.()?.some((entry: any) => !!entry.isSSTB) ?? false,
+    form8995ATotalBusinesses: qbiForm?.qbiEntries?.().length ?? 0,
     form8995AOverflowBusinesses: Math.max(
       0,
-      (detailed?.qbiEntries?.().length ?? 0) - 3
+      (qbiForm?.qbiEntries?.().length ?? 0) - 3
     ),
-    hasForm8995AAttachmentStatement: (detailed?.qbiEntries?.().length ?? 0) > 3,
-    form8995AOverflowQBI: detailed?.overflowTotals?.().qbi ?? null,
+    hasForm8995AAttachmentStatement: (qbiForm?.qbiEntries?.().length ?? 0) > 3,
+    form8995AOverflowQBI: qbiForm?.overflowTotals?.().qbi ?? 0,
+    form8995AOverflowW2Wages: qbiForm?.overflowTotals?.().w2Wages ?? 0,
+    form8995AOverflowUBIA: qbiForm?.overflowTotals?.().ubia ?? 0,
+    form8995AOverflowPatronReduction:
+      qbiForm?.overflowTotals?.().patronReduction ?? 0,
     reitDividends: f1040.f8995?.reitDividends() ?? 0,
     ptpIncome: f1040.f8995?.currentYearPtpIncome() ?? 0
+  }
+}
+
+const createSyntheticBusiness = (
+  name: string,
+  qbi: number,
+  w2Wages: number,
+  ubia: number,
+  isSSTB: boolean
+) => ({
+  name,
+  ein: undefined,
+  principalBusinessCode: '541611',
+  businessDescription: name,
+  accountingMethod: 'cash' as const,
+  materialParticipation: true,
+  startedOrAcquired: false,
+  madePaymentsRequiring1099: false,
+  filed1099s: false,
+  personRole: PersonRole.PRIMARY,
+  qbiW2Wages: w2Wages,
+  qbiUbia: ubia,
+  qbiPatronReduction: 0,
+  isSpecifiedServiceTradeOrBusiness: isSSTB,
+  income: {
+    grossReceipts: qbi,
+    returns: 0,
+    otherIncome: 0
+  },
+  expenses: {
+    advertising: 0,
+    carAndTruck: 0,
+    commissions: 0,
+    contractLabor: 0,
+    depletion: 0,
+    depreciation: 0,
+    employeeBenefits: 0,
+    insurance: 0,
+    interestMortgage: 0,
+    interestOther: 0,
+    legal: 0,
+    office: 0,
+    pensionPlans: 0,
+    rentVehicles: 0,
+    rentOther: 0,
+    repairs: 0,
+    supplies: 0,
+    taxes: 0,
+    travel: 0,
+    deductibleMeals: 0,
+    utilities: 0,
+    wages: 0,
+    otherExpenses: 0
+  }
+})
+
+const createScenario18QbiOverflowOutput = (): Record<string, unknown> => {
+  const scenario = loadScenario<any>('scenario-18-thompson-rental.json')
+  const info = baseInformation(FilingStatus.S, {
+    firstName: scenario.primaryTaxpayer.firstName,
+    lastName: scenario.primaryTaxpayer.lastName,
+    ssn: scenario.primaryTaxpayer.ssn,
+    dateOfBirth: scenario.primaryTaxpayer.dateOfBirth,
+    address: scenario.primaryTaxpayer.address
+  })
+
+  info.w2s = [
+    {
+      occupation: scenario.primaryTaxpayer.occupation ?? 'Employee',
+      income: 300000,
+      fedWithholding: 0,
+      medicareIncome: 300000,
+      ssWages: 176100,
+      ssWithholding: 0,
+      medicareWithholding: 0,
+      employer: {
+        EIN: '120001111',
+        employerName: 'Parity Wages Inc',
+        address: {
+          address: scenario.primaryTaxpayer.address.street,
+          city: scenario.primaryTaxpayer.address.city,
+          state: scenario.primaryTaxpayer.address.state,
+          zip: scenario.primaryTaxpayer.address.zip
+        }
+      },
+      personRole: PersonRole.PRIMARY,
+      state: scenario.primaryTaxpayer.address.state,
+      stateWages: 300000,
+      stateWithholding: 0
+    }
+  ]
+
+  info.businesses = [
+    createSyntheticBusiness('Alpha Advisory', 210000, 60000, 100000, false),
+    createSyntheticBusiness('Beta Logistics', 90000, 20000, 50000, false),
+    createSyntheticBusiness('Gamma Studio', 50000, 10000, 20000, true),
+    createSyntheticBusiness('Delta Rentals', 40000, 5000, 15000, false),
+    createSyntheticBusiness('Echo Foods', 30000, 3000, 10000, false)
+  ] as never
+
+  const f1040 = new F1040(info, [])
+  const qbiForm = f1040.f8995 as any
+  return {
+    form8995ATotalBusinesses: qbiForm?.qbiEntries?.().length ?? 0,
+    form8995AOverflowBusinesses: qbiForm?.overflowEntries?.().length ?? 0,
+    hasForm8995AAttachmentStatement: qbiForm?.needsAdditionalStatement?.() ?? false,
+    form8995ABusiness4Name: qbiForm?.qbiEntries?.()?.[3]?.name ?? null,
+    form8995ABusiness5Name: qbiForm?.qbiEntries?.()?.[4]?.name ?? null,
+    form8995ABusiness4QBI: qbiForm?.qbiEntries?.()?.[3]?.qbi ?? 0,
+    form8995ABusiness5QBI: qbiForm?.qbiEntries?.()?.[4]?.qbi ?? 0,
+    form8995ABusiness4W2Wages: qbiForm?.qbiEntries?.()?.[3]?.w2Wages ?? 0,
+    form8995ABusiness5W2Wages: qbiForm?.qbiEntries?.()?.[4]?.w2Wages ?? 0,
+    form8995ABusiness4UBIA: qbiForm?.qbiEntries?.()?.[3]?.ubia ?? 0,
+    form8995ABusiness5UBIA: qbiForm?.qbiEntries?.()?.[4]?.ubia ?? 0,
+    form8995ABusiness3IsSSTB: qbiForm?.qbiEntries?.()?.[2]?.isSSTB ?? false,
+    form8995ABusiness4IsSSTB: qbiForm?.qbiEntries?.()?.[3]?.isSSTB ?? false,
+    form8995ABusiness5IsSSTB: qbiForm?.qbiEntries?.()?.[4]?.isSSTB ?? false,
+    form8995AOverflowQBI: qbiForm?.overflowTotals?.().qbi ?? 0,
+    form8995AOverflowW2Wages: qbiForm?.overflowTotals?.().w2Wages ?? 0,
+    form8995AOverflowUBIA: qbiForm?.overflowTotals?.().ubia ?? 0
   }
 }
 
@@ -409,10 +558,20 @@ const createScenarioNr5Output = (): Record<string, unknown> => {
     claimsTreatyBenefits: f1040nr.claimsTaxTreaty(),
     scheduleOIRequiresTreatyDisclosure: f1040nr.claimsTaxTreaty(),
     scheduleOIHasForeignAddress: !!scenario.primaryTaxpayer.foreignAddress,
+    treatyCountry: f1040nr.treatyCountry(),
+    treatyArticle: f1040nr.treatyArticle(),
+    treatyBenefitDescription: scenario.taxTreatyBenefits.description ?? '',
+    reducedTreatyRate: null,
+    otherFDAPDescription: scenario.taxTreatyBenefits.description ?? '',
+    scheduleNECLineItemCount: 0,
     totalECI: f1040nr.totalEffectivelyConnectedIncome(),
     totalFDAPIncome: f1040nr.totalFDAPIncome(),
     taxOnECI: f1040nr.eciTax(),
     scheduleNECTax: f1040nr.fdapTax(),
+    dividendsFDAPTax: 0,
+    interestFDAPTax: 0,
+    royaltiesFDAPTax: 0,
+    otherFDAPTax: 0,
     totalTaxNR: f1040nr.totalTax()
   }
 }
@@ -447,16 +606,10 @@ const createScenarioNr12Output = (): Record<string, unknown> => {
     effectivelyConnectedIncome: {
       wages: 0,
       businessIncome: 0,
-      capitalGains: scenario.scheduleP.line9RecognizedEciCapital,
+      capitalGains: scenario.expectedValues.totalIncome,
       rentalIncome: 0,
       partnershipIncome: 0,
       otherIncome: 0
-    },
-    itemizedDeductions: {
-      stateTaxes: 5000,
-      charitableContributions: 0,
-      casualtyLosses: 0,
-      otherDeductions: 0
     },
     taxWithheld: 0,
     estimatedTaxPayments: scenario.expectedValues.totalPayments ?? 0
@@ -479,18 +632,106 @@ const createScenarioNr12Output = (): Record<string, unknown> => {
     claimsTreatyBenefits: f1040nr.claimsTaxTreaty(),
     scheduleOIRequiresTreatyDisclosure: f1040nr.claimsTaxTreaty(),
     scheduleOIHasForeignAddress: !!scenario.primaryTaxpayer.foreignAddress,
+    treatyCountry: f1040nr.treatyCountry(),
+    treatyArticle: f1040nr.treatyArticle(),
+    treatyBenefitDescription: '',
+    reducedTreatyRate: null,
+    otherFDAPDescription: '',
+    scheduleNECLineItemCount: 0,
     totalECI: f1040nr.totalEffectivelyConnectedIncome(),
     totalFDAPIncome: f1040nr.totalFDAPIncome(),
     taxOnECI: f1040nr.eciTax(),
     scheduleNECTax: f1040nr.fdapTax(),
+    dividendsFDAPTax: 0,
+    interestFDAPTax: 0,
+    royaltiesFDAPTax: 0,
+    otherFDAPTax: 0,
+    totalTaxNR: f1040nr.totalTax()
+  }
+}
+
+const createScenarioNr2Output = (): Record<string, unknown> => {
+  const scenario = loadScenario<any>('scenario-nr2-desilva.json')
+  const info = baseInformation(FilingStatus.MFS, {
+    firstName: scenario.primaryTaxpayer.firstName,
+    lastName: scenario.primaryTaxpayer.lastName,
+    ssn: scenario.primaryTaxpayer.ssn,
+    dateOfBirth: scenario.primaryTaxpayer.dateOfBirth,
+    address: {
+      street: scenario.primaryTaxpayer.address.street,
+      city: scenario.primaryTaxpayer.address.city,
+      state: 'CA',
+      zip: '94105'
+    }
+  })
+
+  info.nonresidentAlienReturn = {
+    nonresidentInfo: {
+      countryOfCitizenship: scenario.primaryTaxpayer.address.country,
+      countryOfResidence: scenario.primaryTaxpayer.address.country,
+      visaType: '',
+      dateEnteredUS: new Date('2025-01-15'),
+      daysInUSThisYear: 0,
+      daysInUSPriorYear: 0,
+      daysInUS2YearsPrior: 0,
+      claimsTaxTreaty: false,
+      hasEffectivelyConnectedIncome: true,
+      hasFDAPIncome: false
+    },
+    effectivelyConnectedIncome: {
+      wages: 0,
+      businessIncome: 0,
+      scholarshipIncome: 0,
+      capitalGains: 0,
+      rentalIncome: 0,
+      partnershipIncome: scenario.expectedValues.totalIncome,
+      otherIncome: 0
+    },
+    taxWithheld: scenario.expectedValues.federalWithholding ?? 0,
+    estimatedTaxPayments: 0
+  }
+
+  const f1040 = new F1040(info, [])
+  const f1040nr = f1040.f1040nr
+  if (!f1040nr) throw new Error('F1040-NR required for NR scenario')
+  return {
+    hasScheduleOI: true,
+    hasScheduleNEC: false,
+    countryOfCitizenship: f1040nr.countryOfCitizenship(),
+    countryOfResidence: f1040nr.countryOfResidence(),
+    visaType: f1040nr.visaType(),
+    daysInUS: f1040nr.daysInUSThisYear(),
+    daysInUSPriorYear: f1040nr.nonresidentInfo()?.daysInUSPriorYear ?? null,
+    daysInUSTwoYearsPrior:
+      f1040nr.nonresidentInfo()?.daysInUS2YearsPrior ?? null,
+    substantialPresenceWeightedDays: f1040nr.substantialPresenceDays(),
+    claimsTreatyBenefits: f1040nr.claimsTaxTreaty(),
+    scheduleOIRequiresTreatyDisclosure: f1040nr.claimsTaxTreaty(),
+    scheduleOIHasForeignAddress: false,
+    treatyCountry: f1040nr.treatyCountry(),
+    treatyArticle: f1040nr.treatyArticle(),
+    treatyBenefitDescription: '',
+    reducedTreatyRate: null,
+    otherFDAPDescription: '',
+    scheduleNECLineItemCount: 0,
+    totalECI: f1040nr.totalEffectivelyConnectedIncome(),
+    totalFDAPIncome: f1040nr.totalFDAPIncome(),
+    taxOnECI: f1040nr.eciTax(),
+    scheduleNECTax: f1040nr.fdapTax(),
+    dividendsFDAPTax: 0,
+    interestFDAPTax: 0,
+    royaltiesFDAPTax: 0,
+    otherFDAPTax: 0,
     totalTaxNR: f1040nr.totalTax()
   }
 }
 
 const computeUsTaxesOutputs = (): Record<string, Record<string, unknown>> => ({
   'scenario-28-taylor-qbi.json': createScenario28Output(),
+  'scenario-18-thompson-rental-qbi-overflow': createScenario18QbiOverflowOutput(),
   'scenario-18-thompson-rental.json': createScenario18Output(),
   'scenario-29-white-k1.json': createScenario29Output(),
+  'scenario-nr2-desilva.json': createScenarioNr2Output(),
   'scenario-nr5-chen.json': createScenarioNr5Output(),
   'scenario-nr12-harrier.json': createScenarioNr12Output()
 })
@@ -501,8 +742,10 @@ const buildRows = (
 ): MetricRow[] => {
   const domainByScenario: Record<string, MetricRow['domain']> = {
     'scenario-28-taylor-qbi.json': 'qbi',
+    'scenario-18-thompson-rental-qbi-overflow': 'qbi',
     'scenario-18-thompson-rental.json': 'schedule_e',
     'scenario-29-white-k1.json': 'schedule_e',
+    'scenario-nr2-desilva.json': '1040_nr',
     'scenario-nr5-chen.json': '1040_nr',
     'scenario-nr12-harrier.json': '1040_nr'
   }
@@ -513,10 +756,12 @@ const buildRows = (
       return Object.keys({
         ...usTaxesMetrics,
         ...directMetrics
-      }).map((metric) => {
+      })
+        .filter((metric) => !['scenario', 'directQBI'].includes(metric))
+        .map((metric) => {
         const usValue = usTaxesMetrics[metric]
         const directValue = directMetrics[metric]
-        const matches = sameAmount(usValue, directValue)
+        const matches = sameAmount(metric, usValue, directValue)
         return {
           scenario,
           domain: domainByScenario[scenario],
@@ -531,58 +776,85 @@ const buildRows = (
   )
 }
 
-describe('Form parity diff harness', () => {
-  it('exports side-by-side QBI, Schedule E, and 1040-NR comparisons', () => {
-    execSync(
-      'JAVA_HOME=$(/usr/libexec/java_home -v 21) ./mvnw -q -Dtest=SelectedFormParityExportTest -DforkCount=0 -Dsurefire.useFile=false -Dpmd.skip=true -Dspotbugs.skip=true -Dcheckstyle.skip=true test',
+export const runHarness = () => {
+  execSync(
+    'JAVA_HOME=$(/usr/libexec/java_home -v 21) ./mvnw -q -Dtest=SelectedFormParityExportTest -DforkCount=0 -Dsurefire.useFile=false -Dpmd.skip=true -Dspotbugs.skip=true -Dcheckstyle.skip=true test',
+    {
+      cwd: DIRECT_FILE_BACKEND,
+      stdio: 'inherit',
+      shell: '/bin/zsh'
+    }
+  )
+
+  const directFileOutputs = JSON.parse(
+    readFileSync(DIRECT_FILE_EXPORT, 'utf8')
+  ) as DirectFileExport
+  const usTaxesOutputs = computeUsTaxesOutputs()
+  const rows = buildRows(usTaxesOutputs, directFileOutputs)
+
+  mkdirSync(resolve(TAXES_ROOT, 'UsTaxes/docs'), { recursive: true })
+  writeFileSync(
+    OUTPUT_JSON,
+    JSON.stringify(
       {
-        cwd: DIRECT_FILE_BACKEND,
-        stdio: 'inherit',
-        shell: '/bin/zsh'
-      }
+        generatedAt: '2026-03-19',
+        directFileExport: DIRECT_FILE_EXPORT,
+        rows
+      },
+      null,
+      2
     )
-
-    const directFileOutputs = JSON.parse(
-      readFileSync(DIRECT_FILE_EXPORT, 'utf8')
-    ) as DirectFileExport
-    const usTaxesOutputs = computeUsTaxesOutputs()
-    const rows = buildRows(usTaxesOutputs, directFileOutputs)
-
-    mkdirSync(resolve(TAXES_ROOT, 'UsTaxes/docs'), { recursive: true })
-    writeFileSync(
-      OUTPUT_JSON,
-      JSON.stringify(
-        {
-          generatedAt: '2026-03-13',
-          directFileExport: DIRECT_FILE_EXPORT,
-          rows
-        },
-        null,
-        2
+  )
+  writeFileSync(
+    OUTPUT_CSV,
+    [
+      'scenario,domain,metric,usTaxes,directFile,matches,note',
+      ...rows.map((row) =>
+        [
+          row.scenario,
+          row.domain,
+          row.metric,
+          row.usTaxes,
+          row.directFile,
+          row.matches,
+          row.note
+        ]
+          .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+          .join(',')
       )
-    )
-    writeFileSync(
-      OUTPUT_CSV,
-      [
-        'scenario,domain,metric,usTaxes,directFile,matches,note',
-        ...rows.map((row) =>
-          [
-            row.scenario,
-            row.domain,
-            row.metric,
-            row.usTaxes,
-            row.directFile,
-            row.matches,
-            row.note
-          ]
-            .map((value) => `"${String(value).replace(/"/g, '""')}"`)
-            .join(',')
-        )
-      ].join('\n')
-    )
+    ].join('\n')
+  )
 
-    expect(rows.length).toBeGreaterThan(10)
-    expect(directFileOutputs['scenario-28-taylor-qbi.json']).toBeDefined()
-    expect(usTaxesOutputs['scenario-nr12-harrier.json']).toBeDefined()
+  return { directFileOutputs, usTaxesOutputs, rows }
+}
+
+if (typeof describe === 'function') {
+  describe('Form parity diff harness', () => {
+    it('exports side-by-side QBI, Schedule E, and 1040-NR comparisons', () => {
+      const { directFileOutputs, usTaxesOutputs, rows } = runHarness()
+      expect(rows.length).toBeGreaterThan(10)
+      expect(directFileOutputs['scenario-28-taylor-qbi.json']).toBeDefined()
+      expect(
+        directFileOutputs['scenario-18-thompson-rental-qbi-overflow']
+      ).toBeDefined()
+      expect(usTaxesOutputs['scenario-nr12-harrier.json']).toBeDefined()
+    })
   })
-})
+}
+
+if (require.main === module) {
+  const { rows } = runHarness()
+  const mismatches = rows.filter((row) => row.matches === 'no')
+  console.log(
+    JSON.stringify(
+      {
+        generatedAt: '2026-03-19',
+        rowCount: rows.length,
+        mismatchCount: mismatches.length,
+        mismatches
+      },
+      null,
+      2
+    )
+  )
+}

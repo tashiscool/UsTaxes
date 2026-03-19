@@ -1,0 +1,1212 @@
+{
+  "generatedAt": "2026-03-19",
+  "directFileExport": "/Users/tkhan/IdeaProjects/taxes/direct-file-easy-webui/direct-file/backend/target/parity-reports/direct-file-selected-form-outputs.json",
+  "rows": [
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "totalQBI",
+      "usTaxes": "113000.00",
+      "directFile": "113000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "qbiDeduction",
+      "usTaxes": "17853.36",
+      "directFile": "17854.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "qbi8995A",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "w2Wages8995A",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "ubia8995A",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "qbiComponentBeforeLimitation",
+      "usTaxes": "22600.00",
+      "directFile": "22600.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "qbiComponentAfter8995A",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "w2UBIALimit8995A",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "isSSTB8995A",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "form8995ATotalBusinesses",
+      "usTaxes": "1.00",
+      "directFile": "1.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "form8995AOverflowBusinesses",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "hasForm8995AAttachmentStatement",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "form8995AOverflowQBI",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "form8995AOverflowW2Wages",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "form8995AOverflowUBIA",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "form8995AOverflowPatronReduction",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "reitDividends",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-28-taylor-qbi.json",
+      "domain": "qbi",
+      "metric": "ptpIncome",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ATotalBusinesses",
+      "usTaxes": "5.00",
+      "directFile": "5.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995AOverflowBusinesses",
+      "usTaxes": "2.00",
+      "directFile": "2.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "hasForm8995AAttachmentStatement",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness4Name",
+      "usTaxes": "Delta Rentals",
+      "directFile": "Delta Rentals",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness5Name",
+      "usTaxes": "Echo Foods",
+      "directFile": "Echo Foods",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness4QBI",
+      "usTaxes": "40000.00",
+      "directFile": "40000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness5QBI",
+      "usTaxes": "30000.00",
+      "directFile": "30000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness4W2Wages",
+      "usTaxes": "5000.00",
+      "directFile": "5000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness5W2Wages",
+      "usTaxes": "3000.00",
+      "directFile": "3000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness4UBIA",
+      "usTaxes": "15000.00",
+      "directFile": "15000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness5UBIA",
+      "usTaxes": "10000.00",
+      "directFile": "10000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness3IsSSTB",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness4IsSSTB",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995ABusiness5IsSSTB",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995AOverflowQBI",
+      "usTaxes": "70000.00",
+      "directFile": "70000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995AOverflowW2Wages",
+      "usTaxes": "8000.00",
+      "directFile": "8000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental-qbi-overflow",
+      "domain": "qbi",
+      "metric": "form8995AOverflowUBIA",
+      "usTaxes": "25000.00",
+      "directFile": "25000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental.json",
+      "domain": "schedule_e",
+      "metric": "hasRentalIncome",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental.json",
+      "domain": "schedule_e",
+      "metric": "hasScheduleEPage2Activity",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental.json",
+      "domain": "schedule_e",
+      "metric": "totalRentalRoyaltyIncome",
+      "usTaxes": "28800.00",
+      "directFile": "28800.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental.json",
+      "domain": "schedule_e",
+      "metric": "totalRentalExpenses",
+      "usTaxes": "28103.00",
+      "directFile": "28103.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental.json",
+      "domain": "schedule_e",
+      "metric": "rentalNetIncomeLoss",
+      "usTaxes": "697.00",
+      "directFile": "697.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental.json",
+      "domain": "schedule_e",
+      "metric": "partnershipScheduleEIncome",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental.json",
+      "domain": "schedule_e",
+      "metric": "scheduleEPage2IncomeLoss",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental.json",
+      "domain": "schedule_e",
+      "metric": "scheduleEQualifiedBusinessIncome",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-18-thompson-rental.json",
+      "domain": "schedule_e",
+      "metric": "scheduleETotalIncomeLoss",
+      "usTaxes": "697.00",
+      "directFile": "697.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-29-white-k1.json",
+      "domain": "schedule_e",
+      "metric": "hasRentalIncome",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-29-white-k1.json",
+      "domain": "schedule_e",
+      "metric": "hasScheduleEPage2Activity",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-29-white-k1.json",
+      "domain": "schedule_e",
+      "metric": "totalRentalRoyaltyIncome",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-29-white-k1.json",
+      "domain": "schedule_e",
+      "metric": "totalRentalExpenses",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-29-white-k1.json",
+      "domain": "schedule_e",
+      "metric": "rentalNetIncomeLoss",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-29-white-k1.json",
+      "domain": "schedule_e",
+      "metric": "partnershipScheduleEIncome",
+      "usTaxes": "145000.00",
+      "directFile": "145000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-29-white-k1.json",
+      "domain": "schedule_e",
+      "metric": "scheduleEPage2IncomeLoss",
+      "usTaxes": "145000.00",
+      "directFile": "145000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-29-white-k1.json",
+      "domain": "schedule_e",
+      "metric": "scheduleEQualifiedBusinessIncome",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-29-white-k1.json",
+      "domain": "schedule_e",
+      "metric": "scheduleETotalIncomeLoss",
+      "usTaxes": "145000.00",
+      "directFile": "145000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "hasScheduleOI",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "hasScheduleNEC",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "countryOfCitizenship",
+      "usTaxes": "GB",
+      "directFile": "GB",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "countryOfResidence",
+      "usTaxes": "GB",
+      "directFile": "GB",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "visaType",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "daysInUS",
+      "usTaxes": "0.00",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "daysInUSPriorYear",
+      "usTaxes": "0.00",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "daysInUSTwoYearsPrior",
+      "usTaxes": "0.00",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "substantialPresenceWeightedDays",
+      "usTaxes": "0.00",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "claimsTreatyBenefits",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOIRequiresTreatyDisclosure",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOIHasForeignAddress",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "treatyCountry",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "treatyArticle",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "treatyBenefitDescription",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "reducedTreatyRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "otherFDAPDescription",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "scheduleNECLineItemCount",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "totalECI",
+      "usTaxes": "45000.00",
+      "directFile": "45000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "totalFDAPIncome",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "taxOnECI",
+      "usTaxes": "5165.00",
+      "directFile": "5165.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "scheduleNECTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "dividendsFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "interestFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "royaltiesFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "otherFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr2-desilva.json",
+      "domain": "1040_nr",
+      "metric": "totalTaxNR",
+      "usTaxes": "5165.00",
+      "directFile": "5165.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "hasScheduleOI",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "hasScheduleNEC",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "countryOfCitizenship",
+      "usTaxes": "CN",
+      "directFile": "CN",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "countryOfResidence",
+      "usTaxes": "CN",
+      "directFile": "CN",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "visaType",
+      "usTaxes": "F1",
+      "directFile": "F-1",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "daysInUS",
+      "usTaxes": "120.00",
+      "directFile": "120.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "daysInUSPriorYear",
+      "usTaxes": "118.00",
+      "directFile": "118.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "daysInUSTwoYearsPrior",
+      "usTaxes": "95.00",
+      "directFile": "95.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "substantialPresenceWeightedDays",
+      "usTaxes": "174.00",
+      "directFile": "174.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "claimsTreatyBenefits",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOIRequiresTreatyDisclosure",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOIHasForeignAddress",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "treatyCountry",
+      "usTaxes": "China",
+      "directFile": "China",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "treatyArticle",
+      "usTaxes": "20",
+      "directFile": "20",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "treatyBenefitDescription",
+      "usTaxes": "Student/Trainee Article - Up to $5,000 exempt",
+      "directFile": "Student/Trainee Article - Up to $5,000 exempt",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "reducedTreatyRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "otherFDAPDescription",
+      "usTaxes": "Student/Trainee Article - Up to $5,000 exempt",
+      "directFile": "Student/Trainee Article - Up to $5,000 exempt",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "scheduleNECLineItemCount",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "totalECI",
+      "usTaxes": "24000.00",
+      "directFile": "24000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "totalFDAPIncome",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "taxOnECI",
+      "usTaxes": "2645.00",
+      "directFile": "2645.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "scheduleNECTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "dividendsFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "interestFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "royaltiesFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "otherFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr5-chen.json",
+      "domain": "1040_nr",
+      "metric": "totalTaxNR",
+      "usTaxes": "2645.00",
+      "directFile": "2645.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "hasScheduleOI",
+      "usTaxes": "true",
+      "directFile": "true",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "hasScheduleNEC",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "countryOfCitizenship",
+      "usTaxes": "AU",
+      "directFile": "AU",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "countryOfResidence",
+      "usTaxes": "AU",
+      "directFile": "AU",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "visaType",
+      "usTaxes": "other",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "daysInUS",
+      "usTaxes": "0.00",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "daysInUSPriorYear",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "daysInUSTwoYearsPrior",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "substantialPresenceWeightedDays",
+      "usTaxes": "0.00",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "claimsTreatyBenefits",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOIRequiresTreatyDisclosure",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "scheduleOIHasForeignAddress",
+      "usTaxes": "false",
+      "directFile": "false",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "treatyCountry",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "treatyArticle",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "treatyBenefitDescription",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "reducedTreatyRate",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "otherFDAPDescription",
+      "usTaxes": "",
+      "directFile": "",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "scheduleNECLineItemCount",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "totalECI",
+      "usTaxes": "350000.00",
+      "directFile": "350000.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "totalFDAPIncome",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "taxOnECI",
+      "usTaxes": "92047.00",
+      "directFile": "92047.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "scheduleNECTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "dividendsFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "interestFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "royaltiesFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "otherFDAPTax",
+      "usTaxes": "0.00",
+      "directFile": "0.00",
+      "matches": "yes",
+      "note": ""
+    },
+    {
+      "scenario": "scenario-nr12-harrier.json",
+      "domain": "1040_nr",
+      "metric": "totalTaxNR",
+      "usTaxes": "92047.00",
+      "directFile": "92047.00",
+      "matches": "yes",
+      "note": ""
+    }
+  ]
+}

@@ -169,7 +169,10 @@ export default class ScheduleE extends F1040Attachment {
 
   l20 = (): MatrixRow => {
     const propertyExpenseColumns = [0, 1, 2].map((columnIndex) =>
-      sumFields(this.allExpenses().map((row) => row[columnIndex]))
+      sumFields([
+        ...this.allExpenses().map((row) => row[columnIndex]),
+        this.l19()[1][columnIndex]
+      ])
     )
     const royaltyExpenseColumns = this.royaltyColumn(
       this.royaltyExpenses() ?? 0
@@ -193,11 +196,11 @@ export default class ScheduleE extends F1040Attachment {
   // Deductible real estate loss from 8582, as positive number
   l22 = (): MatrixRow =>
     this.f1040.info.realEstate.length > 0
-      ? this.f1040.f8582?.deductibleRealEstateLossAfterLimitation() ?? [
-          undefined,
-          undefined,
-          undefined
-        ]
+      ? (
+          this.f1040.f8582?.deductibleRealEstateLossAfterLimitation()?.map(
+            (value) => (value !== undefined && value < 0 ? Math.abs(value) : 0)
+          ) as MatrixRow
+        )
       : [undefined, undefined, undefined]
 
   l23a = (): number => sumFields(this.l3())
@@ -217,7 +220,7 @@ export default class ScheduleE extends F1040Attachment {
 
   l25 = (): number => sumFields([sumFields(this.l22()), this.royaltyLoss()])
 
-  l26 = (): number => sumFields([this.l24(), this.l25()])
+  l26 = (): number => this.l24() - this.l25()
 
   page2NetIncomeLoss = (): number =>
     sumFields([this.l37(), this.l39(), this.l40()])

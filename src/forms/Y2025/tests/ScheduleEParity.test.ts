@@ -189,4 +189,48 @@ describe('Schedule E parity improvements', () => {
       ])
     )
   })
+
+  it('includes other rental expenses and does not double count profitable rentals as losses', () => {
+    const information = cloneDeep(baseInformation)
+    information.realEstate = [
+      {
+        address: {
+          address: '456 Rental Lane',
+          aptNo: '',
+          city: 'Denver',
+          state: 'CO',
+          zip: '80203'
+        },
+        rentalDays: 365,
+        personalUseDays: 0,
+        rentReceived: 28800,
+        propertyType: 'singleFamily',
+        qualifiedJointVenture: false,
+        expenses: {
+          advertising: 200,
+          auto: 350,
+          cleaning: 600,
+          commissions: 0,
+          insurance: 1800,
+          legal: 0,
+          management: 2880,
+          mortgage: 8400,
+          repairs: 2500,
+          supplies: 400,
+          taxes: 3200,
+          utilities: 0,
+          depreciation: 7273,
+          other: 500
+        }
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.scheduleE.l23e()).toBe(28103)
+    expect(f1040.scheduleE.l24()).toBe(697)
+    expect(f1040.scheduleE.l25()).toBe(0)
+    expect(f1040.scheduleE.l26()).toBe(697)
+    expect(f1040.scheduleE.l41()).toBe(697)
+  })
 })
