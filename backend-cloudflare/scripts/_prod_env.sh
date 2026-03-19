@@ -179,8 +179,14 @@ backend_require_worker_secrets() {
   fi
 
   backend_require_secret APP_AUTH_SECRET
+  backend_require_secret APP_AUTH_CALLBACK_SHARED_SECRET
   backend_require_secret INTERNAL_API_TOKEN
   backend_require_secret SESSION_SECRET_HMAC_KEY
+
+  if [[ "${APP_DEV_ALLOW_LOCAL_LOGIN:-}" == "true" ]] || [[ "${LOCAL_DEV_AUTH_ENABLED:-}" == "true" ]]; then
+    echo "Local development auth flags must be disabled for env=$(backend_worker_env)." >&2
+    return 1
+  fi
 }
 
 backend_worker_service_name() {

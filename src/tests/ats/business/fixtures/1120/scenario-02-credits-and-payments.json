@@ -1,0 +1,80 @@
+{
+  "scenarioId": "1120-scenario-02-credits-and-payments",
+  "formType": "1120",
+  "description": "C-corporation with special deductions, credits, other taxes, and estimated payments.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts"
+  ],
+  "facts": {
+    "entityName": "Northwind Manufacturing Inc",
+    "ein": "98-1002003",
+    "entityType": "C-Corporation",
+    "accountingMethod": "accrual",
+    "taxYear": 2025,
+    "totalAssets": 2500000,
+    "income": {
+      "grossReceiptsOrSales": 900000,
+      "returnsAndAllowances": 0,
+      "costOfGoodsSold": 0,
+      "dividendIncome": 50000,
+      "interestIncome": 20000,
+      "grossRents": 0,
+      "grossRoyalties": 0,
+      "capitalGainNetIncome": 0,
+      "netGainFromSaleOfAssets": 0,
+      "otherIncome": 30000
+    },
+    "deductions": {
+      "compensationOfOfficers": 120000,
+      "salariesAndWages": 180000,
+      "repairsAndMaintenance": 10000,
+      "badDebts": 5000,
+      "rents": 70000,
+      "taxesAndLicenses": 40000,
+      "interest": 20000,
+      "charitableContributions": 0,
+      "depreciation": 30000,
+      "depletion": 0,
+      "advertising": 20000,
+      "pensionPlans": 0,
+      "employeeBenefits": 25000,
+      "domesticProductionDeduction": 0,
+      "otherDeductions": 0
+    },
+    "specialDeductions": {
+      "dividendsReceivedDeduction": 10000,
+      "dividendsFromAffiliated": 0,
+      "dividendsOnDebtFinancedStock": 0,
+      "dividendsOnCertainPreferred": 0,
+      "foreignDividends": 5000,
+      "nol": 10000
+    },
+    "foreignTaxCredit": 2000,
+    "generalBusinessCredits": {
+      "creditComponents": {
+        "researchCredit": 4000,
+        "disabledAccessCredit": 2500
+      }
+    },
+    "priorYearMinimumTax": 500,
+    "accumulatedEarnings": 2500,
+    "personalHoldingCompanyTax": 500,
+    "estimatedTaxPayments": 60000,
+    "extensionPayment": 8000,
+    "priorYearOverpayment": 5000
+  },
+  "expected": {
+    "entityName": "Northwind Manufacturing Inc",
+    "totalIncome": 1000000,
+    "totalDeductions": 520000,
+    "taxableIncome": 455000,
+    "totalTax": 89550,
+    "totalPayments": 73000,
+    "amountOwed": 16550,
+    "overpayment": 0,
+    "effectiveTaxRate": 0.0896,
+    "schedules": [
+      "f1120"
+    ]
+  }
+}

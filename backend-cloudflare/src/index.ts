@@ -19,9 +19,13 @@ import {
   issueAuthFlowCookie,
   issueAppSessionCookie,
   issueSignedAuthFlowState,
+  isDevelopmentLikeEnvironment,
   localDevAuthAllowed,
   readCookieValue,
   requireAppUser,
+  trustedCallbackIdentityHeaderName,
+  trustedCallbackSignatureHeaderName,
+  verifyTrustedCallbackIdentityAssertion,
   verifyAuthFlowState
 } from './utils/appAuth'
 import { HttpError, jsonResponse } from './utils/http'
@@ -152,6 +156,37 @@ const normalizeCallbackIdentity = (
     tin: tinDigits && tinDigits.length === 9 ? tinDigits : undefined,
     displayName: displayName ? displayName.slice(0, 120) : undefined
   }
+}
+
+const resolveCallbackIdentity = async (c: Context<{ Bindings: Env }>) => {
+  if (isDevelopmentLikeEnvironment(c.env)) {
+    return normalizeCallbackIdentity(
+      c.req.query('sub') ?? c.req.query('userId') ?? c.req.query('id'),
+      c.req.query('email'),
+      c.req.query('tin') ?? undefined,
+      c.req.query('name') ?? undefined
+    )
+  }
+
+  const trustedIdentity = await verifyTrustedCallbackIdentityAssertion(
+    c.env,
+    c.req.header(trustedCallbackIdentityHeaderName(c.env)) ?? undefined,
+    c.req.header(trustedCallbackSignatureHeaderName(c.env)) ?? undefined
+  )
+
+  if (!trustedIdentity) {
+    throw new HttpError(
+      400,
+      'Protected callback identity is missing or invalid.'
+    )
+  }
+
+  return normalizeCallbackIdentity(
+    trustedIdentity.sub,
+    trustedIdentity.email,
+    trustedIdentity.tin,
+    trustedIdentity.displayName
+  )
 }
 
 const resolveSafeRedirect = (
@@ -357,12 +392,7 @@ app.get('/app/v1/auth/callback', async (c) => {
     throw new HttpError(400, 'Invalid or expired authentication flow state.')
   }
 
-  const callbackIdentity = normalizeCallbackIdentity(
-    c.req.query('sub') ?? c.req.query('userId') ?? c.req.query('id'),
-    c.req.query('email'),
-    c.req.query('tin') ?? undefined,
-    c.req.query('name') ?? undefined
-  )
+  const callbackIdentity = await resolveCallbackIdentity(c)
 
   const cookie = await issueAppSessionCookie(c.env, {
     sub: callbackIdentity.sub,

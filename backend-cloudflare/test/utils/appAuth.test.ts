@@ -5,8 +5,12 @@ import {
   issueAppSessionCookie,
   issueAuthFlowCookie,
   issueSignedAuthFlowState,
+  issueTrustedCallbackIdentityAssertion,
   localDevAuthAllowed,
-  verifyAuthFlowState
+  trustedCallbackIdentityHeaderName,
+  trustedCallbackSignatureHeaderName,
+  verifyAuthFlowState,
+  verifyTrustedCallbackIdentityAssertion
 } from '../../src/utils/appAuth'
 import { HttpError } from '../../src/utils/http'
 import type { SubmissionQueueMessage } from '../../src/domain/types'
@@ -27,6 +31,14 @@ describe('app auth utilities', () => {
     expect(localDevAuthAllowed(makeEnv({ ENVIRONMENT: 'production' }))).toBe(
       false
     )
+    expect(
+      localDevAuthAllowed(
+        makeEnv({
+          ENVIRONMENT: 'production',
+          APP_DEV_ALLOW_LOCAL_LOGIN: 'true'
+        })
+      )
+    ).toBe(false)
   })
 
   it('rejects weak app secrets in protected environments', async () => {
@@ -84,5 +96,58 @@ describe('app auth utilities', () => {
     )
 
     await expect(verifyAuthFlowState(env, unsignedState)).resolves.toBeNull()
+  })
+
+  it('round-trips trusted callback identity assertions in protected environments', async () => {
+    const env = makeEnv({
+      ENVIRONMENT: 'production',
+      APP_AUTH_SECRET: 'x'.repeat(48),
+      APP_AUTH_CALLBACK_SHARED_SECRET: 'y'.repeat(48)
+    })
+    const assertion = await issueTrustedCallbackIdentityAssertion(env, {
+      sub: 'callback-user-1',
+      email: 'callback.user@example.com',
+      tin: '400011032',
+      displayName: 'Callback User'
+    })
+
+    const verified = await verifyTrustedCallbackIdentityAssertion(
+      env,
+      assertion.payload,
+      assertion.signature
+    )
+
+    expect(verified).toEqual({
+      sub: 'callback-user-1',
+      email: 'callback.user@example.com',
+      tin: '400011032',
+      displayName: 'Callback User'
+    })
+    expect(trustedCallbackIdentityHeaderName(env)).toBe(
+      'x-ustaxes-authenticated-user'
+    )
+    expect(trustedCallbackSignatureHeaderName(env)).toBe(
+      'x-ustaxes-authenticated-user-signature'
+    )
+  })
+
+  it('rejects tampered trusted callback identity assertions', async () => {
+    const env = makeEnv({
+      ENVIRONMENT: 'production',
+      APP_AUTH_SECRET: 'x'.repeat(48),
+      APP_AUTH_CALLBACK_SHARED_SECRET: 'y'.repeat(48)
+    })
+    const assertion = await issueTrustedCallbackIdentityAssertion(env, {
+      sub: 'callback-user-1',
+      email: 'callback.user@example.com'
+    })
+
+    await expect(
+      verifyTrustedCallbackIdentityAssertion(
+        env,
+        assertion.payload,
+        `${assertion.signature}tampered`
+      )
+    ).resolves.toBeNull()
   })
 })

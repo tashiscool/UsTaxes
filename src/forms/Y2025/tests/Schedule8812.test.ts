@@ -1,6 +1,12 @@
 import { commonTests } from '.'
 import { cloneDeep } from 'lodash'
-import { CreditType, FilingStatus, PersonRole, W2Box12Code } from 'ustaxes/core/data'
+import {
+  CreditType,
+  FilingStatus,
+  Income1099Type,
+  PersonRole,
+  W2Box12Code
+} from 'ustaxes/core/data'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 import Schedule8812 from '../irsForms/Schedule8812'
 import F1040 from '../irsForms/F1040'
@@ -321,5 +327,83 @@ describe('Schedule 8812', () => {
     expect(f1040.scheduleF?.netProfit()).toBe(12000)
     expect(f1040.scheduleSE.l1a()).toBe(12000)
     expect(s8812.earnedIncomeWorksheet()).toBeCloseTo(11152.227, 3)
+  })
+
+  it('subtracts worksheet special-case earned-income adjustments from Schedule 1 lines 8r through 8u', () => {
+    const information = cloneDeep(baseInformation)
+    information.taxPayer.dependents = [
+      {
+        firstName: 'Ava',
+        lastName: 'Payer',
+        role: PersonRole.DEPENDENT,
+        ssid: '333221111',
+        relationship: 'Child',
+        qualifyingInfo: { isStudent: false, numberOfMonths: 12 },
+        dateOfBirth: new Date('2020-02-01'),
+        isBlind: false
+      }
+    ]
+    information.w2s[0].box11NonqualifiedPlans = 400
+    information.w2s[0].box12 = {
+      [W2Box12Code.Z]: 600
+    }
+    information.f1099s = [
+      {
+        payer: 'State Scholarship Office',
+        type: Income1099Type.G,
+        personRole: PersonRole.PRIMARY,
+        form: {
+          taxableGrants: 1200
+        }
+      },
+      {
+        payer: 'Deferred Compensation Admin',
+        type: Income1099Type.MISC,
+        personRole: PersonRole.PRIMARY,
+        form: {
+          nonqualifiedDeferredComp: 500
+        }
+      }
+    ]
+    information.schedule8812EarnedIncomeAdjustments = {
+      scholarshipGrantsNotOnW2: 300,
+      penalIncome: 200,
+      nonqualifiedDeferredCompensation: 300,
+      medicaidWaiverPaymentsExcludedFromIncome: 700
+    }
+
+    const f1040 = new F1040(information, [])
+    const s8812 = f1040.schedule8812
+
+    expect(f1040.schedule1.l8r()).toBe(1500)
+    expect(f1040.schedule1.l8s()).toBe(700)
+    expect(f1040.schedule1.l8t()).toBe(1800)
+    expect(f1040.schedule1.l8u()).toBe(200)
+    expect(s8812.earnedIncomeWorksheet()).toBe(1800)
+  })
+
+  it('treats Medicaid waiver payments as zero on the earned-income worksheet when the filer elects to include them', () => {
+    const information = cloneDeep(baseInformation)
+    information.taxPayer.dependents = [
+      {
+        firstName: 'Ava',
+        lastName: 'Payer',
+        role: PersonRole.DEPENDENT,
+        ssid: '333221111',
+        relationship: 'Child',
+        qualifyingInfo: { isStudent: false, numberOfMonths: 12 },
+        dateOfBirth: new Date('2020-02-01'),
+        isBlind: false
+      }
+    ]
+    information.schedule8812EarnedIncomeAdjustments = {
+      medicaidWaiverPaymentsExcludedFromIncome: 700,
+      includeMedicaidWaiverInEarnedIncome: true
+    }
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.schedule1.l8s()).toBe(700)
+    expect(f1040.schedule8812.earnedIncomeWorksheet()).toBe(6000)
   })
 })

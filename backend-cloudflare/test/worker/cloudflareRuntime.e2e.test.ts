@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { unstable_dev } from 'wrangler'
 import type { Unstable_DevWorker } from 'wrangler'
+import { issueTrustedCallbackIdentityAssertion } from '../../src/utils/appAuth'
 
 const baseUrl = 'http://127.0.0.1'
 const internalToken = 'integration-secret-token'
@@ -28,7 +29,9 @@ const extractCookieHeader = (response: WorkerResponse): string => {
   return String(setCookie).split(';')[0]
 }
 
-const createWorkerHarness = async (): Promise<{
+const createWorkerHarness = async (
+  overrides: { vars?: Record<string, string> } = {}
+): Promise<{
   worker: Unstable_DevWorker
   persistTo: string
 }> => {
@@ -59,7 +62,8 @@ const createWorkerHarness = async (): Promise<{
     local: true,
     persistTo,
     vars: {
-      INTERNAL_API_TOKEN: internalToken
+      INTERNAL_API_TOKEN: internalToken,
+      ...overrides.vars
     },
     experimental: {
       disableExperimentalWarning: true
@@ -934,6 +938,93 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const me = await parseJsonResponse<JsonObject>(response)
     expect((me.user as JsonObject).email).toBe('callback.user@example.com')
   })
+
+  it('requires a trusted callback identity assertion in protected environments', async () => {
+    const protectedEnv = {
+      ENVIRONMENT: 'production',
+      CORS_ORIGIN: 'https://freetaxflow.com',
+      APP_AUTH_SECRET: 'x'.repeat(48),
+      APP_AUTH_CALLBACK_SHARED_SECRET: 'y'.repeat(48),
+      LOCAL_DEV_AUTH_ENABLED: 'false',
+      APP_DEV_ALLOW_LOCAL_LOGIN: 'false'
+    }
+    const isolated = await createWorkerHarness({ vars: protectedEnv })
+    const isolatedWorker = isolated.worker
+
+    try {
+      let response = await isolatedWorker.fetch(`${baseUrl}/app/v1/auth/prepare`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          redirectUri: 'https://freetaxflow.com/review-confirm'
+        })
+      })
+
+      expect(response.status).toBe(201)
+      const authFlowCookie = extractCookieHeader(response)
+      const prepared = await parseJsonResponse<{ state?: string }>(response)
+      expect(prepared.state).toBeTruthy()
+
+      response = await isolatedWorker.fetch(
+        `${baseUrl}/app/v1/auth/callback?state=${encodeURIComponent(
+          String(prepared.state)
+        )}&sub=callback-user-1&email=callback.user%40example.com`,
+        {
+          redirect: 'manual',
+          headers: {
+            cookie: authFlowCookie
+          }
+        }
+      )
+
+      expect(response.status).toBe(400)
+
+      const assertion = await issueTrustedCallbackIdentityAssertion(
+        protectedEnv as never,
+        {
+          sub: 'callback-user-1',
+          email: 'callback.user@example.com',
+          tin: '400011032',
+          displayName: 'Callback User'
+        }
+      )
+
+      response = await isolatedWorker.fetch(
+        `${baseUrl}/app/v1/auth/callback?state=${encodeURIComponent(
+          String(prepared.state)
+        )}`,
+        {
+          redirect: 'manual',
+          headers: {
+            cookie: authFlowCookie,
+            'x-ustaxes-authenticated-user': assertion.payload,
+            'x-ustaxes-authenticated-user-signature': assertion.signature
+          }
+        }
+      )
+
+      expect(response.status).toBe(302)
+      expect(response.headers.get('location')).toBe(
+        'https://freetaxflow.com/review-confirm'
+      )
+      const sessionCookie = extractCookieHeader(response)
+
+      response = await isolatedWorker.fetch(`${baseUrl}/app/v1/auth/me`, {
+        headers: {
+          cookie: sessionCookie
+        }
+      })
+
+      expect(response.status).toBe(200)
+      const me = await parseJsonResponse<JsonObject>(response)
+      expect((me.user as JsonObject).email).toBe('callback.user@example.com')
+    } finally {
+      await isolatedWorker.stop()
+      if (isolated.persistTo) {
+        rmSync(isolated.persistTo, { recursive: true, force: true })
+      }
+    }
+  }, 120_000)
 
   it('surfaces Form 990 as expert-required and blocks self-serve submit', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {

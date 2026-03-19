@@ -315,6 +315,90 @@ describe('TaxCalculationService', () => {
       expect(info.iraContributions).toHaveLength(1)
       expect(info.iraContributions?.[0].traditionalContributions).toBe(3000)
     })
+
+    it('maps Schedule 8812 earned-income adjustments and other withholding credits into workbook-sensitive 1040 fields', () => {
+      const facts = baseFacts({
+        w2Records: [
+          {
+            id: 'w2-earned-income-adjustments',
+            employerName: 'Deferred Comp Employer',
+            ein: '12-3456789',
+            box1Wages: 6000,
+            box2FederalWithheld: 500,
+            box11NonqualifiedPlans: 400,
+            box12: {
+              Z: 600
+            },
+            owner: 'taxpayer',
+            isComplete: true
+          }
+        ],
+        form1099Records: [
+          {
+            id: '1099g-earned-income-adjustments',
+            type: 'G',
+            payer: 'State Scholarship Office',
+            taxableGrants: 1200,
+            isComplete: true
+          },
+          {
+            id: '1099misc-earned-income-adjustments',
+            type: 'MISC',
+            payer: 'Deferred Compensation Admin',
+            nonqualifiedDeferredComp: 500,
+            isComplete: true
+          }
+        ],
+        schedule8812EarnedIncomeAdjustments: {
+          scholarshipGrantsNotOnW2: 300,
+          penalIncome: 200,
+          nonqualifiedDeferredCompensation: 300,
+          medicaidWaiverPaymentsExcludedFromIncome: 700
+        },
+        otherFederalWithholdingCredits: [
+          {
+            source: 'W2G',
+            amount: 125,
+            description: 'Casino withholding'
+          },
+          {
+            source: '1042-S',
+            amount: 375,
+            description: 'Foreign withholding'
+          }
+        ]
+      })
+
+      const info = adaptFactsToInformation(facts)
+      const f1040 = new F1040(info as ValidatedInformation, [])
+
+      expect(info.w2s[0].box11NonqualifiedPlans).toBe(400)
+      expect(info.schedule8812EarnedIncomeAdjustments).toEqual({
+        scholarshipGrantsNotOnW2: 300,
+        penalIncome: 200,
+        nonqualifiedDeferredCompensation: 300,
+        medicaidWaiverPaymentsExcludedFromIncome: 700,
+        includeMedicaidWaiverInEarnedIncome: false
+      })
+      expect(info.otherFederalWithholdingCredits).toEqual([
+        {
+          source: 'W2G',
+          amount: 125,
+          description: 'Casino withholding'
+        },
+        {
+          source: '1042-S',
+          amount: 375,
+          description: 'Foreign withholding'
+        }
+      ])
+      expect(f1040.schedule1.l8r()).toBe(1500)
+      expect(f1040.schedule1.l8s()).toBe(700)
+      expect(f1040.schedule1.l8t()).toBe(1800)
+      expect(f1040.schedule1.l8u()).toBe(200)
+      expect(f1040.schedule8812.earnedIncomeWorksheet()).toBe(1800)
+      expect(f1040.l25c()).toBe(500)
+    })
   })
 
   describe('calculate', () => {

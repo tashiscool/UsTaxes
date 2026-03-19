@@ -1342,8 +1342,15 @@ export default class F1040 extends F1040Base {
       0
     )
 
-  // TODO: form(s) W-2G box 4, schedule K-1, form 1042-S, form 8805, form 8288-A
-  l25c = (): number | undefined => this.f8959.l24()
+  l25c = (): number | undefined => {
+    const additionalMedicareWithholding = this.f8959.l24() ?? 0
+    const otherWithholding = (this.info.otherFederalWithholdingCredits ?? []).reduce(
+      (sum, credit) => sum + credit.amount,
+      0
+    )
+    const total = additionalMedicareWithholding + otherWithholding
+    return total > 0 ? total : undefined
+  }
 
   l25d = (): number => sumFields([this.l25a(), this.l25b(), this.l25c()])
 

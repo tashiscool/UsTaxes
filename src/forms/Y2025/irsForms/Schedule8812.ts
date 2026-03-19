@@ -219,19 +219,20 @@ export default class Schedule8812 extends F1040Attachment {
 
     const allowed = l3 > 0
 
-    // TODO: Scholarship or grant not reported on w-2
-    const l4a = !allowed ? undefined : 0
+    const l4a = !allowed ? undefined : this.f1040.schedule1.l8r() ?? 0
 
-    // TODO: Penal income
-    const l4b = !allowed ? undefined : 0
+    const l4b = !allowed ? undefined : this.f1040.schedule1.l8u() ?? 0
 
-    // TODO: nonqualified deferred comp plan or 457 plan
-    const l4c = !allowed ? undefined : 0
+    const l4c = !allowed ? undefined : this.f1040.schedule1.l8t() ?? 0
 
-    // TODO: Amount included on 1040 that is a medicaid
-    // waiver payment excluded from income, schedule 1, line 8z
-    // or choose to include in earned income, then enter 0.
-    const l4d = !allowed ? undefined : this.f1040.schedule1.l8s() ?? 0
+    const includeMedicaidWaiverInEarnedIncome =
+      this.f1040.info.schedule8812EarnedIncomeAdjustments
+        ?.includeMedicaidWaiverInEarnedIncome ?? false
+    const l4d = !allowed
+      ? undefined
+      : includeMedicaidWaiverInEarnedIncome
+        ? 0
+        : this.f1040.schedule1.l8s() ?? 0
 
     const l5 = this.f1040.schedule1.l15() ?? 0
 

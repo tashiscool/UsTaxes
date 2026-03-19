@@ -2,6 +2,21 @@
   "generatedAt": "2026-03-19",
   "fixtures": [
     {
+      "scenarioId": "1120-scenario-01-operating-ccorp",
+      "formType": "1120",
+      "path": "src/tests/ats/business/fixtures/1120/scenario-01-operating-ccorp.json"
+    },
+    {
+      "scenarioId": "1120-scenario-02-credits-and-payments",
+      "formType": "1120",
+      "path": "src/tests/ats/business/fixtures/1120/scenario-02-credits-and-payments.json"
+    },
+    {
+      "scenarioId": "1120-scenario-03-zero-income",
+      "formType": "1120",
+      "path": "src/tests/ats/business/fixtures/1120/scenario-03-zero-income.json"
+    },
+    {
       "scenarioId": "1120-s-scenario-01-service-scorp",
       "formType": "1120-S",
       "path": "src/tests/ats/business/fixtures/1120-s/scenario-01-service-scorp.json"

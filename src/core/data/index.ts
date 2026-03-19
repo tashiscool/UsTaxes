@@ -109,6 +109,7 @@ export interface IncomeW2 {
   state?: State
   stateWages?: number
   stateWithholding?: number
+  box11NonqualifiedPlans?: number
   box12?: W2Box12Info
 }
 
@@ -2725,6 +2726,18 @@ export interface Information<D = Date> {
   stateResidencies: StateResidency[]
   healthSavingsAccounts: HealthSavingsAccount<D>[]
   individualRetirementArrangements: Ira[]
+  schedule8812EarnedIncomeAdjustments?: {
+    scholarshipGrantsNotOnW2?: number
+    penalIncome?: number
+    nonqualifiedDeferredCompensation?: number
+    medicaidWaiverPaymentsExcludedFromIncome?: number
+    includeMedicaidWaiverInEarnedIncome?: boolean
+  }
+  otherFederalWithholdingCredits?: {
+    source: 'W2G' | 'Schedule K-1' | '1042-S' | '8805' | '8288-A' | 'other'
+    amount: number
+    description?: string
+  }[]
   // Local Tax Information (city/municipal taxes)
   localTaxInfo?: LocalTaxInfo
   // OBBBA 2025 new fields

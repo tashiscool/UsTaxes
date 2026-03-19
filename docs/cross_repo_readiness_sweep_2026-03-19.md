@@ -34,6 +34,13 @@ This sweep covers the active filing stack:
 - `ScheduleEIC` childless-filer gating now has explicit age and U.S.-home coverage:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/ScheduleEIC.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/ScheduleEIC.test.ts`
+- `Schedule 8812` earned-income worksheet special-case adjustments now flow through
+  `Schedule 1` lines `8r` through `8u`, and `Form 1040 line 25c` now carries
+  normalized other-federal-withholding credits alongside Additional Medicare
+  withholding:
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/Schedule1.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/Schedule8812.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1040.ts`
 
 ### backend-cloudflare
 
@@ -54,6 +61,12 @@ This sweep covers the active filing stack:
 - Canonical business parity fixtures are now executable and green:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/business_fixture_manifest.json`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessParityFixtures.test.ts`
+- Protected auth callbacks now require a signed upstream identity assertion
+  instead of trusting raw query params:
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/utils/appAuth.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/index.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/utils/appAuth.test.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
 
 ### direct-file-easy-webui
 
@@ -86,7 +99,7 @@ This sweep covers the active filing stack:
 
 ### Entity-return parity beyond capability proof
 
-- `1120-S`, `1065`, and `1041` now have audited computed output surfaces in the Cloudflare path, not just capability flags.
+- `1120`, `1120-S`, `1065`, and `1041` now have audited computed output surfaces in the Cloudflare path, not just capability flags.
 - They also now have canonical JSON parity-input fixtures that execute cleanly against the backend calculator.
 - See:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/docs/business_entity_output_audit_2026-03-19.md`
@@ -113,8 +126,9 @@ Evidence:
 Why this still blocks the claim:
 
 - local/dev login is still present
-- callback identity is still assembled from callback params/state instead of a
-  real verified code/token exchange
+- protected callback identity is now verified from a signed upstream assertion
+  instead of raw query params, but the stack still is not a full OIDC
+  code/token exchange boundary
 - for tax-filing production readiness, auth trust is part of correctness
 
 ### 2. The 2025 tax-engine still documents important partials
@@ -142,8 +156,7 @@ Evidence:
 
 Why this still blocks the claim:
 
-- `1120-S`, `1065`, and `1041` are no longer only `IRS-reference-led`; they are now fixture-backed and executable through the backend test harness
-- `1120` is still only `IRS-reference-led`
+- `1120`, `1120-S`, `1065`, and `1041` are no longer only `IRS-reference-led`; they are now fixture-backed and executable through the backend test harness
 - none of the business/nonprofit forms are backed by private workbook sources the way the `1040` family is
 - `990` remains expert-routed, not self-serve
 
@@ -194,6 +207,6 @@ The most honest remaining blockers are:
 
 1. production auth trust
 2. residual documented 2025-law partials
-3. lack of full workbook-backed business/nonprofit parity, especially `1120` and the entire `990` family
+3. lack of full private-workbook-backed business/nonprofit parity, especially the entire `990` family
 4. still-partial Direct File final-form detail on the hardest advanced forms
 5. release gating that is strong, but still smoke-weighted at the top level

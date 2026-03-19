@@ -53,6 +53,7 @@ This package now uses the same production ergonomics pattern as the sibling
 Recommended production-only secrets to keep out of `wrangler.toml`:
 
 - `APP_AUTH_SECRET`
+- `APP_AUTH_CALLBACK_SHARED_SECRET`
 - `INTERNAL_API_TOKEN`
 - `SESSION_SECRET_HMAC_KEY`
 

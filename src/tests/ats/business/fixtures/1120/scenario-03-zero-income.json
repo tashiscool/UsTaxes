@@ -1,0 +1,70 @@
+{
+  "scenarioId": "1120-scenario-03-zero-income",
+  "formType": "1120",
+  "description": "Zero-income C-corporation baseline with prior-year overpayment carried into the current year.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts"
+  ],
+  "facts": {
+    "entityName": "Dormant Holdings Inc",
+    "ein": "22-3334444",
+    "entityType": "C-Corporation",
+    "accountingMethod": "accrual",
+    "taxYear": 2025,
+    "totalAssets": 250000,
+    "income": {
+      "grossReceiptsOrSales": 0,
+      "returnsAndAllowances": 0,
+      "costOfGoodsSold": 0,
+      "dividendIncome": 0,
+      "interestIncome": 0,
+      "grossRents": 0,
+      "grossRoyalties": 0,
+      "capitalGainNetIncome": 0,
+      "netGainFromSaleOfAssets": 0,
+      "otherIncome": 0
+    },
+    "deductions": {
+      "compensationOfOfficers": 0,
+      "salariesAndWages": 0,
+      "repairsAndMaintenance": 0,
+      "badDebts": 0,
+      "rents": 0,
+      "taxesAndLicenses": 0,
+      "interest": 0,
+      "charitableContributions": 0,
+      "depreciation": 0,
+      "depletion": 0,
+      "advertising": 0,
+      "pensionPlans": 0,
+      "employeeBenefits": 0,
+      "domesticProductionDeduction": 0,
+      "otherDeductions": 0
+    },
+    "specialDeductions": {
+      "dividendsReceivedDeduction": 0,
+      "dividendsFromAffiliated": 0,
+      "dividendsOnDebtFinancedStock": 0,
+      "dividendsOnCertainPreferred": 0,
+      "foreignDividends": 0,
+      "nol": 0
+    },
+    "estimatedTaxPayments": 0,
+    "extensionPayment": 0,
+    "priorYearOverpayment": 1500
+  },
+  "expected": {
+    "entityName": "Dormant Holdings Inc",
+    "totalIncome": 0,
+    "totalDeductions": 0,
+    "taxableIncome": 0,
+    "totalTax": 0,
+    "totalPayments": 1500,
+    "amountOwed": 0,
+    "overpayment": 1500,
+    "effectiveTaxRate": 0,
+    "schedules": [
+      "f1120"
+    ]
+  }
+}

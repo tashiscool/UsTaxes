@@ -3,6 +3,11 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { sumFields } from 'ustaxes/core/irsForms/util'
 import F1040 from './F1040'
 import { Field } from 'ustaxes/core/pdfFiller'
+import {
+  Income1099MISC,
+  Income1099Type,
+  W2Box12Code
+} from 'ustaxes/core/data'
 
 export default class Schedule1 extends F1040Attachment {
   tag: FormTag = 'f1040s1'
@@ -32,7 +37,11 @@ export default class Schedule1 extends F1040Attachment {
     (this.f1040.info.educatorExpenses ?? 0) > 0 ||
     (this.f1040.info.alimonyReceived ?? 0) > 0 ||
     (this.f1040.info.alimonyPaid ?? 0) > 0 ||
-    (this.f1040.info.selfEmployedHealthInsuranceDeduction ?? 0) > 0
+    (this.f1040.info.selfEmployedHealthInsuranceDeduction ?? 0) > 0 ||
+    (this.l8r() ?? 0) > 0 ||
+    (this.l8s() ?? 0) > 0 ||
+    (this.l8t() ?? 0) > 0 ||
+    (this.l8u() ?? 0) > 0
 
   l1 = (): number | undefined => undefined
   l2a = (): number | undefined =>
@@ -70,10 +79,55 @@ export default class Schedule1 extends F1040Attachment {
   l8o = (): number | undefined => undefined
   l8p = (): number | undefined => undefined
   l8q = (): number | undefined => undefined
-  l8r = (): number | undefined => undefined
-  l8s = (): number | undefined => undefined
-  l8t = (): number | undefined => undefined
-  l8u = (): number | undefined => undefined
+  l8r = (): number | undefined => {
+    const explicitAmount =
+      this.f1040.info.schedule8812EarnedIncomeAdjustments
+        ?.scholarshipGrantsNotOnW2 ?? 0
+    const taxableGrants = this.f1040
+      .f1099gs()
+      .reduce((sum, f1099) => sum + (f1099.form.taxableGrants ?? 0), 0)
+    const total = explicitAmount + taxableGrants
+    return total > 0 ? total : undefined
+  }
+  l8s = (): number | undefined => {
+    const amount =
+      this.f1040.info.schedule8812EarnedIncomeAdjustments
+        ?.medicaidWaiverPaymentsExcludedFromIncome ?? 0
+    return amount > 0 ? amount : undefined
+  }
+  l8t = (): number | undefined => {
+    const w2Box11Amount = this.f1040.validW2s().reduce(
+      (sum, w2) => sum + (w2.box11NonqualifiedPlans ?? 0),
+      0
+    )
+    const miscDeferredComp = this.f1040.info.f1099s
+      .filter(
+        (entry): entry is Income1099MISC => entry.type === Income1099Type.MISC
+      )
+      .reduce(
+        (sum, entry) =>
+          sum +
+          (entry.form.nonqualifiedDeferredComp ??
+            entry.form.section409ADeferrals ??
+            0),
+        0
+      )
+    const w2Box12DeferredComp = this.f1040.validW2s().reduce(
+      (sum, w2) => sum + (w2.box12?.[W2Box12Code.Z] ?? 0),
+      0
+    )
+    const explicitAmount =
+      this.f1040.info.schedule8812EarnedIncomeAdjustments
+        ?.nonqualifiedDeferredCompensation ?? 0
+    const total =
+      explicitAmount + w2Box11Amount + miscDeferredComp + w2Box12DeferredComp
+    return total > 0 ? total : undefined
+  }
+  l8u = (): number | undefined => {
+    const amount =
+      this.f1040.info.schedule8812EarnedIncomeAdjustments?.penalIncome ?? 0
+    return amount > 0 ? amount : undefined
+  }
   l8v = (): number | undefined => undefined
 
   l8z = (): number => {

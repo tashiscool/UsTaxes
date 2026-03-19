@@ -843,6 +843,8 @@ const adaptW2s = (facts: FactsRecord): IncomeW2[] => {
     state: undefined,
     stateWages: toNum(r.stateWages ?? r.box16) || undefined,
     stateWithholding: toNum(r.stateWithheld ?? r.box17) || undefined,
+    box11NonqualifiedPlans:
+      toNum(r.box11NonqualifiedPlans ?? r.box11) || undefined,
     box12: adaptW2Box12(r)
   }))
 }
@@ -1033,7 +1035,9 @@ const adapt1099s = (facts: FactsRecord): Supported1099[] => {
             type: Income1099Type.MISC,
             form: {
               otherIncome: amount,
-              federalIncomeTaxWithheld: toNum(r.federalWithheld)
+              federalIncomeTaxWithheld: toNum(r.federalWithheld),
+              section409ADeferrals: toNum(r.section409ADeferrals),
+              nonqualifiedDeferredComp: toNum(r.nonqualifiedDeferredComp)
             } as F1099MISCData,
             personRole
           }
@@ -1046,7 +1050,8 @@ const adapt1099s = (facts: FactsRecord): Supported1099[] => {
             type: Income1099Type.G,
             form: {
               unemploymentCompensation: amount,
-              federalIncomeTaxWithheld: toNum(r.federalWithheld)
+              federalIncomeTaxWithheld: toNum(r.federalWithheld),
+              taxableGrants: toNum(r.taxableGrants)
             } as F1099GData,
             personRole
           }
@@ -1899,6 +1904,65 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     })
   })()
 
+  const schedule8812EarnedIncomeAdjustments = (() => {
+    const raw = asRecord(facts.schedule8812EarnedIncomeAdjustments)
+    const result = {
+      scholarshipGrantsNotOnW2: toNum(
+        raw.scholarshipGrantsNotOnW2 ?? facts.scholarshipGrantsNotOnW2
+      ),
+      penalIncome: toNum(raw.penalIncome ?? facts.penalIncome),
+      nonqualifiedDeferredCompensation: toNum(
+        raw.nonqualifiedDeferredCompensation ??
+          facts.nonqualifiedDeferredCompensation
+      ),
+      medicaidWaiverPaymentsExcludedFromIncome: toNum(
+        raw.medicaidWaiverPaymentsExcludedFromIncome ??
+          facts.medicaidWaiverPaymentsExcludedFromIncome
+      ),
+      includeMedicaidWaiverInEarnedIncome: toBool(
+        raw.includeMedicaidWaiverInEarnedIncome ??
+          facts.includeMedicaidWaiverInEarnedIncome
+      )
+    }
+
+    return Object.values(result).some((value) =>
+      typeof value === 'boolean' ? value : value > 0
+    )
+      ? result
+      : undefined
+  })()
+
+  const otherFederalWithholdingCredits = (() => {
+    const records = asArray<Record<string, unknown>>(
+      facts.otherFederalWithholdingCredits
+    )
+    if (records.length === 0) return undefined
+
+    const credits = records
+      .map((record) => {
+        const rawSource = toStr(record.source)
+        const source: NonNullable<
+          Information['otherFederalWithholdingCredits']
+        >[number]['source'] =
+          rawSource === 'W2G' ||
+          rawSource === 'Schedule K-1' ||
+          rawSource === '1042-S' ||
+          rawSource === '8805' ||
+          rawSource === '8288-A'
+            ? rawSource
+            : 'other'
+
+        return {
+          source,
+          amount: toNum(record.amount),
+          description: toStr(record.description) || undefined
+        }
+      })
+      .filter((record) => record.amount > 0)
+
+    return credits.length > 0 ? credits : undefined
+  })()
+
   // ─── IRA contribution deductibility (Form 8606, F8880) ──────────────────
   const iraContributions: IraContribution[] | undefined = (() => {
     const records = asArray<Record<string, unknown>>(facts.iraContributions)
@@ -2180,6 +2244,8 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     stateResidencies: adaptStateResidencies(facts),
     healthSavingsAccounts,
     individualRetirementArrangements,
+    schedule8812EarnedIncomeAdjustments,
+    otherFederalWithholdingCredits,
     // OBBBA fields
     overtimeIncome,
     tipIncome,
@@ -2537,6 +2603,15 @@ const adaptFactsToForm1120Data = (facts: FactsRecord): Form1120Data => {
   const income = asRecord(facts.income)
   const deductions = asRecord(facts.deductions)
   const specialDeductions = asRecord(facts.specialDeductions)
+  const generalBusinessCreditsRecord = (() => {
+    const raw = asRecord(facts.generalBusinessCredits)
+    const candidate = asRecord(raw.creditComponents)
+    const source = Object.keys(candidate).length > 0 ? candidate : raw
+    const entries = Object.entries(source)
+      .map(([key, value]) => [key, toNum(value)] as const)
+      .filter(([, value]) => value > 0)
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined
+  })()
 
   return {
     entity: defaultBusinessEntity(facts) as Form1120Data['entity'],
@@ -2590,7 +2665,7 @@ const adaptFactsToForm1120Data = (facts: FactsRecord): Form1120Data => {
     taxableIncome: 0, // Computed by the form
     taxBeforeCredits: 0, // Computed by the form
     foreignTaxCredit: toNum(facts.foreignTaxCredit),
-    generalBusinessCredits: undefined,
+    generalBusinessCredits: generalBusinessCreditsRecord,
     priorYearMinimumTax: toNum(facts.priorYearMinimumTax),
     estimatedTaxPayments: toNum(facts.estimatedTaxPayments),
     extensionPayment: toNum(facts.extensionPayment),

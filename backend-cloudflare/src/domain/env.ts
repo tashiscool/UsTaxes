@@ -8,6 +8,9 @@ export interface Env {
   SUBMISSION_ORCHESTRATOR: DurableObjectNamespace
   INTERNAL_API_TOKEN?: string
   APP_AUTH_SECRET?: string
+  APP_AUTH_CALLBACK_SHARED_SECRET?: string
+  APP_TRUSTED_AUTH_USER_HEADER?: string
+  APP_TRUSTED_AUTH_SIGNATURE_HEADER?: string
   APP_DEV_ALLOW_LOCAL_LOGIN?: string
   TAXFLOW_STATE_PROFILE_BASE_URL?: string
   // Production config

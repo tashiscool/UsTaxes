@@ -408,6 +408,73 @@ describe('Business Entity Tax Calculations', () => {
       expect(result.amountOwed).toBe(0)
       expect(result.overpayment).toBe(8000)
     })
+
+    it('applies special deductions, credits, other taxes, and payments for workbook-grade 1120 parity', () => {
+      const result = taxCalcService.calculateF1120(
+        cCorpFacts({
+          entityName: 'Northwind Manufacturing Inc',
+          income: {
+            grossReceiptsOrSales: 900000,
+            returnsAndAllowances: 0,
+            costOfGoodsSold: 0,
+            dividendIncome: 50000,
+            interestIncome: 20000,
+            grossRents: 0,
+            grossRoyalties: 0,
+            capitalGainNetIncome: 0,
+            netGainFromSaleOfAssets: 0,
+            otherIncome: 30000
+          },
+          deductions: {
+            compensationOfOfficers: 120000,
+            salariesAndWages: 180000,
+            repairsAndMaintenance: 10000,
+            badDebts: 5000,
+            rents: 70000,
+            taxesAndLicenses: 40000,
+            interest: 20000,
+            charitableContributions: 0,
+            depreciation: 30000,
+            depletion: 0,
+            advertising: 20000,
+            pensionPlans: 0,
+            employeeBenefits: 25000,
+            domesticProductionDeduction: 0,
+            otherDeductions: 0
+          },
+          specialDeductions: {
+            dividendsReceivedDeduction: 10000,
+            dividendsFromAffiliated: 0,
+            dividendsOnDebtFinancedStock: 0,
+            dividendsOnCertainPreferred: 0,
+            foreignDividends: 5000,
+            nol: 10000
+          },
+          foreignTaxCredit: 2000,
+          generalBusinessCredits: {
+            researchCredit: 4000,
+            disabledAccessCredit: 2500
+          },
+          priorYearMinimumTax: 500,
+          accumulatedEarnings: 2500,
+          personalHoldingCompanyTax: 500,
+          estimatedTaxPayments: 60000,
+          extensionPayment: 8000,
+          priorYearOverpayment: 5000
+        })
+      )
+
+      expect(result.success).toBe(true)
+      if (!result.success) return
+      expect(result.totalIncome).toBe(1000000)
+      expect(result.totalDeductions).toBe(520000)
+      expect(result.taxableIncome).toBe(455000)
+      expect(result.totalTax).toBe(89550)
+      expect(result.totalPayments).toBe(73000)
+      expect(result.amountOwed).toBe(16550)
+      expect(result.overpayment).toBe(0)
+      expect(result.effectiveTaxRate).toBe(0.0896)
+    })
   })
 
   // ─── S-Corp (Form 1120-S) ──────────────────────────────────────────────
