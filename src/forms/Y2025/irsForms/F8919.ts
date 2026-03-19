@@ -16,7 +16,7 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
  * - Employer misclassified you as an independent contractor
  * - You believe you should have been treated as an employee
  *
- * The tax computed on this form goes to Schedule 2, Line 13.
+ * The tax computed on this form goes to Schedule 2, Line 6.
  *
  * 2025 rates:
  * - Social Security: 6.2% on wages up to $176,100
@@ -112,19 +112,17 @@ export default class F8919 extends F1040Attachment {
 
   // Part III - Figuring the Medicare Tax
 
-  // Line 12: Total wages subject to Medicare tax (from line 6)
-  l12 = (): number => this.l6()
+  // Line 12: Multiply line 6 by 1.45% (Medicare tax rate)
+  l12 = (): number => Math.round(this.l6() * MEDICARE_RATE * 100) / 100
 
-  // Line 13: Multiply line 12 by 1.45% (Medicare tax rate)
-  l13 = (): number => Math.round(this.l12() * MEDICARE_RATE * 100) / 100
+  // Line 13: Add lines 11 and 12
+  l13 = (): number => this.l11() + this.l12()
 
-  // Part IV - Total Tax
+  // Backward-compatible alias retained for older callers/tests.
+  l14 = (): number => this.l13()
 
-  // Line 14: Add lines 11 and 13
-  l14 = (): number => this.l11() + this.l13()
-
-  // Tax for Schedule 2, Line 13
-  l6Tax = (): number => this.l14()
+  // Tax for Schedule 2, Line 6
+  l6Tax = (): number => this.l13()
 
   fields = (): Field[] => [
     this.f1040.namesString(),
@@ -144,8 +142,7 @@ export default class F8919 extends F1040Attachment {
     this.l11(),
     // Part III
     this.l12(),
-    this.l13(),
     // Part IV
-    this.l14()
+    this.l13()
   ]
 }

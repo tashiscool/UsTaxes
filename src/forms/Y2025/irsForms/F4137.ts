@@ -10,7 +10,7 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
  * - Didn't report all tips to your employer, or
  * - Employer didn't withhold social security and Medicare taxes on reported tips
  *
- * The tax computed on this form is added to Schedule 2, Line 13.
+ * The tax computed on this form is added to Schedule 2, Line 5.
  *
  * 2025 rates:
  * - Social Security: 6.2% on wages up to $176,100
@@ -99,7 +99,7 @@ export default class F4137 extends F1040Attachment {
   // Line 13: Add lines 11 and 12 (total tax)
   l13 = (): number => this.l11() + this.l12()
 
-  // Tax for Schedule 2, Line 13
+  // Tax for Schedule 2, Line 5
   l6Tax = (): number => this.l13()
 
   fields = (): Field[] => [

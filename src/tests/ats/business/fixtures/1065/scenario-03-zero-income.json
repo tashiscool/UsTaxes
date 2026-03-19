@@ -1,0 +1,50 @@
+{
+  "scenarioId": "1065-scenario-03-zero-income",
+  "formType": "1065",
+  "description": "Partnership zero-income baseline to anchor parity on no-activity returns.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts"
+  ],
+  "facts": {
+    "entityName": "Test Corp",
+    "ein": "12-3456789",
+    "entityType": "Partnership",
+    "streetAddress": "100 Corporate Blvd",
+    "city": "Wilmington",
+    "zip": "19801",
+    "naicsCode": "541511",
+    "productOrService": "Software",
+    "accountingMethod": "accrual",
+    "taxYear": 2025,
+    "isFiscalYear": false,
+    "totalAssets": 500000,
+    "income": {},
+    "deductions": {},
+    "specialDeductions": {},
+    "scheduleK": {},
+    "shareholders": [],
+    "partners": [
+      {
+        "name": "Solo Partner",
+        "tin": "111223333",
+        "isGeneralPartner": true,
+        "profitSharingPercent": 100,
+        "lossSharingPercent": 100
+      }
+    ],
+    "estimatedTaxPayments": 0
+  },
+  "expected": {
+    "entityName": "Test Corp",
+    "totalIncome": 0,
+    "totalTax": 0,
+    "ownerAllocations": [
+      {
+        "name": "Solo Partner",
+        "ownershipPct": 100,
+        "ordinaryIncome": 0,
+        "selfEmploymentEarnings": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "scenarioId": "1041-scenario-03-distribution-deduction",
+  "formType": "1041",
+  "description": "Complex trust where required and discretionary distributions drive the distribution deduction.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts"
+  ],
+  "facts": {
+    "entityName": "Smith Family Trust",
+    "ein": "66-9876543",
+    "entityType": "complexTrust",
+    "dateCreated": "2020-01-15",
+    "isFinalReturn": false,
+    "fiduciary": {
+      "name": "John Smith",
+      "title": "Trustee",
+      "address": "456 Oak Ave",
+      "ein": "66-9876543",
+      "phone": "555-0100"
+    },
+    "beneficiaries": [],
+    "income": {
+      "interest": 40000,
+      "ordinaryDividends": 30000,
+      "qualifiedDividends": 20000,
+      "businessIncome": 0,
+      "capitalGainShortTerm": 10000,
+      "capitalGainLongTerm": 20000,
+      "rents": 0,
+      "royalties": 0,
+      "farmIncome": 0,
+      "otherIncome": 0
+    },
+    "deductions": {
+      "interestExpense": 0,
+      "taxes": 0,
+      "fiduciaryFees": 0,
+      "charitableDeduction": 0,
+      "attorneyFees": 0,
+      "accountantFees": 0,
+      "otherDeductions": 0
+    },
+    "requiredDistributions": 50000,
+    "otherDistributions": 10000,
+    "section645Election": false,
+    "section663bElection": false,
+    "estimatedTaxPayments": 0,
+    "withholding": 0,
+    "taxYear": 2025
+  },
+  "expected": {
+    "entityName": "Smith Family Trust",
+    "totalIncome": 100000,
+    "adjustedTotalIncome": 100000,
+    "distributionDeduction": 60000,
+    "exemption": 100,
+    "taxableIncome": 39900,
+    "totalTax": 12750
+  }
+}

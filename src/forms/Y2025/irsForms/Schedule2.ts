@@ -2,6 +2,7 @@ import F1040Attachment from './F1040Attachment'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { sumFields } from 'ustaxes/core/irsForms/util'
 import { Field } from 'ustaxes/core/pdfFiller'
+import { W2Box12Code } from 'ustaxes/core/data'
 
 export default class Schedule2 extends F1040Attachment {
   tag: FormTag = 'f1040s2'
@@ -38,8 +39,8 @@ export default class Schedule2 extends F1040Attachment {
 
   // Part II: Other Tax
   l4 = (): number | undefined => this.f1040.scheduleSE.l12() // self-employment tax (schedule SE)
-  l5 = (): number | undefined => undefined // TODO: unreported FICA tax
-  l6 = (): number | undefined => undefined // TODO: additional tax on retirement accounts
+  l5 = (): number | undefined => this.f1040.f4137?.l13() // Form 4137: SS/Medicare tax on unreported tip income
+  l6 = (): number | undefined => this.f1040.f8919?.l13() // Form 8919: uncollected SS/Medicare tax on wages
   l7 = (): number | undefined => sumFields([this.l5(), this.l6()])
   l8box = (): boolean => this.f1040.f5329?.isNeeded() ?? false
   l8 = (): number | undefined => this.f1040.f5329?.totalAdditionalTax() // Form 5329: Additional tax on IRAs/retirement plans
@@ -47,7 +48,17 @@ export default class Schedule2 extends F1040Attachment {
   l10 = (): number | undefined => undefined // repayment of firsttime homebuyer credit, form 5405
   l11 = (): number | undefined => this.f1040.f8959.toSchedule2l11()
   l12 = (): number | undefined => this.f1040.f8960.toSchedule2l12()
-  l13 = (): number | undefined => undefined // TODO: uncollected ss and medicare or rrta tax on tips or group-term life insurance, w-2, box 12
+  l13 = (): number | undefined =>
+    this.f1040.info.w2s.reduce((sum, w2) => {
+      const box12 = w2.box12 ?? {}
+      return (
+        sum +
+        (box12[W2Box12Code.A] ?? 0) +
+        (box12[W2Box12Code.B] ?? 0) +
+        (box12[W2Box12Code.M] ?? 0) +
+        (box12[W2Box12Code.N] ?? 0)
+      )
+    }, 0) || undefined
   l14 = (): number | undefined => undefined // TODO - interest on tax due on installment income from the sale of residential lots and timeshares
   l15 = (): number | undefined => undefined //interest on the deferred tax on gain from certain installment sales with a sales price over 150000.
   l16 = (): number | undefined => undefined // recapture of low-income housing credit, form 8611

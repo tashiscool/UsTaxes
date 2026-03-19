@@ -33,6 +33,7 @@ ROOT = Path('/Users/tkhan/IdeaProjects/taxes/UsTaxes')
 DOWNLOADS = Path('/Users/tkhan/Downloads')
 DEFAULT_OUTPUT_DIR = ROOT / 'docs'
 IRS_MEF_ROOT = DOWNLOADS / 'IRS_MeF_Materials'
+FIXTURE_MANIFEST = ROOT / 'src/tests/ats/business/fixtures/business_fixture_manifest.json'
 
 
 @dataclass(frozen=True)
@@ -69,6 +70,9 @@ class CoverageRow:
     local_test_files: list[str]
     local_test_count: int
     local_tests_present: bool
+    fixture_backed: bool
+    fixture_count: int
+    fixture_paths: list[str]
     coverage_status: str
     notes: str
     last_audited: str
@@ -266,17 +270,55 @@ def filter_local_files(paths: Iterable[str]) -> list[str]:
     return [str((ROOT / rel).resolve()) for rel in paths if (ROOT / rel).exists()]
 
 
-def build_row(spec: FormSpec, workbook_base: Path, output_timestamp: str) -> tuple[CoverageRow, dict[str, object]]:
+def load_fixture_manifest() -> dict[str, list[dict[str, object]]]:
+    if not FIXTURE_MANIFEST.exists():
+        return {}
+
+    payload = json.loads(FIXTURE_MANIFEST.read_text())
+    fixtures_by_form: dict[str, list[dict[str, object]]] = {}
+    for raw_entry in payload.get('fixtures', []):
+        if not isinstance(raw_entry, dict):
+            continue
+        form_type = raw_entry.get('formType')
+        if not isinstance(form_type, str) or not form_type:
+            continue
+        fixtures_by_form.setdefault(form_type, []).append(raw_entry)
+    return fixtures_by_form
+
+
+def resolve_fixture_paths(entries: Sequence[dict[str, object]]) -> list[str]:
+    resolved_paths: list[str] = []
+    for entry in entries:
+        raw_path = entry.get('path')
+        if not isinstance(raw_path, str) or not raw_path:
+            continue
+        path = Path(raw_path)
+        full_path = path if path.is_absolute() else ROOT / path
+        if full_path.exists():
+            resolved_paths.append(str(full_path.resolve()))
+    return resolved_paths
+
+
+def build_row(
+    spec: FormSpec,
+    workbook_base: Path,
+    output_timestamp: str,
+    fixtures_by_form: dict[str, list[dict[str, object]]],
+) -> tuple[CoverageRow, dict[str, object]]:
     workbook_files = find_matching_files(workbook_base, spec.workbook_patterns)
     workbook_details = [summarize_workbook(path) for path in workbook_files]
     irs_refs = find_matching_files(IRS_MEF_ROOT, spec.irs_reference_patterns)
     local_files = filter_local_files(spec.local_files)
     local_test_files = filter_local_files(spec.local_test_files)
+    fixture_entries = fixtures_by_form.get(spec.canonical_form, [])
+    fixture_paths = resolve_fixture_paths(fixture_entries)
 
     if workbook_files and irs_refs:
         coverage_status = 'workbook_and_irs_reference_present'
     elif workbook_files:
         coverage_status = 'workbook_present_without_irs_reference'
+    elif irs_refs and fixture_paths:
+        coverage_status = 'fixture_backed_irs_reference'
     elif irs_refs:
         coverage_status = 'irs_reference_only'
     else:
@@ -305,6 +347,9 @@ def build_row(spec: FormSpec, workbook_base: Path, output_timestamp: str) -> tup
         local_test_files=local_test_files,
         local_test_count=len(local_test_files),
         local_tests_present=bool(local_test_files),
+        fixture_backed=bool(fixture_paths),
+        fixture_count=len(fixture_paths),
+        fixture_paths=fixture_paths,
         coverage_status=coverage_status,
         notes=spec.notes,
         last_audited=output_timestamp,
@@ -316,6 +361,8 @@ def build_row(spec: FormSpec, workbook_base: Path, output_timestamp: str) -> tup
         'irs_reference_paths': [str(path) for path in irs_refs],
         'local_files': local_files,
         'local_test_files': local_test_files,
+        'fixture_entries': fixture_entries,
+        'fixture_paths': fixture_paths,
         'notes': spec.notes,
     }
     return row, inventory
@@ -345,13 +392,14 @@ def write_markdown(rows: Sequence[CoverageRow], path: Path) -> None:
         'This inventory extends the workbook parity approach beyond the 1040 family.',
         'When a private workbook is unavailable locally, the matrix records the workbook gap',
         'and inventories local IRS MeF/ATS materials instead so parity work stays evidence-based.',
+        'Canonical JSON parity fixtures now back 1120-S, 1065, and 1041 so those forms are no longer IRS-reference-led only.',
         '',
-        '| Form | Workbook | IRS refs | Local impl | Tests | Status | Notes |',
-        '| --- | --- | --- | --- | --- | --- | --- |',
+        '| Form | Workbook | IRS refs | Fixtures | Local impl | Tests | Status | Notes |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- |',
     ]
     for row in rows:
         lines.append(
-            f"| {row.canonical_form} | {'yes' if row.workbook_present else 'no'} | {row.irs_reference_count} | {row.local_file_count} | {row.local_test_count} | {row.coverage_status} | {row.notes} |"
+            f"| {row.canonical_form} | {'yes' if row.workbook_present else 'no'} | {row.irs_reference_count} | {row.fixture_count} | {row.local_file_count} | {row.local_test_count} | {row.coverage_status} | {row.notes} |"
         )
     lines.extend(
         [
@@ -360,9 +408,15 @@ def write_markdown(rows: Sequence[CoverageRow], path: Path) -> None:
             '',
             '- `workbook_and_irs_reference_present`: local workbook and IRS support materials are both available.',
             '- `workbook_present_without_irs_reference`: local workbook found, but no IRS support assets were discovered in the scanned materials.',
+            '- `fixture_backed_irs_reference`: no local workbook was found, but canonical parity fixtures and IRS materials are both present.',
             '- `irs_reference_only`: no local workbook found, but IRS MeF/ATS assets are available and should anchor parity work until a workbook is supplied.',
             '- `missing_external_reference`: neither a local workbook nor IRS materials were detected for that form.',
             '- `local_implementation_missing`: the form did not resolve to local implementation files, so parity should stop until source support exists.',
+            '',
+            '## Canonical business fixtures',
+            '',
+            f'- Fixture manifest: `{FIXTURE_MANIFEST}`',
+            '- Fixture-backed forms in this pass: `1120-S`, `1065`, `1041`.',
             '',
         ]
     )
@@ -390,11 +444,12 @@ def main() -> int:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     audited_at = datetime.now(timezone.utc).isoformat()
+    fixtures_by_form = load_fixture_manifest()
 
     rows: list[CoverageRow] = []
     inventory: list[dict[str, object]] = []
     for spec in FORM_SPECS:
-        row, details = build_row(spec, args.workbook_base, audited_at)
+        row, details = build_row(spec, args.workbook_base, audited_at, fixtures_by_form)
         rows.append(row)
         inventory.append(details)
 

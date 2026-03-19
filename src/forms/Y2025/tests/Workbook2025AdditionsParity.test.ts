@@ -90,7 +90,8 @@ describe('Workbook 2025 additions parity', () => {
     expect(f1040.f8919?.l9()).toBe(6100)
     expect(f1040.f8919?.l10()).toBe(6100)
     expect(f1040.f8919?.l11()).toBe(378.2)
-    expect(f1040.f8919?.l13()).toBe(290)
+    expect(f1040.f8919?.l12()).toBe(290)
+    expect(f1040.f8919?.l13()).toBe(668.2)
     expect(f1040.f8919?.l14()).toBe(668.2)
   })
 
@@ -112,5 +113,33 @@ describe('Workbook 2025 additions parity', () => {
     expect(f1040.f8801?.credit()).toBe(6000)
     expect(f1040.f8801?.carryforward()).toBe(0)
     expect(f1040.schedule3.l6a()).toBe(6000)
+  })
+
+  it('routes Forms 4137 and 8919 plus W-2 box 12 uncollected tax through Schedule 2', () => {
+    const information = cloneDeep(baseInformation)
+    information.unreportedTipIncome = 10000
+    information.uncollectedSSTaxWages = [
+      {
+        employerName: 'Misclassified Employer LLC',
+        employerEIN: '222222222',
+        wagesReceived: 20000,
+        reasonCode: 'A'
+      }
+    ]
+    information.w2s[0].box12 = {
+      A: 100,
+      B: 40,
+      M: 25,
+      N: 10
+    }
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.schedule2.l5()).toBe(765)
+    expect(f1040.schedule2.l6()).toBe(1530)
+    expect(f1040.schedule2.l7()).toBe(2295)
+    expect(f1040.schedule2.l13()).toBe(175)
+    expect(f1040.schedule2.l21()).toBe(2470)
+    expect(f1040.l23()).toBe(2470)
   })
 })

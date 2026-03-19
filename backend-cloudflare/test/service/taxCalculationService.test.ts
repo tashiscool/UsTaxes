@@ -616,6 +616,61 @@ describe('TaxCalculationService', () => {
       }
     })
 
+    it('carries W-2 box 12 A/B/M/N amounts into Schedule 2 line 13 through the backend adapter', () => {
+      const baseline = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-box12-baseline',
+              employerName: 'Former Employer',
+              ein: '12-3456789',
+              box1Wages: 100000,
+              box2FederalWithheld: 12000,
+              socialSecurityWages: 100000,
+              socialSecurityWithheld: 6200,
+              medicareWages: 100000,
+              medicareWithheld: 1450,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ]
+        })
+      )
+
+      const withUncollectedTax = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-box12-uncollected-tax',
+              employerName: 'Former Employer',
+              ein: '12-3456789',
+              box1Wages: 100000,
+              box2FederalWithheld: 12000,
+              socialSecurityWages: 100000,
+              socialSecurityWithheld: 6200,
+              medicareWages: 100000,
+              medicareWithheld: 1450,
+              box12: {
+                A: 100,
+                B: 40,
+                M: 25,
+                N: 10
+              },
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ]
+        })
+      )
+
+      expect(baseline.success).toBe(true)
+      expect(withUncollectedTax.success).toBe(true)
+      if (baseline.success && withUncollectedTax.success) {
+        expect(withUncollectedTax.totalTax - baseline.totalTax).toBe(175)
+        expect(withUncollectedTax.totalPayments).toBe(12000)
+      }
+    })
+
     it('computes state tax for CA filer with W-2 income', () => {
       const result = taxCalcService.calculate(
         baseFacts({

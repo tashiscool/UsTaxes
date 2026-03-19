@@ -98,6 +98,8 @@
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/ccorp.test.ts"
     ],
+    "fixture_entries": [],
+    "fixture_paths": [],
     "notes": "C-corporation parity should track Form 1120 computation, MeF serialization, and backend entity-return handling."
   },
   {
@@ -151,6 +153,28 @@
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/scorp.test.ts"
     ],
+    "fixture_entries": [
+      {
+        "scenarioId": "1120-s-scenario-01-service-scorp",
+        "formType": "1120-S",
+        "path": "src/tests/ats/business/fixtures/1120-s/scenario-01-service-scorp.json"
+      },
+      {
+        "scenarioId": "1120-s-scenario-02-investment-income",
+        "formType": "1120-S",
+        "path": "src/tests/ats/business/fixtures/1120-s/scenario-02-investment-income.json"
+      },
+      {
+        "scenarioId": "1120-s-scenario-03-built-in-gains",
+        "formType": "1120-S",
+        "path": "src/tests/ats/business/fixtures/1120-s/scenario-03-built-in-gains.json"
+      }
+    ],
+    "fixture_paths": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120-s/scenario-01-service-scorp.json",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120-s/scenario-02-investment-income.json",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120-s/scenario-03-built-in-gains.json"
+    ],
     "notes": "S-corp parity should include ordinary business income, Schedule K/K-1 allocation, and shareholder ownership inputs."
   },
   {
@@ -194,6 +218,28 @@
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/partnership.test.ts"
     ],
+    "fixture_entries": [
+      {
+        "scenarioId": "1065-scenario-01-service-partnership",
+        "formType": "1065",
+        "path": "src/tests/ats/business/fixtures/1065/scenario-01-service-partnership.json"
+      },
+      {
+        "scenarioId": "1065-scenario-02-investment-partnership",
+        "formType": "1065",
+        "path": "src/tests/ats/business/fixtures/1065/scenario-02-investment-partnership.json"
+      },
+      {
+        "scenarioId": "1065-scenario-03-zero-income",
+        "formType": "1065",
+        "path": "src/tests/ats/business/fixtures/1065/scenario-03-zero-income.json"
+      }
+    ],
+    "fixture_paths": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1065/scenario-01-service-partnership.json",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1065/scenario-02-investment-partnership.json",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1065/scenario-03-zero-income.json"
+    ],
     "notes": "Partnership parity should cover guaranteed payments, partner allocations, Schedule K/K-1, and liabilities."
   },
   {
@@ -225,6 +271,28 @@
     "local_test_files": [
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts"
+    ],
+    "fixture_entries": [
+      {
+        "scenarioId": "1041-scenario-01-complex-trust",
+        "formType": "1041",
+        "path": "src/tests/ats/business/fixtures/1041/scenario-01-complex-trust.json"
+      },
+      {
+        "scenarioId": "1041-scenario-02-decedent-estate",
+        "formType": "1041",
+        "path": "src/tests/ats/business/fixtures/1041/scenario-02-decedent-estate.json"
+      },
+      {
+        "scenarioId": "1041-scenario-03-distribution-deduction",
+        "formType": "1041",
+        "path": "src/tests/ats/business/fixtures/1041/scenario-03-distribution-deduction.json"
+      }
+    ],
+    "fixture_paths": [
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1041/scenario-01-complex-trust.json",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1041/scenario-02-decedent-estate.json",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1041/scenario-03-distribution-deduction.json"
     ],
     "notes": "Trust and estate parity is driven by fiduciary, beneficiary, distribution, and compressed-bracket logic."
   },
@@ -293,6 +361,8 @@
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts"
     ],
+    "fixture_entries": [],
+    "fixture_paths": [],
     "notes": "Nonprofit parity is partially implemented in local forms, but Cloudflare still routes Form 990-family work to expert handling."
   }
 ]

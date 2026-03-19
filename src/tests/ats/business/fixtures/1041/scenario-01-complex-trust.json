@@ -1,0 +1,58 @@
+{
+  "scenarioId": "1041-scenario-01-complex-trust",
+  "formType": "1041",
+  "description": "Complex trust using compressed brackets with no distributions.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts"
+  ],
+  "facts": {
+    "entityType": "complexTrust",
+    "entityName": "Smith Family Trust",
+    "income": {
+      "interest": 50000,
+      "ordinaryDividends": 0,
+      "qualifiedDividends": 0,
+      "businessIncome": 0,
+      "capitalGainShortTerm": 0,
+      "capitalGainLongTerm": 0,
+      "rents": 0,
+      "royalties": 0,
+      "farmIncome": 0,
+      "otherIncome": 0
+    },
+    "deductions": {
+      "interestExpense": 0,
+      "taxes": 2000,
+      "fiduciaryFees": 3000,
+      "charitableDeduction": 0,
+      "attorneyFees": 0,
+      "accountantFees": 0,
+      "otherDeductions": 0
+    },
+    "requiredDistributions": 0,
+    "otherDistributions": 0,
+    "estimatedTaxPayments": 0,
+    "withholding": 0,
+    "beneficiaries": [],
+    "fiduciary": {
+      "name": "John Trustee",
+      "title": "Trustee",
+      "address": "100 Trust Way",
+      "ein": "99-8877665",
+      "phone": "555-1234"
+    }
+  },
+  "expected": {
+    "entityName": "Smith Family Trust",
+    "totalIncome": 50000,
+    "totalDeductions": 5000,
+    "adjustedTotalIncome": 45000,
+    "distributionDeduction": 0,
+    "exemption": 100,
+    "beneficiaryCount": 0,
+    "taxableIncome": 44900,
+    "totalTax": 14600,
+    "amountOwed": 14600,
+    "overpayment": 0
+  }
+}

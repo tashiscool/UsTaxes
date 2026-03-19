@@ -46,6 +46,7 @@ import {
   type IraContribution,
   type RothConversion,
   type LocalTaxInfo,
+  W2Box12Code,
   IraPlanType,
   type Asset,
   type F1099IntData,
@@ -787,24 +788,59 @@ const mapFilingStatus = (status: string): FilingStatus => {
 
 type FactsRecord = Record<string, unknown>
 
+const adaptW2Box12 = (
+  record: Record<string, unknown>
+): IncomeW2['box12'] | undefined => {
+  const result: Partial<Record<W2Box12Code, number>> = {}
+  const rawBox12 = asRecord(record.box12)
+  const rawBox12Codes = asArray<Record<string, unknown>>(record.box12Codes)
+  const singleCode = toStr(record.box12Code ?? record.box12aCode).toUpperCase()
+  const singleAmount = toNum(record.box12Amount ?? record.box12a)
+
+  for (const [rawCode, rawAmount] of Object.entries(rawBox12)) {
+    const code = rawCode.toUpperCase() as W2Box12Code
+    const amount = toNum(rawAmount)
+    if (amount > 0) {
+      result[code] = amount
+    }
+  }
+
+  for (const entry of rawBox12Codes) {
+    const code = toStr(entry.code).toUpperCase() as W2Box12Code
+    const amount = toNum(entry.amount)
+    if (code && amount > 0) {
+      result[code] = amount
+    }
+  }
+
+  if (singleCode && singleAmount > 0) {
+    result[singleCode as W2Box12Code] = singleAmount
+  }
+
+  return Object.keys(result).length > 0
+    ? (result as IncomeW2['box12'])
+    : undefined
+}
+
 const adaptW2s = (facts: FactsRecord): IncomeW2[] => {
   const records = asArray<Record<string, unknown>>(facts.w2Records)
   return records.map((r) => ({
     occupation: toStr(r.employerName),
     income: toNum(r.box1Wages),
-    medicareIncome: toNum(r.box1Wages), // Typically same as box 1 unless specified
-    fedWithholding: toNum(r.box2FederalWithheld),
-    ssWages: toNum(r.box1Wages), // Box 3, defaulting to box 1
-    ssWithholding: 0,
-    medicareWithholding: 0,
+    medicareIncome: toNum(r.medicareWages ?? r.box5 ?? r.box1Wages),
+    fedWithholding: toNum(r.box2FederalWithheld ?? r.box2),
+    ssWages: toNum(r.socialSecurityWages ?? r.box3 ?? r.box1Wages),
+    ssWithholding: toNum(r.socialSecurityWithheld ?? r.box4),
+    medicareWithholding: toNum(r.medicareWithheld ?? r.box6),
     employer: r.ein
       ? { EIN: toStr(r.ein), employerName: toStr(r.employerName) }
       : undefined,
     personRole:
       toStr(r.owner) === 'spouse' ? PersonRole.SPOUSE : PersonRole.PRIMARY,
     state: undefined,
-    stateWages: toNum(r.stateWages) || undefined,
-    stateWithholding: toNum(r.stateWithheld) || undefined
+    stateWages: toNum(r.stateWages ?? r.box16) || undefined,
+    stateWithholding: toNum(r.stateWithheld ?? r.box17) || undefined,
+    box12: adaptW2Box12(r)
   }))
 }
 

@@ -1,0 +1,162 @@
+{
+  "scenarioId": "1065-scenario-02-investment-partnership",
+  "formType": "1065",
+  "description": "Partnership with interest, dividends, capital gain, and limited-partner self-employment gating.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts"
+  ],
+  "facts": {
+    "entityName": "Golden Gate Partners",
+    "ein": "55-1234567",
+    "entityType": "General Partnership",
+    "accountingMethod": "cash",
+    "taxYear": 2025,
+    "totalAssets": 800000,
+    "income": {
+      "grossReceiptsOrSales": 600000,
+      "returnsAndAllowances": 0,
+      "costOfGoodsSold": 0,
+      "ordinaryIncome": 0,
+      "netFarmProfit": 0,
+      "netGainFromSaleOfAssets": 0,
+      "otherIncome": 0,
+      "interestIncome": 0,
+      "dividendIncome": 0,
+      "grossRents": 0,
+      "grossRoyalties": 0,
+      "net1231Gain": 0
+    },
+    "deductions": {
+      "salariesAndWages": 100000,
+      "guaranteedPaymentsToPartners": 50000,
+      "repairsAndMaintenance": 10000,
+      "badDebts": 0,
+      "rents": 30000,
+      "taxesAndLicenses": 15000,
+      "interest": 5000,
+      "depreciation": 20000,
+      "depletion": 0,
+      "retirementPlans": 10000,
+      "employeeBenefits": 5000,
+      "otherDeductions": 5000
+    },
+    "partners": [
+      {
+        "name": "Partner Alpha",
+        "tin": "111-22-3333",
+        "tinType": "SSN",
+        "isGeneralPartner": true,
+        "isLimitedPartner": false,
+        "isDomestic": true,
+        "profitSharingPercent": 50,
+        "lossSharingPercent": 50,
+        "capitalSharingPercent": 50,
+        "beginningCapitalAccount": 100000,
+        "capitalContributed": 0,
+        "currentYearIncrease": 0,
+        "withdrawalsDistributions": 0,
+        "endingCapitalAccount": 100000
+      },
+      {
+        "name": "Partner Beta",
+        "tin": "444-55-6666",
+        "tinType": "SSN",
+        "isGeneralPartner": true,
+        "isLimitedPartner": false,
+        "isDomestic": true,
+        "profitSharingPercent": 30,
+        "lossSharingPercent": 30,
+        "capitalSharingPercent": 30,
+        "beginningCapitalAccount": 60000,
+        "capitalContributed": 0,
+        "currentYearIncrease": 0,
+        "withdrawalsDistributions": 0,
+        "endingCapitalAccount": 60000
+      },
+      {
+        "name": "Partner Gamma",
+        "tin": "777-88-9999",
+        "tinType": "SSN",
+        "isGeneralPartner": false,
+        "isLimitedPartner": true,
+        "isDomestic": true,
+        "profitSharingPercent": 20,
+        "lossSharingPercent": 20,
+        "capitalSharingPercent": 20,
+        "beginningCapitalAccount": 40000,
+        "capitalContributed": 0,
+        "currentYearIncrease": 0,
+        "withdrawalsDistributions": 0,
+        "endingCapitalAccount": 40000
+      }
+    ],
+    "scheduleK": {
+      "ordinaryBusinessIncome": 350000,
+      "netRentalRealEstateIncome": 0,
+      "otherNetRentalIncome": 0,
+      "interestIncome": 5000,
+      "dividendIncome": 3000,
+      "qualifiedDividends": 0,
+      "royalties": 0,
+      "netShortTermCapitalGain": 0,
+      "netLongTermCapitalGain": 10000,
+      "collectibles28Gain": 0,
+      "unrecaptured1250Gain": 0,
+      "net1231Gain": 0,
+      "otherIncome": 0,
+      "section179Deduction": 0,
+      "otherDeductions": 0,
+      "charitableContributions": 0,
+      "lowIncomeHousingCredit": 0,
+      "otherCredits": 0,
+      "netEarningsSE": 350000,
+      "taxExemptInterest": 0,
+      "otherTaxExemptIncome": 0,
+      "nondeductibleExpenses": 0,
+      "cashDistributions": 0,
+      "propertyDistributions": 0,
+      "section199AQBI": 0
+    },
+    "liabilitiesAtYearEnd": {
+      "recourse": 0,
+      "nonrecourse": 0,
+      "qualifiedNonrecourse": 0
+    },
+    "capitalAccountMethod": "tax"
+  },
+  "expected": {
+    "entityName": "Golden Gate Partners",
+    "totalIncome": 600000,
+    "totalDeductions": 250000,
+    "totalTax": 0,
+    "ownerAllocations": [
+      {
+        "name": "Partner Alpha",
+        "ownershipPct": 50,
+        "ordinaryIncome": 175000,
+        "interestIncome": 2500,
+        "dividendIncome": 1500,
+        "capitalGains": 5000,
+        "selfEmploymentEarnings": 175000
+      },
+      {
+        "name": "Partner Beta",
+        "ownershipPct": 30,
+        "ordinaryIncome": 105000,
+        "interestIncome": 1500,
+        "dividendIncome": 900,
+        "capitalGains": 3000,
+        "selfEmploymentEarnings": 105000
+      },
+      {
+        "name": "Partner Gamma",
+        "ownershipPct": 20,
+        "ordinaryIncome": 70000,
+        "interestIncome": 1000,
+        "dividendIncome": 600,
+        "capitalGains": 2000,
+        "selfEmploymentEarnings": 0
+      }
+    ]
+  }
+}

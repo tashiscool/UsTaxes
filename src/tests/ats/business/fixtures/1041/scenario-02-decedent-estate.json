@@ -1,0 +1,31 @@
+{
+  "scenarioId": "1041-scenario-02-decedent-estate",
+  "formType": "1041",
+  "description": "Decedent estate baseline showing the larger $600 exemption.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts"
+  ],
+  "facts": {
+    "entityType": "decedentEstate",
+    "entityName": "Estate of John Doe",
+    "income": {
+      "interest": 10000,
+      "ordinaryDividends": 5000
+    },
+    "deductions": {
+      "fiduciaryFees": 1000
+    },
+    "requiredDistributions": 0,
+    "otherDistributions": 0,
+    "estimatedTaxPayments": 0,
+    "withholding": 0,
+    "beneficiaries": []
+  },
+  "expected": {
+    "entityName": "Estate of John Doe",
+    "adjustedTotalIncome": 14000,
+    "exemption": 600,
+    "taxableIncome": 13400,
+    "totalTax": 2990
+  }
+}

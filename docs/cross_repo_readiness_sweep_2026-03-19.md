@@ -13,6 +13,15 @@ This sweep covers the active filing stack:
 
 - Workbook-led audit passed:
   - `npm run test:workbook-audit`
+- Targeted 2025 `Schedule 2` workbook slice now covers:
+  - Form `4137` -> `Schedule 2 line 5`
+  - Form `8919` -> `Schedule 2 line 6`
+  - W-2 box 12 `A/B/M/N` -> `Schedule 2 line 13`
+  - Evidence:
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/Schedule2.ts`
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F4137.ts`
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F8919.ts`
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/Workbook2025AdditionsParity.test.ts`
 - Cross-engine selected-form parity harness passed:
   - `npm run test:form-parity-harness`
   - `rowCount=169`
@@ -25,8 +34,8 @@ This sweep covers the active filing stack:
 
 - Full backend gate passed:
   - `npm run test:all`
-  - `23/23` test files
-  - `188/188` tests
+  - `24/24` test files
+  - `197/197` tests
 - Runtime smoke passed:
   - `workbook`
   - `advanced`
@@ -37,6 +46,9 @@ This sweep covers the active filing stack:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/appSessionService.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
+- Canonical business parity fixtures are now executable and green:
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/business_fixture_manifest.json`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessParityFixtures.test.ts`
 
 ### direct-file-easy-webui
 
@@ -67,8 +79,10 @@ This sweep covers the active filing stack:
 ### Entity-return parity beyond capability proof
 
 - `1120-S`, `1065`, and `1041` now have audited computed output surfaces in the Cloudflare path, not just capability flags.
+- They also now have canonical JSON parity-input fixtures that execute cleanly against the backend calculator.
 - See:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/docs/business_entity_output_audit_2026-03-19.md`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/docs/business_workbook_parity_harness.md`
 
 ### Cross-engine parity
 
@@ -110,7 +124,7 @@ Why this still blocks the claim:
 - live source still contains TODO-backed or simplified branches
 - today’s work improved `EIC`, but not every remaining 2025-law edge case
 
-### 3. Business/nonprofit families are still not workbook-proven
+### 3. Business/nonprofit families are stronger, but still not fully workbook-proven
 
 Evidence:
 
@@ -120,8 +134,9 @@ Evidence:
 
 Why this still blocks the claim:
 
-- `1120`, `1120-S`, `1065`, and `1041` are now better audited at the runtime/output level
-- but they are still `IRS-reference-led`, not workbook-backed
+- `1120-S`, `1065`, and `1041` are no longer only `IRS-reference-led`; they are now fixture-backed and executable through the backend test harness
+- `1120` is still only `IRS-reference-led`
+- none of the business/nonprofit forms are backed by private workbook sources the way the `1040` family is
 - `990` remains expert-routed, not self-serve
 
 ### 4. Direct File advanced-form parity is still stronger, but still not final-form complete
@@ -171,6 +186,6 @@ The most honest remaining blockers are:
 
 1. production auth trust
 2. residual documented 2025-law partials
-3. lack of workbook-backed business/nonprofit parity
+3. lack of full workbook-backed business/nonprofit parity, especially `1120` and the entire `990` family
 4. still-partial Direct File final-form detail on the hardest advanced forms
 5. release gating that is strong, but still smoke-weighted at the top level

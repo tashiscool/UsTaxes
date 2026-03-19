@@ -1609,6 +1609,31 @@ const getW2Records = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
 ) => {
+  const parseBox12 = (value: unknown) => {
+    const result: Record<string, number> = {}
+
+    const entries = asArray<Record<string, unknown>>(value)
+    if (entries.length > 0) {
+      for (const entry of entries) {
+        const code = toText(entry.code).toUpperCase()
+        const amount = toMoney(entry.amount)
+        if (code && amount > 0) {
+          result[code] = amount
+        }
+      }
+    } else {
+      for (const [rawCode, rawAmount] of Object.entries(asRecord(value))) {
+        const code = rawCode.toUpperCase()
+        const amount = toMoney(rawAmount)
+        if (code && amount > 0) {
+          result[code] = amount
+        }
+      }
+    }
+
+    return Object.keys(result).length > 0 ? result : undefined
+  }
+
   const screenW2 = asArray<Record<string, unknown>>(
     requireScreen(snapshot, '/w2').w2s
   ).map((record) => ({
@@ -1617,8 +1642,20 @@ const getW2Records = (
     ein: toText(record.ein),
     box1Wages: toMoney(record.box1),
     box2FederalWithheld: toMoney(record.box2),
+    socialSecurityWages: toMoney(record.box3),
+    socialSecurityWithheld: toMoney(record.box4),
+    medicareWages: toMoney(record.box5),
+    medicareWithheld: toMoney(record.box6),
     box12Code: toText(record.box12aCode),
     box12Amount: toMoney(record.box12a),
+    box12:
+      parseBox12(record.box12Codes) ??
+      parseBox12(record.box12) ??
+      (toText(record.box12aCode) && toMoney(record.box12a) > 0
+        ? {
+            [toText(record.box12aCode).toUpperCase()]: toMoney(record.box12a)
+          }
+        : undefined),
     stateWages: toMoney(record.box16),
     stateWithheld: toMoney(record.box17),
     owner: toText(record.owner) || 'taxpayer',
@@ -1644,8 +1681,22 @@ const getW2Records = (
         ein: toText(d.ein),
         box1Wages: wages,
         box2FederalWithheld: fedWithheld,
+        socialSecurityWages: toMoney(d.socialSecurityWages ?? d.box3),
+        socialSecurityWithheld: toMoney(d.socialSecurityWithheld ?? d.box4),
+        medicareWages: toMoney(d.medicareWages ?? d.box5),
+        medicareWithheld: toMoney(d.medicareWithheld ?? d.box6),
         box12Code: toText(d.box12Code ?? d.box12aCode) || '',
         box12Amount: toMoney(d.box12Amount ?? d.box12a),
+        box12:
+          parseBox12(d.box12Codes) ??
+          parseBox12(d.box12) ??
+          ((toText(d.box12Code ?? d.box12aCode) || '') &&
+          toMoney(d.box12Amount ?? d.box12a) > 0
+            ? {
+                [toText(d.box12Code ?? d.box12aCode).toUpperCase()]:
+                  toMoney(d.box12Amount ?? d.box12a)
+              }
+            : undefined),
         stateWages: stWages,
         stateWithheld: stWithheld,
         owner: toText(d.owner) || 'taxpayer',
@@ -1655,6 +1706,18 @@ const getW2Records = (
 
   return mergeCollectionById(screenW2, entityW2)
 }
+
+const getW2Box12UncollectedTaxTotal = (w2Records: Record<string, unknown>[]) =>
+  w2Records.reduce((sum, record) => {
+    const box12 = asRecord(record.box12)
+    return (
+      sum +
+      toMoney(box12.A) +
+      toMoney(box12.B) +
+      toMoney(box12.M) +
+      toMoney(box12.N)
+    )
+  }, 0)
 
 const get1099Records = (
   snapshot: FilingSessionSnapshot,
@@ -4104,6 +4167,7 @@ const buildReview = (
     (sum, record) => sum + toMoney(record.wagesReceived),
     0
   )
+  const w2Box12UncollectedTaxTotal = getW2Box12UncollectedTaxTotal(w2Records)
   const amtCreditData = getAmtCreditData(snapshot, entities)
   const form8801TrackedTotal =
     toMoney(amtCreditData.priorYearAmtCredit) +
@@ -4321,6 +4385,16 @@ const buildReview = (
                 label: 'Uncollected SS/Medicare wages (Form 8919)',
                 value: `$${form8919TotalWages.toLocaleString()}`,
                 editPath: '/form-8919',
+                editLabel: 'Edit'
+              }
+            ]
+          : []),
+        ...(w2Box12UncollectedTaxTotal > 0
+          ? [
+              {
+                label: 'W-2 box 12 uncollected payroll tax',
+                value: `$${w2Box12UncollectedTaxTotal.toLocaleString()}`,
+                editPath: '/income/w2',
                 editLabel: 'Edit'
               }
             ]

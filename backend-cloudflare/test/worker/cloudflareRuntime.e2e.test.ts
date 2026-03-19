@@ -2378,6 +2378,108 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     }
   )
 
+  it(
+    'carries W-2 box 12 uncollected tax codes through sync into the tax summary',
+    { timeout: 120000 },
+    async () => {
+      let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sub: 'taxflow-user-w2-box12-uncollected-tax',
+          email: 'w2-box12-uncollected-tax@example.com',
+          displayName: 'W2 Box12 Uncollected Tax User'
+        })
+      })
+      expect([200, 201]).toContain(response.status)
+      const sessionCookie = response.headers.get('set-cookie') ?? ''
+
+      response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          taxYear: 2025,
+          returnType: '1040',
+          state: 'draft'
+        })
+      })
+      expect(response.status).toBe(201)
+      const created = await parseJsonResponse<JsonObject>(response)
+      const filingSessionId = String((created.filingSession as JsonObject).id)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/w2/w2-box12-${filingSessionId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            status: 'complete',
+            label: 'Former Employer',
+            data: {
+              employerName: 'Former Employer',
+              ein: '12-3456789',
+              box1Wages: 100000,
+              box2FederalWithheld: 12000,
+              socialSecurityWages: 100000,
+              socialSecurityWithheld: 6200,
+              medicareWages: 100000,
+              medicareWithheld: 1450,
+              owner: 'taxpayer',
+              box12: {
+                A: 100,
+                B: 40,
+                M: 25,
+                N: 10
+              }
+            }
+          })
+        }
+      )
+      expect(response.status).toBe(200)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+        {
+          method: 'POST',
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const syncResult = await parseJsonResponse<JsonObject>(response)
+      const taxSummary = syncResult.taxSummary as JsonObject
+
+      expect((taxSummary.totalTax as number)).toBeGreaterThan(5000)
+      expect((taxSummary.totalPayments as number)).toBe(12000)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/review`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const review = await parseJsonResponse<JsonObject>(response)
+      const sections = (review.review as JsonObject).sections as JsonObject[]
+      const paymentsSection = sections.find(
+        (section) => section.id === 'income'
+      ) as JsonObject | undefined
+      const rows = (paymentsSection?.rows as JsonObject[]) ?? []
+      expect(
+        rows.some(
+          (row) =>
+            row.label === 'W-2 box 12 uncollected payroll tax' &&
+            row.value === '$175'
+        )
+      ).toBe(true)
+    }
+  )
+
   it('generates and updates a print-and-mail packet for TaxFlow sessions', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
       method: 'POST',

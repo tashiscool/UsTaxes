@@ -1,0 +1,56 @@
+{
+  "scenarioId": "1120-s-scenario-03-built-in-gains",
+  "formType": "1120-S",
+  "description": "Former C-corporation conversion with built-in gains tax at the entity level.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts"
+  ],
+  "facts": {
+    "entityName": "Test Corp",
+    "ein": "12-3456789",
+    "entityType": "S-Corporation",
+    "streetAddress": "100 Corporate Blvd",
+    "city": "Wilmington",
+    "zip": "19801",
+    "naicsCode": "541511",
+    "productOrService": "Software",
+    "accountingMethod": "accrual",
+    "taxYear": 2025,
+    "isFiscalYear": false,
+    "totalAssets": 500000,
+    "income": {
+      "grossReceiptsOrSales": 200000
+    },
+    "deductions": {
+      "compensation": 50000
+    },
+    "shareholders": [
+      {
+        "name": "Owner",
+        "ssn": "111223333",
+        "ownershipPercentage": 100,
+        "stockOwned": 100,
+        "isOfficer": true
+      }
+    ],
+    "scheduleK": {
+      "ordinaryBusinessIncome": 150000
+    },
+    "builtInGainsTax": 10000
+  },
+  "expected": {
+    "entityName": "Test Corp",
+    "totalIncome": 200000,
+    "totalDeductions": 50000,
+    "totalTax": 10000,
+    "amountOwed": 10000,
+    "ownerAllocations": [
+      {
+        "name": "Owner",
+        "ownershipPct": 100,
+        "ordinaryIncome": 150000,
+        "selfEmploymentEarnings": 0
+      }
+    ]
+  }
+}
