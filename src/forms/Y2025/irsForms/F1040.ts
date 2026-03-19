@@ -1412,6 +1412,18 @@ export default class F1040 extends F1040Base {
   l38 = (): number | undefined =>
     this.f2210?.isNeeded() ?? false ? this.f2210?.penalty() : undefined
 
+  filingStatusDetailName = (): string => {
+    if (this.info.taxPayer.filingStatus === FilingStatus.MFS) {
+      return this.spouseFullName() ?? ''
+    }
+
+    if (this.info.taxPayer.filingStatus === FilingStatus.W) {
+      return this.qualifyingWidowChildName()
+    }
+
+    return ''
+  }
+
   _depField = (idx: number): string | boolean => {
     const deps: Dependent[] = this.info.taxPayer.dependents
 
@@ -1471,8 +1483,7 @@ export default class F1040 extends F1040Base {
       this.info.taxPayer.filingStatus === FilingStatus.MFJ,
       this.info.taxPayer.filingStatus === FilingStatus.MFS,
       this.info.taxPayer.filingStatus === FilingStatus.W,
-      // TODO: implement non dependent child for HOH and QW
-      this.info.taxPayer.filingStatus === 'MFS' ? this.spouseFullName() : '',
+      this.filingStatusDetailName(),
       false, //teating non-resident alien
       '',
       this.info.questions.CRYPTO ?? false,

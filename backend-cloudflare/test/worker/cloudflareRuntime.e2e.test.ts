@@ -1560,6 +1560,49 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
               hasDocumentRetentionPolicy: true,
               hasWhistleblowerPolicy: true
             },
+            schedule990B: {
+              contributors: [
+                {
+                  name: 'Northwind Donor Fund',
+                  totalContributions: 75000
+                }
+              ]
+            },
+            schedule990D: {
+              donorAdvisedFunds: [{ sponsoringOrganization: 'Community Fund' }],
+              endowmentFunds: {
+                endingBalance: 180000
+              }
+            },
+            schedule990G: {
+              professionalFundraisers: [{ name: 'Fundraise Partners LLC' }],
+              fundraisingEvents: [{ name: 'Annual Gala' }],
+              gamingActivities: [{ name: 'Charity Raffle' }]
+            },
+            schedule990I: {
+              organizationGrants: [{ recipientName: 'Rural Clinic Network' }],
+              individualGrants: [{ recipientName: 'Student Health Fellow' }]
+            },
+            schedule990J: {
+              usedCompensationCommittee: true,
+              compensatedPersons: [{ name: 'Taylor Director' }]
+            },
+            schedule990O: {
+              missionStatement: 'Expand community health access through clinic support',
+              explanations: [
+                {
+                  formPart: 'Part VI',
+                  lineNumber: '12c',
+                  explanation: 'Conflict policy is reviewed annually.'
+                }
+              ]
+            },
+            schedule990R: {
+              relatedExemptOrgs: [{ name: 'Community Health Support Fund' }],
+              relatedPartnerships: [{ name: 'Health Outreach JV' }],
+              relatedCorpsAndTrusts: [{ name: 'Community Health Realty LLC' }],
+              transactions: [{ relatedOrgName: 'Community Health Support Fund' }]
+            },
             programAccomplishments: [
               {
                 description: 'Expanded rural clinic hours'
@@ -1595,6 +1638,11 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(
       ((nonprofitPreview.renderedSections as JsonObject[]) ?? []).some(
         (section) => section.title === 'Nonprofit governance package'
+      )
+    ).toBe(true)
+    expect(
+      ((nonprofitPreview.renderedSections as JsonObject[]) ?? []).some(
+        (section) => section.title === 'Schedule B contributor package'
       )
     ).toBe(true)
 
@@ -1685,6 +1733,48 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             (row) =>
               row.label === 'Lead officer' &&
               row.value === 'Taylor Director'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Schedule B contributor package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Largest contribution' &&
+              row.value === '$75,000'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Schedule G fundraising package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Fundraising events' && row.value === '1'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Schedule O supplemental package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Supplemental explanations' && row.value === '1'
+          )
+      )
+    ).toBe(true)
+    expect(
+      reviewSections.some(
+        (section) =>
+          section.title === 'Schedule R related-organizations package' &&
+          ((section.rows as JsonObject[]) ?? []).some(
+            (row) =>
+              row.label === 'Related-organization transactions' &&
+              row.value === '1'
           )
       )
     ).toBe(true)

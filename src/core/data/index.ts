@@ -47,6 +47,15 @@ export interface QualifyingInformation {
   isStudent: boolean
 }
 
+export interface HeadOfHouseholdQualifyingPerson {
+  firstName: string
+  lastName: string
+  relationship: string
+  isDependent: boolean
+  livedWithTaxpayerMoreThanHalfYear?: boolean
+  isQualifyingChildNotClaimedAsDependent?: boolean
+}
+
 export interface Dependent<D = Date> extends Person<D> {
   relationship: string
   qualifyingInfo?: QualifyingInformation
@@ -400,7 +409,10 @@ export const filingStatuses = <D>(
   let withDependents: FilingStatus[] = []
   let spouseStatuses: FilingStatus[] = []
 
-  if ((p?.dependents ?? []).length > 0) {
+  if (
+    (p?.dependents ?? []).length > 0 ||
+    p?.headOfHouseholdQualifyingPerson !== undefined
+  ) {
     withDependents = [FilingStatus.HOH]
   }
   if (p?.spouse !== undefined) {
@@ -408,7 +420,13 @@ export const filingStatuses = <D>(
     // HoH not available if married
     withDependents = []
   } else {
-    spouseStatuses = [FilingStatus.S, FilingStatus.W]
+    spouseStatuses = [FilingStatus.S]
+    if (
+      (p?.dependents ?? []).length > 0 ||
+      (p?.qualifyingWidowChildName?.trim() ?? '').length > 0
+    ) {
+      spouseStatuses.push(FilingStatus.W)
+    }
   }
   return [...spouseStatuses, ...withDependents]
 }
@@ -423,6 +441,8 @@ export interface TaxPayer<D = Date> extends ContactInfo {
   primaryPerson?: PrimaryPerson<D>
   spouse?: Spouse<D>
   dependents: Dependent<D>[]
+  headOfHouseholdQualifyingPerson?: HeadOfHouseholdQualifyingPerson
+  qualifyingWidowChildName?: string
 }
 
 export type TaxPayerDateString = TaxPayer<string>

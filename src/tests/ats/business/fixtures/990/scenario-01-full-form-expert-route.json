@@ -11,7 +11,36 @@
     "entityType": "501(c)(3)",
     "taxYear": 2025,
     "grossReceipts": 325000,
-    "totalAssets": 650000
+    "totalAssets": 650000,
+    "organization": {
+      "name": "Community Health Foundation",
+      "ein": "12-3456789",
+      "exemptionType": "501c3"
+    },
+    "schedule990B": {
+      "contributors": [
+        {
+          "name": "Northwind Donor Fund",
+          "totalContributions": 75000
+        }
+      ]
+    },
+    "schedule990G": {
+      "fundraisingEvents": [
+        {
+          "name": "Annual Gala"
+        }
+      ]
+    },
+    "schedule990O": {
+      "explanations": [
+        {
+          "formPart": "Part VI",
+          "lineNumber": "12c",
+          "explanation": "Conflict policy is reviewed annually."
+        }
+      ]
+    }
   },
   "expected": {
     "success": false,

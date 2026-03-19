@@ -1,5 +1,6 @@
 import {
   FilingStatus,
+  HeadOfHouseholdQualifyingPerson,
   Income1099B,
   Income1099Div,
   Income1099G,
@@ -30,6 +31,33 @@ export interface ValidatedInformation extends Information {
 const isValidTaxpayer = (tp: TaxPayer): tp is ValidatedTaxpayer =>
   tp.filingStatus !== undefined && tp.primaryPerson !== undefined
 
+const relationshipIsParent = (relationship: string | undefined): boolean =>
+  /parent/i.test(relationship ?? '')
+
+const hasHeadOfHouseholdQualifyingPerson = (
+  person: HeadOfHouseholdQualifyingPerson | undefined
+): boolean => {
+  if (!person) {
+    return false
+  }
+
+  if (person.isQualifyingChildNotClaimedAsDependent) {
+    return true
+  }
+
+  if (!person.isDependent) {
+    return false
+  }
+
+  return (
+    Boolean(person.livedWithTaxpayerMoreThanHalfYear) ||
+    relationshipIsParent(person.relationship)
+  )
+}
+
+const hasQualifyingWidowChild = (tp: TaxPayer): boolean =>
+  tp.dependents.length > 0 || Boolean(tp.qualifyingWidowChildName?.trim())
+
 export const isValidInformation = (
   info: Information
 ): info is ValidatedInformation => isValidTaxpayer(info.taxPayer)
@@ -46,11 +74,21 @@ export const validate = (
   const numDependents = info.taxPayer.dependents.length
   const hasSpouse = info.taxPayer.spouse !== undefined
   const hasDependents = numDependents > 0
+  const hasHeadOfHouseholdOverride = hasHeadOfHouseholdQualifyingPerson(
+    info.taxPayer.headOfHouseholdQualifyingPerson
+  )
+  const hasQualifyingWidowChildOverride = hasQualifyingWidowChild(info.taxPayer)
 
   if (
     fs === undefined ||
-    ([FilingStatus.S, FilingStatus.HOH].some((x) => x === fs) && hasSpouse) ||
-    (fs === FilingStatus.HOH && !hasDependents)
+    ([FilingStatus.S, FilingStatus.HOH, FilingStatus.W].some(
+      (x) => x === fs
+    ) &&
+      hasSpouse) ||
+    (fs === FilingStatus.HOH &&
+      !hasDependents &&
+      !hasHeadOfHouseholdOverride) ||
+    (fs === FilingStatus.W && !hasQualifyingWidowChildOverride)
   ) {
     result.push(F1040Error.filingStatusRequirementsNotMet)
   }
@@ -129,4 +167,7 @@ export default abstract class F1040Base extends Form {
     this.info.taxPayer.spouse !== undefined
       ? this.fullName(this.info.taxPayer.spouse)
       : undefined
+
+  qualifyingWidowChildName = (): string =>
+    this.info.taxPayer.qualifyingWidowChildName?.trim() ?? ''
 }

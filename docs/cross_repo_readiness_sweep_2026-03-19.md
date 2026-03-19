@@ -89,6 +89,9 @@ This sweep covers the active filing stack:
   - financial package
   - governance package
   - program and officer package
+  - schedule-aware package rows such as contributors, fundraising, grants,
+    compensation, supplemental explanations, and related organizations when the
+    nonprofit facts include them
   - rendered EIN / variant rows
   - richer `990` and `990-EZ` financial subtotals such as contributions,
     special-events net, liabilities, and salaries/payroll where facts support them
@@ -170,6 +173,11 @@ Why this still blocks the claim:
 - both the helper-level and worker-level OIDC code-exchange paths now run green locally
 - the remaining auth gap is operational: this still needs live production
   provider rollout validation, not a different trust architecture
+- local production env validation is still blocked because
+  `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/.env-prod`
+  does not currently contain real `APP_OIDC_ISSUER_URL`,
+  `APP_OIDC_CLIENT_ID`, `APP_OIDC_CLIENT_SECRET`, and
+  `APP_AUTH_CALLBACK_URL` values for a live-provider round-trip
 - for tax-filing production readiness, auth trust is part of correctness
 
 ### 2. The 2025 tax-engine still documents important partials
@@ -200,6 +208,10 @@ Why this still blocks the claim:
 
 - `1120`, `1120-S`, `1065`, `1041`, and the expert-routed `990` family are no longer only `IRS-reference-led`; they are now fixture-backed and executable through the backend test harness
 - the expert-routed `990` family now also exposes richer rendered preview fields in checklist/review flows instead of only sizing prose
+- the `1120` family still does not model advanced corporate structures like
+  COLI premium disallowance, §101(j)/Form 8925 compliance, or rabbi-trust /
+  nonqualified deferred compensation timing, so those scenarios still block a
+  blanket corporate-readiness claim
 - none of the business/nonprofit forms are backed by private workbook sources the way the `1040` family is
 - `990` remains expert-routed, not self-serve
 

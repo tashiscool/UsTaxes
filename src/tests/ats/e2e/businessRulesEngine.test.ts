@@ -41,7 +41,7 @@ describe('BusinessRulesEngine expanded TY2025 coverage', () => {
     expect(errors.some((error) => error.ruleId === 'BE001')).toBe(true)
   })
 
-  it('flags HOH returns without a qualifying dependent', () => {
+  it('flags HOH returns without a qualifying dependent or qualifying-person override', () => {
     const errors = engine.check(
       {
         filingStatus: FilingStatus.HOH,
@@ -51,5 +51,33 @@ describe('BusinessRulesEngine expanded TY2025 coverage', () => {
     )
 
     expect(errors.some((error) => error.ruleId === 'FS001')).toBe(true)
+  })
+
+  it('allows HOH when a qualifying-person override exists', () => {
+    const errors = engine.check(
+      {
+        filingStatus: FilingStatus.HOH,
+        dependentCount: 0,
+        hasHohQualifyingPerson: true
+      } as any,
+      2025
+    )
+
+    expect(errors.some((error) => error.ruleId === 'FS001')).toBe(false)
+    expect(errors.some((error) => error.ruleId === 'R0201')).toBe(false)
+  })
+
+  it('allows qualifying widow(er) when a child name is supplied for the non-dependent-child case', () => {
+    const errors = engine.check(
+      {
+        filingStatus: FilingStatus.W,
+        dependentCount: 0,
+        qualifyingChildCount: 0,
+        qualifyingWidowChildName: 'Avery Example'
+      } as any,
+      2025
+    )
+
+    expect(errors.some((error) => error.ruleId === 'R0202')).toBe(false)
   })
 })

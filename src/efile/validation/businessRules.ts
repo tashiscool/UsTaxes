@@ -289,6 +289,8 @@ export interface TaxReturnData {
   hasForeignAccounts?: boolean
   dependentCount?: number
   qualifyingChildCount?: number
+  hasHohQualifyingPerson?: boolean
+  qualifyingWidowChildName?: string
   age?: number
   spouseAge?: number
   isBlind?: boolean
@@ -995,7 +997,9 @@ export const RULES_1040: BusinessRule[] = [
     check: (data) => {
       if (data.filingStatus === FilingStatus.HOH) {
         return (
-          (data.dependentCount || 0) > 0 || (data.qualifyingChildCount || 0) > 0
+          (data.dependentCount || 0) > 0 ||
+          (data.qualifyingChildCount || 0) > 0 ||
+          Boolean(data.hasHohQualifyingPerson)
         )
       }
       return true
@@ -1015,14 +1019,18 @@ export const RULES_1040: BusinessRule[] = [
     applicableForms: ['Form1040'],
     check: (data) => {
       if (data.filingStatus === FilingStatus.W) {
-        return (data.qualifyingChildCount || 0) > 0
+        return (
+          (data.qualifyingChildCount || 0) > 0 ||
+          Boolean(data.qualifyingWidowChildName?.trim())
+        )
       }
       return true
     },
     getErrorDetails: () => ({
       fields: ['Filing Status'],
-      expected: 'At least one dependent child',
-      suggestion: 'Qualifying Widow(er) status requires a dependent child'
+      expected: 'A qualifying child or explicit qualifying-child override',
+      suggestion:
+        'Qualifying Widow(er) status requires a qualifying child, including the not-claimed-as-dependent special case'
     })
   },
 
@@ -1890,14 +1898,17 @@ export const RULES_FILING_STATUS_EXTENDED: BusinessRule[] = [
     applicableForms: ['Form1040'],
     check: (data) => {
       if (data.filingStatus === FilingStatus.HOH) {
-        return (data.dependentCount || 0) > 0
+        return (
+          (data.dependentCount || 0) > 0 ||
+          Boolean(data.hasHohQualifyingPerson)
+        )
       }
       return true
     },
     getErrorDetails: () => ({
       fields: ['Filing Status', 'Dependents'],
       suggestion:
-        'Head of Household requires a qualifying person listed as a dependent'
+        'Head of Household requires a qualifying person, including the parent and non-dependent-child special cases'
     })
   },
   {

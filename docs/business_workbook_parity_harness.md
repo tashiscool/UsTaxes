@@ -7,7 +7,7 @@ Canonical JSON parity fixtures now back 1120-S, 1065, and 1041 so those forms ar
 
 | Form | Workbook | IRS refs | Fixtures | Local impl | Tests | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1120 | no | 83 | 3 | 4 | 3 | fixture_backed_irs_reference | C-corporation parity should track Form 1120 computation, MeF serialization, and backend entity-return handling. |
+| 1120 | no | 83 | 3 | 4 | 3 | fixture_backed_irs_reference | C-corporation parity tracks baseline Form 1120 computation, MeF serialization, and backend entity-return handling, but it still does not model COLI premium disallowance, employer-owned life insurance/Form 8925 compliance, or rabbi-trust/NQDC timing structures. |
 | 1120-S | no | 35 | 3 | 4 | 3 | fixture_backed_irs_reference | S-corp parity should include ordinary business income, Schedule K/K-1 allocation, and shareholder ownership inputs. |
 | 1065 | no | 25 | 3 | 4 | 3 | fixture_backed_irs_reference | Partnership parity should cover guaranteed payments, partner allocations, Schedule K/K-1, and liabilities. |
 | 1041 | no | 14 | 3 | 5 | 2 | fixture_backed_irs_reference | Trust and estate parity is driven by fiduciary, beneficiary, distribution, and compressed-bracket logic. |

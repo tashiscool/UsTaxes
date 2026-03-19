@@ -404,6 +404,20 @@ const BUSINESS_RETURN_RECORD_KEYS = [
   'expenses',
   'balanceSheet',
   'governance',
+  'schedule990A',
+  'schedule990B',
+  'schedule990C',
+  'schedule990D',
+  'schedule990F',
+  'schedule990G',
+  'schedule990I',
+  'schedule990J',
+  'schedule990K',
+  'schedule990L',
+  'schedule990M',
+  'schedule990N',
+  'schedule990O',
+  'schedule990R',
   'mailingAddress',
   'principalOfficerAddress'
 ] as const
@@ -483,6 +497,335 @@ const compactRenderedRows = <T extends { value: unknown }>(rows: T[]): T[] =>
     return row.value !== undefined && row.value !== null
   })
 
+const countTruthyEntries = (record: Record<string, unknown>): number =>
+  Object.values(record).filter((value) => {
+    if (Array.isArray(value)) {
+      return value.length > 0
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      return Object.keys(value as Record<string, unknown>).length > 0
+    }
+
+    if (typeof value === 'boolean') {
+      return value
+    }
+
+    return value !== undefined && value !== null && String(value).trim() !== ''
+  }).length
+
+const buildNonprofitSupplementalSections = (
+  facts: Record<string, unknown>
+): Array<{ title: string; rows: Array<{ label: string; value: string }> }> => {
+  const schedule990B = asRecord(facts.schedule990B)
+  const schedule990C = asRecord(facts.schedule990C)
+  const schedule990D = asRecord(facts.schedule990D)
+  const schedule990F = asRecord(facts.schedule990F)
+  const schedule990G = asRecord(facts.schedule990G)
+  const schedule990I = asRecord(facts.schedule990I)
+  const schedule990J = asRecord(facts.schedule990J)
+  const schedule990K = asRecord(facts.schedule990K)
+  const schedule990L = asRecord(facts.schedule990L)
+  const schedule990M = asRecord(facts.schedule990M)
+  const schedule990N = asRecord(facts.schedule990N)
+  const schedule990O = asRecord(facts.schedule990O)
+  const schedule990R = asRecord(facts.schedule990R)
+
+  const sections: Array<{
+    title: string
+    rows: Array<{ label: string; value: string }>
+  }> = []
+
+  const contributors = asArray<Record<string, unknown>>(schedule990B.contributors)
+  if (contributors.length > 0) {
+    sections.push({
+      title: 'Schedule B contributor package',
+      rows: compactRenderedRows([
+        { label: 'Major contributors', value: String(contributors.length) },
+        { label: 'Largest contributor', value: toText(contributors[0]?.name) },
+        {
+          label: 'Largest contribution',
+          value:
+            toMoney(contributors[0]?.totalContributions) > 0
+              ? formatCurrency(toMoney(contributors[0]?.totalContributions))
+              : ''
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990C).length > 0) {
+    sections.push({
+      title: 'Schedule C lobbying package',
+      rows: compactRenderedRows([
+        {
+          label: 'Political campaign expenses',
+          value:
+            toMoney(schedule990C.directPoliticalCampaignExpenses) > 0
+              ? formatCurrency(toMoney(schedule990C.directPoliticalCampaignExpenses))
+              : ''
+        },
+        {
+          label: '501(h) election',
+          value: schedule990C.made501hElection ? 'Yes' : ''
+        },
+        {
+          label: 'Lobbying expense total',
+          value:
+            toMoney(schedule990C.totalLobbyingExpenses) > 0
+              ? formatCurrency(toMoney(schedule990C.totalLobbyingExpenses))
+              : ''
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990D).length > 0) {
+    sections.push({
+      title: 'Schedule D financial schedules package',
+      rows: compactRenderedRows([
+        {
+          label: 'Donor advised funds',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990D.donorAdvisedFunds).length
+          )
+        },
+        {
+          label: 'Endowment ending balance',
+          value:
+            toMoney(asRecord(schedule990D.endowmentFunds).endingBalance) > 0
+              ? formatCurrency(
+                  toMoney(asRecord(schedule990D.endowmentFunds).endingBalance)
+                )
+              : ''
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990F).length > 0) {
+    sections.push({
+      title: 'Schedule F foreign activities package',
+      rows: compactRenderedRows([
+        {
+          label: 'Countries of activity',
+          value:
+            toMoney(schedule990F.numberOfCountries) > 0
+              ? String(toMoney(schedule990F.numberOfCountries))
+              : ''
+        },
+        {
+          label: 'Foreign offices',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990F.foreignOffices).length
+          )
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990G).length > 0) {
+    sections.push({
+      title: 'Schedule G fundraising package',
+      rows: compactRenderedRows([
+        {
+          label: 'Professional fundraisers',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990G.professionalFundraisers)
+              .length
+          )
+        },
+        {
+          label: 'Fundraising events',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990G.fundraisingEvents).length
+          )
+        },
+        {
+          label: 'Gaming activities',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990G.gamingActivities).length
+          )
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990I).length > 0) {
+    sections.push({
+      title: 'Schedule I grants package',
+      rows: compactRenderedRows([
+        {
+          label: 'Organization grants',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990I.organizationGrants).length
+          )
+        },
+        {
+          label: 'Individual grants',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990I.individualGrants).length
+          )
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990J).length > 0) {
+    sections.push({
+      title: 'Schedule J compensation package',
+      rows: compactRenderedRows([
+        {
+          label: 'Compensation committee',
+          value: schedule990J.usedCompensationCommittee ? 'Yes' : ''
+        },
+        {
+          label: 'Compensated persons',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990J.compensatedPersons).length
+          )
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990K).length > 0) {
+    sections.push({
+      title: 'Schedule K bond package',
+      rows: compactRenderedRows([
+        {
+          label: 'Tax-exempt bond issues',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990K.bondIssues).length
+          )
+        },
+        {
+          label: 'Private business use percent',
+          value:
+            toMoney(schedule990K.privateBusinessUsePercent) > 0
+              ? `${toMoney(schedule990K.privateBusinessUsePercent)}%`
+              : ''
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990L).length > 0) {
+    sections.push({
+      title: 'Schedule L interested-person package',
+      rows: compactRenderedRows([
+        {
+          label: 'Excess benefit transactions',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990L.excessBenefitTransactions)
+              .length
+          )
+        },
+        {
+          label: 'Loans to interested persons',
+          value: String(asArray<Record<string, unknown>>(schedule990L.loans).length)
+        },
+        {
+          label: 'Business transactions',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990L.businessTransactions)
+              .length
+          )
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990M).length > 0) {
+    sections.push({
+      title: 'Schedule M noncash-contributions package',
+      rows: compactRenderedRows([
+        {
+          label: 'Noncash contribution categories',
+          value:
+            countTruthyEntries(asRecord(schedule990M.contributions)) > 0
+              ? String(countTruthyEntries(asRecord(schedule990M.contributions)))
+              : ''
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990N).length > 0) {
+    sections.push({
+      title: 'Schedule N termination package',
+      rows: compactRenderedRows([
+        {
+          label: 'Asset dispositions',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990N.assetDispositions).length
+          )
+        },
+        {
+          label: 'Disposition percent',
+          value:
+            toMoney(schedule990N.dispositionPercent) > 0
+              ? `${toMoney(schedule990N.dispositionPercent)}%`
+              : ''
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990O).length > 0) {
+    sections.push({
+      title: 'Schedule O supplemental package',
+      rows: compactRenderedRows([
+        {
+          label: 'Supplemental explanations',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990O.explanations).length
+          )
+        },
+        {
+          label: 'Mission statement supplement',
+          value: toText(schedule990O.missionStatement)
+        }
+      ])
+    })
+  }
+
+  if (Object.keys(schedule990R).length > 0) {
+    sections.push({
+      title: 'Schedule R related-organizations package',
+      rows: compactRenderedRows([
+        {
+          label: 'Related exempt organizations',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990R.relatedExemptOrgs).length
+          )
+        },
+        {
+          label: 'Related partnerships',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990R.relatedPartnerships).length
+          )
+        },
+        {
+          label: 'Related corporations and trusts',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990R.relatedCorpsAndTrusts)
+              .length
+          )
+        },
+        {
+          label: 'Related-organization transactions',
+          value: String(
+            asArray<Record<string, unknown>>(schedule990R.transactions).length
+          )
+        }
+      ])
+    })
+  }
+
+  return sections.filter((section) => section.rows.length > 0)
+}
+
 const buildNonprofitRenderedPreview = (
   facts: Record<string, unknown>,
   nonprofitReturnHint: '990N' | '990EZ' | null
@@ -496,6 +839,7 @@ const buildNonprofitRenderedPreview = (
   const programAccomplishments = asArray<Record<string, unknown>>(
     facts.programAccomplishments
   )
+  const supplementalScheduleSections = buildNonprofitSupplementalSections(facts)
   const organizationName = toText(
     organization.name ?? facts.entityName ?? facts.organizationName
   )
@@ -758,7 +1102,8 @@ const buildNonprofitRenderedPreview = (
                   : ''
             }
           ])
-        }
+        },
+        ...supplementalScheduleSections
       ]
     }
   }
@@ -974,7 +1319,8 @@ const buildNonprofitRenderedPreview = (
             value: '990'
           }
         ])
-      }
+      },
+      ...supplementalScheduleSections
     ]
   }
 }
