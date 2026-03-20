@@ -605,6 +605,19 @@ app.post('/app/v1/filing-sessions/:sessionId/documents', async (c) => {
 })
 
 app.get(
+  '/app/v1/filing-sessions/:sessionId/documents',
+  async (c) => {
+    const user = await requireAppUser(c)
+    const { appSessionService } = buildServices(c)
+    const result = await appSessionService.listDocuments(
+      c.req.param('sessionId'),
+      user
+    )
+    return c.json(result)
+  }
+)
+
+app.get(
   '/app/v1/filing-sessions/:sessionId/documents/:documentId',
   async (c) => {
     const user = await requireAppUser(c)

@@ -7,6 +7,10 @@ import type { AppUserClaims } from '../utils/appAuth'
 import type { ReturnFormType, SubmissionPayload } from '../domain/types'
 import { ApiService } from './apiService'
 import {
+  extractDocumentFromR2,
+  type ExtractedDocument
+} from './documentExtractionService'
+import {
   type BusinessEntityResult,
   TaxCalculationService,
   type TaxCalculationResult,
@@ -1714,6 +1718,306 @@ const mergeCollectionById = <T extends { id: string }>(
     merged.set(item.id, item)
   }
   return Array.from(merged.values())
+}
+
+const decodeBase64Content = (value: string): Uint8Array | null => {
+  try {
+    const normalized = value.includes(',') ? value.split(',').pop() ?? '' : value
+    const binary = atob(normalized)
+    return Uint8Array.from(binary, (char) => char.charCodeAt(0))
+  } catch {
+    return null
+  }
+}
+
+const inferDocumentClusterFromExtraction = (
+  extracted: ExtractedDocument
+): 'w2' | '1099' | 'unknown' => {
+  if (extracted.documentType === 'w2') {
+    return 'w2'
+  }
+  if (extracted.documentType.startsWith('1099-')) {
+    return '1099'
+  }
+  return 'unknown'
+}
+
+const buildDocumentFieldsFromExtraction = (
+  extracted: ExtractedDocument
+): Array<Record<string, unknown>> => {
+  const makeField = (
+    label: string,
+    value: unknown,
+    confidence: number,
+    flagReason?: string
+  ) => {
+    if (value === undefined || value === null || value === '') {
+      return null
+    }
+    const showValue =
+      typeof value === 'number' ? formatCurrency(value) : toText(value)
+    return {
+      label,
+      value: showValue,
+      confidence,
+      source: 'AI extraction',
+      ...(flagReason ? { flagged: true, flagReason } : {})
+    }
+  }
+
+  const confidence = extracted.confidence
+
+  switch (extracted.documentType) {
+    case 'w2':
+      return [
+        makeField('Employer name', extracted.w2?.employerName, confidence),
+        makeField('Employer EIN', extracted.w2?.ein, confidence),
+        makeField('Wages (Box 1)', extracted.w2?.box1Wages, confidence),
+        makeField(
+          'Federal tax withheld (Box 2)',
+          extracted.w2?.box2FedWithholding,
+          confidence
+        ),
+        makeField(
+          'State wages (Box 16)',
+          extracted.w2?.box16StateWages,
+          confidence
+        ),
+        makeField(
+          'State withholding (Box 17)',
+          extracted.w2?.box17StateWithholding,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case '1099-int':
+      return [
+        makeField('Payer name', extracted.form1099Int?.payerName, confidence),
+        makeField(
+          'Interest income (Box 1)',
+          extracted.form1099Int?.interestIncome,
+          confidence
+        ),
+        makeField(
+          'Federal tax withheld (Box 4)',
+          extracted.form1099Int?.federalTaxWithheld,
+          confidence
+        ),
+        makeField(
+          'Tax-exempt interest (Box 8)',
+          extracted.form1099Int?.taxExemptInterest,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case '1099-div':
+      return [
+        makeField('Payer name', extracted.form1099Div?.payerName, confidence),
+        makeField(
+          'Ordinary dividends (Box 1a)',
+          extracted.form1099Div?.ordinaryDividends,
+          confidence
+        ),
+        makeField(
+          'Qualified dividends (Box 1b)',
+          extracted.form1099Div?.qualifiedDividends,
+          confidence
+        ),
+        makeField(
+          'Capital gain distributions (Box 2a)',
+          extracted.form1099Div?.capitalGainDistributions,
+          confidence
+        ),
+        makeField(
+          'Federal tax withheld (Box 4)',
+          extracted.form1099Div?.federalTaxWithheld,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case '1099-nec':
+      return [
+        makeField('Payer name', extracted.form1099Nec?.payerName, confidence),
+        makeField(
+          'Nonemployee compensation (Box 1)',
+          extracted.form1099Nec?.nonemployeeCompensation,
+          confidence
+        ),
+        makeField(
+          'Federal tax withheld (Box 4)',
+          extracted.form1099Nec?.federalTaxWithheld,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case '1099-r':
+      return [
+        makeField('Payer name', extracted.form1099R?.payerName, confidence),
+        makeField(
+          'Gross distribution (Box 1)',
+          extracted.form1099R?.grossDistribution,
+          confidence
+        ),
+        makeField(
+          'Taxable amount (Box 2a)',
+          extracted.form1099R?.taxableAmount,
+          confidence
+        ),
+        makeField(
+          'Federal tax withheld (Box 4)',
+          extracted.form1099R?.federalTaxWithheld,
+          confidence
+        ),
+        makeField(
+          'Distribution code',
+          extracted.form1099R?.distributionCode,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    default:
+      return []
+  }
+}
+
+const buildEntityFromDocumentExtraction = (
+  documentId: string,
+  documentName: string,
+  extracted: ExtractedDocument
+):
+  | {
+      entityType: string
+      entityId: string
+      status: string
+      label: string
+      data: Record<string, unknown>
+    }
+  | undefined => {
+  switch (extracted.documentType) {
+    case 'w2':
+      if (
+        !extracted.w2?.employerName ||
+        !extracted.w2?.ein ||
+        extracted.w2.box1Wages == null
+      ) {
+        return undefined
+      }
+      return {
+        entityType: 'w2',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.w2.employerName || documentName,
+        data: {
+          employerName: extracted.w2.employerName,
+          ein: extracted.w2.ein,
+          box1Wages: extracted.w2.box1Wages,
+          box2FederalWithheld: extracted.w2.box2FedWithholding,
+          box12Codes: extracted.w2.box12Codes,
+          stateWages: extracted.w2.box16StateWages,
+          stateWithheld: extracted.w2.box17StateWithholding,
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }
+    case '1099-int':
+      if (
+        !extracted.form1099Int?.payerName ||
+        extracted.form1099Int.interestIncome == null
+      ) {
+        return undefined
+      }
+      return {
+        entityType: '1099_int',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.form1099Int.payerName || documentName,
+        data: {
+          payerName: extracted.form1099Int.payerName,
+          amount: extracted.form1099Int.interestIncome,
+          federalWithheld: extracted.form1099Int.federalTaxWithheld,
+          taxExemptInterest: extracted.form1099Int.taxExemptInterest,
+          foreignTaxPaid: extracted.form1099Int.foreignTaxPaid,
+          owner: extracted.form1099Int.owner ?? 'taxpayer',
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }
+    case '1099-div':
+      if (
+        !extracted.form1099Div?.payerName ||
+        extracted.form1099Div.ordinaryDividends == null
+      ) {
+        return undefined
+      }
+      return {
+        entityType: '1099_div',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.form1099Div.payerName || documentName,
+        data: {
+          payerName: extracted.form1099Div.payerName,
+          amount: extracted.form1099Div.ordinaryDividends,
+          qualifiedDividends: extracted.form1099Div.qualifiedDividends,
+          capitalGainDistributions:
+            extracted.form1099Div.capitalGainDistributions,
+          section199ADividends: extracted.form1099Div.section199ADividends,
+          exemptInterestDividends:
+            extracted.form1099Div.exemptInterestDividends,
+          foreignTaxPaid: extracted.form1099Div.foreignTaxPaid,
+          federalWithheld: extracted.form1099Div.federalTaxWithheld,
+          owner: extracted.form1099Div.owner ?? 'taxpayer',
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }
+    case '1099-nec':
+      if (
+        !extracted.form1099Nec?.payerName ||
+        extracted.form1099Nec.nonemployeeCompensation == null
+      ) {
+        return undefined
+      }
+      return {
+        entityType: '1099_nec',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.form1099Nec.payerName || documentName,
+        data: {
+          payerName: extracted.form1099Nec.payerName,
+          amount: extracted.form1099Nec.nonemployeeCompensation,
+          federalWithheld: extracted.form1099Nec.federalTaxWithheld,
+          owner: extracted.form1099Nec.owner ?? 'taxpayer',
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }
+    case '1099-r':
+      if (
+        !extracted.form1099R?.payerName ||
+        extracted.form1099R.grossDistribution == null
+      ) {
+        return undefined
+      }
+      return {
+        entityType: '1099_r',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.form1099R.payerName || documentName,
+        data: {
+          payerName: extracted.form1099R.payerName,
+          amount: extracted.form1099R.grossDistribution,
+          taxableAmount: extracted.form1099R.taxableAmount,
+          federalWithheld: extracted.form1099R.federalTaxWithheld,
+          distributionCode: extracted.form1099R.distributionCode,
+          iraSepSimple: extracted.form1099R.iraSepSimple,
+          owner: extracted.form1099R.owner ?? 'taxpayer',
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }
+    default:
+      return undefined
+  }
 }
 
 const sumRecordValues = (record: Record<string, unknown>): number =>
@@ -6549,6 +6853,169 @@ export class AppSessionService {
     private readonly apiService: ApiService
   ) {}
 
+  private async upsertSessionEntityInternal(
+    sessionId: string,
+    entityType: string,
+    entityId: string,
+    status: string,
+    label: string | undefined,
+    data: Record<string, unknown>
+  ) {
+    const now = nowIso()
+    const dataKey = `filing-sessions/${sessionId}/entities/${entityType}/${entityId}.json`
+    await this.artifacts.putJson(dataKey, data)
+    await this.env.USTAXES_DB.prepare(
+      `INSERT INTO session_entities (
+          id, filing_session_id, entity_type, entity_key, status, label, data_key, created_at, updated_at
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+        ON CONFLICT(filing_session_id, entity_type, entity_key) DO UPDATE SET
+          status = excluded.status,
+          label = excluded.label,
+          data_key = excluded.data_key,
+          updated_at = excluded.updated_at`
+    )
+      .bind(
+        entityId,
+        sessionId,
+        entityType,
+        entityId,
+        status,
+        label ?? null,
+        dataKey,
+        now,
+        now
+      )
+      .run()
+  }
+
+  private async runDocumentExtraction(
+    sessionId: string,
+    documentId: string,
+    body: z.infer<typeof documentCreateSchema>
+  ): Promise<{
+    artifactKey: string | null
+    metadata: Record<string, unknown>
+    status: z.infer<typeof documentCreateSchema>['status']
+    cluster: z.infer<typeof documentCreateSchema>['cluster']
+    clusterConfidence: number
+  }> {
+    let artifactKey: string | null = null
+    const metadata = {
+      ...body.metadata
+    } as Record<string, unknown>
+    let extracted: ExtractedDocument | null = null
+
+    const override = asRecord(metadata.extractionOverride)
+    if (Object.keys(override).length > 0) {
+      extracted = {
+        documentType:
+          typeof override.documentType === 'string'
+            ? (override.documentType as ExtractedDocument['documentType'])
+            : 'unknown',
+        ...(override as Record<string, unknown>),
+        confidence: toMoney(override.confidence) || 0.85,
+        processingTimeMs: toMoney(override.processingTimeMs)
+      } as ExtractedDocument
+    }
+
+    if (!extracted && body.contentBase64) {
+      const bytes = decodeBase64Content(body.contentBase64)
+      if (bytes) {
+        artifactKey = `filing-sessions/${sessionId}/documents/${documentId}/artifact.bin`
+        await this.env.ARTIFACTS_BUCKET.put(artifactKey, bytes, {
+          httpMetadata: { contentType: body.mimeType }
+        })
+
+        if (this.env.AI && body.mimeType.startsWith('image/')) {
+          try {
+            extracted = await extractDocumentFromR2(
+              this.env.ARTIFACTS_BUCKET,
+              this.env.AI,
+              artifactKey
+            )
+          } catch (error) {
+            metadata.ocrIssue =
+              error instanceof Error
+                ? error.message
+                : 'We could not extract fields from this document yet.'
+          }
+        }
+      }
+    }
+
+    if (!artifactKey && body.contentBase64) {
+      artifactKey = `filing-sessions/${sessionId}/documents/${documentId}/content.json`
+      await this.artifacts.putJson(artifactKey, {
+        contentBase64: body.contentBase64,
+        mimeType: body.mimeType
+      })
+    }
+
+    let status = body.status
+    let cluster = body.cluster
+    let clusterConfidence = body.clusterConfidence
+
+    if (extracted) {
+      const fields = buildDocumentFieldsFromExtraction(extracted)
+      const importedEntity = buildEntityFromDocumentExtraction(
+        documentId,
+        body.name,
+        extracted
+      )
+      metadata.extraction = extracted
+      metadata.fields = fields
+      metadata.documentType = extracted.documentType
+      metadata.extractedAt = nowIso()
+      metadata.extractedEntity = importedEntity
+        ? {
+            entityType: importedEntity.entityType,
+            entityId: importedEntity.entityId,
+            status: importedEntity.status,
+            label: importedEntity.label
+          }
+        : null
+      metadata.ocrIssue =
+        extracted.documentType === 'unknown'
+          ? metadata.ocrIssue ??
+            'We could not classify this document with high confidence yet.'
+          : metadata.ocrIssue
+
+      cluster = inferDocumentClusterFromExtraction(extracted)
+      clusterConfidence = extracted.confidence
+      status =
+        extracted.documentType === 'unknown'
+          ? 'ambiguous'
+          : fields.length > 0
+          ? 'extracted'
+          : 'needs_review'
+
+      if (importedEntity) {
+        await this.upsertSessionEntityInternal(
+          sessionId,
+          importedEntity.entityType,
+          importedEntity.entityId,
+          importedEntity.status,
+          importedEntity.label,
+          importedEntity.data
+        )
+      }
+    } else if (body.contentBase64) {
+      metadata.ocrIssue =
+        metadata.ocrIssue ??
+        (body.mimeType.startsWith('image/')
+          ? 'OCR has not completed yet for this upload.'
+          : 'Preview extraction currently works best for images. You can still review and import this document manually.')
+    }
+
+    return {
+      artifactKey,
+      metadata,
+      status,
+      cluster,
+      clusterConfidence
+    }
+  }
+
   async upsertUser(user: AppUserClaims): Promise<void> {
     const now = nowIso()
     await this.env.USTAXES_DB.prepare(
@@ -6726,9 +7193,58 @@ export class AppSessionService {
     )
   }
 
+  private async loadSessionDocuments(
+    sessionId: string
+  ): Promise<
+    Array<{
+      id: string
+      name: string
+      mimeType: string
+      status: string
+      cluster: string
+      clusterConfidence: number
+      pages: number
+      metadata: Record<string, unknown>
+      createdAt: string
+      updatedAt: string
+    }>
+  > {
+    const result = await this.env.USTAXES_DB.prepare(
+      `SELECT id, filing_session_id, name, mime_type, status, cluster, cluster_confidence, pages, artifact_key, metadata_key, created_at, updated_at
+         FROM documents
+         WHERE filing_session_id = ?1
+         ORDER BY updated_at DESC, created_at DESC`
+    )
+      .bind(sessionId)
+      .all<DocumentRow>()
+
+    return Promise.all(
+      (result.results ?? []).map(async (row) => ({
+        id: row.id,
+        name: row.name,
+        mimeType: row.mime_type,
+        status: row.status,
+        cluster: row.cluster,
+        clusterConfidence: row.cluster_confidence,
+        pages: row.pages,
+        metadata:
+          (await this.artifacts.getJson<Record<string, unknown>>(
+            row.metadata_key
+          )) ?? {},
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }))
+    )
+  }
+
   async listEntities(sessionId: string, user: AppUserClaims) {
     await this.requireSession(sessionId, user.sub)
     return { entities: await this.loadSessionEntities(sessionId) }
+  }
+
+  async listDocuments(sessionId: string, user: AppUserClaims) {
+    await this.requireSession(sessionId, user.sub)
+    return { documents: await this.loadSessionDocuments(sessionId) }
   }
 
   async putEntity(
@@ -6804,17 +7320,9 @@ export class AppSessionService {
     const body = documentCreateSchema.parse(rawBody ?? {})
     const id = crypto.randomUUID()
     const now = nowIso()
-    const artifactKey = body.contentBase64
-      ? `filing-sessions/${sessionId}/documents/${id}/content.json`
-      : null
     const metadataKey = `filing-sessions/${sessionId}/documents/${id}/metadata.json`
-    if (artifactKey) {
-      await this.artifacts.putJson(artifactKey, {
-        contentBase64: body.contentBase64,
-        mimeType: body.mimeType
-      })
-    }
-    await this.artifacts.putJson(metadataKey, body.metadata)
+    const extracted = await this.runDocumentExtraction(sessionId, id, body)
+    await this.artifacts.putJson(metadataKey, extracted.metadata)
     await this.env.USTAXES_DB.prepare(
       `INSERT INTO documents (
           id, filing_session_id, name, mime_type, status, cluster, cluster_confidence,
@@ -6826,11 +7334,11 @@ export class AppSessionService {
         sessionId,
         body.name,
         body.mimeType,
-        body.status,
-        body.cluster,
-        body.clusterConfidence,
+        extracted.status,
+        extracted.cluster,
+        extracted.clusterConfidence,
         body.pages,
-        artifactKey,
+        extracted.artifactKey,
         metadataKey,
         now,
         now
@@ -6896,6 +7404,26 @@ export class AppSessionService {
       throw new HttpError(404, 'Document not found')
     }
     await this.artifacts.putJson(row.metadata_key, metadata)
+    const extractedEntity = asRecord(metadata.extractedEntity)
+    if (
+      patch.status === 'confirmed' &&
+      toText(extractedEntity.entityType) &&
+      toText(extractedEntity.entityId)
+    ) {
+      const dataKey = `filing-sessions/${sessionId}/entities/${toText(
+        extractedEntity.entityType
+      )}/${toText(extractedEntity.entityId)}.json`
+      const currentData =
+        (await this.artifacts.getJson<Record<string, unknown>>(dataKey)) ?? {}
+      await this.upsertSessionEntityInternal(
+        sessionId,
+        toText(extractedEntity.entityType),
+        toText(extractedEntity.entityId),
+        'complete',
+        toText(extractedEntity.label) || current.document.name,
+        currentData
+      )
+    }
     await this.env.USTAXES_DB.prepare(
       `UPDATE documents
          SET status = COALESCE(?1, status),
@@ -7282,19 +7810,40 @@ export class AppSessionService {
     const row = await this.requireSession(sessionId, user.sub)
     const snapshot = await this.getSnapshot(row)
     const entities = await this.loadSessionEntities(row.id)
+    const documents = await this.loadSessionDocuments(row.id)
     const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
     const spouse = getSpouse(snapshot, entities)
     const review = requireScreen(snapshot, '/review-confirm')
     const printMail = requireScreen(snapshot, '/print-mail')
     const facts = toFacts(row, snapshot, entities)
+    const computed = await this.computeTaxSummary(sessionId, snapshot, facts)
+    const computedSummary = asRecord(computed.taxSummary)
+    const totalTax = Number(review.totalTax ?? computedSummary.totalTax ?? 0)
+    const totalPayments = Number(
+      review.totalPayments ?? computedSummary.totalPayments ?? 0
+    )
+    const refund = Number(
+      review.totalRefund ??
+        computedSummary.refund ??
+        computedSummary.overpayment ??
+        snapshot.estimatedRefund ??
+        0
+    )
+    const computedAmountOwed = Number(computedSummary.amountOwed ?? 0)
     const amountOwed = Math.max(
       0,
-      Number(review.totalTax ?? 0) - Number(review.totalPayments ?? 0)
+      computedAmountOwed > 0 ? computedAmountOwed : totalTax - totalPayments
     )
     const address = resolvePrintMailAddress(
       toText(asRecord(taxpayer.address).state ?? 'CA'),
       amountOwed > 0
     )
+    const includedForms = Array.from(
+      new Set([
+        snapshot.formType,
+        ...asArray<string>(computedSummary.schedules)
+      ])
+    ).filter(Boolean)
     const attachments = [
       'Signed Form 1040 (and all included schedules)',
       'Copy B of each W-2',
@@ -7334,9 +7883,9 @@ export class AppSessionService {
       },
       spouse,
       returnSummary: {
-        totalTax: Number(review.totalTax ?? 0),
-        totalPayments: Number(review.totalPayments ?? 0),
-        refund: Number(review.totalRefund ?? snapshot.estimatedRefund ?? 0),
+        totalTax,
+        totalPayments,
+        refund,
         amountOwed
       },
       mailingAddress: address,
@@ -7362,6 +7911,30 @@ export class AppSessionService {
         dependentCount: asArray(facts.dependents).length,
         w2Count: asArray(facts.w2Records).length,
         form1099Count: asArray(facts.form1099Records).length
+      },
+      officialFormPreview: {
+        includedForms,
+        sourceDocumentCount: documents.length,
+        extractedDocumentCount: documents.filter(
+          (document) =>
+            toText(asRecord(document.metadata).documentType) &&
+            toText(asRecord(document.metadata).documentType) !== 'unknown'
+        ).length,
+        readyForPreview:
+          includedForms.length > 0 && (computed.taxCalcErrors?.length ?? 0) === 0,
+        nextActions: compactRenderedRows([
+          {
+            label: 'Return build status',
+            value:
+              (computed.taxCalcErrors?.length ?? 0) === 0
+                ? 'Computed from uploaded data'
+                : 'Needs review before filing'
+          },
+          {
+            label: 'Forms in packet',
+            value: includedForms.join(', ')
+          }
+        ])
       },
       verificationUrl: address.verificationUrl
     }

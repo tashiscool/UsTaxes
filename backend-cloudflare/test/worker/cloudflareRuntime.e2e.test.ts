@@ -734,14 +734,25 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           cookie: sessionCookie
         },
         body: JSON.stringify({
-          name: 'w2.pdf',
-          mimeType: 'application/pdf',
+          name: 'brokerage-dividend.png',
+          mimeType: 'image/png',
           status: 'processing',
-          cluster: 'w2',
-          clusterConfidence: 0.96,
+          cluster: 'unknown',
+          clusterConfidence: 0,
           pages: 1,
           metadata: {
-            extractedFields: ['employerName', 'box1Wages']
+            extractionOverride: {
+              documentType: '1099-div',
+              confidence: 0.94,
+              form1099Div: {
+                payerName: 'Fidelity Brokerage',
+                ordinaryDividends: 320,
+                qualifiedDividends: 180,
+                capitalGainDistributions: 45,
+                federalTaxWithheld: 12,
+                confidence: 0.94
+              }
+            }
           }
         })
       }
@@ -749,6 +760,24 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(201)
     const documentBody = await parseJsonResponse<JsonObject>(response)
     const documentId = String((documentBody.document as JsonObject).id)
+    expect((documentBody.document as JsonObject).status).toBe('extracted')
+    expect((documentBody.document as JsonObject).cluster).toBe('1099')
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const documents = await parseJsonResponse<JsonObject>(response)
+    const listedDocument = (documents.documents as JsonObject[]).find(
+      (entry) => String((entry as JsonObject).id) === documentId
+    ) as JsonObject | undefined
+    expect(listedDocument).toBeTruthy()
+    expect(
+      ((listedDocument?.metadata as JsonObject).documentType as string) ?? ''
+    ).toBe('1099-div')
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents/${documentId}`,
@@ -807,7 +836,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const taxReturnId = String(syncResult.taxReturnId)
     const facts = syncResult.facts as JsonObject
     expect((facts.incomeSummary as JsonObject).totalW2Wages).toBe(75000)
-    expect((facts.incomeSummary as JsonObject).total1099Amount).toBe(215)
+    expect((facts.incomeSummary as JsonObject).total1099Amount).toBe(535)
     expect(Array.isArray(facts.dependents)).toBe(true)
     expect(
       ((facts.dependents as JsonObject[])[0] as JsonObject).relationship
@@ -816,6 +845,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect((facts.creditSummary as JsonObject).estimatedTotal).toBe(2000)
     expect(Array.isArray(facts.w2Records)).toBe(true)
     expect(Array.isArray(facts.form1099Records)).toBe(true)
+    expect((facts.form1099Records as JsonObject[]).length).toBeGreaterThanOrEqual(2)
     expect(facts.schedule8812EarnedIncomeAdjustments).toEqual({
       scholarshipGrantsNotOnW2: 300,
       penalIncome: 0,
@@ -923,7 +953,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(202)
     const authorization = await parseJsonResponse<JsonObject>(response)
     expect(typeof authorization.authorizationCode).toBe('string')
-  })
+  }, 15000)
 
   it('prepares and completes a signed auth callback flow', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/prepare`, {
@@ -3442,6 +3472,14 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(String(initialPrintMail.packetKey)).toContain(
       '/print-mail/packet.json'
     )
+    expect(
+      Array.isArray(
+        ((initialPrintMail.officialFormPreview as JsonObject)?.includedForms as
+          | JsonObject[]
+          | string[]
+          | undefined) ?? []
+      )
+    ).toBe(true)
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/print-mail`,

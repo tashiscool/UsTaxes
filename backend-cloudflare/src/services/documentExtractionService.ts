@@ -16,6 +16,41 @@ export interface ExtractedW2 {
   confidence: number
 }
 
+export interface Extracted1099Base {
+  payerName?: string
+  federalTaxWithheld?: number
+  stateTaxWithheld?: number
+  owner?: 'taxpayer' | 'spouse'
+  confidence: number
+}
+
+export interface Extracted1099Int extends Extracted1099Base {
+  interestIncome?: number
+  earlyWithdrawalPenalty?: number
+  taxExemptInterest?: number
+  foreignTaxPaid?: number
+}
+
+export interface Extracted1099Div extends Extracted1099Base {
+  ordinaryDividends?: number
+  qualifiedDividends?: number
+  capitalGainDistributions?: number
+  section199ADividends?: number
+  exemptInterestDividends?: number
+  foreignTaxPaid?: number
+}
+
+export interface Extracted1099Nec extends Extracted1099Base {
+  nonemployeeCompensation?: number
+}
+
+export interface Extracted1099R extends Extracted1099Base {
+  grossDistribution?: number
+  taxableAmount?: number
+  distributionCode?: string
+  iraSepSimple?: boolean
+}
+
 export interface ExtractedDocument {
   documentType:
     | 'w2'
@@ -25,6 +60,10 @@ export interface ExtractedDocument {
     | '1099-r'
     | 'unknown'
   w2?: ExtractedW2
+  form1099Int?: Extracted1099Int
+  form1099Div?: Extracted1099Div
+  form1099Nec?: Extracted1099Nec
+  form1099R?: Extracted1099R
   raw?: Record<string, unknown>
   confidence: number
   processingTimeMs: number
@@ -35,6 +74,10 @@ const EXTRACTION_PROMPT =
   'Identify the document type (w2, 1099-nec, 1099-int, 1099-div, 1099-r). ' +
   'For W-2: extract employerName, ein, box1Wages, box2FedWithholding, box12Codes (array of {code, amount}), ' +
   'box16StateWages, box17StateWithholding. ' +
+  'For 1099-INT: extract payerName, interestIncome, earlyWithdrawalPenalty, federalTaxWithheld, taxExemptInterest, foreignTaxPaid. ' +
+  'For 1099-DIV: extract payerName, ordinaryDividends, qualifiedDividends, capitalGainDistributions, section199ADividends, federalTaxWithheld, exemptInterestDividends, foreignTaxPaid. ' +
+  'For 1099-NEC: extract payerName, nonemployeeCompensation, federalTaxWithheld. ' +
+  'For 1099-R: extract payerName, grossDistribution, taxableAmount, federalTaxWithheld, distributionCode, iraSepSimple. ' +
   'Respond ONLY with valid JSON matching: ' +
   '{"documentType":"w2","employerName":"...","ein":"...","box1Wages":0,"box2FedWithholding":0,' +
   '"box12Codes":[{"code":"D","amount":0}],"box16StateWages":0,"box17StateWithholding":0}'
@@ -105,9 +148,96 @@ function buildExtractedDocument(
         }
       : undefined
 
+  const shared1099 = {
+    payerName:
+      typeof parsed.payerName === 'string' ? parsed.payerName : undefined,
+    federalTaxWithheld: parseNumber(
+      parsed.federalTaxWithheld ?? parsed.box4FedWithholding
+    ),
+    stateTaxWithheld: parseNumber(
+      parsed.stateTaxWithheld ?? parsed.box15StateWithholding
+    ),
+    owner:
+      parsed.owner === 'spouse' || parsed.owner === 'taxpayer'
+        ? (parsed.owner as 'taxpayer' | 'spouse')
+        : undefined,
+    confidence: docType !== 'unknown' ? 0.82 : 0.5
+  }
+
+  const form1099Int: Extracted1099Int | undefined =
+    docType === '1099-int'
+      ? {
+          ...shared1099,
+          interestIncome: parseNumber(parsed.interestIncome ?? parsed.box1),
+          earlyWithdrawalPenalty: parseNumber(
+            parsed.earlyWithdrawalPenalty ?? parsed.box2
+          ),
+          taxExemptInterest: parseNumber(
+            parsed.taxExemptInterest ?? parsed.box8
+          ),
+          foreignTaxPaid: parseNumber(parsed.foreignTaxPaid ?? parsed.box6)
+        }
+      : undefined
+
+  const form1099Div: Extracted1099Div | undefined =
+    docType === '1099-div'
+      ? {
+          ...shared1099,
+          ordinaryDividends: parseNumber(
+            parsed.ordinaryDividends ?? parsed.box1a
+          ),
+          qualifiedDividends: parseNumber(
+            parsed.qualifiedDividends ?? parsed.box1b
+          ),
+          capitalGainDistributions: parseNumber(
+            parsed.capitalGainDistributions ?? parsed.box2a
+          ),
+          section199ADividends: parseNumber(
+            parsed.section199ADividends ?? parsed.box5
+          ),
+          exemptInterestDividends: parseNumber(
+            parsed.exemptInterestDividends ?? parsed.box12
+          ),
+          foreignTaxPaid: parseNumber(parsed.foreignTaxPaid ?? parsed.box7)
+        }
+      : undefined
+
+  const form1099Nec: Extracted1099Nec | undefined =
+    docType === '1099-nec'
+      ? {
+          ...shared1099,
+          nonemployeeCompensation: parseNumber(
+            parsed.nonemployeeCompensation ?? parsed.box1
+          )
+        }
+      : undefined
+
+  const form1099R: Extracted1099R | undefined =
+    docType === '1099-r'
+      ? {
+          ...shared1099,
+          grossDistribution: parseNumber(
+            parsed.grossDistribution ?? parsed.box1
+          ),
+          taxableAmount: parseNumber(parsed.taxableAmount ?? parsed.box2a),
+          distributionCode:
+            typeof parsed.distributionCode === 'string'
+              ? parsed.distributionCode
+              : undefined,
+          iraSepSimple:
+            typeof parsed.iraSepSimple === 'boolean'
+              ? parsed.iraSepSimple
+              : undefined
+        }
+      : undefined
+
   return {
     documentType: docType,
     w2,
+    form1099Int,
+    form1099Div,
+    form1099Nec,
+    form1099R,
     raw: parsed,
     confidence: docType !== 'unknown' ? 0.85 : 0.3,
     processingTimeMs
