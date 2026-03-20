@@ -1,0 +1,110 @@
+{
+  "scenarioId": "1120-scenario-06-executive-comp-edges",
+  "formType": "1120",
+  "description": "C-corporation with Section 3121(v)(2) payroll-tax timing, Section 1032 stock nonrecognition, Section 162(m) covered-employee compensation cap, and Section 280G excess parachute disallowance.",
+  "facts": {
+    "entityName": "Public Exec Corp",
+    "ein": "12-3456789",
+    "entityType": "C-Corporation",
+    "accountingMethod": "accrual",
+    "taxYear": 2025,
+    "totalAssets": 2500000,
+    "income": {
+      "grossReceiptsOrSales": 2000000,
+      "returnsAndAllowances": 0,
+      "costOfGoodsSold": 0,
+      "dividendIncome": 0,
+      "interestIncome": 0,
+      "grossRents": 0,
+      "grossRoyalties": 0,
+      "capitalGainNetIncome": 0,
+      "netGainFromSaleOfAssets": 0,
+      "otherIncome": 100000
+    },
+    "deductions": {
+      "compensationOfOfficers": 1600000,
+      "salariesAndWages": 300000,
+      "repairsAndMaintenance": 0,
+      "badDebts": 0,
+      "rents": 100000,
+      "taxesAndLicenses": 50000,
+      "interest": 0,
+      "charitableContributions": 0,
+      "depreciation": 0,
+      "depletion": 0,
+      "advertising": 0,
+      "pensionPlans": 0,
+      "employeeBenefits": 0,
+      "domesticProductionDeduction": 0,
+      "otherDeductions": 100000
+    },
+    "specialDeductions": {
+      "dividendsReceivedDeduction": 0,
+      "dividendsFromAffiliated": 0,
+      "dividendsOnDebtFinancedStock": 0,
+      "dividendsOnCertainPreferred": 0,
+      "foreignDividends": 0,
+      "nol": 0
+    },
+    "executiveCompensation": {
+      "publiclyHeld": true,
+      "coveredEmployees": [
+        {
+          "name": "Chief Executive Officer",
+          "compensationDeductionClaimed": 1400000,
+          "deductionLine": "officers"
+        }
+      ],
+      "socialSecurityTaxableDeferredComp": 20000,
+      "medicareTaxableDeferredComp": 100000,
+      "employerFicaExpenseClaimed": 4000,
+      "corporationRecognizedStockGain": 50000,
+      "excessParachutePaymentsClaimedAsDeduction": 150000,
+      "excessParachutePaymentsDeductionLine": "officers",
+      "changeInControlOccurred": true
+    }
+  },
+  "expected": {
+    "success": true,
+    "totalIncome": 2050000,
+    "totalDeductions": 1598690,
+    "taxableIncome": 451310,
+    "totalTax": 94775,
+    "totalPayments": 0,
+    "amountOwed": 94775,
+    "overpayment": 0,
+    "effectiveTaxRate": 0.0462,
+    "hazardFlags": [
+      "SECTION_3121V2_FICA_TIMING",
+      "SECTION_162M_CAP_APPLIED",
+      "SECTION_280G_DISALLOWANCE",
+      "SECTION_1032_NONRECOGNITION"
+    ],
+    "corporateTaxAdjustments": [
+      {
+        "code": "EMPLOYER_FICA_OVERCLAIM_3121V2",
+        "description": "Employer FICA deduction attributable to nonqualified deferred compensation cannot exceed the amount supported by the supplied Section 3121(v)(2) taxable wages.",
+        "amount": 1310,
+        "effect": "deduction_disallowance"
+      },
+      {
+        "code": "STOCK_ISSUANCE_NONRECOGNITION_1032",
+        "description": "The corporation does not recognize gain or loss on issuing its own stock for compensation or property.",
+        "amount": 50000,
+        "effect": "income_exclusion"
+      },
+      {
+        "code": "EXEC_COMP_DISALLOWANCE_162M",
+        "description": "Applicable employee remuneration for covered employees of a publicly held corporation is limited under Section 162(m).",
+        "amount": 400000,
+        "effect": "deduction_disallowance"
+      },
+      {
+        "code": "EXCESS_PARACHUTE_DISALLOWANCE_280G",
+        "description": "Excess parachute payments triggered by a change in control are nondeductible under Section 280G.",
+        "amount": 150000,
+        "effect": "deduction_disallowance"
+      }
+    ]
+  }
+}

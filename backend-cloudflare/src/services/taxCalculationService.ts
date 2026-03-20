@@ -130,7 +130,7 @@ export interface BusinessEntityResult {
     code: string
     description: string
     amount?: number
-    effect: 'income_increase' | 'deduction_disallowance'
+    effect: 'income_increase' | 'income_exclusion' | 'deduction_disallowance'
   }>
   complianceAlerts?: Array<{
     code: string
@@ -2270,6 +2270,25 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     }))
   })()
 
+  const thirdPartyDesignee:
+    | Information['thirdPartyDesignee']
+    | undefined = (() => {
+    const raw = asRecord(facts.thirdPartyDesignee)
+    const authorizeDiscussion = toBool(
+      raw.authorizeDiscussion ?? raw.authorized ?? raw.enabled
+    )
+    const name = toStr(raw.name)
+    const phone = toStr(raw.phone).replace(/\D/g, '')
+    const pin = toStr(raw.pin).replace(/\D/g, '')
+    if (!authorizeDiscussion && !name && !phone && !pin) return undefined
+    return {
+      authorizeDiscussion,
+      name: name || undefined,
+      phone: phone || undefined,
+      pin: pin || undefined
+    }
+  })()
+
   // Build the Information object
   const info: Information = {
     f1099s: all1099s,
@@ -2303,6 +2322,7 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
               facts.refundAppliedToNextYearEstimatedTax
           )
         : undefined,
+    thirdPartyDesignee,
     form8879,
     // OBBBA fields
     overtimeIncome,
@@ -2698,6 +2718,9 @@ const adaptFactsToForm1120Data = (facts: FactsRecord): Form1120Data => {
     facts.corporateDeferredCompensation ??
       facts.nonqualifiedDeferredCompensationCorporate
   )
+  const executiveCompensation = asRecord(
+    facts.executiveCompensation ?? facts.corporateExecutiveCompensation
+  )
   const rabbiTrust = asRecord(facts.rabbiTrust)
   const form8925 = asRecord(facts.form8925 ?? facts.eoliCompliance)
   const generalBusinessCreditsRecord = (() => {
@@ -2832,6 +2855,57 @@ const adaptFactsToForm1120Data = (facts: FactsRecord): Form1120Data => {
             ),
             excludedEmployeeForSection83i: toBool(
               corporateDeferredCompensation.excludedEmployeeForSection83i
+            )
+          }
+        : undefined,
+    executiveCompensation:
+      Object.keys(executiveCompensation).length > 0
+        ? {
+            publiclyHeld: toBool(executiveCompensation.publiclyHeld),
+            coveredEmployees: asArray<Record<string, unknown>>(
+              executiveCompensation.coveredEmployees
+            ).map((employee) => ({
+              name: toStr(employee.name) || undefined,
+              compensationDeductionClaimed: toNum(
+                employee.compensationDeductionClaimed ??
+                  employee.compensation ??
+                  employee.deductionClaimed
+              ),
+              deductibleLimit:
+                toNum(employee.deductibleLimit ?? employee.limit) > 0
+                  ? toNum(employee.deductibleLimit ?? employee.limit)
+                  : undefined,
+              deductionLine: (toStr(
+                employee.deductionLine ?? employee.line
+              ) || 'officers') as 'officers' | 'salaries' | 'other'
+            })),
+            socialSecurityTaxableDeferredComp: toNum(
+              executiveCompensation.socialSecurityTaxableDeferredComp ??
+                executiveCompensation.socialSecurityTaxableAmount
+            ),
+            medicareTaxableDeferredComp: toNum(
+              executiveCompensation.medicareTaxableDeferredComp ??
+                executiveCompensation.medicareTaxableAmount
+            ),
+            employerFicaExpenseClaimed: toNum(
+              executiveCompensation.employerFicaExpenseClaimed ??
+                executiveCompensation.employerPayrollTaxDeductionClaimed
+            ),
+            corporationRecognizedStockGain: toNum(
+              executiveCompensation.corporationRecognizedStockGain ??
+                executiveCompensation.stockSettlementGainRecognized
+            ),
+            excessParachutePaymentsClaimedAsDeduction: toNum(
+              executiveCompensation.excessParachutePaymentsClaimedAsDeduction ??
+                executiveCompensation.excessParachutePayments ??
+                executiveCompensation.goldenParachuteDeductionClaimed
+            ),
+            excessParachutePaymentsDeductionLine: (toStr(
+              executiveCompensation.excessParachutePaymentsDeductionLine ??
+                executiveCompensation.goldenParachuteDeductionLine
+            ) || 'officers') as 'officers' | 'salaries' | 'other',
+            changeInControlOccurred: toBool(
+              executiveCompensation.changeInControlOccurred
             )
           }
         : undefined,
@@ -3574,6 +3648,37 @@ export class TaxCalculationService {
         effect: 'deduction_disallowance' as const
       },
       {
+        code: 'EMPLOYER_FICA_OVERCLAIM_3121V2',
+        description:
+          'Employer FICA deduction attributable to nonqualified deferred compensation cannot exceed the amount supported by the supplied Section 3121(v)(2) taxable wages.',
+        amount: form.excessEmployerFicaDeductionClaimed3121v2(),
+        effect: 'deduction_disallowance' as const
+      },
+      {
+        code: 'STOCK_ISSUANCE_NONRECOGNITION_1032',
+        description:
+          'The corporation does not recognize gain or loss on issuing its own stock for compensation or property.',
+        amount: form.section1032StockIssuanceGainExclusion(),
+        effect: 'income_exclusion' as const
+      },
+      {
+        code: 'EXEC_COMP_DISALLOWANCE_162M',
+        description:
+          'Applicable employee remuneration for covered employees of a publicly held corporation is limited under Section 162(m).',
+        amount:
+          form.section162mDisallowanceForLine('officers') +
+          form.section162mDisallowanceForLine('salaries') +
+          form.section162mDisallowanceForLine('other'),
+        effect: 'deduction_disallowance' as const
+      },
+      {
+        code: 'EXCESS_PARACHUTE_DISALLOWANCE_280G',
+        description:
+          'Excess parachute payments triggered by a change in control are nondeductible under Section 280G.',
+        amount: form.excessParachutePaymentsDisallowance280G(),
+        effect: 'deduction_disallowance' as const
+      },
+      {
         code: 'RABBI_TRUST_FUNDING_DISALLOWANCE',
         description:
           'Rabbi trust funding does not create a current deduction in the absence of matching employee income inclusion.',
@@ -3617,6 +3722,43 @@ export class TaxCalculationService {
             severity: 'warning' as const,
             description:
               'A Section 83(i) deferral was flagged for an excluded employee. The current corporate model treats this as a review issue, not an automatic tax adjustment.'
+          }
+        : null,
+      form.has3121v2TimingExposure()
+        ? {
+            code: 'SECTION_3121V2_FICA_TIMING',
+            severity:
+              form.underclaimedEmployerFicaExpense3121v2() > 0
+                ? ('warning' as const)
+                : ('info' as const),
+            description:
+              form.underclaimedEmployerFicaExpense3121v2() > 0
+                ? 'The supplied deferred-comp facts indicate employer FICA timing exposure under Section 3121(v)(2) that exceeds the payroll-tax deduction currently claimed.'
+                : 'The supplied deferred-comp facts indicate Section 3121(v)(2) payroll-tax timing on vested or service-complete nonqualified deferred compensation.'
+          }
+        : null,
+      form.hasSection162mDisallowance()
+        ? {
+            code: 'SECTION_162M_CAP_APPLIED',
+            severity: 'warning' as const,
+            description:
+              'Covered-employee compensation exceeded the Section 162(m) deductible limit for a publicly held corporation.'
+          }
+        : null,
+      form.hasSection280gDisallowance()
+        ? {
+            code: 'SECTION_280G_DISALLOWANCE',
+            severity: 'warning' as const,
+            description:
+              'A supplied excess parachute payment is treated as nondeductible under Section 280G.'
+          }
+        : null,
+      form.section1032StockIssuanceGainExclusion() > 0
+        ? {
+            code: 'SECTION_1032_NONRECOGNITION',
+            severity: 'info' as const,
+            description:
+              'A recognized stock-settlement gain was backed out under Section 1032 nonrecognition.'
           }
         : null
     ].filter((item): item is NonNullable<typeof item> => item !== null)

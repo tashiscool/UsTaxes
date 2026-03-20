@@ -79,7 +79,8 @@ export default class F1120 extends CCorpForm {
   l10 = (): number =>
     this.data.income.otherIncome +
     this.taxableEmployerOwnedLifeInsuranceDeathBenefit() +
-    this.lifeInsuranceSurrenderGain()
+    this.lifeInsuranceSurrenderGain() -
+    this.section1032StockIssuanceGainExclusion()
 
   // Line 11: Total income (add lines 3 through 10)
   l11 = (): number => {
@@ -100,10 +101,22 @@ export default class F1120 extends CCorpForm {
   // =========================================================================
 
   // Line 12: Compensation of officers (Schedule E)
-  l12 = (): number => this.data.deductions.compensationOfOfficers
+  l12 = (): number =>
+    Math.max(
+      0,
+      this.data.deductions.compensationOfOfficers -
+        this.section162mDisallowanceForLine('officers') -
+        this.section280gDisallowanceForLine('officers')
+    )
 
   // Line 13: Salaries and wages (less employment credits)
-  l13 = (): number => this.data.deductions.salariesAndWages
+  l13 = (): number =>
+    Math.max(
+      0,
+      this.data.deductions.salariesAndWages -
+        this.section162mDisallowanceForLine('salaries') -
+        this.section280gDisallowanceForLine('salaries')
+    )
 
   // Line 14: Repairs and maintenance
   l14 = (): number => this.data.deductions.repairsAndMaintenance
@@ -115,7 +128,12 @@ export default class F1120 extends CCorpForm {
   l16 = (): number => this.data.deductions.rents
 
   // Line 17: Taxes and licenses
-  l17 = (): number => this.data.deductions.taxesAndLicenses
+  l17 = (): number =>
+    Math.max(
+      0,
+      this.data.deductions.taxesAndLicenses -
+        this.excessEmployerFicaDeductionClaimed3121v2()
+    )
 
   // Line 18: Interest
   l18 = (): number =>
@@ -169,7 +187,9 @@ export default class F1120 extends CCorpForm {
       this.data.deductions.otherDeductions -
         this.nondeductibleColiPremiums() -
         this.disallowedDeferredCompensationDeduction() -
-        this.disallowedRabbiTrustFundingDeduction()
+        this.disallowedRabbiTrustFundingDeduction() -
+        this.section162mDisallowanceForLine('other') -
+        this.section280gDisallowanceForLine('other')
     )
 
   // Line 27: Total deductions (add lines 12 through 26)
@@ -290,6 +310,8 @@ export default class F1120 extends CCorpForm {
 
   corporateDeferredCompensation = () => this.data.corporateDeferredCompensation
 
+  executiveCompensation = () => this.data.executiveCompensation
+
   rabbiTrust = () => this.data.rabbiTrust
 
   form8925 = () => this.data.form8925
@@ -355,6 +377,9 @@ export default class F1120 extends CCorpForm {
     return Math.max(0, (coli.cashSurrenderValue ?? 0) - investmentInContract)
   }
 
+  section1032StockIssuanceGainExclusion = (): number =>
+    Math.max(0, this.executiveCompensation()?.corporationRecognizedStockGain ?? 0)
+
   allowedDeferredCompensationDeduction = (): number => {
     const deferredComp = this.corporateDeferredCompensation()
     if (!deferredComp) return 0
@@ -383,6 +408,75 @@ export default class F1120 extends CCorpForm {
   disallowedRabbiTrustFundingDeduction = (): number =>
     Math.max(0, this.rabbiTrust()?.contributionsClaimedAsDeduction ?? 0)
 
+  employerFicaExpenseRequired3121v2 = (): number => {
+    const execComp = this.executiveCompensation()
+    if (!execComp) return 0
+    const socialSecurityTaxable = Math.max(
+      0,
+      execComp.socialSecurityTaxableDeferredComp ?? 0
+    )
+    const medicareTaxable = Math.max(
+      0,
+      execComp.medicareTaxableDeferredComp ?? socialSecurityTaxable
+    )
+    return Math.round(
+      (socialSecurityTaxable * 0.062 + medicareTaxable * 0.0145) * 100
+    ) / 100
+  }
+
+  excessEmployerFicaDeductionClaimed3121v2 = (): number =>
+    Math.max(
+      0,
+      (this.executiveCompensation()?.employerFicaExpenseClaimed ?? 0) -
+        this.employerFicaExpenseRequired3121v2()
+    )
+
+  underclaimedEmployerFicaExpense3121v2 = (): number =>
+    Math.max(
+      0,
+      this.employerFicaExpenseRequired3121v2() -
+        (this.executiveCompensation()?.employerFicaExpenseClaimed ?? 0)
+    )
+
+  section162mDisallowanceForLine = (
+    line: 'officers' | 'salaries' | 'other'
+  ): number => {
+    const execComp = this.executiveCompensation()
+    if (!execComp?.publiclyHeld) return 0
+
+    return (execComp.coveredEmployees ?? [])
+      .filter((employee) => (employee.deductionLine ?? 'officers') === line)
+      .reduce((sum, employee) => {
+        const deductibleLimit = Math.max(
+          0,
+          employee.deductibleLimit ?? 1_000_000
+        )
+        return (
+          sum +
+          Math.max(0, employee.compensationDeductionClaimed - deductibleLimit)
+        )
+      }, 0)
+  }
+
+  excessParachutePaymentsDisallowance280G = (): number =>
+    Math.max(
+      0,
+      this.executiveCompensation()?.excessParachutePaymentsClaimedAsDeduction ??
+        0
+    )
+
+  section280gDisallowanceForLine = (
+    line: 'officers' | 'salaries' | 'other'
+  ): number => {
+    const execComp = this.executiveCompensation()
+    if (!execComp) return 0
+    const deductionLine =
+      execComp.excessParachutePaymentsDeductionLine ?? 'officers'
+    return deductionLine === line
+      ? this.excessParachutePaymentsDisallowance280G()
+      : 0
+  }
+
   requiresForm8925 = (): boolean => {
     const coli = this.employerOwnedLifeInsurance()
     if (!coli) return false
@@ -410,6 +504,20 @@ export default class F1120 extends CCorpForm {
         deferredComp.excludedEmployeeForSection83i
     )
   }
+
+  has3121v2TimingExposure = (): boolean =>
+    this.employerFicaExpenseRequired3121v2() > 0
+
+  hasSection162mDisallowance = (): boolean =>
+    ['officers', 'salaries', 'other'].some(
+      (line) =>
+        this.section162mDisallowanceForLine(
+          line as 'officers' | 'salaries' | 'other'
+        ) > 0
+    )
+
+  hasSection280gDisallowance = (): boolean =>
+    this.excessParachutePaymentsDisallowance280G() > 0
 
   // =========================================================================
   // Credits (Schedule J, Part II)

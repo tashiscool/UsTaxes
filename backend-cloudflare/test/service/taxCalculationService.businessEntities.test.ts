@@ -284,6 +284,79 @@ describe('C-Corp (Form 1120)', () => {
       ])
     )
   })
+
+  it('applies 3121(v)(2), 1032, 162(m), and 280G executive-compensation rules when facts are supplied', () => {
+    const result = svc.calculateBusinessEntity(
+      '1120',
+      baseBizFacts({
+        entityName: 'Public Exec Corp',
+        income: {
+          grossReceiptsOrSales: 2_000_000,
+          otherIncome: 100_000
+        },
+        deductions: {
+          compensationOfOfficers: 1_600_000,
+          salariesAndWages: 300_000,
+          rents: 100_000,
+          taxesAndLicenses: 50_000,
+          otherDeductions: 100_000
+        },
+        executiveCompensation: {
+          publiclyHeld: true,
+          coveredEmployees: [
+            {
+              name: 'Chief Executive Officer',
+              compensationDeductionClaimed: 1_400_000,
+              deductionLine: 'officers'
+            }
+          ],
+          socialSecurityTaxableDeferredComp: 20_000,
+          medicareTaxableDeferredComp: 100_000,
+          employerFicaExpenseClaimed: 4_000,
+          corporationRecognizedStockGain: 50_000,
+          excessParachutePaymentsClaimedAsDeduction: 150_000,
+          excessParachutePaymentsDeductionLine: 'officers',
+          changeInControlOccurred: true
+        }
+      })
+    )
+
+    expect(result.success).toBe(true)
+    if (!result.success) return
+
+    expect(result.totalIncome).toBe(2_050_000)
+    expect(result.totalDeductions).toBe(1_598_690)
+    expect(result.taxableIncome).toBe(451_310)
+    expect(result.totalTax).toBe(94_775)
+    expect(result.hazardFlags).toEqual(
+      expect.arrayContaining([
+        'SECTION_3121V2_FICA_TIMING',
+        'SECTION_162M_CAP_APPLIED',
+        'SECTION_280G_DISALLOWANCE',
+        'SECTION_1032_NONRECOGNITION'
+      ])
+    )
+    expect(result.corporateTaxAdjustments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'EMPLOYER_FICA_OVERCLAIM_3121V2',
+          amount: 1_310
+        }),
+        expect.objectContaining({
+          code: 'STOCK_ISSUANCE_NONRECOGNITION_1032',
+          amount: 50_000
+        }),
+        expect.objectContaining({
+          code: 'EXEC_COMP_DISALLOWANCE_162M',
+          amount: 400_000
+        }),
+        expect.objectContaining({
+          code: 'EXCESS_PARACHUTE_DISALLOWANCE_280G',
+          amount: 150_000
+        })
+      ])
+    )
+  })
 })
 
 // ---------------------------------------------------------------------------

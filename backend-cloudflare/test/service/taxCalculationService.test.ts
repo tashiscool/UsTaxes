@@ -440,6 +440,26 @@ describe('TaxCalculationService', () => {
       expect(f1040.f8879?.federalIncomeTaxWithheld()).toBe(f1040.l25d())
     })
 
+    it('maps third-party designee facts into the shared e-file data model', () => {
+      const facts = baseFacts({
+        thirdPartyDesignee: {
+          authorizeDiscussion: true,
+          name: 'Pat Helper',
+          phone: '(415) 555-1212',
+          pin: '54321'
+        }
+      })
+
+      const info = adaptFactsToInformation(facts)
+
+      expect(info.thirdPartyDesignee).toEqual({
+        authorizeDiscussion: true,
+        name: 'Pat Helper',
+        phone: '4155551212',
+        pin: '54321'
+      })
+    })
+
     it('maps casualty and miscellaneous itemized deduction rollups into Schedule A-sensitive fields', () => {
       const facts = baseFacts({
         itemizedDeductions: {

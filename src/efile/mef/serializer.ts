@@ -260,6 +260,11 @@ function xmlContainer(
   return `<${name}${attrStr}>\n${filteredChildren.join('\n')}\n</${name}>`
 }
 
+function formatPhone(phone: string | undefined): string {
+  if (!phone) return ''
+  return phone.replace(/\D/g, '')
+}
+
 // =============================================================================
 // Form1040Serializer Class
 // =============================================================================
@@ -822,8 +827,19 @@ ${returnData}
    * Build third party designee section
    */
   private buildThirdPartyDesignee(): string {
-    // Not implemented - return empty by default
-    return ''
+    const designee = this.f1040.info.thirdPartyDesignee
+    if (!designee?.authorizeDiscussion) {
+      return ''
+    }
+
+    return [
+      xmlElement('ThirdPartyDesigneeInd', 'true'),
+      xmlElement('ThirdPartyDesigneeNm', designee.name),
+      xmlElement('ThirdPartyDesigneePhoneNum', formatPhone(designee.phone)),
+      xmlElement('ThirdPartyDesigneePIN', designee.pin)
+    ]
+      .filter((value) => value.length > 0)
+      .join('\n')
   }
 
   /**

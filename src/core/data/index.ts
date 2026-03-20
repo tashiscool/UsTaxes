@@ -1481,6 +1481,27 @@ export interface CorporateDeferredCompensationData {
   excludedEmployeeForSection83i?: boolean
 }
 
+export type CorporateDeductionLine = 'officers' | 'salaries' | 'other'
+
+export interface CoveredEmployeeCompensationData {
+  name?: string
+  compensationDeductionClaimed: number
+  deductibleLimit?: number
+  deductionLine?: CorporateDeductionLine
+}
+
+export interface CorporateExecutiveCompensationData {
+  publiclyHeld?: boolean
+  coveredEmployees?: CoveredEmployeeCompensationData[]
+  socialSecurityTaxableDeferredComp?: number
+  medicareTaxableDeferredComp?: number
+  employerFicaExpenseClaimed?: number
+  corporationRecognizedStockGain?: number
+  excessParachutePaymentsClaimedAsDeduction?: number
+  excessParachutePaymentsDeductionLine?: CorporateDeductionLine
+  changeInControlOccurred?: boolean
+}
+
 export interface RabbiTrustData {
   contributions?: number
   contributionsClaimedAsDeduction?: number
@@ -1506,6 +1527,7 @@ export interface Form1120Data<D = Date> {
   specialDeductions: CCorpSpecialDeductions
   employerOwnedLifeInsurance?: EmployerOwnedLifeInsuranceData
   corporateDeferredCompensation?: CorporateDeferredCompensationData
+  executiveCompensation?: CorporateExecutiveCompensationData
   rabbiTrust?: RabbiTrustData
   form8925?: Form8925Data
   // Tax computation
@@ -2937,6 +2959,12 @@ export interface Information<D = Date> {
   // Form 8888 - Allocation of Refund
   refundAllocations?: Record<string, unknown>[]
   appliedToNextYearEstimatedTax?: number
+  thirdPartyDesignee?: {
+    authorizeDiscussion: boolean
+    name?: string
+    phone?: string
+    pin?: string
+  }
   // Form 8879 - IRS e-file Signature Authorization
   form8879?: Record<string, unknown>
   // Form 4137 - Unreported Tip Income

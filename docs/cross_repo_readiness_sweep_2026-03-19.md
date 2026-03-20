@@ -65,6 +65,12 @@ This sweep covers the active filing stack:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1040.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/F1040RefundAllocationParity.test.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/appSessionService.ts`
+- `Form 1040` third-party designee support is no longer missing from the e-file layer:
+  - authorized designee facts now flow through the shared information model and
+    serialize into the real MeF designee fields instead of being only UI data
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/efile/mef/serializer.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/F1040ThirdPartyDesigneeParity.test.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/appSessionService.ts`
 
 ### backend-cloudflare
 
@@ -98,6 +104,10 @@ This sweep covers the active filing stack:
   - Form `8925` reporting requirements and review flags under `§6039I`
   - NQDC deduction timing under `§404(a)(5)` / `§83(h)`
   - rabbi-trust current-deduction disallowance and `§409A(b)` hazard flags
+  - Section `3121(v)(2)` employer-FICA timing adjustments for deferred comp
+  - Section `1032` nonrecognition when the corporation issues its own stock
+  - Section `162(m)` covered-employee deduction caps for publicly held corps
+  - Section `280G` excess parachute disallowance on change-in-control facts
   - evidence:
     - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1120.ts`
     - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts`
@@ -106,6 +116,7 @@ This sweep covers the active filing stack:
     - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
     - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-04-coli-and-101j.json`
     - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-05-nqdc-stockcomp-timing.json`
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-06-executive-comp-edges.json`
 - Nonprofit expert-route evidence is now fixture-backed too:
   - `990-N`-sized, `990-EZ`-sized, and full-`990` organizations all execute through the fixture harness and surface sized guidance instead of only generic expert routing
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts`
@@ -168,8 +179,10 @@ This sweep covers the active filing stack:
 - They also now have canonical JSON parity-input fixtures that execute cleanly against the backend calculator.
 - `1120` is no longer only a basic flat-tax story: the audited output now
   includes required forms, hazard flags, and explicit corporate tax adjustments
-  for COLI, Section `101(j)`, Form `8925`, NQDC timing, and rabbi-trust funding
-  when those facts are supplied.
+  for COLI, Section `101(j)`, Form `8925`, NQDC timing, rabbi-trust funding,
+  Section `3121(v)(2)` FICA timing, Section `1032` stock nonrecognition,
+  Section `162(m)` covered-employee caps, and Section `280G` parachute
+  disallowance when those facts are supplied.
 - `990` is still expert-routed, but it is no longer only a prose claim: the parity harness now proves honest `990-N`, `990-EZ`, and full-`990` sizing guidance in the service/runtime path, and the worker review now surfaces fuller rendered-package sections instead of just a couple of summary rows.
 - See:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/docs/business_entity_output_audit_2026-03-19.md`
@@ -240,9 +253,10 @@ Why this still blocks the claim:
 - `1120`, `1120-S`, `1065`, `1041`, and the expert-routed `990` family are no longer only `IRS-reference-led`; they are now fixture-backed and executable through the backend test harness
 - the expert-routed `990` family now also exposes richer rendered preview fields in checklist/review flows instead of only sizing prose
 - the `1120` family now models key COLI, Section `101(j)`, Form `8925`, NQDC,
-  and rabbi-trust timing adjustments from explicit facts, but it still is not
-  backed by a private workbook and it still does not model every payroll,
-  public-company, or transaction-triggered corporate edge case
+  rabbi-trust, Section `3121(v)(2)`, Section `1032`, Section `162(m)`, and
+  Section `280G` adjustments from explicit facts, but it still is not backed by
+  a private workbook and it still does not model every payroll-form, stock
+  settlement, or transaction-trigger nuance
 - none of the business/nonprofit forms are backed by private workbook sources the way the `1040` family is
 - `990` remains expert-routed, not self-serve
 

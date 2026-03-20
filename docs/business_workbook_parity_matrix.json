@@ -35,17 +35,18 @@
     "local_test_count": 3,
     "local_tests_present": true,
     "fixture_backed": true,
-    "fixture_count": 5,
+    "fixture_count": 6,
     "fixture_paths": [
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-01-operating-ccorp.json",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-02-credits-and-payments.json",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-03-zero-income.json",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-04-coli-and-101j.json",
-      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-05-nqdc-stockcomp-timing.json"
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-05-nqdc-stockcomp-timing.json",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-06-executive-comp-edges.json"
     ],
     "coverage_status": "fixture_backed_irs_reference",
     "notes": "C-corporation parity should track Form 1120 computation, MeF serialization, and backend entity-return handling.",
-    "last_audited": "2026-03-20T00:09:58.323877+00:00"
+    "last_audited": "2026-03-20T00:48:32.454841+00:00"
   },
   {
     "canonical_form": "1120-S",
@@ -91,7 +92,7 @@
     ],
     "coverage_status": "fixture_backed_irs_reference",
     "notes": "S-corp parity should include ordinary business income, Schedule K/K-1 allocation, and shareholder ownership inputs.",
-    "last_audited": "2026-03-20T00:09:58.323877+00:00"
+    "last_audited": "2026-03-20T00:48:32.454841+00:00"
   },
   {
     "canonical_form": "1065",
@@ -137,7 +138,7 @@
     ],
     "coverage_status": "fixture_backed_irs_reference",
     "notes": "Partnership parity should cover guaranteed payments, partner allocations, Schedule K/K-1, and liabilities.",
-    "last_audited": "2026-03-20T00:09:58.323877+00:00"
+    "last_audited": "2026-03-20T00:48:32.454841+00:00"
   },
   {
     "canonical_form": "1041",
@@ -183,7 +184,7 @@
     ],
     "coverage_status": "fixture_backed_irs_reference",
     "notes": "Trust and estate parity is driven by fiduciary, beneficiary, distribution, and compressed-bracket logic.",
-    "last_audited": "2026-03-20T00:09:58.323877+00:00"
+    "last_audited": "2026-03-20T00:48:32.454841+00:00"
   },
   {
     "canonical_form": "990",
@@ -230,6 +231,6 @@
     ],
     "coverage_status": "fixture_backed_irs_reference",
     "notes": "Nonprofit parity is partially implemented in local forms, but Cloudflare still routes Form 990-family work to expert handling.",
-    "last_audited": "2026-03-20T00:09:58.323877+00:00"
+    "last_audited": "2026-03-20T00:48:32.454841+00:00"
   }
 ]

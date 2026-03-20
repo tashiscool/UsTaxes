@@ -398,6 +398,7 @@ const BUSINESS_RETURN_RECORD_KEYS = [
   'specialDeductions',
   'employerOwnedLifeInsurance',
   'corporateDeferredCompensation',
+  'executiveCompensation',
   'rabbiTrust',
   'form8925',
   'scheduleK',
@@ -4228,6 +4229,36 @@ const getForm8879Data = (
   }
 }
 
+const getThirdPartyDesigneeData = (
+  snapshot: FilingSessionSnapshot
+): Record<string, unknown> | undefined => {
+  const efile = requireScreen(snapshot, '/efile-wizard')
+  const raw = asRecord(efile.thirdPartyDesignee)
+  const authorizeDiscussion = Boolean(
+    raw.authorizeDiscussion ??
+      raw.authorized ??
+      raw.enabled ??
+      efile.thirdPartyDesigneeAuthorized
+  )
+  const name = toText(raw.name ?? efile.thirdPartyDesigneeName)
+  const phone = toText(raw.phone ?? efile.thirdPartyDesigneePhone).replace(
+    /\D/g,
+    ''
+  )
+  const pin = toText(raw.pin ?? efile.thirdPartyDesigneePin).replace(/\D/g, '')
+
+  if (!authorizeDiscussion && !name && !phone && !pin) {
+    return undefined
+  }
+
+  return {
+    authorizeDiscussion,
+    name: name || undefined,
+    phone: phone || undefined,
+    pin: pin || undefined
+  }
+}
+
 /** Schedule R: disability income and nontaxable pension from entity or /schedule-r screen */
 const getScheduleRData = (
   snapshot: FilingSessionSnapshot,
@@ -4546,6 +4577,7 @@ const toFacts = (
   const scheduleNecState = asRecord(intlAdvancedData.scheduleNec)
   const scheduleOiState = asRecord(intlAdvancedData.scheduleOi)
   const form8879 = getForm8879Data(snapshot, taxpayer, spouse)
+  const thirdPartyDesignee = getThirdPartyDesigneeData(snapshot)
 
   return {
     ...businessReturnFacts,
@@ -4592,6 +4624,7 @@ const toFacts = (
       efile.appliedToNextYearEstimatedTax ??
         efile.refundAppliedToNextYearEstimatedTax
     ),
+    thirdPartyDesignee,
     form8879,
     creditSummary: creditSummary.summary,
     // OBBBA 2025 fields
@@ -5319,6 +5352,7 @@ const buildReview = (
     entities
   )
   const form8879 = getForm8879Data(snapshot, taxpayer, spouse)
+  const thirdPartyDesignee = getThirdPartyDesigneeData(snapshot)
   const form8801TrackedTotal =
     toMoney(amtCreditData.priorYearAmtCredit) +
     toMoney(amtCreditData.priorYearAmtCreditCarryforward)
@@ -5964,6 +5998,19 @@ const buildReview = (
             : 'Not entered',
           editPath: '/efile-wizard',
           editLabel: 'Edit'
+        },
+        {
+          label: 'Third-party designee',
+          value: thirdPartyDesignee?.authorizeDiscussion
+            ? toText(thirdPartyDesignee.name) || 'Authorized'
+            : 'No',
+          editPath: '/efile-wizard',
+          editLabel: 'Edit',
+          hasWarning:
+            Boolean(thirdPartyDesignee?.authorizeDiscussion) &&
+            (!toText(thirdPartyDesignee?.name) ||
+              !toText(thirdPartyDesignee?.phone) ||
+              !toText(thirdPartyDesignee?.pin))
         },
         ...(spouse
           ? [

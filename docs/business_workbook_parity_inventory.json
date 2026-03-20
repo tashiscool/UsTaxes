@@ -123,6 +123,11 @@
         "scenarioId": "1120-scenario-05-nqdc-stockcomp-timing",
         "formType": "1120",
         "path": "src/tests/ats/business/fixtures/1120/scenario-05-nqdc-stockcomp-timing.json"
+      },
+      {
+        "scenarioId": "1120-scenario-06-executive-comp-edges",
+        "formType": "1120",
+        "path": "src/tests/ats/business/fixtures/1120/scenario-06-executive-comp-edges.json"
       }
     ],
     "fixture_paths": [
@@ -130,7 +135,8 @@
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-02-credits-and-payments.json",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-03-zero-income.json",
       "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-04-coli-and-101j.json",
-      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-05-nqdc-stockcomp-timing.json"
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-05-nqdc-stockcomp-timing.json",
+      "/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-06-executive-comp-edges.json"
     ],
     "notes": "C-corporation parity should track Form 1120 computation, MeF serialization, and backend entity-return handling."
   },

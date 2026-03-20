@@ -1833,6 +1833,23 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
               claimedCurrentYearDeduction: '18000',
               employeeIncomeInclusion: '12000'
             },
+            executiveCompensation: {
+              publiclyHeld: true,
+              coveredEmployees: [
+                {
+                  name: 'Avery Chief Executive',
+                  compensationDeductionClaimed: '1400000',
+                  deductionLine: 'officers'
+                }
+              ],
+              socialSecurityTaxableDeferredComp: '20000',
+              medicareTaxableDeferredComp: '100000',
+              employerFicaExpenseClaimed: '4000',
+              corporationRecognizedStockGain: '25000',
+              excessParachutePaymentsClaimedAsDeduction: '100000',
+              excessParachutePaymentsDeductionLine: 'officers',
+              changeInControlOccurred: true
+            },
             rabbiTrust: {
               contributionsClaimedAsDeduction: '3000',
               subjectToGeneralCreditors: false,
@@ -2126,7 +2143,11 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
             expect.arrayContaining([
               'FORM_8925_REQUIRED',
               'SECTION_101J_TAXABLE_PROCEEDS',
-              'RABBI_TRUST_409A_HAZARD'
+              'RABBI_TRUST_409A_HAZARD',
+              'SECTION_3121V2_FICA_TIMING',
+              'SECTION_162M_CAP_APPLIED',
+              'SECTION_280G_DISALLOWANCE',
+              'SECTION_1032_NONRECOGNITION'
             ])
           )
         }

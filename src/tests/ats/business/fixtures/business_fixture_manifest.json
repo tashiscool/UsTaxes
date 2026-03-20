@@ -27,6 +27,11 @@
       "path": "src/tests/ats/business/fixtures/1120/scenario-05-nqdc-stockcomp-timing.json"
     },
     {
+      "scenarioId": "1120-scenario-06-executive-comp-edges",
+      "formType": "1120",
+      "path": "src/tests/ats/business/fixtures/1120/scenario-06-executive-comp-edges.json"
+    },
+    {
       "scenarioId": "1120-s-scenario-01-service-scorp",
       "formType": "1120-S",
       "path": "src/tests/ats/business/fixtures/1120-s/scenario-01-service-scorp.json"

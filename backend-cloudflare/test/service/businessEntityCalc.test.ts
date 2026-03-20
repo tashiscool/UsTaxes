@@ -491,6 +491,75 @@ describe('Business Entity Tax Calculations', () => {
       )
     })
 
+    it('treats 3121(v)(2), 1032, 162(m), and 280G adjustments as real 1120 tax inputs', () => {
+      const result = taxCalcService.calculateF1120(
+        cCorpFacts({
+          entityName: 'Public Exec Corp',
+          income: {
+            grossReceiptsOrSales: 2000000,
+            returnsAndAllowances: 0,
+            costOfGoodsSold: 0,
+            dividendIncome: 0,
+            interestIncome: 0,
+            grossRents: 0,
+            grossRoyalties: 0,
+            capitalGainNetIncome: 0,
+            netGainFromSaleOfAssets: 0,
+            otherIncome: 100000
+          },
+          deductions: {
+            compensationOfOfficers: 1600000,
+            salariesAndWages: 300000,
+            repairsAndMaintenance: 0,
+            badDebts: 0,
+            rents: 100000,
+            taxesAndLicenses: 50000,
+            interest: 0,
+            charitableContributions: 0,
+            depreciation: 0,
+            depletion: 0,
+            advertising: 0,
+            pensionPlans: 0,
+            employeeBenefits: 0,
+            domesticProductionDeduction: 0,
+            otherDeductions: 100000
+          },
+          executiveCompensation: {
+            publiclyHeld: true,
+            coveredEmployees: [
+              {
+                name: 'Chief Executive Officer',
+                compensationDeductionClaimed: 1400000,
+                deductionLine: 'officers'
+              }
+            ],
+            socialSecurityTaxableDeferredComp: 20000,
+            medicareTaxableDeferredComp: 100000,
+            employerFicaExpenseClaimed: 4000,
+            corporationRecognizedStockGain: 50000,
+            excessParachutePaymentsClaimedAsDeduction: 150000,
+            excessParachutePaymentsDeductionLine: 'officers',
+            changeInControlOccurred: true
+          }
+        })
+      )
+
+      expect(result.success).toBe(true)
+      if (!result.success) return
+      expect(result.totalIncome).toBe(2050000)
+      expect(result.totalDeductions).toBe(1598690)
+      expect(result.taxableIncome).toBe(451310)
+      expect(result.totalTax).toBe(94775)
+      expect(result.hazardFlags).toEqual(
+        expect.arrayContaining([
+          'SECTION_3121V2_FICA_TIMING',
+          'SECTION_162M_CAP_APPLIED',
+          'SECTION_280G_DISALLOWANCE',
+          'SECTION_1032_NONRECOGNITION'
+        ])
+      )
+    })
+
     it('applies special deductions, credits, other taxes, and payments for workbook-grade 1120 parity', () => {
       const result = taxCalcService.calculateF1120(
         cCorpFacts({
