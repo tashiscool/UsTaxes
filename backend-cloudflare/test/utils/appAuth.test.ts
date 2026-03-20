@@ -56,7 +56,8 @@ describe('app auth utilities', () => {
   it('issues auth flow cookies as HttpOnly and round-trips signed PKCE claims', async () => {
     const env = makeEnv({
       ENVIRONMENT: 'production',
-      APP_AUTH_SECRET: 'x'.repeat(48)
+      APP_AUTH_SECRET: 'x'.repeat(48),
+      APP_AUTH_CALLBACK_URL: 'https://freetaxflow.com/api/app/v1/auth/callback'
     })
     const cookie = await issueAuthFlowCookie(
       env,
@@ -75,6 +76,27 @@ describe('app auth utilities', () => {
     )
     expect(cookie).toContain('HttpOnly')
     expect(cookie).toContain('Secure')
+    expect(cookie).toContain('Domain=freetaxflow.com')
+  })
+
+  it('shares protected auth cookies across apex and www callback hosts', async () => {
+    const env = makeEnv({
+      ENVIRONMENT: 'production',
+      APP_AUTH_SECRET: 'x'.repeat(48),
+      APP_AUTH_CALLBACK_URL: 'https://freetaxflow.com/api/app/v1/auth/callback'
+    })
+
+    const sessionCookie = await issueAppSessionCookie(env, {
+      sub: 'user-1',
+      email: 'user@example.com'
+    })
+    const authFlowCookie = await issueAuthFlowCookie(env, {
+      nonce: 'nonce-2',
+      codeVerifier: 'pkce-verifier-2'
+    })
+
+    expect(sessionCookie).toContain('Domain=freetaxflow.com')
+    expect(authFlowCookie).toContain('Domain=freetaxflow.com')
   })
 
   it('rejects tampered auth flow cookies in protected environments', async () => {

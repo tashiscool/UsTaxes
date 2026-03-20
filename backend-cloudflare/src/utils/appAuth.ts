@@ -145,6 +145,34 @@ const parseCookie = (
 const cookieSecurityAttributes = (env: Env): string =>
   isProtectedEnvironment(env) ? '; Secure' : ''
 
+const cookieDomainAttribute = (env: Env): string => {
+  if (!isProtectedEnvironment(env)) {
+    return ''
+  }
+
+  const callbackUrl = env.APP_AUTH_CALLBACK_URL?.trim()
+  if (!callbackUrl) {
+    return ''
+  }
+
+  try {
+    const hostname = new URL(callbackUrl).hostname.trim().toLowerCase()
+    if (!hostname || hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+      return ''
+    }
+
+    const parts = hostname.split('.').filter(Boolean)
+    if (parts.length < 2) {
+      return ''
+    }
+
+    const apexDomain = parts.slice(-2).join('.')
+    return `; Domain=${apexDomain}`
+  } catch {
+    return ''
+  }
+}
+
 export const issueAppSessionCookie = async (
   env: Env,
   user: Omit<AppUserClaims, 'exp'>,
@@ -158,15 +186,15 @@ export const issueAppSessionCookie = async (
   const signature = await sign(env, encodedPayload)
   const token = `${encodedPayload}.${signature}`
 
-  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ttlSeconds}${cookieSecurityAttributes(
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ttlSeconds}${cookieDomainAttribute(
     env
-  )}`
+  )}${cookieSecurityAttributes(env)}`
 }
 
 export const clearAppSessionCookie = (env: Env): string =>
-  `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${cookieSecurityAttributes(
+  `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${cookieDomainAttribute(
     env
-  )}`
+  )}${cookieSecurityAttributes(env)}`
 
 const parseAuthFlowCookiePayload = (
   encodedPayload: string
@@ -211,15 +239,15 @@ export const issueAuthFlowCookie = async (
   const encodedPayload = toBase64Url(JSON.stringify(payload))
   const signature = await sign(env, encodedPayload)
   const token = `${encodedPayload}.${signature}`
-  return `${AUTH_FLOW_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ttlSeconds}${cookieSecurityAttributes(
+  return `${AUTH_FLOW_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ttlSeconds}${cookieDomainAttribute(
     env
-  )}`
+  )}${cookieSecurityAttributes(env)}`
 }
 
 export const clearAuthFlowCookie = (env: Env): string =>
-  `${AUTH_FLOW_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${cookieSecurityAttributes(
+  `${AUTH_FLOW_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${cookieDomainAttribute(
     env
-  )}`
+  )}${cookieSecurityAttributes(env)}`
 
 export const verifyAuthFlowCookie = async (
   env: Env,
