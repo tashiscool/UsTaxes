@@ -1060,7 +1060,9 @@ const adapt1099s = (facts: FactsRecord): Supported1099[] => {
             payer,
             type: Income1099Type.MISC,
             form: {
-              otherIncome: amount,
+              rents: toNum(r.rents),
+              royalties: toNum(r.royalties),
+              otherIncome: toNum(r.otherIncome ?? amount),
               federalIncomeTaxWithheld: toNum(r.federalWithheld),
               section409ADeferrals: toNum(r.section409ADeferrals),
               nonqualifiedDeferredComp: toNum(r.nonqualifiedDeferredComp)

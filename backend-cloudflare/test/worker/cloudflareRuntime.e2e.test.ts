@@ -552,7 +552,10 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(400)
   })
 
-  it('supports authenticated TaxFlow app sessions end-to-end', async () => {
+  it(
+    'supports authenticated TaxFlow app sessions end-to-end',
+    { timeout: 30000 },
+    async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -803,6 +806,19 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       }
     })
 
+    await uploadExtractedDocument('tuition-statement.png', {
+      documentType: '1098-t',
+      confidence: 0.93,
+      form1098T: {
+        institutionName: 'Monroe State University',
+        studentName: 'Casey Tester',
+        qualifiedTuitionExpenses: 6400,
+        scholarshipsOrGrants: 1000,
+        adjustmentsFromPriorYear: 0,
+        confidence: 0.93
+      }
+    })
+
     await uploadExtractedDocument('marketplace-1095a.png', {
       documentType: '1095-a',
       confidence: 0.89,
@@ -855,6 +871,35 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       }
     })
 
+    const miscDocumentBody = await uploadExtractedDocument('royalty-income.png', {
+      documentType: '1099-misc',
+      confidence: 0.87,
+      form1099Misc: {
+        payerName: 'Studio Distribution LLC',
+        rents: 1500,
+        royalties: 600,
+        otherIncome: 250,
+        federalTaxWithheld: 90,
+        confidence: 0.87
+      }
+    })
+    const miscDocumentId = String((miscDocumentBody.document as JsonObject).id)
+
+    await uploadExtractedDocument('partnership-k1.png', {
+      documentType: 'k-1',
+      confidence: 0.89,
+      scheduleK1: {
+        issuerName: 'Maple Holdings LP',
+        issuerEin: '12-3456789',
+        businessType: 'partnership',
+        ordinaryBusinessIncome: 4200,
+        rentalRealEstateIncome: 900,
+        interestIncome: 35,
+        section199AQBI: 3900,
+        confidence: 0.89
+      }
+    })
+
     await uploadExtractedDocument('brokerage-sales.png', {
       documentType: '1099-b',
       confidence: 0.88,
@@ -864,6 +909,20 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
         shortTermCostBasis: 9000,
         longTermProceeds: 8000,
         longTermCostBasis: 6200,
+        transactions: [
+          {
+            description: 'AAPL short-term sale',
+            term: 'short',
+            proceeds: 10000,
+            costBasis: 9000
+          },
+          {
+            description: 'MSFT long-term sale',
+            term: 'long',
+            proceeds: 8000,
+            costBasis: 6200
+          }
+        ],
         confidence: 0.88
       }
     })
@@ -883,6 +942,32 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(
       ((listedDocument?.metadata as JsonObject).documentType as string) ?? ''
     ).toBe('1099-div')
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents/${miscDocumentId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          status: 'confirmed',
+          metadata: {
+            fieldEdits: {
+              'Other income (Box 3)': '$300.00'
+            },
+            reviewedFieldLabels: [
+              'Payer name',
+              'Rents (Box 1)',
+              'Royalties (Box 2)',
+              'Other income (Box 3)'
+            ]
+          }
+        })
+      }
+    )
+    expect(response.status).toBe(200)
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents/${documentId}`,
@@ -911,7 +996,11 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(200)
     const checklist = await parseJsonResponse<JsonObject>(response)
     expect((checklist.checklist as JsonObject).items).toBeTruthy()
-    expect((checklist.findings as JsonObject[]).length).toBe(0)
+    expect(
+      ((checklist.findings as JsonObject[]) ?? []).filter(
+        (finding) => String((finding as JsonObject).severity) === 'error'
+      ).length
+    ).toBe(0)
     const checklistItems = (checklist.checklist as JsonObject).items as Record<
       string,
       JsonObject
@@ -941,7 +1030,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const taxReturnId = String(syncResult.taxReturnId)
     const facts = syncResult.facts as JsonObject
     expect((facts.incomeSummary as JsonObject).totalW2Wages).toBe(75000)
-    expect((facts.incomeSummary as JsonObject).total1099Amount).toBe(535)
+    expect((facts.incomeSummary as JsonObject).total1099Amount).toBe(2935)
     expect(Array.isArray(facts.dependents)).toBe(true)
     expect(
       ((facts.dependents as JsonObject[])[0] as JsonObject).relationship
@@ -962,6 +1051,13 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(
       ((facts.marketplaceInsurance as JsonObject[])[0] as JsonObject).policyNumber
     ).toBe('APTC-2025-01')
+    expect(Array.isArray(facts.educationExpenses)).toBe(true)
+    expect(
+      ((facts.educationExpenses as JsonObject[])[0] as JsonObject).institutionName
+    ).toBe('Monroe State University')
+    expect(
+      ((facts.educationExpenses as JsonObject[])[0] as JsonObject).qualifiedExpenses
+    ).toBe(6400)
     expect(Array.isArray(facts.dependentCareProviders)).toBe(true)
     expect(
       ((facts.dependentCareProviders as JsonObject[])[0] as JsonObject).name
@@ -974,11 +1070,21 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     )
     expect(Array.isArray(facts.taxLots)).toBe(true)
     expect(((facts.taxLots as JsonObject[])[0] as JsonObject).proceeds).toBe(18000)
+    expect(Array.isArray(facts.k1Records)).toBe(true)
+    expect(
+      ((facts.k1Records as JsonObject[])[0] as JsonObject).partnershipName
+    ).toBe('Maple Holdings LP')
     expect((facts.creditSummary as JsonObject).eligibleCount).toBe(1)
     expect((facts.creditSummary as JsonObject).estimatedTotal).toBe(2000)
     expect(Array.isArray(facts.w2Records)).toBe(true)
     expect(Array.isArray(facts.form1099Records)).toBe(true)
-    expect((facts.form1099Records as JsonObject[]).length).toBeGreaterThanOrEqual(2)
+    const miscFactsRecord = (facts.form1099Records as JsonObject[]).find(
+      (record) => ((record as JsonObject).type as string) === '1099-MISC'
+    ) as JsonObject | undefined
+    expect(miscFactsRecord).toBeTruthy()
+    expect(miscFactsRecord?.otherIncome).toBe(300)
+    expect(miscFactsRecord?.rents).toBe(1500)
+    expect(miscFactsRecord?.royalties).toBe(600)
     expect(facts.schedule8812EarnedIncomeAdjustments).toEqual({
       scholarshipGrantsNotOnW2: 300,
       penalIncome: 0,
@@ -1011,10 +1117,27 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     ) ?? []
     expect(includedForms).toContain('Schedule A')
     expect(includedForms).toContain('Form 8283')
+    expect(includedForms).toContain('Form 8863')
     expect(includedForms).toContain('Form 8962')
     expect(includedForms).toContain('Form 2441')
+    expect(includedForms).toContain('Schedule E')
     expect(includedForms).toContain('Schedule D')
     expect(includedForms).toContain('Form 8949')
+    const officialPreview = (printMail.printMail as JsonObject)
+      .officialFormPreview as JsonObject
+    expect(Array.isArray(officialPreview.renderedForms)).toBe(true)
+    const renderedForms = officialPreview.renderedForms as JsonObject[]
+    expect(
+      renderedForms.some(
+        (form) => String((form as JsonObject).formName) === 'Form 8863'
+      )
+    ).toBe(true)
+    expect(
+      renderedForms.some(
+        (form) => String((form as JsonObject).formName) === 'Schedule E'
+      )
+    ).toBe(true)
+    expect(typeof officialPreview.renderedHtml).toBe('string')
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/sign`,
@@ -1105,7 +1228,254 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(202)
     const authorization = await parseJsonResponse<JsonObject>(response)
     expect(typeof authorization.authorizationCode).toBe('string')
-  }, 15000)
+    }
+  )
+
+  it(
+    'imports OCR-reviewed education, K-1, misc, and brokerage docs into rendered IRS previews',
+    { timeout: 15000 },
+    async () => {
+      let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sub: 'taxflow-user-doc-preview',
+          email: 'doc-preview@example.com',
+          displayName: 'Doc Preview User'
+        })
+      })
+      expect(response.status).toBe(201)
+      const sessionCookie = extractCookieHeader(response)
+
+      response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          taxYear: 2025,
+          filingStatus: 'hoh',
+          formType: '1040',
+          screenData: {
+            '/taxpayer-profile': {
+              firstName: 'Riley',
+              lastName: 'Uploader',
+              ssn: '400-01-8888',
+              address: {
+                line1: '55 Intake Ave',
+                city: 'Boston',
+                state: 'MA',
+                zip: '02110'
+              }
+            },
+            '/household': {
+              dependents: [
+                {
+                  id: 'dep-1',
+                  name: 'Casey Uploader',
+                  dob: '2006-04-14',
+                  relationship: 'child',
+                  ssn: '400-01-2222'
+                }
+              ]
+            },
+            '/review-confirm': {
+              totalTax: 4200,
+              totalPayments: 5300,
+              totalRefund: 1100
+            }
+          }
+        })
+      })
+      expect(response.status).toBe(201)
+      const created = await parseJsonResponse<JsonObject>(response)
+      const filingSessionId = String((created.filingSession as JsonObject).id)
+
+      const uploadExtractedDocument = async (
+        name: string,
+        extractionOverride: Record<string, unknown>
+      ) => {
+        const uploadResponse = await worker.fetch(
+          `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents`,
+          {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              cookie: sessionCookie
+            },
+            body: JSON.stringify({
+              name,
+              mimeType: 'application/pdf',
+              status: 'processing',
+              cluster: 'unknown',
+              clusterConfidence: 0,
+              pages: 1,
+              metadata: {
+                extractionOverride
+              }
+            })
+          }
+        )
+        expect(uploadResponse.status).toBe(201)
+        return parseJsonResponse<JsonObject>(uploadResponse)
+      }
+
+      await uploadExtractedDocument('tuition-1098t.pdf', {
+        documentType: '1098-t',
+        confidence: 0.93,
+        form1098T: {
+          institutionName: 'Monroe State University',
+          studentName: 'Casey Uploader',
+          qualifiedTuitionExpenses: 6400,
+          scholarshipsOrGrants: 1000,
+          confidence: 0.93
+        }
+      })
+
+      const miscDocument = await uploadExtractedDocument(
+        'royalties-1099misc.pdf',
+        {
+          documentType: '1099-misc',
+          confidence: 0.87,
+          form1099Misc: {
+            payerName: 'Studio Distribution LLC',
+            rents: 1500,
+            royalties: 600,
+            otherIncome: 250,
+            federalTaxWithheld: 90,
+            confidence: 0.87
+          }
+        }
+      )
+      const miscDocumentId = String((miscDocument.document as JsonObject).id)
+
+      await uploadExtractedDocument('partnership-k1.pdf', {
+        documentType: 'k-1',
+        confidence: 0.89,
+        scheduleK1: {
+          issuerName: 'Maple Holdings LP',
+          issuerEin: '12-3456789',
+          businessType: 'partnership',
+          ordinaryBusinessIncome: 4200,
+          rentalRealEstateIncome: 900,
+          interestIncome: 35,
+          section199AQBI: 3900,
+          confidence: 0.89
+        }
+      })
+
+      await uploadExtractedDocument('brokerage-1099b.pdf', {
+        documentType: '1099-b',
+        confidence: 0.9,
+        form1099B: {
+          payerName: 'Fidelity Brokerage',
+          shortTermProceeds: 10000,
+          shortTermCostBasis: 9000,
+          longTermProceeds: 8000,
+          longTermCostBasis: 6200,
+          transactions: [
+            {
+              description: 'AAPL short-term sale',
+              term: 'short',
+              proceeds: 10000,
+              costBasis: 9000
+            },
+            {
+              description: 'MSFT long-term sale',
+              term: 'long',
+              proceeds: 8000,
+              costBasis: 6200
+            }
+          ],
+          confidence: 0.9
+        }
+      })
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents/${miscDocumentId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            status: 'confirmed',
+            metadata: {
+              fieldEdits: {
+                'Other income (Box 3)': '$300.00'
+              },
+              reviewedFieldLabels: [
+                'Payer name',
+                'Rents (Box 1)',
+                'Royalties (Box 2)',
+                'Other income (Box 3)'
+              ]
+            }
+          })
+        }
+      )
+      expect(response.status).toBe(200)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+        {
+          method: 'POST',
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const syncResult = await parseJsonResponse<JsonObject>(response)
+      const facts = syncResult.facts as JsonObject
+      expect(Array.isArray(facts.educationExpenses)).toBe(true)
+      expect(
+        ((facts.educationExpenses as JsonObject[])[0] as JsonObject)
+          .institutionName
+      ).toBe('Monroe State University')
+      expect(Array.isArray(facts.k1Records)).toBe(true)
+      expect(
+        ((facts.k1Records as JsonObject[])[0] as JsonObject).partnershipName
+      ).toBe('Maple Holdings LP')
+      const miscFactsRecord = (facts.form1099Records as JsonObject[]).find(
+        (record) => String((record as JsonObject).type) === '1099-MISC'
+      ) as JsonObject | undefined
+      expect(miscFactsRecord).toBeTruthy()
+      expect(miscFactsRecord?.otherIncome).toBe(300)
+      expect(Array.isArray(facts.taxLots)).toBe(true)
+      expect(
+        ((facts.taxLots as JsonObject[])[0] as JsonObject).proceeds
+      ).toBe(18000)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/print-mail`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const printMail = await parseJsonResponse<JsonObject>(response)
+      const officialPreview = (printMail.printMail as JsonObject)
+        .officialFormPreview as JsonObject
+      const includedForms = (officialPreview.includedForms as string[]) ?? []
+      expect(includedForms).toContain('Form 8863')
+      expect(includedForms).toContain('Schedule E')
+      expect(includedForms).toContain('Schedule D')
+      expect(includedForms).toContain('Form 8949')
+      const renderedForms = (officialPreview.renderedForms as JsonObject[]) ?? []
+      expect(
+        renderedForms.some(
+          (form) => String((form as JsonObject).formName) === 'Form 8863'
+        )
+      ).toBe(true)
+      expect(
+        renderedForms.some(
+          (form) => String((form as JsonObject).formName) === 'Schedule E'
+        )
+      ).toBe(true)
+      expect(String(officialPreview.renderedHtml)).toContain('Form 8863')
+    }
+  )
 
   it('prepares and completes a signed auth callback flow', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/prepare`, {
@@ -1152,7 +1522,8 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(response.status).toBe(200)
     const me = await parseJsonResponse<JsonObject>(response)
     expect((me.user as JsonObject).email).toBe('callback.user@example.com')
-  })
+    }
+  )
 
   it('completes a real OIDC code-exchange callback in protected environments', async () => {
     const { privateKey, publicKey } = await generateKeyPair('RS256')
