@@ -617,6 +617,17 @@ app.get(
   }
 )
 
+app.post('/app/v1/filing-sessions/:sessionId/documents/batch', async (c) => {
+  const user = await requireAppUser(c)
+  const { appSessionService } = buildServices(c)
+  const result = await appSessionService.createDocumentsBatch(
+    c.req.param('sessionId'),
+    await c.req.json().catch(() => ({})),
+    user
+  )
+  return c.json(result, 201)
+})
+
 app.get(
   '/app/v1/filing-sessions/:sessionId/documents/:documentId',
   async (c) => {

@@ -1481,6 +1481,204 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
   )
 
   it(
+    'batch uploads multiple institutional docs and prefills the draft return before final confirmation',
+    { timeout: 15000 },
+    async () => {
+      let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sub: 'taxflow-user-batch-prefill',
+          email: 'batch-prefill@example.com',
+          displayName: 'Batch Prefill User'
+        })
+      })
+      expect(response.status).toBe(201)
+      const sessionCookie = extractCookieHeader(response)
+
+      response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          taxYear: 2025,
+          filingStatus: 'hoh',
+          formType: '1040',
+          screenData: {
+            '/taxpayer-profile': {
+              firstName: 'Taylor',
+              lastName: 'Batch',
+              ssn: '400-01-8899',
+              address: {
+                line1: '10 Prefill Way',
+                city: 'Boston',
+                state: 'MA',
+                zip: '02110'
+              }
+            },
+            '/household': {
+              dependents: [
+                {
+                  id: 'dep-batch-1',
+                  name: 'Morgan Batch',
+                  dob: '2018-06-15',
+                  relationship: 'child',
+                  ssn: '400-01-7777'
+                }
+              ]
+            }
+          }
+        })
+      })
+      expect(response.status).toBe(201)
+      const created = await parseJsonResponse<JsonObject>(response)
+      const filingSessionId = String((created.filingSession as JsonObject).id)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents/batch`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            documents: [
+              {
+                name: 'tuition-1098t.pdf',
+                mimeType: 'application/pdf',
+                status: 'processing',
+                cluster: 'unknown',
+                clusterConfidence: 0,
+                pages: 1,
+                metadata: {
+                  extractionOverride: {
+                    documentType: '1098-t',
+                    confidence: 0.94,
+                    form1098T: {
+                      institutionName: 'Monroe State University',
+                      studentName: 'Morgan Batch',
+                      qualifiedTuitionExpenses: 5800,
+                      scholarshipsOrGrants: 1200,
+                      confidence: 0.94
+                    }
+                  }
+                }
+              },
+              {
+                name: 'marketplace-1095a.pdf',
+                mimeType: 'application/pdf',
+                status: 'processing',
+                cluster: 'unknown',
+                clusterConfidence: 0,
+                pages: 1,
+                metadata: {
+                  extractionOverride: {
+                    documentType: '1095-a',
+                    confidence: 0.9,
+                    form1095A: {
+                      policyNumber: 'BATCH-APTC-01',
+                      coveredPersons: 2,
+                      annualEnrollmentPremium: 7200,
+                      annualSlcsp: 6800,
+                      annualAdvancePayment: 5400,
+                      coverageStart: '2025-01-01',
+                      coverageEnd: '2025-12-31',
+                      confidence: 0.9
+                    }
+                  }
+                }
+              },
+              {
+                name: 'daycare-statement.pdf',
+                mimeType: 'application/pdf',
+                status: 'processing',
+                cluster: 'unknown',
+                clusterConfidence: 0,
+                pages: 1,
+                metadata: {
+                  extractionOverride: {
+                    documentType: 'childcare',
+                    confidence: 0.86,
+                    childcareStatement: {
+                      providerName: 'Bright Start Childcare',
+                      providerTin: '12-3456789',
+                      amountPaid: 4100,
+                      address: '22 School St, Boston, MA 02110',
+                      confidence: 0.86
+                    }
+                  }
+                }
+              }
+            ]
+          })
+        }
+      )
+      expect(response.status).toBe(201)
+      const batchUpload = await parseJsonResponse<JsonObject>(response)
+      const batchDocuments = (batchUpload.documents as JsonObject[]) ?? []
+      expect(batchDocuments).toHaveLength(3)
+      expect((batchUpload.summary as JsonObject).documentCount).toBe(3)
+      expect((batchUpload.summary as JsonObject).prefilledDocumentCount).toBe(3)
+      expect(
+        ((batchUpload.summary as JsonObject).affectedForms as string[]) ?? []
+      ).toEqual(
+        expect.arrayContaining(['Form 8863', 'Form 8962', 'Form 2441'])
+      )
+      for (const document of batchDocuments) {
+        const metadata = ((document as JsonObject).metadata as JsonObject) ?? {}
+        const prefillSummary = (metadata.prefillSummary as JsonObject) ?? {}
+        expect(prefillSummary.prefillsReturnDraft).toBe(true)
+        expect((prefillSummary.affectedForms as string[])?.length).toBeGreaterThan(0)
+      }
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+        {
+          method: 'POST',
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const syncResult = await parseJsonResponse<JsonObject>(response)
+      const facts = syncResult.facts as JsonObject
+      expect(Array.isArray(facts.educationExpenses)).toBe(true)
+      expect(
+        ((facts.educationExpenses as JsonObject[])[0] as JsonObject)
+          .institutionName
+      ).toBe('Monroe State University')
+      expect(Array.isArray(facts.marketplaceInsurance)).toBe(true)
+      expect(
+        ((facts.marketplaceInsurance as JsonObject[])[0] as JsonObject)
+          .policyNumber
+      ).toBe('BATCH-APTC-01')
+      expect(Array.isArray(facts.dependentCareProviders)).toBe(true)
+      expect(
+        ((facts.dependentCareProviders as JsonObject[])[0] as JsonObject).name
+      ).toBe('Bright Start Childcare')
+      expect(facts.dependentCareExpenses).toBe(4100)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/print-mail`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const printMail = await parseJsonResponse<JsonObject>(response)
+      const includedForms = (
+        ((printMail.printMail as JsonObject).officialFormPreview as JsonObject)
+          .includedForms as string[]
+      ) ?? []
+      expect(includedForms).toEqual(
+        expect.arrayContaining(['Form 8863', 'Form 8962', 'Form 2441'])
+      )
+    }
+  )
+
+  it(
     'returns document guidance, serves source artifacts, and streams a filled IRS PDF',
     { timeout: 20000 },
     async () => {

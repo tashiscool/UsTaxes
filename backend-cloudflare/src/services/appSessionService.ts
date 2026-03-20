@@ -322,6 +322,10 @@ const documentCreateSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).default({})
 })
 
+const documentBatchCreateSchema = z.object({
+  documents: z.array(documentCreateSchema).min(1).max(25)
+})
+
 const documentPatchSchema = documentCreateSchema.partial()
 
 const signSchema = z.object({
@@ -2472,6 +2476,22 @@ type DocumentInterviewGuidance = {
   branch?: string
 }
 
+type DocumentPrefillSummary = {
+  prefillsReturnDraft: boolean
+  entityCount: number
+  entityLabels: string[]
+  affectedForms: string[]
+  taxImpactSummary: string
+}
+
+type DocumentBatchSummary = {
+  documentCount: number
+  prefilledDocumentCount: number
+  needsReviewCount: number
+  confirmedCount: number
+  affectedForms: string[]
+}
+
 const normalizeK1BusinessType = (
   value: unknown
 ): 'k1-partnership' | 'k1-scorp' | 'k1-trust' => {
@@ -2547,6 +2567,143 @@ const buildDocumentInterviewGuidance = (
     }
     default:
       return null
+  }
+}
+
+const buildDocumentPrefillSummary = (
+  extracted: ExtractedDocument,
+  importedEntities: ImportedExtractedEntity[]
+): DocumentPrefillSummary => {
+  const entityLabels = uniqueStrings(
+    importedEntities.map((entity) => entity.label || entity.entityType)
+  )
+
+  const makeSummary = (
+    affectedForms: string[],
+    taxImpactSummary: string
+  ): DocumentPrefillSummary => ({
+    prefillsReturnDraft: importedEntities.length > 0,
+    entityCount: importedEntities.length,
+    entityLabels,
+    affectedForms,
+    taxImpactSummary
+  })
+
+  switch (extracted.documentType) {
+    case 'w2':
+      return makeSummary(
+        ['Form 1040', 'State return'],
+        'Draft wages and withholding now flow into your return estimate.'
+      )
+    case '1099-int':
+      return makeSummary(
+        ['Form 1040', 'Schedule B'],
+        'Draft interest income now feeds your federal return totals.'
+      )
+    case '1099-div':
+      return makeSummary(
+        ['Form 1040', 'Schedule B', 'Qualified dividends worksheet'],
+        'Draft dividend income now feeds your return and dividend tax worksheets.'
+      )
+    case '1099-nec':
+      return makeSummary(
+        ['Schedule C', 'Schedule SE', 'Form 1040'],
+        'Draft self-employment income now feeds the business income estimate.'
+      )
+    case '1099-misc':
+      return makeSummary(
+        ['Schedule 1', 'Schedule E', 'Form 1040'],
+        'Draft rent, royalty, and other income now flows into your return.'
+      )
+    case '1099-r':
+      return makeSummary(
+        ['Form 1040', 'Retirement income'],
+        'Draft retirement income and withholding now affect your return estimate.'
+      )
+    case '1099-g':
+      return makeSummary(
+        ['Schedule 1', 'Form 1040'],
+        'Draft unemployment and state refund amounts now affect your return estimate.'
+      )
+    case '1099-ssa':
+      return makeSummary(
+        ['Form 1040', 'Social Security worksheet'],
+        'Draft Social Security benefits now feed the taxable-benefits calculation.'
+      )
+    case '1099-b':
+      return makeSummary(
+        ['Schedule D', 'Form 8949', 'Form 1040'],
+        'Draft sale details now feed capital gain and loss calculations.'
+      )
+    case '1098-e':
+      return makeSummary(
+        ['Schedule 1', 'Form 1040'],
+        'Draft student loan interest now feeds the adjustment calculation.'
+      )
+    case '1098-t':
+      return makeSummary(
+        ['Form 8863', 'Form 1040'],
+        'Draft education credits now feed your return estimate.'
+      )
+    case '1095-a':
+      return makeSummary(
+        ['Form 8962', 'Form 1040'],
+        'Draft marketplace coverage now feeds the premium tax credit calculation.'
+      )
+    case '1098-mortgage':
+      return makeSummary(
+        ['Schedule A'],
+        'Draft mortgage interest and property tax amounts now feed itemized deductions.'
+      )
+    case 'childcare':
+      return makeSummary(
+        ['Form 2441', 'Form 1040'],
+        'Draft dependent care costs now feed the child and dependent care credit.'
+      )
+    case 'charity-receipt':
+    case '1098-c':
+      return makeSummary(
+        ['Schedule A', 'Form 8283'],
+        'Draft charitable contributions now feed your itemized deduction packet.'
+      )
+    case 'k-1':
+      return makeSummary(
+        ['Schedule E', 'QBI worksheets', 'Form 1040'],
+        'Draft K-1 income now feeds rental, pass-through, and QBI calculations.'
+      )
+    default:
+      return makeSummary([], 'We extracted this document, but it is not prefilling the draft return yet.')
+  }
+}
+
+const buildDocumentBatchSummary = (
+  documents: Array<{
+    status: string
+    metadata?: Record<string, unknown>
+  }>
+): DocumentBatchSummary => {
+  const affectedForms = uniqueStrings(
+    documents.flatMap((document) => {
+      const prefillSummary = asRecord(document.metadata?.prefillSummary)
+      return asArray<string>(prefillSummary.affectedForms).filter(
+        (form): form is string => typeof form === 'string' && form.length > 0
+      )
+    })
+  )
+
+  return {
+    documentCount: documents.length,
+    prefilledDocumentCount: documents.filter((document) => {
+      const prefillSummary = asRecord(document.metadata?.prefillSummary)
+      return prefillSummary.prefillsReturnDraft === true
+    }).length,
+    needsReviewCount: documents.filter((document) =>
+      ['needs_review', 'ambiguous', 'ocr_failed'].includes(document.status)
+    ).length,
+    confirmedCount: documents.filter(
+      (document) => document.status === 'confirmed'
+    ).length,
+    affectedForms
   }
 }
 
@@ -8454,6 +8611,10 @@ export class AppSessionService {
           ? extractedEntityRefs[0]
           : null
       metadata.interviewGuidance = interviewGuidance
+      metadata.prefillSummary = buildDocumentPrefillSummary(
+        extracted,
+        importedEntities
+      )
       metadata.ocrIssue =
         extracted.documentType === 'unknown'
           ? metadata.ocrIssue ??
@@ -8845,6 +9006,26 @@ export class AppSessionService {
     return this.getDocument(sessionId, id, user)
   }
 
+  async createDocumentsBatch(
+    sessionId: string,
+    rawBody: unknown,
+    user: AppUserClaims
+  ) {
+    await this.requireSession(sessionId, user.sub)
+    const body = documentBatchCreateSchema.parse(rawBody ?? {})
+    const createdDocuments = []
+
+    for (const documentBody of body.documents) {
+      const created = await this.createDocument(sessionId, documentBody, user)
+      createdDocuments.push(created.document)
+    }
+
+    return {
+      documents: createdDocuments,
+      summary: buildDocumentBatchSummary(createdDocuments)
+    }
+  }
+
   async getDocument(
     sessionId: string,
     documentId: string,
@@ -9077,6 +9258,10 @@ export class AppSessionService {
           importedEntities.length === 1 ? extractedEntityRefs[0] : null
         metadata.interviewGuidance =
           buildDocumentInterviewGuidance(correctedExtraction)
+        metadata.prefillSummary = buildDocumentPrefillSummary(
+          correctedExtraction,
+          importedEntities
+        )
       }
     }
     const row = await this.env.USTAXES_DB.prepare(
