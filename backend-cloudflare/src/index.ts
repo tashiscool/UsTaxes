@@ -101,6 +101,70 @@ const buildServices = (c: Context<{ Bindings: Env }>) => {
   }
 }
 
+const wantsHtmlNavigation = (c: Context<{ Bindings: Env }>): boolean => {
+  const secFetchDest = c.req.header('sec-fetch-dest')?.toLowerCase()
+  if (secFetchDest === 'document') {
+    return true
+  }
+
+  const secFetchMode = c.req.header('sec-fetch-mode')?.toLowerCase()
+  if (secFetchMode === 'navigate') {
+    return true
+  }
+
+  const accept = c.req.header('accept')?.toLowerCase() ?? ''
+  return accept.includes('text/html')
+}
+
+const renderAuthCompletionPage = (redirectUrl: string): string => {
+  const serializedRedirect = JSON.stringify(redirectUrl)
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="refresh" content="0;url=${redirectUrl}" />
+    <title>Signing you in…</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f6f8fc;
+        color: #0f172a;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      main {
+        width: min(28rem, calc(100vw - 2rem));
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+      }
+      h1 {
+        margin: 0 0 0.75rem;
+        font-size: 1.25rem;
+      }
+      p {
+        margin: 0;
+        line-height: 1.5;
+        color: #334155;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sign-in complete</h1>
+      <p>We’re taking you back to TaxFlow now.</p>
+    </main>
+    <script>
+      window.location.replace(${serializedRedirect});
+    </script>
+  </body>
+</html>`
+}
+
 const getDirectFileUserContext = (c: Context<{ Bindings: Env }>) => ({
   id: c.req.header('x-user-id') ?? defaultDirectFileUserId,
   email: c.req.header('x-user-email') ?? '',
@@ -435,9 +499,11 @@ app.get('/app/v1/auth/callback', async (c) => {
   })
   c.header('set-cookie', cookie)
   c.header('set-cookie', clearAuthFlowCookie(c.env), { append: true })
-  return c.redirect(
-    resolveSafeRedirect(parsedState.redirectUri, c.env.CORS_ORIGIN)
-  )
+  const redirectUrl = resolveSafeRedirect(parsedState.redirectUri, c.env.CORS_ORIGIN)
+  if (wantsHtmlNavigation(c)) {
+    return c.html(renderAuthCompletionPage(redirectUrl), 200)
+  }
+  return c.redirect(redirectUrl)
 })
 
 app.post('/app/v1/auth/logout', async (c) => {
