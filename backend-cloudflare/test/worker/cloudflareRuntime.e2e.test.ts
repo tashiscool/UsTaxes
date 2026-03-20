@@ -930,6 +930,19 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       }
     })
 
+    await uploadExtractedDocument('brokerage-summary.pdf', {
+      documentType: 'brokerage-summary',
+      confidence: 0.86,
+      form1099B: {
+        payerName: 'Fidelity Brokerage',
+        shortTermProceeds: 10000,
+        shortTermCostBasis: 9000,
+        longTermProceeds: 8000,
+        longTermCostBasis: 6200,
+        confidence: 0.86
+      }
+    })
+
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents`,
       {
@@ -1072,7 +1085,13 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       true
     )
     expect(Array.isArray(facts.taxLots)).toBe(true)
-    expect(((facts.taxLots as JsonObject[])[0] as JsonObject).proceeds).toBe(18000)
+    expect((facts.taxLots as JsonObject[]).length).toBeGreaterThanOrEqual(2)
+    expect(
+      (facts.taxLots as JsonObject[]).reduce(
+        (sum, lot) => sum + Number((lot as JsonObject).proceeds ?? 0),
+        0
+      )
+    ).toBe(18000)
     expect(Array.isArray(facts.k1Records)).toBe(true)
     expect(
       ((facts.k1Records as JsonObject[])[0] as JsonObject).partnershipName
@@ -1395,6 +1414,19 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
         }
       })
 
+      await uploadExtractedDocument('brokerage-summary.pdf', {
+        documentType: 'brokerage-summary',
+        confidence: 0.87,
+        form1099B: {
+          payerName: 'Fidelity Brokerage',
+          shortTermProceeds: 10000,
+          shortTermCostBasis: 9000,
+          longTermProceeds: 8000,
+          longTermCostBasis: 6200,
+          confidence: 0.87
+        }
+      })
+
       response = await worker.fetch(
         `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents/${miscDocumentId}`,
         {
@@ -1447,7 +1479,10 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       expect(miscFactsRecord?.otherIncome).toBe(300)
       expect(Array.isArray(facts.taxLots)).toBe(true)
       expect(
-        ((facts.taxLots as JsonObject[])[0] as JsonObject).proceeds
+        (facts.taxLots as JsonObject[]).reduce(
+          (sum, lot) => sum + Number((lot as JsonObject).proceeds ?? 0),
+          0
+        )
       ).toBe(18000)
 
       response = await worker.fetch(
@@ -1592,6 +1627,28 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
                 }
               },
               {
+                name: 'tuition-ledger.pdf',
+                mimeType: 'application/pdf',
+                status: 'processing',
+                cluster: 'unknown',
+                clusterConfidence: 0,
+                pages: 1,
+                metadata: {
+                  extractionOverride: {
+                    documentType: 'tuition-ledger',
+                    confidence: 0.91,
+                    form1098T: {
+                      institutionName: 'Monroe State University',
+                      studentName: 'Morgan Batch',
+                      qualifiedTuitionExpenses: 5800,
+                      booksAndMaterials: 600,
+                      scholarshipsOrGrants: 1200,
+                      confidence: 0.91
+                    }
+                  }
+                }
+              },
+              {
                 name: 'daycare-statement.pdf',
                 mimeType: 'application/pdf',
                 status: 'processing',
@@ -1619,13 +1676,13 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       expect(response.status).toBe(201)
       const batchUpload = await parseJsonResponse<JsonObject>(response)
       const batchDocuments = (batchUpload.documents as JsonObject[]) ?? []
-      expect(batchDocuments).toHaveLength(3)
-      expect((batchUpload.summary as JsonObject).documentCount).toBe(3)
-      expect((batchUpload.summary as JsonObject).prefilledDocumentCount).toBe(3)
+      expect(batchDocuments).toHaveLength(4)
+      expect((batchUpload.summary as JsonObject).documentCount).toBe(4)
+      expect((batchUpload.summary as JsonObject).prefilledDocumentCount).toBe(4)
       expect(
         ((batchUpload.summary as JsonObject).affectedForms as string[]) ?? []
       ).toEqual(
-        expect.arrayContaining(['Form 8863', 'Form 8962', 'Form 2441'])
+        expect.arrayContaining(['form 8863', 'form 8962', 'form 2441'])
       )
       for (const document of batchDocuments) {
         const metadata = ((document as JsonObject).metadata as JsonObject) ?? {}
@@ -1633,6 +1690,13 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
         expect(prefillSummary.prefillsReturnDraft).toBe(true)
         expect((prefillSummary.affectedForms as string[])?.length).toBeGreaterThan(0)
       }
+      const tuitionDocument = batchDocuments.find((document) => {
+        const metadata = ((document as JsonObject).metadata as JsonObject) ?? {}
+        return metadata.documentType === '1098-t'
+      }) as JsonObject | undefined
+      const tuitionReconciliation = (((tuitionDocument?.metadata as JsonObject) ?? {})
+        .reconciliationSummary as JsonObject) ?? {}
+      expect(String(tuitionReconciliation.headline)).not.toBe('')
 
       response = await worker.fetch(
         `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
@@ -1649,6 +1713,13 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
         ((facts.educationExpenses as JsonObject[])[0] as JsonObject)
           .institutionName
       ).toBe('Monroe State University')
+      expect(
+        ((facts.educationExpenses as JsonObject[])[0] as JsonObject).personRole
+      ).toBe('dependent')
+      expect(
+        ((facts.educationExpenses as JsonObject[])[0] as JsonObject)
+          .qualifiedExpenses
+      ).toBe(6400)
       expect(Array.isArray(facts.marketplaceInsurance)).toBe(true)
       expect(
         ((facts.marketplaceInsurance as JsonObject[])[0] as JsonObject)

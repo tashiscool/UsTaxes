@@ -316,6 +316,26 @@ describe('TaxCalculationService', () => {
       expect(info.iraContributions?.[0].traditionalContributions).toBe(3000)
     })
 
+    it('does not force Form 8863 facts when education credit is explicitly set to none', () => {
+      const info = adaptFactsToInformation(
+        baseFacts({
+          educationExpenses: [
+            {
+              id: 'edu-1',
+              studentName: 'Jamie Johnson',
+              institutionName: 'State University',
+              qualifiedExpenses: 6400,
+              scholarshipsReceived: 1200,
+              creditType: 'NONE',
+              personRole: 'dependent'
+            }
+          ]
+        })
+      ) as ValidatedInformation & { educationExpenses?: unknown[] }
+
+      expect(info.educationExpenses).toBeUndefined()
+    })
+
     it('maps imported marketplace, childcare, mortgage, charity, and investment facts into downstream forms', () => {
       const facts = baseFacts({
         filingStatus: 'hoh',

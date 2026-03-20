@@ -2090,33 +2090,45 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
   const educationExpenses: EducationExpense[] | undefined = (() => {
     const expenses = asArray<Record<string, unknown>>(facts.educationExpenses)
     if (expenses.length === 0) return undefined
-    return expenses.map((e) => ({
-      studentName: toStr(e.studentName ?? e.name ?? ''),
-      studentSsn: toStr(e.studentSsn ?? e.ssn ?? '').replace(/\D/g, ''),
-      institutionName: toStr(
-        e.institutionName ?? e.schoolName ?? e.institution ?? ''
-      ),
-      institutionEin: toStr(e.institutionEin ?? e.ein ?? '') || undefined,
-      institutionAddress: toStr(e.institutionAddress ?? '') || undefined,
-      qualifiedExpenses: toNum(
-        e.qualifiedExpenses ?? e.tuition ?? e.expenses ?? 0
-      ),
-      scholarshipsReceived: toNum(
-        e.scholarshipsReceived ?? e.scholarships ?? 0
-      ),
-      isHalfTimeStudent: toBool(e.isHalfTimeStudent ?? e.halfTime ?? true),
-      isFirstFourYears: toBool(e.isFirstFourYears ?? e.firstFourYears ?? true),
-      hasConviction: toBool(e.hasConviction ?? false),
-      creditType: (toStr(e.creditType) === 'LLC' ? 'LLC' : 'AOTC') as
-        | 'AOTC'
-        | 'LLC',
-      personRole: (() => {
-        const role = toStr(e.personRole ?? e.owner)
-        if (role === 'spouse') return PersonRole.SPOUSE
-        if (role === 'dependent') return PersonRole.DEPENDENT
-        return PersonRole.PRIMARY
-      })()
-    }))
+    const normalized: EducationExpense[] = []
+    for (const e of expenses) {
+      const creditTypeValue = toStr(e.creditType).toUpperCase()
+      const creditType =
+        creditTypeValue === 'LLC'
+          ? 'LLC'
+          : creditTypeValue === 'AOTC'
+            ? 'AOTC'
+            : null
+      if (!creditType) continue
+      normalized.push({
+        studentName: toStr(e.studentName ?? e.name ?? ''),
+        studentSsn: toStr(e.studentSsn ?? e.ssn ?? '').replace(/\D/g, ''),
+        institutionName: toStr(
+          e.institutionName ?? e.schoolName ?? e.institution ?? ''
+        ),
+        institutionEin: toStr(e.institutionEin ?? e.ein ?? '') || undefined,
+        institutionAddress: toStr(e.institutionAddress ?? '') || undefined,
+        qualifiedExpenses: toNum(
+          e.qualifiedExpenses ?? e.tuition ?? e.expenses ?? 0
+        ),
+        scholarshipsReceived: toNum(
+          e.scholarshipsReceived ?? e.scholarships ?? 0
+        ),
+        isHalfTimeStudent: toBool(e.isHalfTimeStudent ?? e.halfTime ?? true),
+        isFirstFourYears: toBool(
+          e.isFirstFourYears ?? e.firstFourYears ?? true
+        ),
+        hasConviction: toBool(e.hasConviction ?? false),
+        creditType,
+        personRole: (() => {
+          const role = toStr(e.personRole ?? e.owner)
+          if (role === 'spouse') return PersonRole.SPOUSE
+          if (role === 'dependent') return PersonRole.DEPENDENT
+          return PersonRole.PRIMARY
+        })()
+      })
+    }
+    return normalized.length > 0 ? normalized : undefined
   })()
 
   // ─── Form 5695 energy improvements ──────────────────────────────────────

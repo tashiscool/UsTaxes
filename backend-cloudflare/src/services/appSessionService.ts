@@ -2026,6 +2026,9 @@ const inferDocumentClusterFromExtraction = (
   if (extracted.documentType === '1099-b') {
     return 'investment'
   }
+  if (extracted.documentType === 'brokerage-summary') {
+    return 'investment'
+  }
   if (extracted.documentType === '1098-mortgage') {
     return 'housing'
   }
@@ -2034,7 +2037,8 @@ const inferDocumentClusterFromExtraction = (
   }
   if (
     extracted.documentType === '1098-e' ||
-    extracted.documentType === '1098-t'
+    extracted.documentType === '1098-t' ||
+    extracted.documentType === 'tuition-ledger'
   ) {
     return 'education'
   }
@@ -2256,8 +2260,14 @@ const buildDocumentFieldsFromExtraction = (
         )
       ].filter(Boolean) as Array<Record<string, unknown>>
     case '1099-b':
+    case 'brokerage-summary':
       return [
         makeField('Broker / payer', extracted.form1099B?.payerName, confidence),
+        makeField(
+          'Document variant',
+          extracted.form1099B?.documentVariant,
+          confidence
+        ),
         makeField(
           'Short-term proceeds',
           extracted.form1099B?.shortTermProceeds,
@@ -2294,6 +2304,7 @@ const buildDocumentFieldsFromExtraction = (
         )
       ].filter(Boolean) as Array<Record<string, unknown>>
     case '1098-t':
+    case 'tuition-ledger':
       return [
         makeField(
           'Institution',
@@ -2318,6 +2329,16 @@ const buildDocumentFieldsFromExtraction = (
         makeField(
           'Prior-year adjustment (Box 4)',
           extracted.form1098T?.adjustmentsFromPriorYear,
+          confidence
+        ),
+        makeField(
+          'Books and required materials',
+          extracted.form1098T?.booksAndMaterials,
+          confidence
+        ),
+        makeField(
+          'Payments received',
+          extracted.form1098T?.paymentsReceived,
           confidence
         )
       ].filter(Boolean) as Array<Record<string, unknown>>
@@ -2484,12 +2505,313 @@ type DocumentPrefillSummary = {
   taxImpactSummary: string
 }
 
+type DocumentReconciliationSummary = {
+  status: 'matched' | 'needs_review' | 'missing_related'
+  headline: string
+  bullets: string[]
+  actionPath?: string
+  actionLabel?: string
+}
+
+type DocumentContext = {
+  snapshot?: FilingSessionSnapshot | null
+  entities?: SessionEntitySnapshot[]
+  documents?: Array<{
+    id: string
+    name: string
+    metadata: Record<string, unknown>
+  }>
+  currentDocumentId?: string
+}
+
 type DocumentBatchSummary = {
   documentCount: number
   prefilledDocumentCount: number
   needsReviewCount: number
   confirmedCount: number
   affectedForms: string[]
+}
+
+const normalizeMatchingText = (value: unknown): string =>
+  toText(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '')
+
+const buildImportEntityId = (prefix: string, parts: unknown[]): string => {
+  const normalizedParts = parts
+    .map(normalizeMatchingText)
+    .filter((value) => value.length > 0)
+    .slice(0, 4)
+  return normalizedParts.length > 0
+    ? `${prefix}-${normalizedParts.join('-')}`
+    : `${prefix}-${crypto.randomUUID()}`
+}
+
+const getTaxpayerCandidate = (snapshot?: FilingSessionSnapshot | null) => {
+  if (!snapshot) return null
+  const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
+  const firstName = toText(taxpayer.firstName)
+  const lastName = toText(taxpayer.lastName)
+  const fullName = `${firstName} ${lastName}`.trim()
+  if (!fullName) return null
+  return {
+    role: 'taxpayer' as const,
+    id: 'taxpayer-primary',
+    name: fullName,
+    ssn: toText(taxpayer.ssn).replace(/\D/g, '')
+  }
+}
+
+const matchEducationHouseholdMember = (
+  studentName: unknown,
+  snapshot?: FilingSessionSnapshot | null,
+  entities: SessionEntitySnapshot[] = []
+) => {
+  const normalizedStudent = normalizeMatchingText(studentName)
+  if (!normalizedStudent || !snapshot) return null
+
+  const candidates = [
+    getTaxpayerCandidate(snapshot),
+    ...(() => {
+      const spouse = getSpouse(snapshot, entities)
+      if (!spouse) return []
+      return [
+        {
+          role: 'spouse' as const,
+          id: spouse.id,
+          name: `${spouse.firstName} ${spouse.lastName}`.trim(),
+          ssn: toText(spouse.ssn).replace(/\D/g, '')
+        }
+      ]
+    })(),
+    ...getDependents(snapshot, entities).map((dependent) => ({
+      role: 'dependent' as const,
+      id: dependent.id,
+      name: toText(dependent.name),
+      ssn: toText(dependent.ssn).replace(/\D/g, '')
+    }))
+  ].filter(
+    (
+      candidate
+    ): candidate is {
+      role: 'taxpayer' | 'spouse' | 'dependent'
+      id: string
+      name: string
+      ssn: string
+    } => Boolean(candidate && candidate.name)
+  )
+
+  return (
+    candidates.find(
+      (candidate) => normalizeMatchingText(candidate.name) === normalizedStudent
+    ) ?? null
+  )
+}
+
+const getReconciliationDocuments = (
+  documents: DocumentContext['documents'] = [],
+  currentDocumentId?: string
+) =>
+  documents.filter((document) => document.id !== currentDocumentId)
+
+const getDocumentExtraction = (
+  document: { metadata: Record<string, unknown> } | null | undefined
+): ExtractedDocument | null => {
+  const extraction = asRecord(document?.metadata?.extraction)
+  return toText(extraction.documentType)
+    ? (extraction as unknown as ExtractedDocument)
+    : null
+}
+
+const sumBrokerLotsForReconciliation = (
+  entities: SessionEntitySnapshot[],
+  brokerName: string,
+  excludeDocumentId?: string
+) =>
+  entities
+    .filter((entity) => entity.entityType === 'tax_lot')
+    .filter((entity) => Boolean(entity.data.summaryOnly) === false)
+    .filter((entity) => {
+      const sourceDocumentId = toText(entity.data.sourceDocumentId)
+      return !excludeDocumentId || sourceDocumentId !== excludeDocumentId
+    })
+    .filter(
+      (entity) =>
+        normalizeMatchingText(entity.data.sourceBrokerName ?? entity.label) ===
+        normalizeMatchingText(brokerName)
+    )
+    .reduce(
+      (totals, entity) => ({
+        proceeds: totals.proceeds + toMoney(entity.data.proceeds),
+        costBasis:
+          totals.costBasis +
+          toMoney(entity.data.costBasis ?? entity.data.basis),
+        lotCount: totals.lotCount + 1
+      }),
+      { proceeds: 0, costBasis: 0, lotCount: 0 }
+    )
+
+const buildDocumentReconciliationSummary = (
+  extracted: ExtractedDocument,
+  context: DocumentContext = {}
+): DocumentReconciliationSummary | null => {
+  const snapshot = context.snapshot ?? undefined
+  const entities = context.entities ?? []
+  const relatedDocuments = getReconciliationDocuments(
+    context.documents,
+    context.currentDocumentId
+  )
+
+  if (extracted.documentType === '1098-t' || extracted.documentType === 'tuition-ledger') {
+    const studentName = toText(extracted.form1098T?.studentName || 'the student')
+    const institutionName = toText(
+      extracted.form1098T?.institutionName || 'the school'
+    )
+    const matchedStudent = matchEducationHouseholdMember(
+      extracted.form1098T?.studentName,
+      snapshot,
+      entities
+    )
+    const counterpartTypes =
+      extracted.documentType === '1098-t'
+        ? ['tuition-ledger']
+        : ['1098-t']
+    const counterpart = relatedDocuments.find((document) => {
+      const relatedExtraction = getDocumentExtraction(document)
+      if (!relatedExtraction) return false
+      if (!counterpartTypes.includes(relatedExtraction.documentType)) return false
+      return (
+        normalizeMatchingText(relatedExtraction.form1098T?.studentName) ===
+          normalizeMatchingText(studentName) ||
+        normalizeMatchingText(relatedExtraction.form1098T?.institutionName) ===
+          normalizeMatchingText(institutionName)
+      )
+    })
+    const counterpartExtraction = counterpart ? getDocumentExtraction(counterpart) : null
+    const currentQualifiedExpenses =
+      toMoney(extracted.form1098T?.qualifiedTuitionExpenses) +
+      (extracted.documentType === 'tuition-ledger'
+        ? toMoney(extracted.form1098T?.booksAndMaterials)
+        : 0)
+    const counterpartQualifiedExpenses =
+      toMoney(counterpartExtraction?.form1098T?.qualifiedTuitionExpenses) +
+      (counterpartExtraction?.documentType === 'tuition-ledger'
+        ? toMoney(counterpartExtraction?.form1098T?.booksAndMaterials)
+        : 0)
+
+    const bullets = [
+      matchedStudent
+        ? `Matched ${studentName} to your ${matchedStudent.role === 'dependent' ? 'dependent' : matchedStudent.role}: ${matchedStudent.name}.`
+        : `We could not confidently match ${studentName} to the taxpayer, spouse, or dependents yet.`
+    ]
+
+    if (counterpart && counterpartExtraction) {
+      const difference = Math.abs(
+        currentQualifiedExpenses - counterpartQualifiedExpenses
+      )
+      bullets.push(
+        difference <= 1
+          ? `This ${extracted.documentType === '1098-t' ? '1098-T' : 'tuition ledger'} lines up with ${counterpart.name}.`
+          : `${counterpart.name} differs by ${formatCurrency(
+              difference
+            )}; review tuition, books, and scholarship offsets before finalizing Form 8863.`
+      )
+      return {
+        status: difference <= 1 && matchedStudent ? 'matched' : 'needs_review',
+        headline:
+          difference <= 1
+            ? 'Education documents are lining up cleanly'
+            : 'Education documents need one reconciliation check',
+        bullets,
+        actionPath: '/education-care?tab=education',
+        actionLabel: 'Review education details'
+      }
+    }
+
+    bullets.push(
+      extracted.documentType === '1098-t'
+        ? 'Upload a bursar or tuition ledger if books, required supplies, or payment timing are missing from the 1098-T.'
+        : 'Upload the matching 1098-T if you have it so we can reconcile school billing against the tax form.'
+    )
+    return {
+      status: matchedStudent ? 'missing_related' : 'needs_review',
+      headline: 'Education credit support can be tightened',
+      bullets,
+      actionPath: '/education-care?tab=education',
+      actionLabel: 'Review education details'
+    }
+  }
+
+  if (
+    extracted.documentType === '1099-b' ||
+    extracted.documentType === 'brokerage-summary'
+  ) {
+    const brokerName = toText(extracted.form1099B?.payerName || 'this broker')
+    const documentTotals = {
+      proceeds:
+        toMoney(extracted.form1099B?.shortTermProceeds) +
+        toMoney(extracted.form1099B?.longTermProceeds),
+      costBasis:
+        toMoney(extracted.form1099B?.shortTermCostBasis) +
+        toMoney(extracted.form1099B?.longTermCostBasis)
+    }
+    const detailedLots = sumBrokerLotsForReconciliation(
+      entities,
+      brokerName,
+      context.currentDocumentId
+    )
+    const difference = Math.abs(documentTotals.proceeds - detailedLots.proceeds)
+
+    if (detailedLots.lotCount > 0) {
+      return {
+        status: difference <= 1 ? 'matched' : 'needs_review',
+        headline:
+          difference <= 1
+            ? 'Broker totals match your imported sale lots'
+            : 'Broker totals do not match your imported sale lots yet',
+        bullets: [
+          `${brokerName} currently has ${detailedLots.lotCount} detailed lot${
+            detailedLots.lotCount === 1 ? '' : 's'
+          } in the draft return.`,
+          difference <= 1
+            ? `The detailed lots tie to ${formatCurrency(
+                detailedLots.proceeds
+              )} of proceeds.`
+            : `The detailed lots total ${formatCurrency(
+                detailedLots.proceeds
+              )} of proceeds vs ${formatCurrency(
+                documentTotals.proceeds
+              )} on this summary.`
+        ],
+        actionPath: '/investments',
+        actionLabel: 'Review investment lots'
+      }
+    }
+
+    return {
+      status:
+        extracted.form1099B?.transactions &&
+        extracted.form1099B.transactions.length > 0
+          ? 'matched'
+          : 'missing_related',
+      headline:
+        extracted.form1099B?.transactions &&
+        extracted.form1099B.transactions.length > 0
+          ? 'Detailed brokerage sales were imported'
+          : 'Broker summary imported, but detailed lots are still missing',
+      bullets: [
+        extracted.form1099B?.transactions &&
+        extracted.form1099B.transactions.length > 0
+          ? `We imported ${extracted.form1099B.transactions.length} sale rows from ${brokerName}.`
+          : `We imported the high-level ${brokerName} totals, but not line-by-line sale lots yet.`,
+        'Review the investment workbench to confirm term, basis, wash sales, and Form 8949 treatment.'
+      ],
+      actionPath: '/investments',
+      actionLabel: 'Review investment lots'
+    }
+  }
+
+  return null
 }
 
 const normalizeK1BusinessType = (
@@ -2517,7 +2839,8 @@ const buildDocumentInterviewGuidance = (
   extracted: ExtractedDocument
 ): DocumentInterviewGuidance | null => {
   switch (extracted.documentType) {
-    case '1098-t': {
+    case '1098-t':
+    case 'tuition-ledger': {
       const studentName = toText(extracted.form1098T?.studentName || 'the student')
       const institutionName = toText(
         extracted.form1098T?.institutionName || 'the school'
@@ -2532,6 +2855,9 @@ const buildDocumentInterviewGuidance = (
         bullets: [
           `Confirm whether ${studentName} is the taxpayer, spouse, or a dependent.`,
           `Review ${institutionName} expenses against books, supplies, and scholarships before we finalize Form 8863.`,
+          extracted.documentType === 'tuition-ledger'
+            ? 'Use the ledger to confirm books, required supplies, and payment timing that may not appear on the 1098-T itself.'
+            : 'If books or required supplies are missing from the 1098-T, upload the tuition ledger so we can reconcile them automatically.',
           'Answer the AOTC vs LLC eligibility questions, including first four years, half-time status, and any felony-drug-conviction disqualification.'
         ]
       }
@@ -2562,6 +2888,25 @@ const buildDocumentInterviewGuidance = (
             ? 'Review beneficiary/trust items, DNI-style allocations, and any foreign or fiduciary detail that does not show up in the headline boxes.'
             : 'Review passive-vs-nonpassive treatment, guaranteed payments, self-employment earnings, and any at-risk or prior-year loss carryovers.',
           'Finish any QBI follow-up so Schedule E, Schedule SE, and the 199A worksheet stay aligned.'
+        ]
+      }
+    }
+    case '1099-b':
+    case 'brokerage-summary': {
+      const brokerName = toText(extracted.form1099B?.payerName || 'the broker')
+      return {
+        title: 'Reconcile your investment sales',
+        summary:
+          extracted.documentType === 'brokerage-summary'
+            ? 'We imported the broker summary totals, but we still want to line them up against detailed sale lots before Form 8949 is final.'
+            : 'We imported the investment sales we found, but you should still confirm lot-level basis, term, and any wash-sale adjustments.',
+        actionPath: '/investments',
+        actionLabel: 'Review investment lots',
+        branch: 'investment-sales',
+        bullets: [
+          `Confirm whether ${brokerName} is already represented by detailed 1099-B lot imports or manual lot entries.`,
+          'Review term, basis, and wash-sale treatment for every lot that will flow to Form 8949 and Schedule D.',
+          'If this is only a brokerage summary, add or confirm the detailed lots so the return does not rely on summary-only proceeds.'
         ]
       }
     }
@@ -2631,9 +2976,12 @@ const buildDocumentPrefillSummary = (
         'Draft Social Security benefits now feed the taxable-benefits calculation.'
       )
     case '1099-b':
+    case 'brokerage-summary':
       return makeSummary(
         ['Schedule D', 'Form 8949', 'Form 1040'],
-        'Draft sale details now feed capital gain and loss calculations.'
+        extracted.documentType === 'brokerage-summary'
+          ? 'Draft brokerage totals now feed capital gain estimates until you reconcile them against detailed lots.'
+          : 'Draft sale details now feed capital gain and loss calculations.'
       )
     case '1098-e':
       return makeSummary(
@@ -2641,9 +2989,12 @@ const buildDocumentPrefillSummary = (
         'Draft student loan interest now feeds the adjustment calculation.'
       )
     case '1098-t':
+    case 'tuition-ledger':
       return makeSummary(
         ['Form 8863', 'Form 1040'],
-        'Draft education credits now feed your return estimate.'
+        extracted.documentType === 'tuition-ledger'
+          ? 'Draft tuition, books, and scholarship details now feed your education credit estimate.'
+          : 'Draft education credits now feed your return estimate.'
       )
     case '1095-a':
       return makeSummary(
@@ -2707,10 +3058,21 @@ const buildDocumentBatchSummary = (
   }
 }
 
+const buildEducationExpenseEntityId = (
+  extracted: ExtractedDocument,
+  matchedStudent: ReturnType<typeof matchEducationHouseholdMember>
+) =>
+  buildImportEntityId('education-expense', [
+    matchedStudent?.role,
+    matchedStudent?.name ?? extracted.form1098T?.studentName,
+    extracted.form1098T?.institutionName
+  ])
+
 const buildEntitiesFromDocumentExtraction = (
   documentId: string,
   documentName: string,
-  extracted: ExtractedDocument
+  extracted: ExtractedDocument,
+  context: Pick<DocumentContext, 'snapshot' | 'entities'> = {}
 ): ImportedExtractedEntity[] => {
   switch (extracted.documentType) {
     case 'w2':
@@ -2924,54 +3286,112 @@ const buildEntitiesFromDocumentExtraction = (
           extractionConfidence: extracted.confidence
         }
       }]
-    case '1099-b': {
+    case '1099-b':
+    case 'brokerage-summary': {
       const shortTermProceeds = toMoney(extracted.form1099B?.shortTermProceeds)
       const longTermProceeds = toMoney(extracted.form1099B?.longTermProceeds)
       const totalProceeds = shortTermProceeds + longTermProceeds
       if (!extracted.form1099B?.payerName || totalProceeds <= 0) {
         return []
       }
+      const brokerName = extracted.form1099B.payerName || documentName
+      const transactionLots: ImportedExtractedEntity[] =
+        extracted.form1099B.transactions?.reduce<ImportedExtractedEntity[]>(
+          (acc, transaction, index) => {
+            const proceeds = toMoney(transaction.proceeds)
+            const costBasis = toMoney(transaction.costBasis)
+            if (proceeds <= 0 && costBasis <= 0) {
+              return acc
+            }
+            const term =
+              transaction.term === 'short' ||
+              transaction.term === 'long' ||
+              transaction.term === 'unknown'
+                ? transaction.term
+                : 'unknown'
+            acc.push({
+              entityType: 'tax_lot',
+              entityId: `${documentId}-lot-${index + 1}`,
+              status: 'review_needed',
+              label: transaction.description || `${brokerName} sale ${index + 1}`,
+              data: {
+                security:
+                  transaction.description || `${brokerName} sale ${index + 1}`,
+                securityType: 'brokerage',
+                proceeds,
+                costBasis,
+                term,
+                source:
+                  extracted.documentType === 'brokerage-summary'
+                    ? 'document_brokerage_summary_transaction'
+                    : 'document_1099_b_transaction',
+                sourceBrokerName: brokerName,
+                summaryOnly: false,
+                sourceDocumentId: documentId,
+                sourceDocumentName: documentName,
+                extractionConfidence: extracted.confidence
+              }
+            })
+            return acc
+          },
+          []
+        ) ?? []
+
+      const fallbackSummaryLot: ImportedExtractedEntity[] =
+        transactionLots.length === 0
+          ? [
+              {
+                entityType: 'tax_lot',
+                entityId: `${documentId}-summary`,
+                status: 'review_needed',
+                label: brokerName,
+                data: {
+                  security: brokerName,
+                  securityType: 'brokerage',
+                  proceeds: totalProceeds,
+                  costBasis:
+                    toMoney(extracted.form1099B.shortTermCostBasis) +
+                    toMoney(extracted.form1099B.longTermCostBasis),
+                  shortTermProceeds: extracted.form1099B.shortTermProceeds,
+                  shortTermCostBasis: extracted.form1099B.shortTermCostBasis,
+                  longTermProceeds: extracted.form1099B.longTermProceeds,
+                  longTermCostBasis: extracted.form1099B.longTermCostBasis,
+                  source:
+                    extracted.documentType === 'brokerage-summary'
+                      ? 'document_brokerage_summary'
+                      : 'document_1099_b_summary',
+                  sourceBrokerName: brokerName,
+                  summaryOnly: true,
+                  sourceDocumentId: documentId,
+                  sourceDocumentName: documentName,
+                  extractionConfidence: extracted.confidence
+                }
+              }
+            ]
+          : []
+
       return [
         {
           entityType: '1099_b',
           entityId: documentId,
           status: 'review_needed',
-          label: extracted.form1099B.payerName || documentName,
+          label: brokerName,
           data: {
-            payerName: extracted.form1099B.payerName,
+            payerName: brokerName,
             shortTermProceeds: extracted.form1099B.shortTermProceeds,
             shortTermCostBasis: extracted.form1099B.shortTermCostBasis,
             longTermProceeds: extracted.form1099B.longTermProceeds,
             longTermCostBasis: extracted.form1099B.longTermCostBasis,
             federalWithheld: extracted.form1099B.federalTaxWithheld,
+            documentVariant: extracted.form1099B.documentVariant,
             owner: extracted.form1099B.owner ?? 'taxpayer',
             sourceDocumentId: documentId,
             sourceDocumentName: documentName,
             extractionConfidence: extracted.confidence
           }
         },
-        {
-          entityType: 'tax_lot',
-          entityId: documentId,
-          status: 'review_needed',
-          label: extracted.form1099B.payerName || documentName,
-          data: {
-            security: extracted.form1099B.payerName || documentName,
-            securityType: 'brokerage',
-            proceeds: totalProceeds,
-            costBasis:
-              toMoney(extracted.form1099B.shortTermCostBasis) +
-              toMoney(extracted.form1099B.longTermCostBasis),
-            shortTermProceeds: extracted.form1099B.shortTermProceeds,
-            shortTermCostBasis: extracted.form1099B.shortTermCostBasis,
-            longTermProceeds: extracted.form1099B.longTermProceeds,
-            longTermCostBasis: extracted.form1099B.longTermCostBasis,
-            source: 'document_1099_b',
-            sourceDocumentId: documentId,
-            sourceDocumentName: documentName,
-            extractionConfidence: extracted.confidence
-          }
-        }
+        ...transactionLots,
+        ...fallbackSummaryLot
       ]
     }
     case '1098-e':
@@ -2991,39 +3411,85 @@ const buildEntitiesFromDocumentExtraction = (
           extractionConfidence: extracted.confidence
         }
       }]
-    case '1098-t': {
+    case '1098-t':
+    case 'tuition-ledger': {
+      const matchedStudent = matchEducationHouseholdMember(
+        extracted.form1098T?.studentName,
+        context.snapshot,
+        context.entities ?? []
+      )
+      const entityId = buildEducationExpenseEntityId(extracted, matchedStudent)
       const qualifiedExpenses = toMoney(
         extracted.form1098T?.qualifiedTuitionExpenses
       )
+      const booksAndMaterials = toMoney(extracted.form1098T?.booksAndMaterials)
       const scholarships = toMoney(extracted.form1098T?.scholarshipsOrGrants)
       if (
         !extracted.form1098T?.institutionName &&
         !extracted.form1098T?.studentName &&
         qualifiedExpenses <= 0 &&
+        booksAndMaterials <= 0 &&
         scholarships <= 0
       ) {
         return []
       }
       return [{
         entityType: 'education_expense',
-        entityId: documentId,
+        entityId,
         status: 'review_needed',
         label:
+          matchedStudent?.name ||
           extracted.form1098T?.studentName ||
           extracted.form1098T?.institutionName ||
           documentName,
         data: {
-          studentName: extracted.form1098T?.studentName,
+          studentName:
+            matchedStudent?.name || extracted.form1098T?.studentName,
+          studentSsn: matchedStudent?.ssn,
+          matchedHouseholdMemberId: matchedStudent?.id,
+          matchedHouseholdMemberRole: matchedStudent?.role,
           institutionName: extracted.form1098T?.institutionName,
-          qualifiedExpenses,
+          qualifiedExpenses:
+            extracted.documentType === 'tuition-ledger'
+              ? qualifiedExpenses + booksAndMaterials
+              : qualifiedExpenses,
+          tuitionAmount: qualifiedExpenses,
+          booksAndMaterials,
+          paymentsReceived: extracted.form1098T?.paymentsReceived,
           scholarshipsReceived: scholarships,
           priorYearAdjustment: extracted.form1098T?.adjustmentsFromPriorYear,
+          form1098TQualifiedExpenses:
+            extracted.documentType === '1098-t' ? qualifiedExpenses : undefined,
+          form1098TScholarships:
+            extracted.documentType === '1098-t' ? scholarships : undefined,
+          form1098TPriorYearAdjustment:
+            extracted.documentType === '1098-t'
+              ? extracted.form1098T?.adjustmentsFromPriorYear
+              : undefined,
+          tuitionLedgerQualifiedExpenses:
+            extracted.documentType === 'tuition-ledger'
+              ? qualifiedExpenses
+              : undefined,
+          tuitionLedgerBooksAndMaterials:
+            extracted.documentType === 'tuition-ledger'
+              ? booksAndMaterials
+              : undefined,
+          tuitionLedgerScholarships:
+            extracted.documentType === 'tuition-ledger' ? scholarships : undefined,
+          tuitionLedgerPaymentsReceived:
+            extracted.documentType === 'tuition-ledger'
+              ? extracted.form1098T?.paymentsReceived
+              : undefined,
           importNeedsEducationInterview: true,
           creditType: 'AOTC',
-          personRole: 'dependent',
+          personRole: matchedStudent?.role ?? 'dependent',
           isHalfTimeStudent: true,
           isFirstFourYears: true,
           hasConviction: false,
+          documentVariant:
+            extracted.form1098T?.documentVariant ?? extracted.documentType,
+          sourceDocumentIds: [documentId],
+          sourceDocumentTypes: [extracted.documentType],
           sourceDocumentId: documentId,
           sourceDocumentName: documentName,
           extractionConfidence: extracted.confidence
@@ -3239,7 +3705,32 @@ const mergeImportedEntityData = (
     'coveredPersons',
     'coverageFamily',
     'sharedAllocationPct',
-    'sharedPolicyAllocation'
+    'sharedPolicyAllocation',
+    'qualifiedExpenses',
+    'tuitionAmount',
+    'scholarshipsReceived',
+    'priorYearAdjustment',
+    'booksAndMaterials',
+    'paymentsReceived',
+    'form1098TQualifiedExpenses',
+    'form1098TScholarships',
+    'form1098TPriorYearAdjustment',
+    'tuitionLedgerQualifiedExpenses',
+    'tuitionLedgerBooksAndMaterials',
+    'tuitionLedgerScholarships',
+    'tuitionLedgerPaymentsReceived',
+    'shortTermProceeds',
+    'shortTermCostBasis',
+    'longTermProceeds',
+    'longTermCostBasis',
+    'proceeds',
+    'costBasis',
+    'interestPaid',
+    'studentLoanInterest',
+    'annualEnrollmentPremium',
+    'annualSLCSP',
+    'annualAPTC',
+    'annualAdvancePayment'
   ])
   const maxNumberKeys = new Set(['extractionConfidence'])
 
@@ -3250,7 +3741,18 @@ const mergeImportedEntityData = (
     if (Array.isArray(current) || Array.isArray(value)) {
       const currentArray = Array.isArray(current) ? current : []
       const nextArray = Array.isArray(value) ? value : []
-      merged[key] = [...currentArray, ...nextArray]
+      const seen = new Set<string>()
+      merged[key] = [...currentArray, ...nextArray].filter((entry) => {
+        const fingerprint =
+          typeof entry === 'string'
+            ? entry
+            : JSON.stringify(entry ?? null)
+        if (seen.has(fingerprint)) {
+          return false
+        }
+        seen.add(fingerprint)
+        return true
+      })
       continue
     }
 
@@ -3295,6 +3797,49 @@ const mergeImportedEntityData = (
     }
 
     merged[key] = value
+  }
+
+  const hasEducationSourceAmounts =
+    [
+      merged.form1098TQualifiedExpenses,
+      merged.form1098TScholarships,
+      merged.form1098TPriorYearAdjustment,
+      merged.tuitionLedgerQualifiedExpenses,
+      merged.tuitionLedgerBooksAndMaterials,
+      merged.tuitionLedgerScholarships,
+      merged.tuitionLedgerPaymentsReceived
+    ].some((value) => value !== undefined)
+
+  if (hasEducationSourceAmounts) {
+    const form1098TQualifiedExpenses = toMoney(merged.form1098TQualifiedExpenses)
+    const tuitionLedgerQualifiedExpenses = toMoney(
+      merged.tuitionLedgerQualifiedExpenses
+    )
+    const tuitionLedgerBooksAndMaterials = toMoney(
+      merged.tuitionLedgerBooksAndMaterials
+    )
+    merged.qualifiedExpenses = Math.max(
+      form1098TQualifiedExpenses,
+      tuitionLedgerQualifiedExpenses + tuitionLedgerBooksAndMaterials,
+      toMoney(merged.qualifiedExpenses)
+    )
+    merged.booksAndMaterials = Math.max(
+      tuitionLedgerBooksAndMaterials,
+      toMoney(merged.booksAndMaterials)
+    )
+    merged.scholarshipsReceived = Math.max(
+      toMoney(merged.form1098TScholarships),
+      toMoney(merged.tuitionLedgerScholarships),
+      toMoney(merged.scholarshipsReceived)
+    )
+    merged.priorYearAdjustment = Math.max(
+      toMoney(merged.form1098TPriorYearAdjustment),
+      toMoney(merged.priorYearAdjustment)
+    )
+    merged.paymentsReceived = Math.max(
+      toMoney(merged.tuitionLedgerPaymentsReceived),
+      toMoney(merged.paymentsReceived)
+    )
   }
 
   return merged
@@ -4678,13 +5223,36 @@ const getTaxLots = (
       proceeds: toMoney(entity.data.proceeds),
       costBasis: toMoney(entity.data.costBasis ?? entity.data.basis),
       source: toText(entity.data.source ?? 'entity'),
+      sourceBrokerName: toText(
+        entity.data.sourceBrokerName ?? entity.data.payerName
+      ),
+      summaryOnly: Boolean(entity.data.summaryOnly),
       isComplete: Boolean(
         (entity.data.security ?? entity.data.asset) &&
           (entity.data.proceeds ?? entity.data.costBasis)
       )
     }))
 
-  return mergeCollectionById(screenLots, entityLots)
+  const brokersWithDetailedLots = new Set(
+    entityLots
+      .filter(
+        (lot) =>
+          lot.summaryOnly !== true &&
+          lot.sourceBrokerName &&
+          lot.source.startsWith('document_')
+      )
+      .map((lot) => normalizeMatchingText(lot.sourceBrokerName))
+      .filter((value) => value.length > 0)
+  )
+
+  return mergeCollectionById(
+    screenLots,
+    entityLots.filter((lot) => {
+      if (!lot.summaryOnly) return true
+      const brokerKey = normalizeMatchingText(lot.sourceBrokerName)
+      return !brokerKey || !brokersWithDetailedLots.has(brokerKey)
+    })
+  )
 }
 
 const getCryptoAccounts = (
@@ -5208,6 +5776,7 @@ const getEducationExpensesData = (
       const scholarshipsReceived = toMoney(
         data.scholarshipsReceived ?? data.scholarships
       )
+      const creditTypeValue = toText(data.creditType).toUpperCase()
       return {
         id: entity.id,
         studentName: toText(data.studentName ?? data.name),
@@ -5221,7 +5790,12 @@ const getEducationExpensesData = (
         isHalfTimeStudent: data.isHalfTimeStudent !== false,
         isFirstFourYears: data.isFirstFourYears !== false,
         hasConviction: Boolean(data.hasConviction ?? false),
-        creditType: toText(data.creditType).toUpperCase() === 'LLC' ? 'LLC' : 'AOTC',
+        creditType:
+          creditTypeValue === 'LLC'
+            ? 'LLC'
+            : creditTypeValue === 'AOTC'
+              ? 'AOTC'
+              : null,
         personRole: (() => {
           const role = toText(data.personRole ?? data.owner).toLowerCase()
           if (role === 'spouse') return 'spouse'
@@ -5232,9 +5806,10 @@ const getEducationExpensesData = (
     })
     .filter(
       (expense) =>
-        expense.qualifiedExpenses > 0 ||
-        expense.scholarshipsReceived > 0 ||
-        Boolean(expense.institutionName)
+        expense.creditType &&
+        (expense.qualifiedExpenses > 0 ||
+          expense.scholarshipsReceived > 0 ||
+          Boolean(expense.institutionName))
     )
 
   if (entityExpenses.length > 0) {
@@ -5248,6 +5823,11 @@ const getEducationExpensesData = (
     form.scholarshipReceived ?? screen.scholarshipReceived
   )
   if (tuitionPaid <= 0 && scholarshipReceived <= 0) {
+    return undefined
+  }
+
+  const creditTypeValue = toText(form.creditType).toLowerCase()
+  if (creditTypeValue !== 'aotc' && creditTypeValue !== 'llc') {
     return undefined
   }
 
@@ -5266,9 +5846,9 @@ const getEducationExpensesData = (
       qualifiedExpenses: tuitionPaid,
       scholarshipsReceived: scholarshipReceived,
       isHalfTimeStudent: true,
-      isFirstFourYears: toText(form.creditType).toLowerCase() !== 'llc',
+      isFirstFourYears: creditTypeValue !== 'llc',
       hasConviction: false,
-      creditType: toText(form.creditType).toLowerCase() === 'llc' ? 'LLC' : 'AOTC',
+      creditType: creditTypeValue === 'llc' ? 'LLC' : 'AOTC',
       personRole: firstDependent ? 'dependent' : 'taxpayer'
     }
   ]
@@ -8522,7 +9102,8 @@ export class AppSessionService {
   private async runDocumentExtraction(
     sessionId: string,
     documentId: string,
-    body: z.infer<typeof documentCreateSchema>
+    body: z.infer<typeof documentCreateSchema>,
+    context: DocumentContext = {}
   ): Promise<{
     artifactKey: string | null
     metadata: Record<string, unknown>
@@ -8591,7 +9172,8 @@ export class AppSessionService {
       const importedEntities = buildEntitiesFromDocumentExtraction(
         documentId,
         body.name,
-        extracted
+        extracted,
+        context
       )
       const interviewGuidance = buildDocumentInterviewGuidance(extracted)
       const extractedEntityRefs = importedEntities.map((entity) => ({
@@ -8614,6 +9196,13 @@ export class AppSessionService {
       metadata.prefillSummary = buildDocumentPrefillSummary(
         extracted,
         importedEntities
+      )
+      metadata.reconciliationSummary = buildDocumentReconciliationSummary(
+        extracted,
+        {
+          ...context,
+          currentDocumentId: documentId
+        }
       )
       metadata.ocrIssue =
         extracted.documentType === 'unknown'
@@ -8894,6 +9483,37 @@ export class AppSessionService {
     )
   }
 
+  private async refreshDocumentReconciliationSummaries(
+    row: FilingSessionRow
+  ): Promise<void> {
+    const snapshot = await this.getSnapshot(row)
+    const entities = await this.loadSessionEntities(row.id)
+    const documents = await this.loadSessionDocuments(row.id)
+
+    await Promise.all(
+      documents.map(async (document) => {
+        const extraction = getDocumentExtraction(document)
+        if (!extraction) return
+        const metadata = { ...document.metadata }
+        metadata.reconciliationSummary = buildDocumentReconciliationSummary(
+          extraction,
+          {
+            snapshot,
+            entities,
+            documents: documents.map((entry) => ({
+              id: entry.id,
+              name: entry.name,
+              metadata: entry.metadata
+            })),
+            currentDocumentId: document.id
+          }
+        )
+        const metadataKey = `filing-sessions/${row.id}/documents/${document.id}/metadata.json`
+        await this.artifacts.putJson(metadataKey, metadata)
+      })
+    )
+  }
+
   async listEntities(sessionId: string, user: AppUserClaims) {
     await this.requireSession(sessionId, user.sub)
     return { entities: await this.loadSessionEntities(sessionId) }
@@ -8911,7 +9531,7 @@ export class AppSessionService {
     rawBody: unknown,
     user: AppUserClaims
   ) {
-    await this.requireSession(sessionId, user.sub)
+    const row = await this.requireSession(sessionId, user.sub)
     const body = entitySchema.parse(rawBody ?? {})
     const now = nowIso()
     const rowId = makeSessionEntityRowId(sessionId, entityType, entityId)
@@ -8940,6 +9560,8 @@ export class AppSessionService {
       )
       .run()
 
+    await this.refreshDocumentReconciliationSummaries(row)
+
     return {
       entity: {
         id: entityId,
@@ -8959,13 +9581,14 @@ export class AppSessionService {
     entityId: string,
     user: AppUserClaims
   ) {
-    await this.requireSession(sessionId, user.sub)
+    const row = await this.requireSession(sessionId, user.sub)
     await this.env.USTAXES_DB.prepare(
       `DELETE FROM session_entities
          WHERE filing_session_id = ?1 AND entity_type = ?2 AND entity_key = ?3`
     )
       .bind(sessionId, entityType, entityId)
       .run()
+    await this.refreshDocumentReconciliationSummaries(row)
     return { deleted: true }
   }
 
@@ -8974,12 +9597,16 @@ export class AppSessionService {
     rawBody: unknown,
     user: AppUserClaims
   ) {
-    await this.requireSession(sessionId, user.sub)
+    const row = await this.requireSession(sessionId, user.sub)
     const body = documentCreateSchema.parse(rawBody ?? {})
     const id = crypto.randomUUID()
     const now = nowIso()
     const metadataKey = `filing-sessions/${sessionId}/documents/${id}/metadata.json`
-    const extracted = await this.runDocumentExtraction(sessionId, id, body)
+    const extracted = await this.runDocumentExtraction(sessionId, id, body, {
+      snapshot: await this.getSnapshot(row),
+      entities: await this.loadSessionEntities(row.id),
+      documents: await this.loadSessionDocuments(row.id)
+    })
     await this.artifacts.putJson(metadataKey, extracted.metadata)
     await this.env.USTAXES_DB.prepare(
       `INSERT INTO documents (
@@ -9002,6 +9629,8 @@ export class AppSessionService {
         now
       )
       .run()
+
+    await this.refreshDocumentReconciliationSummaries(row)
 
     return this.getDocument(sessionId, id, user)
   }
@@ -9218,7 +9847,10 @@ export class AppSessionService {
     rawBody: unknown,
     user: AppUserClaims
   ) {
-    await this.requireSession(sessionId, user.sub)
+    const row = await this.requireSession(sessionId, user.sub)
+    const snapshot = await this.getSnapshot(row)
+    const entities = await this.loadSessionEntities(row.id)
+    const documents = await this.loadSessionDocuments(row.id)
     const current = await this.getDocument(sessionId, documentId, user)
     const patch = documentPatchSchema.parse(rawBody ?? {})
     const metadata = {
@@ -9240,7 +9872,8 @@ export class AppSessionService {
         const importedEntities = buildEntitiesFromDocumentExtraction(
           documentId,
           current.document.name,
-          correctedExtraction
+          correctedExtraction,
+          { snapshot, entities }
         )
         const extractedEntityRefs = importedEntities.map((entity) => ({
           entityType: entity.entityType,
@@ -9262,17 +9895,30 @@ export class AppSessionService {
           correctedExtraction,
           importedEntities
         )
+        metadata.reconciliationSummary = buildDocumentReconciliationSummary(
+          correctedExtraction,
+          {
+            snapshot,
+            entities,
+            documents: documents.map((document) => ({
+              id: document.id,
+              name: document.name,
+              metadata: document.metadata
+            })),
+            currentDocumentId: documentId
+          }
+        )
       }
     }
-    const row = await this.env.USTAXES_DB.prepare(
+    const metadataRow = await this.env.USTAXES_DB.prepare(
       `SELECT metadata_key FROM documents WHERE filing_session_id = ?1 AND id = ?2`
     )
       .bind(sessionId, documentId)
       .first<{ metadata_key: string }>()
-    if (!row) {
+    if (!metadataRow) {
       throw new HttpError(404, 'Document not found')
     }
-    await this.artifacts.putJson(row.metadata_key, metadata)
+    await this.artifacts.putJson(metadataRow.metadata_key, metadata)
     const extractedEntities = [
       ...asArray<Record<string, unknown>>(metadata.extractedEntities),
       ...(() => {
@@ -9290,7 +9936,8 @@ export class AppSessionService {
         ? buildEntitiesFromDocumentExtraction(
             documentId,
             current.document.name,
-            extractedForImport
+            extractedForImport,
+            { snapshot, entities }
           )
         : []
 
@@ -9351,6 +9998,7 @@ export class AppSessionService {
         documentId
       )
       .run()
+    await this.refreshDocumentReconciliationSummaries(row)
     return this.getDocument(sessionId, documentId, user)
   }
 

@@ -77,6 +77,7 @@ export interface Extracted1099BTransaction {
 }
 
 export interface Extracted1099B extends Extracted1099Base {
+  documentVariant?: '1099-b' | 'brokerage-summary'
   shortTermProceeds?: number
   shortTermCostBasis?: number
   longTermProceeds?: number
@@ -91,11 +92,14 @@ export interface Extracted1098E {
 }
 
 export interface Extracted1098T {
+  documentVariant?: '1098-t' | 'tuition-ledger'
   institutionName?: string
   studentName?: string
   qualifiedTuitionExpenses?: number
   scholarshipsOrGrants?: number
   adjustmentsFromPriorYear?: number
+  booksAndMaterials?: number
+  paymentsReceived?: number
   confidence: number
 }
 
@@ -165,8 +169,10 @@ export interface ExtractedDocument {
     | '1099-g'
     | '1099-ssa'
     | '1099-b'
+    | 'brokerage-summary'
     | '1098-e'
     | '1098-t'
+    | 'tuition-ledger'
     | '1095-a'
     | '1098-mortgage'
     | 'childcare'
@@ -197,7 +203,7 @@ export interface ExtractedDocument {
 
 const EXTRACTION_PROMPT =
   'You are a tax document parser. Extract all tax fields from this document image as JSON. ' +
-  'Identify the document type (w2, 1099-nec, 1099-int, 1099-div, 1099-misc, 1099-r, 1099-g, 1099-ssa, 1099-b, 1098-e, 1098-t, 1095-a, 1098-mortgage, childcare, charity-receipt, 1098-c, k-1). ' +
+  'Identify the document type (w2, 1099-nec, 1099-int, 1099-div, 1099-misc, 1099-r, 1099-g, 1099-ssa, 1099-b, brokerage-summary, 1098-e, 1098-t, tuition-ledger, 1095-a, 1098-mortgage, childcare, charity-receipt, 1098-c, k-1). ' +
   'For W-2: extract employerName, ein, box1Wages, box2FedWithholding, box12Codes (array of {code, amount}), box16StateWages, box17StateWithholding. ' +
   'For 1099-INT: extract payerName, interestIncome, earlyWithdrawalPenalty, federalTaxWithheld, taxExemptInterest, foreignTaxPaid. ' +
   'For 1099-DIV: extract payerName, ordinaryDividends, qualifiedDividends, capitalGainDistributions, section199ADividends, federalTaxWithheld, exemptInterestDividends, foreignTaxPaid. ' +
@@ -206,9 +212,9 @@ const EXTRACTION_PROMPT =
   'For 1099-R: extract payerName, grossDistribution, taxableAmount, federalTaxWithheld, distributionCode, iraSepSimple. ' +
   'For 1099-G: extract payerName, unemploymentCompensation, stateRefund, federalTaxWithheld, stateTaxWithheld. ' +
   'For SSA-1099 / 1099-SSA: extract payerName, benefitsPaid, federalTaxWithheld, medicarePartBPremiums. ' +
-  'For 1099-B: extract payerName, shortTermProceeds, shortTermCostBasis, longTermProceeds, longTermCostBasis, federalTaxWithheld, transactions. ' +
+  'For 1099-B or brokerage-summary: extract payerName, shortTermProceeds, shortTermCostBasis, longTermProceeds, longTermCostBasis, federalTaxWithheld, transactions. ' +
   'For 1098-E: extract lenderName, studentLoanInterest. ' +
-  'For 1098-T: extract institutionName, studentName, qualifiedTuitionExpenses, scholarshipsOrGrants, adjustmentsFromPriorYear. ' +
+  'For 1098-T or tuition-ledger / bursar statements: extract institutionName, studentName, qualifiedTuitionExpenses, scholarshipsOrGrants, adjustmentsFromPriorYear, booksAndMaterials, paymentsReceived. ' +
   'For 1095-A: extract policyNumber, coveredPersons, annualEnrollmentPremium, annualSlcsp, annualAdvancePayment, coverageStart, coverageEnd. ' +
   'For Form 1098 mortgage statements: extract lenderName, mortgageInterest, propertyTaxes, points, mortgageInsurancePremiums. ' +
   'For childcare receipts or provider statements: extract providerName, providerTin, amountPaid, address. ' +
@@ -312,10 +318,24 @@ const detectDocumentTypeFromText = (
   const search = `${text} ${documentName}`.toLowerCase()
 
   if (/1098\s*-?\s*t|tuition statement/.test(search)) return '1098-t'
+  if (
+    /tuition ledger|bursar|student account statement|student billing statement|account activity for student|semester charges/.test(
+      search
+    )
+  ) {
+    return 'tuition-ledger'
+  }
   if (/schedule\s*k\s*-?\s*1|\bk-1\b/.test(search)) return 'k-1'
   if (/1099\s*-?\s*misc|miscellaneous income/.test(search)) return '1099-misc'
   if (/1099\s*-?\s*b|proceeds from broker|broker and barter/.test(search))
     return '1099-b'
+  if (
+    /consolidated 1099|brokerage statement|brokerage summary|tax reporting statement|realized gain(?:\/loss)? summary|annual brokerage|supplemental brokerage/.test(
+      search
+    )
+  ) {
+    return 'brokerage-summary'
+  }
   if (/1098\s*-?\s*e|student loan interest/.test(search)) return '1098-e'
   if (/1095\s*-?\s*a|health insurance marketplace/.test(search))
     return '1095-a'
@@ -451,8 +471,10 @@ const parseTextDocumentToRecord = (
 
   switch (documentType) {
     case '1098-t':
+    case 'tuition-ledger':
       return {
         documentType,
+        documentVariant: documentType,
         institutionName: firstTextMatch(text, [
           /(?:filer'?s name|institution(?: name)?|school name)\s*[:\-]?\s*([A-Za-z0-9&.,' -]{4,})/i
         ], fallbackName),
@@ -467,6 +489,12 @@ const parseTextDocumentToRecord = (
         ]),
         adjustmentsFromPriorYear: firstNumberMatch(text, [
           /(?:adjustments made for a prior year|box\s*4)\D{0,25}([-$]?[\d,]+(?:\.\d{2})?)/i
+        ]),
+        booksAndMaterials: firstNumberMatch(text, [
+          /(?:books(?: and required supplies)?|course materials|required materials|supplies)\D{0,25}([-$]?[\d,]+(?:\.\d{2})?)/i
+        ]),
+        paymentsReceived: firstNumberMatch(text, [
+          /(?:payments received|payments posted|payments made|credits applied)\D{0,25}([-$]?[\d,]+(?:\.\d{2})?)/i
         ])
       }
     case '1099-misc':
@@ -522,7 +550,8 @@ const parseTextDocumentToRecord = (
           /(?:ubia|qualified property)\D{0,25}([-$]?[\d,]+(?:\.\d{2})?)/i
         ])
       }
-    case '1099-b': {
+    case '1099-b':
+    case 'brokerage-summary': {
       const payerName = firstTextMatch(text, [
         /(?:payer'?s name|broker(?: or barter exchange)? name|broker)\s*[:\-]?\s*([A-Za-z0-9&.,' -]{4,})/i
       ], fallbackName)
@@ -546,6 +575,7 @@ const parseTextDocumentToRecord = (
       )
       return {
         documentType,
+        documentVariant: documentType,
         payerName,
         shortTermProceeds,
         shortTermCostBasis,
@@ -660,8 +690,10 @@ function buildExtractedDocument(
     '1099-g',
     '1099-ssa',
     '1099-b',
+    'brokerage-summary',
     '1098-e',
     '1098-t',
+    'tuition-ledger',
     '1095-a',
     '1098-mortgage',
     'childcare',
@@ -813,9 +845,11 @@ function buildExtractedDocument(
       : undefined
 
   const form1099B: Extracted1099B | undefined =
-    docType === '1099-b'
+    docType === '1099-b' || docType === 'brokerage-summary'
       ? {
           ...shared1099,
+          documentVariant:
+            docType === 'brokerage-summary' ? 'brokerage-summary' : '1099-b',
           shortTermProceeds: parseNumber(
             parsed.shortTermProceeds ?? parsed.shortTermSalesProceeds
           ),
@@ -874,8 +908,10 @@ function buildExtractedDocument(
       : undefined
 
   const form1098T: Extracted1098T | undefined =
-    docType === '1098-t'
+    docType === '1098-t' || docType === 'tuition-ledger'
       ? {
+          documentVariant:
+            docType === 'tuition-ledger' ? 'tuition-ledger' : '1098-t',
           institutionName:
             typeof parsed.institutionName === 'string'
               ? parsed.institutionName
@@ -892,6 +928,12 @@ function buildExtractedDocument(
           ),
           adjustmentsFromPriorYear: parseNumber(
             parsed.adjustmentsFromPriorYear ?? parsed.box4
+          ),
+          booksAndMaterials: parseNumber(
+            parsed.booksAndMaterials ?? parsed.requiredMaterials
+          ),
+          paymentsReceived: parseNumber(
+            parsed.paymentsReceived ?? parsed.creditsApplied
           ),
           confidence: 0.82
         }
@@ -1251,6 +1293,7 @@ export function applyFieldEditsToExtractedDocument(
         }
       }
     case '1099-b':
+    case 'brokerage-summary':
       return {
         ...extracted,
         form1099B: {
@@ -1274,6 +1317,7 @@ export function applyFieldEditsToExtractedDocument(
         }
       }
     case '1098-t':
+    case 'tuition-ledger':
       return {
         ...extracted,
         form1098T: {
@@ -1283,6 +1327,8 @@ export function applyFieldEditsToExtractedDocument(
           qualifiedTuitionExpenses: maybeEditedNumber(fieldEdits, 'Qualified tuition (Box 1)', extracted.form1098T?.qualifiedTuitionExpenses),
           scholarshipsOrGrants: maybeEditedNumber(fieldEdits, 'Scholarships and grants (Box 5)', extracted.form1098T?.scholarshipsOrGrants),
           adjustmentsFromPriorYear: maybeEditedNumber(fieldEdits, 'Prior-year adjustment (Box 4)', extracted.form1098T?.adjustmentsFromPriorYear),
+          booksAndMaterials: maybeEditedNumber(fieldEdits, 'Books and required materials', extracted.form1098T?.booksAndMaterials),
+          paymentsReceived: maybeEditedNumber(fieldEdits, 'Payments received', extracted.form1098T?.paymentsReceived),
           confidence: extracted.form1098T?.confidence ?? extracted.confidence
         }
       }

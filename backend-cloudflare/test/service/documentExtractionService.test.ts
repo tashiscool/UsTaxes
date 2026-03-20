@@ -26,6 +26,27 @@ describe('documentExtractionService', () => {
     expect(extracted.form1098T?.scholarshipsOrGrants).toBe(1000)
   })
 
+  it('parses tuition ledger PDF text into education support fields', async () => {
+    const extracted = await extractDocumentFromBytes(
+      pdfBytes(`
+        Student Billing Statement
+        School name: Monroe State University
+        Student's name: Casey Tester
+        Tuition charges 5,800.00
+        Books and required supplies 600.00
+        Scholarships or grants 1,000.00
+        Payments received 4,500.00
+      `),
+      'application/pdf',
+      'tuition-ledger.pdf'
+    )
+
+    expect(extracted.documentType).toBe('tuition-ledger')
+    expect(extracted.form1098T?.institutionName).toBe('Monroe State University')
+    expect(extracted.form1098T?.booksAndMaterials).toBe(600)
+    expect(extracted.form1098T?.paymentsReceived).toBe(4500)
+  })
+
   it('parses Schedule K-1 style PDF text into k-1 fields', async () => {
     const extracted = await extractDocumentFromBytes(
       pdfBytes(`
@@ -94,5 +115,25 @@ describe('documentExtractionService', () => {
     expect(extracted.form1099B?.shortTermProceeds).toBe(10000)
     expect(extracted.form1099B?.longTermProceeds).toBe(8000)
     expect(extracted.form1099B?.transactions?.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('parses brokerage summary PDF text into investment totals', async () => {
+    const extracted = await extractDocumentFromBytes(
+      pdfBytes(`
+        Annual Brokerage Statement
+        Broker name: Fidelity Brokerage
+        Short-term proceeds 10,000.00
+        Short-term cost basis 9,000.00
+        Long-term proceeds 8,000.00
+        Long-term cost basis 6,200.00
+      `),
+      'application/pdf',
+      'brokerage-summary.pdf'
+    )
+
+    expect(extracted.documentType).toBe('brokerage-summary')
+    expect(extracted.form1099B?.documentVariant).toBe('brokerage-summary')
+    expect(extracted.form1099B?.shortTermProceeds).toBe(10000)
+    expect(extracted.form1099B?.longTermCostBasis).toBe(6200)
   })
 })
