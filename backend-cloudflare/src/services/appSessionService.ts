@@ -218,6 +218,11 @@ const documentCreateSchema = z.object({
       'w2',
       '1099',
       'investment',
+      'housing',
+      'health',
+      'education',
+      'care',
+      'charity',
       'prior_return',
       'irs_notice',
       'foreign',
@@ -1634,6 +1639,12 @@ interface RejectionRepairError {
   canEfile: boolean
 }
 
+const makeSessionEntityRowId = (
+  sessionId: string,
+  entityType: string,
+  entityId: string
+) => `${sessionId}:${entityType}:${entityId}`
+
 const FORM_1099_TYPES = new Set([
   '1099_int',
   '1099_div',
@@ -1732,12 +1743,49 @@ const decodeBase64Content = (value: string): Uint8Array | null => {
 
 const inferDocumentClusterFromExtraction = (
   extracted: ExtractedDocument
-): 'w2' | '1099' | 'unknown' => {
+):
+  | 'w2'
+  | '1099'
+  | 'investment'
+  | 'housing'
+  | 'health'
+  | 'education'
+  | 'care'
+  | 'charity'
+  | 'unknown' => {
   if (extracted.documentType === 'w2') {
     return 'w2'
   }
-  if (extracted.documentType.startsWith('1099-')) {
+  if (
+    extracted.documentType === '1099-int' ||
+    extracted.documentType === '1099-div' ||
+    extracted.documentType === '1099-nec' ||
+    extracted.documentType === '1099-r' ||
+    extracted.documentType === '1099-g' ||
+    extracted.documentType === '1099-ssa'
+  ) {
     return '1099'
+  }
+  if (extracted.documentType === '1099-b') {
+    return 'investment'
+  }
+  if (extracted.documentType === '1098-mortgage') {
+    return 'housing'
+  }
+  if (extracted.documentType === '1095-a') {
+    return 'health'
+  }
+  if (extracted.documentType === '1098-e') {
+    return 'education'
+  }
+  if (extracted.documentType === 'childcare') {
+    return 'care'
+  }
+  if (
+    extracted.documentType === 'charity-receipt' ||
+    extracted.documentType === '1098-c'
+  ) {
+    return 'charity'
   }
   return 'unknown'
 }
@@ -1870,24 +1918,188 @@ const buildDocumentFieldsFromExtraction = (
           confidence
         )
       ].filter(Boolean) as Array<Record<string, unknown>>
+    case '1099-g':
+      return [
+        makeField('Payer name', extracted.form1099G?.payerName, confidence),
+        makeField(
+          'Unemployment compensation (Box 1)',
+          extracted.form1099G?.unemploymentCompensation,
+          confidence
+        ),
+        makeField(
+          'State refund (Box 2)',
+          extracted.form1099G?.stateRefund,
+          confidence
+        ),
+        makeField(
+          'Federal tax withheld (Box 4)',
+          extracted.form1099G?.federalTaxWithheld,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case '1099-ssa':
+      return [
+        makeField('Payer name', extracted.form1099Ssa?.payerName, confidence),
+        makeField(
+          'Benefits paid (Box 5)',
+          extracted.form1099Ssa?.benefitsPaid,
+          confidence
+        ),
+        makeField(
+          'Federal tax withheld (Box 6)',
+          extracted.form1099Ssa?.federalTaxWithheld,
+          confidence
+        ),
+        makeField(
+          'Medicare Part B premiums',
+          extracted.form1099Ssa?.medicarePartBPremiums,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case '1099-b':
+      return [
+        makeField('Broker / payer', extracted.form1099B?.payerName, confidence),
+        makeField(
+          'Short-term proceeds',
+          extracted.form1099B?.shortTermProceeds,
+          confidence
+        ),
+        makeField(
+          'Short-term cost basis',
+          extracted.form1099B?.shortTermCostBasis,
+          confidence
+        ),
+        makeField(
+          'Long-term proceeds',
+          extracted.form1099B?.longTermProceeds,
+          confidence
+        ),
+        makeField(
+          'Long-term cost basis',
+          extracted.form1099B?.longTermCostBasis,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case '1098-e':
+      return [
+        makeField('Lender', extracted.form1098E?.lenderName, confidence),
+        makeField(
+          'Student loan interest',
+          extracted.form1098E?.studentLoanInterest,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case '1095-a':
+      return [
+        makeField('Policy number', extracted.form1095A?.policyNumber, confidence),
+        makeField(
+          'People covered',
+          extracted.form1095A?.coveredPersons,
+          confidence
+        ),
+        makeField(
+          'Enrollment premiums',
+          extracted.form1095A?.annualEnrollmentPremium,
+          confidence
+        ),
+        makeField('SLCSP', extracted.form1095A?.annualSlcsp, confidence),
+        makeField(
+          'Advance premium tax credit',
+          extracted.form1095A?.annualAdvancePayment,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case '1098-mortgage':
+      return [
+        makeField('Lender', extracted.mortgage1098?.lenderName, confidence),
+        makeField(
+          'Mortgage interest',
+          extracted.mortgage1098?.mortgageInterest,
+          confidence
+        ),
+        makeField(
+          'Property taxes',
+          extracted.mortgage1098?.propertyTaxes,
+          confidence
+        ),
+        makeField('Points', extracted.mortgage1098?.points, confidence),
+        makeField(
+          'Mortgage insurance premiums',
+          extracted.mortgage1098?.mortgageInsurancePremiums,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case 'childcare':
+      return [
+        makeField(
+          'Care provider',
+          extracted.childcareStatement?.providerName,
+          confidence
+        ),
+        makeField(
+          'Provider TIN',
+          extracted.childcareStatement?.providerTin,
+          confidence
+        ),
+        makeField(
+          'Amount paid',
+          extracted.childcareStatement?.amountPaid,
+          confidence
+        ),
+        makeField(
+          'Address',
+          extracted.childcareStatement?.address,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
+    case 'charity-receipt':
+    case '1098-c':
+      return [
+        makeField('Donee', extracted.charityReceipt?.doneeName, confidence),
+        makeField(
+          'Cash contribution',
+          extracted.charityReceipt?.cashContribution,
+          confidence
+        ),
+        makeField(
+          'Noncash contribution',
+          extracted.charityReceipt?.noncashContribution,
+          confidence
+        ),
+        makeField(
+          'Deduction claimed',
+          extracted.charityReceipt?.deductionClaimed,
+          confidence
+        ),
+        makeField(
+          'Gross proceeds',
+          extracted.charityReceipt?.grossProceeds,
+          confidence
+        ),
+        makeField(
+          'Property description',
+          extracted.charityReceipt?.propertyDescription,
+          confidence
+        )
+      ].filter(Boolean) as Array<Record<string, unknown>>
     default:
       return []
   }
 }
 
-const buildEntityFromDocumentExtraction = (
+type ImportedExtractedEntity = {
+  entityType: string
+  entityId: string
+  status: string
+  label: string
+  data: Record<string, unknown>
+}
+
+const buildEntitiesFromDocumentExtraction = (
   documentId: string,
   documentName: string,
   extracted: ExtractedDocument
-):
-  | {
-      entityType: string
-      entityId: string
-      status: string
-      label: string
-      data: Record<string, unknown>
-    }
-  | undefined => {
+): ImportedExtractedEntity[] => {
   switch (extracted.documentType) {
     case 'w2':
       if (
@@ -1895,9 +2107,9 @@ const buildEntityFromDocumentExtraction = (
         !extracted.w2?.ein ||
         extracted.w2.box1Wages == null
       ) {
-        return undefined
+        return []
       }
-      return {
+      return [{
         entityType: 'w2',
         entityId: documentId,
         status: 'review_needed',
@@ -1914,15 +2126,15 @@ const buildEntityFromDocumentExtraction = (
           sourceDocumentName: documentName,
           extractionConfidence: extracted.confidence
         }
-      }
+      }]
     case '1099-int':
       if (
         !extracted.form1099Int?.payerName ||
         extracted.form1099Int.interestIncome == null
       ) {
-        return undefined
+        return []
       }
-      return {
+      return [{
         entityType: '1099_int',
         entityId: documentId,
         status: 'review_needed',
@@ -1938,15 +2150,15 @@ const buildEntityFromDocumentExtraction = (
           sourceDocumentName: documentName,
           extractionConfidence: extracted.confidence
         }
-      }
+      }]
     case '1099-div':
       if (
         !extracted.form1099Div?.payerName ||
         extracted.form1099Div.ordinaryDividends == null
       ) {
-        return undefined
+        return []
       }
-      return {
+      return [{
         entityType: '1099_div',
         entityId: documentId,
         status: 'review_needed',
@@ -1967,15 +2179,15 @@ const buildEntityFromDocumentExtraction = (
           sourceDocumentName: documentName,
           extractionConfidence: extracted.confidence
         }
-      }
+      }]
     case '1099-nec':
       if (
         !extracted.form1099Nec?.payerName ||
         extracted.form1099Nec.nonemployeeCompensation == null
       ) {
-        return undefined
+        return []
       }
-      return {
+      return [{
         entityType: '1099_nec',
         entityId: documentId,
         status: 'review_needed',
@@ -1989,15 +2201,15 @@ const buildEntityFromDocumentExtraction = (
           sourceDocumentName: documentName,
           extractionConfidence: extracted.confidence
         }
-      }
+      }]
     case '1099-r':
       if (
         !extracted.form1099R?.payerName ||
         extracted.form1099R.grossDistribution == null
       ) {
-        return undefined
+        return []
       }
-      return {
+      return [{
         entityType: '1099_r',
         entityId: documentId,
         status: 'review_needed',
@@ -2014,10 +2226,330 @@ const buildEntityFromDocumentExtraction = (
           sourceDocumentName: documentName,
           extractionConfidence: extracted.confidence
         }
+      }]
+    case '1099-g':
+      if (extracted.form1099G?.unemploymentCompensation == null) {
+        return []
       }
+      return [{
+        entityType: 'unemployment_record',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.form1099G.payerName || documentName,
+        data: {
+          payerName: extracted.form1099G.payerName,
+          amount: extracted.form1099G.unemploymentCompensation,
+          federalWithheld: extracted.form1099G.federalTaxWithheld,
+          stateWithheld: extracted.form1099G.stateTaxWithheld,
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }]
+    case '1099-ssa':
+      if (extracted.form1099Ssa?.benefitsPaid == null) {
+        return []
+      }
+      return [{
+        entityType: 'ssa_record',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.form1099Ssa.payerName || documentName,
+        data: {
+          payerName: extracted.form1099Ssa.payerName,
+          grossAmount: extracted.form1099Ssa.benefitsPaid,
+          federalWithheld: extracted.form1099Ssa.federalTaxWithheld,
+          medicarePartBPremiums: extracted.form1099Ssa.medicarePartBPremiums,
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }]
+    case '1099-b': {
+      const shortTermProceeds = toMoney(extracted.form1099B?.shortTermProceeds)
+      const longTermProceeds = toMoney(extracted.form1099B?.longTermProceeds)
+      const totalProceeds = shortTermProceeds + longTermProceeds
+      if (!extracted.form1099B?.payerName || totalProceeds <= 0) {
+        return []
+      }
+      return [
+        {
+          entityType: '1099_b',
+          entityId: documentId,
+          status: 'review_needed',
+          label: extracted.form1099B.payerName || documentName,
+          data: {
+            payerName: extracted.form1099B.payerName,
+            shortTermProceeds: extracted.form1099B.shortTermProceeds,
+            shortTermCostBasis: extracted.form1099B.shortTermCostBasis,
+            longTermProceeds: extracted.form1099B.longTermProceeds,
+            longTermCostBasis: extracted.form1099B.longTermCostBasis,
+            federalWithheld: extracted.form1099B.federalTaxWithheld,
+            owner: extracted.form1099B.owner ?? 'taxpayer',
+            sourceDocumentId: documentId,
+            sourceDocumentName: documentName,
+            extractionConfidence: extracted.confidence
+          }
+        },
+        {
+          entityType: 'tax_lot',
+          entityId: documentId,
+          status: 'review_needed',
+          label: extracted.form1099B.payerName || documentName,
+          data: {
+            security: extracted.form1099B.payerName || documentName,
+            securityType: 'brokerage',
+            proceeds: totalProceeds,
+            costBasis:
+              toMoney(extracted.form1099B.shortTermCostBasis) +
+              toMoney(extracted.form1099B.longTermCostBasis),
+            shortTermProceeds: extracted.form1099B.shortTermProceeds,
+            shortTermCostBasis: extracted.form1099B.shortTermCostBasis,
+            longTermProceeds: extracted.form1099B.longTermProceeds,
+            longTermCostBasis: extracted.form1099B.longTermCostBasis,
+            source: 'document_1099_b',
+            sourceDocumentId: documentId,
+            sourceDocumentName: documentName,
+            extractionConfidence: extracted.confidence
+          }
+        }
+      ]
+    }
+    case '1098-e':
+      if (extracted.form1098E?.studentLoanInterest == null) {
+        return []
+      }
+      return [{
+        entityType: 'student_loan_interest',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.form1098E.lenderName || documentName,
+        data: {
+          lenderName: extracted.form1098E.lenderName,
+          interestPaid: extracted.form1098E.studentLoanInterest,
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }]
+    case '1095-a':
+      if (
+        extracted.form1095A?.annualEnrollmentPremium == null &&
+        extracted.form1095A?.annualAdvancePayment == null &&
+        extracted.form1095A?.annualSlcsp == null
+      ) {
+        return []
+      }
+      return [{
+        entityType: 'aca_1095a',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.form1095A.policyNumber || 'Marketplace coverage',
+        data: {
+          has1095A: true,
+          entryMode: 'annual',
+          policyNumber: extracted.form1095A.policyNumber,
+          coverageStart: extracted.form1095A.coverageStart,
+          coverageEnd: extracted.form1095A.coverageEnd,
+          coveredPersons: extracted.form1095A.coveredPersons ?? 1,
+          annualEnrollmentPremium:
+            extracted.form1095A.annualEnrollmentPremium ?? 0,
+          annualSLCSP: extracted.form1095A.annualSlcsp ?? 0,
+          annualAPTC: extracted.form1095A.annualAdvancePayment ?? 0,
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }]
+    case '1098-mortgage':
+      if (extracted.mortgage1098?.mortgageInterest == null) {
+        return []
+      }
+      return [{
+        entityType: 'itemized_deductions',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.mortgage1098.lenderName || documentName,
+        data: {
+          mortgageInterest: extracted.mortgage1098.mortgageInterest,
+          propertyTaxes: extracted.mortgage1098.propertyTaxes,
+          points: extracted.mortgage1098.points,
+          mortgageInsurancePremiums:
+            extracted.mortgage1098.mortgageInsurancePremiums,
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }]
+    case 'childcare':
+      if (
+        !extracted.childcareStatement?.providerName ||
+        extracted.childcareStatement.amountPaid == null
+      ) {
+        return []
+      }
+      return [{
+        entityType: 'care_provider',
+        entityId: documentId,
+        status: 'review_needed',
+        label: extracted.childcareStatement.providerName || documentName,
+        data: {
+          providerName: extracted.childcareStatement.providerName,
+          ein: extracted.childcareStatement.providerTin,
+          ssn: extracted.childcareStatement.providerTin,
+          address: extracted.childcareStatement.address,
+          amountPaid: extracted.childcareStatement.amountPaid,
+          providerType: 'daycare',
+          sourceDocumentId: documentId,
+          sourceDocumentName: documentName,
+          extractionConfidence: extracted.confidence
+        }
+      }]
+    case 'charity-receipt':
+    case '1098-c': {
+      const cashContribution = toMoney(extracted.charityReceipt?.cashContribution)
+      const noncashContribution = toMoney(
+        extracted.charityReceipt?.noncashContribution ??
+          extracted.charityReceipt?.deductionClaimed
+      )
+      const entities: ImportedExtractedEntity[] = []
+      if (cashContribution > 0) {
+        entities.push({
+          entityType: 'itemized_deductions',
+          entityId: `${documentId}-schedule-a`,
+          status: 'review_needed',
+          label: extracted.charityReceipt?.doneeName || documentName,
+          data: {
+            charityCashCheck: cashContribution,
+            sourceDocumentId: documentId,
+            sourceDocumentName: documentName,
+            extractionConfidence: extracted.confidence
+          }
+        })
+      }
+      if (
+        noncashContribution > 0 ||
+        Boolean(extracted.charityReceipt?.form1098CAttached)
+      ) {
+        entities.push({
+          entityType: 'form_8283',
+          entityId: `${documentId}-8283`,
+          status: 'review_needed',
+          label: extracted.charityReceipt?.doneeName || documentName,
+          data: {
+            sectionADonations:
+              noncashContribution > 0
+                ? [
+                    {
+                      donee: extracted.charityReceipt?.doneeName || '',
+                      description:
+                        extracted.charityReceipt?.propertyDescription ||
+                        'Noncash contribution',
+                      fairMarketValue: noncashContribution,
+                      deductionClaimed:
+                        extracted.charityReceipt?.deductionClaimed ??
+                        noncashContribution
+                    }
+                  ]
+                : [],
+            vehicleDonations:
+              extracted.documentType === '1098-c'
+                ? [
+                    {
+                      donee: extracted.charityReceipt?.doneeName || '',
+                      description:
+                        extracted.charityReceipt?.propertyDescription ||
+                        'Vehicle donation',
+                      grossProceeds:
+                        extracted.charityReceipt?.grossProceeds ?? undefined,
+                      deductionClaimed:
+                        extracted.charityReceipt?.deductionClaimed ??
+                        noncashContribution,
+                      form1098CAttached: true
+                    }
+                  ]
+                : [],
+            sourceDocumentId: documentId,
+            sourceDocumentName: documentName,
+            extractionConfidence: extracted.confidence
+          }
+        })
+      }
+      return entities
+    }
     default:
-      return undefined
+      return []
   }
+}
+
+const mergeImportedEntityData = (
+  existing: Record<string, unknown>,
+  incoming: Record<string, unknown>
+): Record<string, unknown> => {
+  const merged: Record<string, unknown> = { ...existing }
+  const nonAdditiveNumberKeys = new Set([
+    'coveredPersons',
+    'coverageFamily',
+    'sharedAllocationPct',
+    'sharedPolicyAllocation'
+  ])
+  const maxNumberKeys = new Set(['extractionConfidence'])
+
+  for (const [key, value] of Object.entries(incoming)) {
+    if (value === undefined) continue
+    const current = merged[key]
+
+    if (Array.isArray(current) || Array.isArray(value)) {
+      const currentArray = Array.isArray(current) ? current : []
+      const nextArray = Array.isArray(value) ? value : []
+      merged[key] = [...currentArray, ...nextArray]
+      continue
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      const currentNumber =
+        typeof current === 'number' && Number.isFinite(current) ? current : 0
+      if (maxNumberKeys.has(key)) {
+        merged[key] = Math.max(currentNumber, value)
+        continue
+      }
+      if (nonAdditiveNumberKeys.has(key)) {
+        merged[key] = value || currentNumber
+        continue
+      }
+      merged[key] = currentNumber + value
+      continue
+    }
+
+    if (typeof value === 'boolean') {
+      merged[key] = Boolean(current) || value
+      continue
+    }
+
+    if (typeof value === 'string') {
+      merged[key] = value || (typeof current === 'string' ? current : '')
+      continue
+    }
+
+    if (
+      value &&
+      typeof value === 'object' &&
+      current &&
+      typeof current === 'object' &&
+      !Array.isArray(value) &&
+      !Array.isArray(current)
+    ) {
+      merged[key] = mergeImportedEntityData(
+        current as Record<string, unknown>,
+        value as Record<string, unknown>
+      )
+      continue
+    }
+
+    merged[key] = value
+  }
+
+  return merged
 }
 
 const sumRecordValues = (record: Record<string, unknown>): number =>
@@ -3686,18 +4218,193 @@ const getStudentLoanData = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
 ) => {
-  const entity = entities.find((e) => e.entityType === 'student_loan_interest')
   const screen = requireScreen(snapshot, '/student-loan')
-  const d = (entity?.data ?? screen) as Record<string, unknown>
+  const entityRecords = entities
+    .filter((entity) => entity.entityType === 'student_loan_interest')
+    .map((entity) => {
+      const d = asRecord(entity.data)
+      const interest = toMoney(d.interestPaid ?? d.interest ?? 0)
+      return interest > 0
+        ? {
+            id: entity.id,
+            lender: toText(d.lenderName ?? 'Student Loan Servicer'),
+            interest,
+            interestPaid: interest
+          }
+        : null
+    })
+    .filter(
+      (
+        item
+      ): item is {
+        id: string
+        lender: string
+        interest: number
+        interestPaid: number
+      } => item !== null
+    )
+
+  if (entityRecords.length > 0) {
+    return entityRecords
+  }
+
+  const d = asRecord(screen)
   const interest = toMoney(d.interestPaid ?? d.interest ?? 0)
   if (interest <= 0) return undefined
   return [
     {
+      id: 'student-loan-interest-primary',
       lender: toText(d.lenderName ?? 'Student Loan Servicer'),
       interest,
       interestPaid: interest
     }
   ]
+}
+
+/** ACA marketplace insurance from aca_1095a entities or /marketplace-insurance screen */
+const getMarketplaceInsuranceData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const makeMonthly = (value: unknown) => {
+    const array = asArray<unknown>(value)
+    if (array.length === 12) {
+      return array.map((item) => toMoney(item))
+    }
+    const scalar = toMoney(value)
+    return Array(12).fill(Math.round((scalar / 12) * 100) / 100)
+  }
+
+  const mapRecord = (id: string, raw: Record<string, unknown>) => {
+    const entryMode = toText(raw.entryMode).toLowerCase()
+    const annualEnrollment = toMoney(
+      raw.annualEnrollmentPremium ?? raw.enrollmentPremiums ?? raw.annualPremium
+    )
+    const annualSlcsp = toMoney(
+      raw.annualSLCSP ?? raw.annualSlcsp ?? raw.slcsp ?? raw.secondLowestCostPlan
+    )
+    const annualAptc = toMoney(
+      raw.annualAPTC ?? raw.annualAdvancePayment ?? raw.advancePayments
+    )
+    const monthlyEnrollment =
+      entryMode === 'monthly'
+        ? makeMonthly(raw.monthlyEnrollment)
+        : makeMonthly(annualEnrollment)
+    const monthlySlcsp =
+      entryMode === 'monthly'
+        ? makeMonthly(raw.monthlySLCSP ?? raw.monthlySlcsp)
+        : makeMonthly(annualSlcsp)
+    const monthlyAptc =
+      entryMode === 'monthly'
+        ? makeMonthly(raw.monthlyAPTC)
+        : makeMonthly(annualAptc)
+
+    const hasAnyValue =
+      monthlyEnrollment.some((value) => value > 0) ||
+      monthlySlcsp.some((value) => value > 0) ||
+      monthlyAptc.some((value) => value > 0)
+
+    if (!hasAnyValue) {
+      return null
+    }
+
+    return {
+      id,
+      policyNumber: toText(raw.policyNumber),
+      coverageStartDate: toText(
+        raw.coverageStart ?? raw.coverageStartDate ?? `${snapshot.taxYear}-01-01`
+      ),
+      coverageEndDate: toText(
+        raw.coverageEnd ?? raw.coverageEndDate ?? `${snapshot.taxYear}-12-31`
+      ),
+      enrollmentPremiums: monthlyEnrollment,
+      slcsp: monthlySlcsp,
+      advancePayments: monthlyAptc,
+      coverageFamily: toMoney(raw.coveredPersons ?? raw.coverageFamily ?? 1),
+      sharedPolicyAllocation: toMoney(
+        raw.sharedAllocationPct ?? raw.sharedPolicyAllocation
+      )
+    }
+  }
+
+  const entityRecords = entities
+    .filter((entity) => entity.entityType === 'aca_1095a')
+    .map((entity) => mapRecord(entity.id, asRecord(entity.data)))
+    .filter(
+      (
+        item
+      ): item is {
+        id: string
+        policyNumber: string
+        coverageStartDate: string
+        coverageEndDate: string
+        enrollmentPremiums: number[]
+        slcsp: number[]
+        advancePayments: number[]
+        coverageFamily: number
+        sharedPolicyAllocation: number
+      } => item !== null
+    )
+
+  if (entityRecords.length > 0) {
+    return entityRecords
+  }
+
+  const screen = requireScreen(snapshot, '/marketplace-insurance')
+  const screenRecord = mapRecord('aca-primary', asRecord(screen))
+  return screenRecord ? [screenRecord] : undefined
+}
+
+/** Dependent care providers and expenses from care_provider entities or /education-care screen */
+const getDependentCareData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const providerEntities = entities
+    .filter((entity) => entity.entityType === 'care_provider')
+    .map((entity) => {
+      const data = asRecord(entity.data)
+      const amountPaid = toMoney(data.amountPaid ?? data.amount ?? 0)
+      return {
+        id: entity.id,
+        name: toText(data.providerName ?? data.name),
+        address: [
+          toText(data.address),
+          [toText(data.city), toText(data.state), toText(data.zip)]
+            .filter(Boolean)
+            .join(' ')
+            .trim()
+        ]
+          .filter(Boolean)
+          .join(', '),
+        tin: toText(data.tin ?? data.ein ?? data.ssn).replace(/\D/g, ''),
+        amountPaid
+      }
+    })
+    .filter((provider) => provider.name || provider.amountPaid > 0)
+
+  const screen = requireScreen(snapshot, '/education-care')
+  const form = asRecord(screen.form)
+  const screenExpenses = toMoney(
+    form.dependentCareExpenses ??
+      screen.dependentCareExpenses ??
+      screen.childcareExpenses
+  )
+
+  const entityExpenses = providerEntities.reduce(
+    (sum, provider) => sum + provider.amountPaid,
+    0
+  )
+
+  return {
+    providers: providerEntities.length > 0 ? providerEntities : undefined,
+    expenses:
+      entityExpenses > 0
+        ? entityExpenses
+        : screenExpenses > 0
+        ? screenExpenses
+        : undefined
+  }
 }
 
 /** IRA contribution deductibility from dedicated deduction entity/screen or /ira-retirement fallback */
@@ -4614,9 +5321,31 @@ const getNoncashContributions = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
 ): Record<string, unknown> | undefined => {
-  const entity = entities.find((e) => e.entityType === 'form_8283')
-  const fromEntity = entity?.data as Record<string, unknown> | undefined
-  if (fromEntity && Object.keys(fromEntity).length > 0) return fromEntity
+  const entityData = entities
+    .filter((entity) => entity.entityType === 'form_8283')
+    .map((entity) => asRecord(entity.data))
+
+  if (entityData.length > 0) {
+    const combined = {
+      sectionADonations: entityData.flatMap((item) =>
+        asArray<Record<string, unknown>>(item.sectionADonations)
+      ),
+      sectionBDonations: entityData.flatMap((item) =>
+        asArray<Record<string, unknown>>(item.sectionBDonations)
+      ),
+      vehicleDonations: entityData.flatMap((item) =>
+        asArray<Record<string, unknown>>(item.vehicleDonations)
+      )
+    }
+    if (
+      combined.sectionADonations.length > 0 ||
+      combined.sectionBDonations.length > 0 ||
+      combined.vehicleDonations.length > 0
+    ) {
+      return combined
+    }
+  }
+
   const screen = requireScreen(snapshot, '/form-8283') as Record<
     string,
     unknown
@@ -4645,10 +5374,13 @@ const getItemizedDeductions = (
   entities: SessionEntitySnapshot[],
   noncashContributions?: Record<string, unknown>
 ) => {
-  const entity =
-    entities.find((item) => item.entityType === 'itemized_deductions') ??
-    entities.find((item) => item.entityType === 'schedule_a')
-  const entityData = asRecord(entity?.data)
+  const entityDataList = entities
+    .filter(
+      (item) =>
+        item.entityType === 'itemized_deductions' ||
+        item.entityType === 'schedule_a'
+    )
+    .map((item) => asRecord(item.data))
   const screenCandidates = [
     requireScreen(snapshot, '/deductions'),
     requireScreen(snapshot, '/schedule-a'),
@@ -4658,12 +5390,14 @@ const getItemizedDeductions = (
     screenCandidates.find((candidate) => Object.keys(candidate).length > 0) ??
     {}
   const nestedScreenForm = asRecord(screenData.form)
-  const source =
-    Object.keys(entityData).length > 0
-      ? entityData
-      : Object.keys(nestedScreenForm).length > 0
-      ? { ...screenData, ...nestedScreenForm }
-      : screenData
+  const sources =
+    entityDataList.length > 0
+      ? entityDataList
+      : [
+          Object.keys(nestedScreenForm).length > 0
+            ? { ...screenData, ...nestedScreenForm }
+            : screenData
+        ]
 
   const noncashTotal = (() => {
     const contributions = asRecord(noncashContributions)
@@ -4679,80 +5413,96 @@ const getItemizedDeductions = (
     }, 0)
   })()
 
+  const sumCandidateValues = (...keys: string[]) =>
+    sources.reduce((sum, source) => {
+      for (const key of keys) {
+        if (source[key] !== undefined && source[key] !== null && source[key] !== '') {
+          sum += toMoney(source[key])
+          break
+        }
+      }
+      return sum
+    }, 0)
+
+  const someCandidateBoolean = (...keys: string[]) =>
+    sources.some((source) => keys.some((key) => Boolean(source[key])))
+
+  const firstCandidateText = (...keys: string[]) =>
+    toText(
+      sources
+        .map((source) => keys.map((key) => toText(source[key])).find(Boolean))
+        .find(Boolean)
+    )
+
   const deductions = {
-    medicalAndDental: toMoney(
-      source.medicalAndDental ??
-        source.medicalDental ??
-        source.medicalExpenses ??
-        source.unreimbursedMedical
+    medicalAndDental: sumCandidateValues(
+      'medicalAndDental',
+      'medicalDental',
+      'medicalExpenses',
+      'unreimbursedMedical'
     ),
-    stateAndLocalTaxes: toMoney(
-      source.stateAndLocalTaxes ??
-        source.stateLocalIncomeTax ??
-        source.stateTaxes ??
-        source.stateTax ??
-        source.stateIncomeTaxes ??
-        source.salesTaxes
+    stateAndLocalTaxes: sumCandidateValues(
+      'stateAndLocalTaxes',
+      'stateLocalIncomeTax',
+      'stateTaxes',
+      'stateTax',
+      'stateIncomeTaxes',
+      'salesTaxes'
     ),
-    isSalesTax: Boolean(
-      source.isSalesTax ?? source.useSalesTax ?? source.salesTaxElection
+    isSalesTax: someCandidateBoolean('isSalesTax', 'useSalesTax', 'salesTaxElection'),
+    stateAndLocalRealEstateTaxes: sumCandidateValues(
+      'stateAndLocalRealEstateTaxes',
+      'realEstateTaxes',
+      'propertyTaxesRealEstate'
     ),
-    stateAndLocalRealEstateTaxes: toMoney(
-      source.stateAndLocalRealEstateTaxes ??
-        source.realEstateTaxes ??
-        source.propertyTaxesRealEstate
+    stateAndLocalPropertyTaxes: sumCandidateValues(
+      'stateAndLocalPropertyTaxes',
+      'personalPropertyTaxes',
+      'vehiclePropertyTaxes'
     ),
-    stateAndLocalPropertyTaxes: toMoney(
-      source.stateAndLocalPropertyTaxes ??
-        source.personalPropertyTaxes ??
-        source.vehiclePropertyTaxes
+    otherTaxes: sumCandidateValues(
+      'otherTaxes',
+      'scheduleAOtherTaxes',
+      'line6OtherTaxes'
     ),
-    otherTaxes: toMoney(
-      source.otherTaxes ??
-        source.scheduleAOtherTaxes ??
-        source.line6OtherTaxes
+    otherTaxesDescription: firstCandidateText(
+      'otherTaxesDescription',
+      'otherTaxesLabel',
+      'scheduleAOtherTaxesDescription'
     ),
-    otherTaxesDescription: toText(
-      source.otherTaxesDescription ??
-        source.otherTaxesLabel ??
-        source.scheduleAOtherTaxesDescription
+    interest8a: sumCandidateValues(
+      'interest8a',
+      'mortgageInterest',
+      'homeMortgageInterest',
+      'mortgageInterestReported'
     ),
-    interest8a: toMoney(
-      source.interest8a ??
-        source.mortgageInterest ??
-        source.homeMortgageInterest ??
-        source.mortgageInterestReported
+    interest8b: sumCandidateValues('interest8b', 'pointsNotReported', 'points'),
+    interest8c: sumCandidateValues(
+      'interest8c',
+      'mortgageInsurancePremiums',
+      'homeEquityInterest'
     ),
-    interest8b: toMoney(
-      source.interest8b ?? source.pointsNotReported ?? source.points
-    ),
-    interest8c: toMoney(
-      source.interest8c ??
-        source.mortgageInsurancePremiums ??
-        source.homeEquityInterest
-    ),
-    interest8d: toMoney(source.interest8d),
-    investmentInterest: toMoney(
-      source.investmentInterest ?? source.marginInterest
-    ),
-    charityCashCheck: toMoney(
-      source.charityCashCheck ??
-        source.charityCash ??
-        source.cashContributions ??
-        source.charitableContributionsCash
+    interest8d: sumCandidateValues('interest8d'),
+    investmentInterest: sumCandidateValues('investmentInterest', 'marginInterest'),
+    charityCashCheck: sumCandidateValues(
+      'charityCashCheck',
+      'charityCash',
+      'cashContributions',
+      'charitableContributionsCash'
     ),
     charityOther: Math.max(
-      toMoney(
-        source.charityOther ??
-          source.charityNonCash ??
-          source.noncashContributionsTotal ??
-          source.charitableContributionsNoncash
+      sumCandidateValues(
+        'charityOther',
+        'charityNonCash',
+        'noncashContributionsTotal',
+        'charitableContributionsNoncash'
       ),
       noncashTotal
     ),
-    casualtyLosses: toMoney(source.casualtyLosses),
-    otherDeductions: toMoney(
-      source.otherDeductions ?? source.miscellaneousDeductions
+    casualtyLosses: sumCandidateValues('casualtyLosses'),
+    otherDeductions: sumCandidateValues(
+      'otherDeductions',
+      'miscellaneousDeductions'
     )
   }
 
@@ -4839,6 +5589,8 @@ const toFacts = (
     intlAdvancedData
   )
   const studentLoanRecords = getStudentLoanData(snapshot, entities)
+  const marketplaceInsurance = getMarketplaceInsuranceData(snapshot, entities)
+  const dependentCareData = getDependentCareData(snapshot, entities)
   const iraContributionsData = getIRAContributionsData(snapshot, entities)
   const iraAccountsData = getIRAAccountsData(snapshot, entities)
   const form5695Data = getForm5695Data(snapshot, entities)
@@ -4948,6 +5700,10 @@ const toFacts = (
     trumpSavingsAccounts: obbbaData.trumpSavingsAccounts,
     // Student loan, IRA contribution, Form 5695
     studentLoanRecords,
+    marketplaceInsurance,
+    aca1095a: marketplaceInsurance,
+    dependentCareProviders: dependentCareData.providers,
+    dependentCareExpenses: dependentCareData.expenses,
     iraContributions: iraContributionsData,
     iraAccounts: iraAccountsData,
     cleanEnergyProperties: form5695Data?.cleanEnergyProperties,
@@ -6862,6 +7618,7 @@ export class AppSessionService {
     data: Record<string, unknown>
   ) {
     const now = nowIso()
+    const rowId = makeSessionEntityRowId(sessionId, entityType, entityId)
     const dataKey = `filing-sessions/${sessionId}/entities/${entityType}/${entityId}.json`
     await this.artifacts.putJson(dataKey, data)
     await this.env.USTAXES_DB.prepare(
@@ -6875,7 +7632,7 @@ export class AppSessionService {
           updated_at = excluded.updated_at`
     )
       .bind(
-        entityId,
+        rowId,
         sessionId,
         entityType,
         entityId,
@@ -6957,23 +7714,26 @@ export class AppSessionService {
 
     if (extracted) {
       const fields = buildDocumentFieldsFromExtraction(extracted)
-      const importedEntity = buildEntityFromDocumentExtraction(
+      const importedEntities = buildEntitiesFromDocumentExtraction(
         documentId,
         body.name,
         extracted
       )
+      const extractedEntityRefs = importedEntities.map((entity) => ({
+        entityType: entity.entityType,
+        entityId: entity.entityId,
+        status: entity.status,
+        label: entity.label
+      }))
       metadata.extraction = extracted
       metadata.fields = fields
       metadata.documentType = extracted.documentType
       metadata.extractedAt = nowIso()
-      metadata.extractedEntity = importedEntity
-        ? {
-            entityType: importedEntity.entityType,
-            entityId: importedEntity.entityId,
-            status: importedEntity.status,
-            label: importedEntity.label
-          }
-        : null
+      metadata.extractedEntities = extractedEntityRefs
+      metadata.extractedEntity =
+        importedEntities.length === 1
+          ? extractedEntityRefs[0]
+          : null
       metadata.ocrIssue =
         extracted.documentType === 'unknown'
           ? metadata.ocrIssue ??
@@ -6989,15 +7749,27 @@ export class AppSessionService {
           ? 'extracted'
           : 'needs_review'
 
-      if (importedEntity) {
-        await this.upsertSessionEntityInternal(
-          sessionId,
-          importedEntity.entityType,
-          importedEntity.entityId,
-          importedEntity.status,
-          importedEntity.label,
-          importedEntity.data
-        )
+      if (importedEntities.length > 0) {
+        const existingEntities = await this.loadSessionEntities(sessionId)
+        for (const importedEntity of importedEntities) {
+          const existingEntity = existingEntities.find(
+            (entity) =>
+              entity.entityType === importedEntity.entityType &&
+              entity.id === importedEntity.entityId
+          )
+          const mergedData = existingEntity
+            ? mergeImportedEntityData(existingEntity.data, importedEntity.data)
+            : importedEntity.data
+
+          await this.upsertSessionEntityInternal(
+            sessionId,
+            importedEntity.entityType,
+            importedEntity.entityId,
+            importedEntity.status,
+            importedEntity.label,
+            mergedData
+          )
+        }
       }
     } else if (body.contentBase64) {
       metadata.ocrIssue =
@@ -7178,7 +7950,7 @@ export class AppSessionService {
 
     return Promise.all(
       (result.results ?? []).map(async (row) => ({
-        id: row.id,
+        id: row.entity_key,
         entityType: row.entity_type,
         entityKey: row.entity_key,
         status: row.status,
@@ -7257,6 +8029,7 @@ export class AppSessionService {
     await this.requireSession(sessionId, user.sub)
     const body = entitySchema.parse(rawBody ?? {})
     const now = nowIso()
+    const rowId = makeSessionEntityRowId(sessionId, entityType, entityId)
     const dataKey = `filing-sessions/${sessionId}/entities/${entityType}/${entityId}.json`
     await this.artifacts.putJson(dataKey, body.data)
     await this.env.USTAXES_DB.prepare(
@@ -7270,7 +8043,7 @@ export class AppSessionService {
           updated_at = excluded.updated_at`
     )
       .bind(
-        entityId,
+        rowId,
         sessionId,
         entityType,
         entityId,
@@ -7404,25 +8177,30 @@ export class AppSessionService {
       throw new HttpError(404, 'Document not found')
     }
     await this.artifacts.putJson(row.metadata_key, metadata)
-    const extractedEntity = asRecord(metadata.extractedEntity)
-    if (
-      patch.status === 'confirmed' &&
-      toText(extractedEntity.entityType) &&
-      toText(extractedEntity.entityId)
-    ) {
-      const dataKey = `filing-sessions/${sessionId}/entities/${toText(
-        extractedEntity.entityType
-      )}/${toText(extractedEntity.entityId)}.json`
-      const currentData =
-        (await this.artifacts.getJson<Record<string, unknown>>(dataKey)) ?? {}
-      await this.upsertSessionEntityInternal(
-        sessionId,
-        toText(extractedEntity.entityType),
-        toText(extractedEntity.entityId),
-        'complete',
-        toText(extractedEntity.label) || current.document.name,
-        currentData
-      )
+    const extractedEntities = [
+      ...asArray<Record<string, unknown>>(metadata.extractedEntities),
+      ...(() => {
+        const single = asRecord(metadata.extractedEntity)
+        return toText(single.entityType) && toText(single.entityId) ? [single] : []
+      })()
+    ]
+    if (patch.status === 'confirmed') {
+      for (const extractedEntity of extractedEntities) {
+        const entityType = toText(extractedEntity.entityType)
+        const entityId = toText(extractedEntity.entityId)
+        if (!entityType || !entityId) continue
+        const dataKey = `filing-sessions/${sessionId}/entities/${entityType}/${entityId}.json`
+        const currentData =
+          (await this.artifacts.getJson<Record<string, unknown>>(dataKey)) ?? {}
+        await this.upsertSessionEntityInternal(
+          sessionId,
+          entityType,
+          entityId,
+          'complete',
+          toText(extractedEntity.label) || current.document.name,
+          currentData
+        )
+      }
     }
     await this.env.USTAXES_DB.prepare(
       `UPDATE documents
@@ -7838,10 +8616,37 @@ export class AppSessionService {
       toText(asRecord(taxpayer.address).state ?? 'CA'),
       amountOwed > 0
     )
+    const derivedPreviewForms = [
+      asArray<Record<string, unknown>>(facts.studentLoanRecords).length > 0 ||
+      asArray<Record<string, unknown>>(facts.unemploymentRecords).length > 0
+        ? 'Schedule 1'
+        : null,
+      Object.keys(asRecord(facts.itemizedDeductions)).length > 0
+        ? 'Schedule A'
+        : null,
+      Object.keys(asRecord(facts.noncashContributions)).length > 0
+        ? 'Form 8283'
+        : null,
+      asArray<Record<string, unknown>>(facts.marketplaceInsurance).length > 0 ||
+      asArray<Record<string, unknown>>(facts.aca1095a).length > 0
+        ? 'Form 8962'
+        : null,
+      asArray<Record<string, unknown>>(facts.dependentCareProviders).length > 0 ||
+      toMoney(facts.dependentCareExpenses) > 0
+        ? 'Form 2441'
+        : null,
+      asArray<Record<string, unknown>>(facts.taxLots).length > 0
+        ? 'Schedule D'
+        : null,
+      asArray<Record<string, unknown>>(facts.taxLots).length > 0
+        ? 'Form 8949'
+        : null
+    ].filter((form): form is string => Boolean(form))
     const includedForms = Array.from(
       new Set([
         snapshot.formType,
-        ...asArray<string>(computedSummary.schedules)
+        ...asArray<string>(computedSummary.schedules),
+        ...derivedPreviewForms
       ])
     ).filter(Boolean)
     const attachments = [

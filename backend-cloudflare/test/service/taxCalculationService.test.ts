@@ -316,6 +316,120 @@ describe('TaxCalculationService', () => {
       expect(info.iraContributions?.[0].traditionalContributions).toBe(3000)
     })
 
+    it('maps imported marketplace, childcare, mortgage, charity, and investment facts into downstream forms', () => {
+      const facts = baseFacts({
+        filingStatus: 'hoh',
+        w2Records: [
+          {
+            id: 'w2-1',
+            employerName: 'Employer Inc',
+            ein: '12-3456789',
+            box1Wages: 68000,
+            box2FederalWithheld: 6200,
+            owner: 'taxpayer',
+            isComplete: true
+          }
+        ],
+        dependents: [
+          {
+            id: 'dep-1',
+            name: 'Jamie Johnson',
+            dob: '2018-06-15',
+            relationship: 'child',
+            ssn: '987654321',
+            months: '12',
+            isComplete: true
+          }
+        ],
+        marketplaceInsurance: [
+          {
+            id: 'aca-doc-1',
+            policyNumber: 'APTC-2025-01',
+            coverageStartDate: '2025-01-01',
+            coverageEndDate: '2025-12-31',
+            enrollmentPremiums: Array(12).fill(600),
+            slcsp: Array(12).fill(565),
+            advancePayments: Array(12).fill(450),
+            coverageFamily: 2
+          }
+        ],
+        dependentCareProviders: [
+          {
+            id: 'care-1',
+            name: 'Sunshine Daycare Center',
+            tin: '12-3456789',
+            address: '10 Main St, Monroe, MA 02301',
+            amountPaid: 4200
+          }
+        ],
+        dependentCareExpenses: 4200,
+        itemizedDeductions: {
+          stateAndLocalTaxes: 5000,
+          isSalesTax: false,
+          stateAndLocalRealEstateTaxes: 4300,
+          interest8a: 12500,
+          interest8b: 600,
+          charityCashCheck: 650,
+          charityOther: 900
+        },
+        noncashContributions: {
+          sectionADonations: [
+            {
+              donee: 'Monroe Food Pantry',
+              description: 'Clothing and household goods',
+              deductionClaimed: 900
+            }
+          ]
+        },
+        taxLots: [
+          {
+            id: 'lot-1',
+            security: 'Brokerage account summary',
+            acquisitionDate: '2024-01-15',
+            saleDate: '2025-11-10',
+            proceeds: 18000,
+            costBasis: 15200,
+            shortTermProceeds: 10000,
+            shortTermCostBasis: 9000,
+            longTermProceeds: 8000,
+            longTermCostBasis: 6200
+          }
+        ]
+      })
+
+      const info = adaptFactsToInformation(facts)
+      const f1040 = new F1040(info as ValidatedInformation, [])
+      const calcResult = taxCalcService.calculate(facts)
+
+      expect(info.healthInsuranceMarketplace).toHaveLength(1)
+      expect(info.healthInsuranceMarketplace?.[0].policyNumber).toBe(
+        'APTC-2025-01'
+      )
+      expect(info.dependentCareProviders).toHaveLength(1)
+      expect(info.dependentCareProviders?.[0].name).toBe(
+        'Sunshine Daycare Center'
+      )
+      expect(info.dependentCareExpenses).toBe(4200)
+      expect(info.itemizedDeductions).toMatchObject({
+        interest8a: 12500,
+        interest8b: 600,
+        charityCashCheck: 650,
+        charityOther: 900
+      })
+      expect(f1040.scheduleA.isNeeded()).toBe(true)
+      expect(f1040.f8962?.isNeeded()).toBe(true)
+      expect(f1040.f8962?.marketplaceCoverage()).toHaveLength(12)
+      expect(f1040.f2441?.providers()).toHaveLength(1)
+      expect(f1040.f2441?.isNeeded()).toBe(true)
+      expect(calcResult.success).toBe(true)
+      if (calcResult.success) {
+        expect(calcResult.schedules).toContain('f1040sa')
+        expect(calcResult.schedules).toContain('f8962')
+        expect(calcResult.schedules).toContain('f2441')
+        expect(calcResult.schedules).toContain('f1040sd')
+      }
+    })
+
     it('maps Schedule 8812 earned-income adjustments and other withholding credits into workbook-sensitive 1040 fields', () => {
       const facts = baseFacts({
         w2Records: [

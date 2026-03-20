@@ -725,43 +725,148 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     const entities = await parseJsonResponse<JsonObject>(response)
     expect((entities.entities as JsonObject[]).length).toBeGreaterThanOrEqual(1)
 
-    response = await worker.fetch(
-      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents`,
-      {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          cookie: sessionCookie
-        },
-        body: JSON.stringify({
-          name: 'brokerage-dividend.png',
-          mimeType: 'image/png',
-          status: 'processing',
-          cluster: 'unknown',
-          clusterConfidence: 0,
-          pages: 1,
-          metadata: {
-            extractionOverride: {
-              documentType: '1099-div',
-              confidence: 0.94,
-              form1099Div: {
-                payerName: 'Fidelity Brokerage',
-                ordinaryDividends: 320,
-                qualifiedDividends: 180,
-                capitalGainDistributions: 45,
-                federalTaxWithheld: 12,
-                confidence: 0.94
-              }
+    const uploadExtractedDocument = async (
+      name: string,
+      extractionOverride: Record<string, unknown>
+    ) => {
+      const uploadResponse = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            name,
+            mimeType: 'image/png',
+            status: 'processing',
+            cluster: 'unknown',
+            clusterConfidence: 0,
+            pages: 1,
+            metadata: {
+              extractionOverride
             }
-          }
-        })
+          })
+        }
+      )
+      expect(uploadResponse.status).toBe(201)
+      return parseJsonResponse<JsonObject>(uploadResponse)
+    }
+
+    const documentBody = await uploadExtractedDocument('brokerage-dividend.png', {
+      documentType: '1099-div',
+      confidence: 0.94,
+      form1099Div: {
+        payerName: 'Fidelity Brokerage',
+        ordinaryDividends: 320,
+        qualifiedDividends: 180,
+        capitalGainDistributions: 45,
+        federalTaxWithheld: 12,
+        confidence: 0.94
       }
-    )
-    expect(response.status).toBe(201)
-    const documentBody = await parseJsonResponse<JsonObject>(response)
+    })
     const documentId = String((documentBody.document as JsonObject).id)
     expect((documentBody.document as JsonObject).status).toBe('extracted')
     expect((documentBody.document as JsonObject).cluster).toBe('1099')
+
+    await uploadExtractedDocument('state-benefits.png', {
+      documentType: '1099-g',
+      confidence: 0.91,
+      form1099G: {
+        payerName: 'Massachusetts Department of Unemployment',
+        unemploymentCompensation: 4800,
+        federalTaxWithheld: 480,
+        stateTaxWithheld: 120,
+        confidence: 0.91
+      }
+    })
+
+    await uploadExtractedDocument('ssa-benefits.png', {
+      documentType: '1099-ssa',
+      confidence: 0.9,
+      form1099Ssa: {
+        payerName: 'Social Security Administration',
+        benefitsPaid: 21000,
+        federalTaxWithheld: 1200,
+        confidence: 0.9
+      }
+    })
+
+    await uploadExtractedDocument('student-loan-interest.png', {
+      documentType: '1098-e',
+      confidence: 0.92,
+      form1098E: {
+        lenderName: 'MOHELA',
+        studentLoanInterest: 750,
+        confidence: 0.92
+      }
+    })
+
+    await uploadExtractedDocument('marketplace-1095a.png', {
+      documentType: '1095-a',
+      confidence: 0.89,
+      form1095A: {
+        policyNumber: 'APTC-2025-01',
+        coveredPersons: 2,
+        annualEnrollmentPremium: 7200,
+        annualSlcsp: 6800,
+        annualAdvancePayment: 5400,
+        coverageStart: '2025-01-01',
+        coverageEnd: '2025-12-31',
+        confidence: 0.89
+      }
+    })
+
+    await uploadExtractedDocument('mortgage-interest.png', {
+      documentType: '1098-mortgage',
+      confidence: 0.9,
+      mortgage1098: {
+        lenderName: 'Monroe Home Lending',
+        mortgageInterest: 12500,
+        propertyTaxes: 4300,
+        points: 600,
+        confidence: 0.9
+      }
+    })
+
+    await uploadExtractedDocument('daycare-statement.png', {
+      documentType: 'childcare',
+      confidence: 0.83,
+      childcareStatement: {
+        providerName: 'Sunshine Daycare Center',
+        providerTin: '12-3456789',
+        amountPaid: 4200,
+        address: '10 Main St, Monroe, MA 02301',
+        confidence: 0.83
+      }
+    })
+
+    await uploadExtractedDocument('charity-receipt.png', {
+      documentType: 'charity-receipt',
+      confidence: 0.84,
+      charityReceipt: {
+        doneeName: 'Monroe Food Pantry',
+        cashContribution: 650,
+        noncashContribution: 900,
+        propertyDescription: 'Clothing and household goods',
+        deductionClaimed: 900,
+        confidence: 0.84
+      }
+    })
+
+    await uploadExtractedDocument('brokerage-sales.png', {
+      documentType: '1099-b',
+      confidence: 0.88,
+      form1099B: {
+        payerName: 'Fidelity Brokerage',
+        shortTermProceeds: 10000,
+        shortTermCostBasis: 9000,
+        longTermProceeds: 8000,
+        longTermCostBasis: 6200,
+        confidence: 0.88
+      }
+    })
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents`,
@@ -841,6 +946,34 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(
       ((facts.dependents as JsonObject[])[0] as JsonObject).relationship
     ).toBe('child')
+    expect(Array.isArray(facts.unemploymentRecords)).toBe(true)
+    expect(((facts.unemploymentRecords as JsonObject[])[0] as JsonObject).amount).toBe(
+      4800
+    )
+    expect(Array.isArray(facts.socialSecurityRecords)).toBe(true)
+    expect(
+      ((facts.socialSecurityRecords as JsonObject[])[0] as JsonObject).grossAmount
+    ).toBe(21000)
+    expect(Array.isArray(facts.studentLoanRecords)).toBe(true)
+    expect(
+      ((facts.studentLoanRecords as JsonObject[])[0] as JsonObject).interestPaid
+    ).toBe(750)
+    expect(Array.isArray(facts.marketplaceInsurance)).toBe(true)
+    expect(
+      ((facts.marketplaceInsurance as JsonObject[])[0] as JsonObject).policyNumber
+    ).toBe('APTC-2025-01')
+    expect(Array.isArray(facts.dependentCareProviders)).toBe(true)
+    expect(
+      ((facts.dependentCareProviders as JsonObject[])[0] as JsonObject).name
+    ).toBe('Sunshine Daycare Center')
+    expect(facts.dependentCareExpenses).toBe(4200)
+    expect((facts.itemizedDeductions as JsonObject).interest8a).toBe(12500)
+    expect((facts.itemizedDeductions as JsonObject).charityCashCheck).toBe(650)
+    expect(Array.isArray((facts.noncashContributions as JsonObject).sectionADonations)).toBe(
+      true
+    )
+    expect(Array.isArray(facts.taxLots)).toBe(true)
+    expect(((facts.taxLots as JsonObject[])[0] as JsonObject).proceeds).toBe(18000)
     expect((facts.creditSummary as JsonObject).eligibleCount).toBe(1)
     expect((facts.creditSummary as JsonObject).estimatedTotal).toBe(2000)
     expect(Array.isArray(facts.w2Records)).toBe(true)
@@ -863,6 +996,25 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect((facts.form8879 as JsonObject).taxpayerName).toBe('Ava Tester')
     expect((facts.form8879 as JsonObject).taxpayerPIN).toBe('12345')
     expect((facts.form8879 as JsonObject).form8879Consent).toBe(true)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/print-mail`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const printMail = await parseJsonResponse<JsonObject>(response)
+    const includedForms = (
+      ((printMail.printMail as JsonObject).officialFormPreview as JsonObject)
+        .includedForms as string[]
+    ) ?? []
+    expect(includedForms).toContain('Schedule A')
+    expect(includedForms).toContain('Form 8283')
+    expect(includedForms).toContain('Form 8962')
+    expect(includedForms).toContain('Form 2441')
+    expect(includedForms).toContain('Schedule D')
+    expect(includedForms).toContain('Form 8949')
 
     response = await worker.fetch(
       `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/sign`,
