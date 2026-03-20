@@ -1454,6 +1454,48 @@ export interface CCorpSpecialDeductions {
   nol: number // Net Operating Loss deduction
 }
 
+export interface EmployerOwnedLifeInsuranceData {
+  premiumsPaid: number
+  claimedPremiumDeduction?: number
+  policyCashValue?: number
+  interestExpenseDisallowance?: number
+  deathBenefitReceived?: number
+  investmentInContract?: number
+  cashSurrenderValue?: number
+  surrenderedForCash?: boolean
+  isEmployerOwnedPolicy?: boolean
+  corporationIsDirectOrIndirectBeneficiary?: boolean
+  validNoticeAndConsent?: boolean
+  insuredWasEmployeeWithin12MonthsOfDeath?: boolean
+  insuredWasDirectorOrHighlyCompedAtIssue?: boolean
+  proceedsPaidToFamilyOrUsedForEquityPurchase?: boolean
+  issuedAfterAugust172006?: boolean
+}
+
+export interface CorporateDeferredCompensationData {
+  claimedCurrentYearDeduction?: number
+  employeeIncomeInclusion?: number
+  stockCompIncomeInclusion?: number
+  section409AFailureInclusion?: number
+  claimedSection83iDeferral?: boolean
+  excludedEmployeeForSection83i?: boolean
+}
+
+export interface RabbiTrustData {
+  contributions?: number
+  contributionsClaimedAsDeduction?: number
+  subjectToGeneralCreditors?: boolean
+  isOffshore?: boolean
+  hasFinancialHealthTrigger?: boolean
+}
+
+export interface Form8925Data {
+  filed?: boolean
+  employeeCount?: number
+  insuredCount?: number
+  totalInsuranceInForce?: number
+}
+
 /**
  * Form 1120 Complete Data Structure
  */
@@ -1462,6 +1504,10 @@ export interface Form1120Data<D = Date> {
   income: CCorpIncome
   deductions: CCorpDeductions
   specialDeductions: CCorpSpecialDeductions
+  employerOwnedLifeInsurance?: EmployerOwnedLifeInsuranceData
+  corporateDeferredCompensation?: CorporateDeferredCompensationData
+  rabbiTrust?: RabbiTrustData
+  form8925?: Form8925Data
   // Tax computation
   taxableIncome: number
   taxBeforeCredits: number // 21% flat rate for 2025
@@ -2890,6 +2936,7 @@ export interface Information<D = Date> {
   capitalGainsElectedAsInvestmentIncome?: number
   // Form 8888 - Allocation of Refund
   refundAllocations?: Record<string, unknown>[]
+  appliedToNextYearEstimatedTax?: number
   // Form 8879 - IRS e-file Signature Authorization
   form8879?: Record<string, unknown>
   // Form 4137 - Unreported Tip Income

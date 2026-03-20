@@ -3,11 +3,11 @@
 This inventory extends the workbook parity approach beyond the 1040 family.
 When a private workbook is unavailable locally, the matrix records the workbook gap
 and inventories local IRS MeF/ATS materials instead so parity work stays evidence-based.
-Canonical JSON parity fixtures now back 1120-S, 1065, and 1041 so those forms are no longer IRS-reference-led only.
+Canonical JSON parity fixtures now back 1120, 1120-S, 1065, and 1041 so those forms are no longer IRS-reference-led only.
 
 | Form | Workbook | IRS refs | Fixtures | Local impl | Tests | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1120 | no | 83 | 3 | 4 | 3 | fixture_backed_irs_reference | C-corporation parity tracks baseline Form 1120 computation, MeF serialization, and backend entity-return handling, but it still does not model COLI premium disallowance, employer-owned life insurance/Form 8925 compliance, or rabbi-trust/NQDC timing structures. |
+| 1120 | no | 83 | 5 | 4 | 3 | fixture_backed_irs_reference | C-corporation parity now has executable fixture coverage for baseline operations, credits/payments, zero-income carryover behavior, COLI/Section 101(j)/Form 8925 exposure, and NQDC/rabbi-trust timing inputs, but it is still not backed by a private workbook. |
 | 1120-S | no | 35 | 3 | 4 | 3 | fixture_backed_irs_reference | S-corp parity should include ordinary business income, Schedule K/K-1 allocation, and shareholder ownership inputs. |
 | 1065 | no | 25 | 3 | 4 | 3 | fixture_backed_irs_reference | Partnership parity should cover guaranteed payments, partner allocations, Schedule K/K-1, and liabilities. |
 | 1041 | no | 14 | 3 | 5 | 2 | fixture_backed_irs_reference | Trust and estate parity is driven by fiduciary, beneficiary, distribution, and compressed-bracket logic. |
@@ -25,4 +25,4 @@ Canonical JSON parity fixtures now back 1120-S, 1065, and 1041 so those forms ar
 ## Canonical business fixtures
 
 - Fixture manifest: `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/business_fixture_manifest.json`
-- Fixture-backed forms in this pass: `1120`, `1120-S`, `1065`, `1041`, `990`.
+- Fixture-backed forms in this pass: `1120`, `1120-S`, `1065`, `1041`.

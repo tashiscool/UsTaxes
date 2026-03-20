@@ -124,6 +124,19 @@ export interface BusinessEntityResult {
   distributionDeduction?: number
   exemption?: number
   beneficiaryCount?: number
+  requiredForms?: string[]
+  hazardFlags?: string[]
+  corporateTaxAdjustments?: Array<{
+    code: string
+    description: string
+    amount?: number
+    effect: 'income_increase' | 'deduction_disallowance'
+  }>
+  complianceAlerts?: Array<{
+    code: string
+    severity: 'info' | 'warning' | 'error'
+    description: string
+  }>
   schedules: string[]
 }
 
@@ -2280,6 +2293,16 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     individualRetirementArrangements,
     schedule8812EarnedIncomeAdjustments,
     otherFederalWithholdingCredits,
+    appliedToNextYearEstimatedTax:
+      toNum(
+        facts.appliedToNextYearEstimatedTax ??
+          facts.refundAppliedToNextYearEstimatedTax
+      ) > 0
+        ? toNum(
+            facts.appliedToNextYearEstimatedTax ??
+              facts.refundAppliedToNextYearEstimatedTax
+          )
+        : undefined,
     form8879,
     // OBBBA fields
     overtimeIncome,
@@ -2668,6 +2691,15 @@ const adaptFactsToForm1120Data = (facts: FactsRecord): Form1120Data => {
   const income = asRecord(facts.income)
   const deductions = asRecord(facts.deductions)
   const specialDeductions = asRecord(facts.specialDeductions)
+  const employerOwnedLifeInsurance = asRecord(
+    facts.employerOwnedLifeInsurance ?? facts.corporateLifeInsurance
+  )
+  const corporateDeferredCompensation = asRecord(
+    facts.corporateDeferredCompensation ??
+      facts.nonqualifiedDeferredCompensationCorporate
+  )
+  const rabbiTrust = asRecord(facts.rabbiTrust)
+  const form8925 = asRecord(facts.form8925 ?? facts.eoliCompliance)
   const generalBusinessCreditsRecord = (() => {
     const raw = asRecord(facts.generalBusinessCredits)
     const candidate = asRecord(raw.creditComponents)
@@ -2727,6 +2759,108 @@ const adaptFactsToForm1120Data = (facts: FactsRecord): Form1120Data => {
       foreignDividends: toNum(specialDeductions.foreignDividends),
       nol: toNum(specialDeductions.nol)
     },
+    employerOwnedLifeInsurance:
+      Object.keys(employerOwnedLifeInsurance).length > 0
+        ? {
+            premiumsPaid: toNum(employerOwnedLifeInsurance.premiumsPaid),
+            claimedPremiumDeduction: toNum(
+              employerOwnedLifeInsurance.claimedPremiumDeduction ??
+                employerOwnedLifeInsurance.premiumsClaimedAsDeduction
+            ),
+            policyCashValue: toNum(employerOwnedLifeInsurance.policyCashValue),
+            interestExpenseDisallowance: toNum(
+              employerOwnedLifeInsurance.interestExpenseDisallowance ??
+                employerOwnedLifeInsurance.allocableInterestDisallowance
+            ),
+            deathBenefitReceived: toNum(
+              employerOwnedLifeInsurance.deathBenefitReceived
+            ),
+            investmentInContract: toNum(
+              employerOwnedLifeInsurance.investmentInContract ??
+                employerOwnedLifeInsurance.policyBasis
+            ),
+            cashSurrenderValue: toNum(
+              employerOwnedLifeInsurance.cashSurrenderValue
+            ),
+            surrenderedForCash: toBool(
+              employerOwnedLifeInsurance.surrenderedForCash
+            ),
+            isEmployerOwnedPolicy: toBool(
+              employerOwnedLifeInsurance.isEmployerOwnedPolicy ?? true
+            ),
+            corporationIsDirectOrIndirectBeneficiary: toBool(
+              employerOwnedLifeInsurance.corporationIsDirectOrIndirectBeneficiary ??
+                employerOwnedLifeInsurance.isCorporationBeneficiary ??
+                true
+            ),
+            validNoticeAndConsent: toBool(
+              employerOwnedLifeInsurance.validNoticeAndConsent ??
+                employerOwnedLifeInsurance.hasValidConsentForAll
+            ),
+            insuredWasEmployeeWithin12MonthsOfDeath: toBool(
+              employerOwnedLifeInsurance.insuredWasEmployeeWithin12MonthsOfDeath
+            ),
+            insuredWasDirectorOrHighlyCompedAtIssue: toBool(
+              employerOwnedLifeInsurance.insuredWasDirectorOrHighlyCompedAtIssue
+            ),
+            proceedsPaidToFamilyOrUsedForEquityPurchase: toBool(
+              employerOwnedLifeInsurance.proceedsPaidToFamilyOrUsedForEquityPurchase
+            ),
+            issuedAfterAugust172006: toBool(
+              employerOwnedLifeInsurance.issuedAfterAugust172006 ?? true
+            )
+          }
+        : undefined,
+    corporateDeferredCompensation:
+      Object.keys(corporateDeferredCompensation).length > 0
+        ? {
+            claimedCurrentYearDeduction: toNum(
+              corporateDeferredCompensation.claimedCurrentYearDeduction ??
+                corporateDeferredCompensation.currentYearDeductionClaimed
+            ),
+            employeeIncomeInclusion: toNum(
+              corporateDeferredCompensation.employeeIncomeInclusion
+            ),
+            stockCompIncomeInclusion: toNum(
+              corporateDeferredCompensation.stockCompIncomeInclusion
+            ),
+            section409AFailureInclusion: toNum(
+              corporateDeferredCompensation.section409AFailureInclusion
+            ),
+            claimedSection83iDeferral: toBool(
+              corporateDeferredCompensation.claimedSection83iDeferral
+            ),
+            excludedEmployeeForSection83i: toBool(
+              corporateDeferredCompensation.excludedEmployeeForSection83i
+            )
+          }
+        : undefined,
+    rabbiTrust:
+      Object.keys(rabbiTrust).length > 0
+        ? {
+            contributions: toNum(rabbiTrust.contributions),
+            contributionsClaimedAsDeduction: toNum(
+              rabbiTrust.contributionsClaimedAsDeduction ??
+                rabbiTrust.currentYearDeductionClaimed
+            ),
+            subjectToGeneralCreditors: toBool(
+              rabbiTrust.subjectToGeneralCreditors ?? true
+            ),
+            isOffshore: toBool(rabbiTrust.isOffshore),
+            hasFinancialHealthTrigger: toBool(
+              rabbiTrust.hasFinancialHealthTrigger
+            )
+          }
+        : undefined,
+    form8925:
+      Object.keys(form8925).length > 0
+        ? {
+            filed: toBool(form8925.filed),
+            employeeCount: toNum(form8925.employeeCount),
+            insuredCount: toNum(form8925.insuredCount),
+            totalInsuranceInForce: toNum(form8925.totalInsuranceInForce)
+          }
+        : undefined,
     taxableIncome: 0, // Computed by the form
     taxBeforeCredits: 0, // Computed by the form
     foreignTaxCredit: toNum(facts.foreignTaxCredit),
@@ -3403,6 +3537,90 @@ export class TaxCalculationService {
     const overpayment = form.l39()
     const effectiveTaxRate =
       totalIncome > 0 ? Math.round((totalTax / totalIncome) * 10000) / 10000 : 0
+    const corporateTaxAdjustments = [
+      {
+        code: 'COLI_PREMIUM_DISALLOWANCE_264A1',
+        description:
+          'Premiums on employer-owned life insurance are nondeductible when the corporation is directly or indirectly the beneficiary.',
+        amount: form.nondeductibleColiPremiums(),
+        effect: 'deduction_disallowance' as const
+      },
+      {
+        code: 'INTEREST_DISALLOWANCE_264F',
+        description:
+          'Interest expense allocable to unborrowed policy cash value is disallowed to the extent supplied in the Section 264(f) adjustment input.',
+        amount: form.section264fInterestDisallowance(),
+        effect: 'deduction_disallowance' as const
+      },
+      {
+        code: 'TAXABLE_DEATH_BENEFIT_101J',
+        description:
+          'Employer-owned life insurance proceeds become taxable to the extent the Section 101(j) exclusion is not available.',
+        amount: form.taxableEmployerOwnedLifeInsuranceDeathBenefit(),
+        effect: 'income_increase' as const
+      },
+      {
+        code: 'CASH_SURRENDER_GAIN_P525',
+        description:
+          'Cash surrender proceeds above investment in the contract are treated as taxable income.',
+        amount: form.lifeInsuranceSurrenderGain(),
+        effect: 'income_increase' as const
+      },
+      {
+        code: 'NQDC_DEDUCTION_DISALLOWANCE_404A5',
+        description:
+          'Deferred compensation deduction is limited to the amount currently includible in employee income.',
+        amount: form.disallowedDeferredCompensationDeduction(),
+        effect: 'deduction_disallowance' as const
+      },
+      {
+        code: 'RABBI_TRUST_FUNDING_DISALLOWANCE',
+        description:
+          'Rabbi trust funding does not create a current deduction in the absence of matching employee income inclusion.',
+        amount: form.disallowedRabbiTrustFundingDeduction(),
+        effect: 'deduction_disallowance' as const
+      }
+    ].filter((item) => (item.amount ?? 0) > 0)
+    const requiredForms = Array.from(
+      new Set([
+        ...(form.requiresForm8925() ? ['8925'] : [])
+      ])
+    )
+    const complianceAlerts = [
+      form.requiresForm8925() && !form.form8925()?.filed
+        ? {
+            code: 'FORM_8925_REQUIRED',
+            severity: 'warning' as const,
+            description:
+              'Employer-owned life insurance appears to require Form 8925 reporting, but the filing flag is not set.'
+          }
+        : null,
+      form.taxableEmployerOwnedLifeInsuranceDeathBenefit() > 0
+        ? {
+            code: 'SECTION_101J_TAXABLE_PROCEEDS',
+            severity: 'warning' as const,
+            description:
+              'The supplied Section 101(j) facts leave part of the death benefit taxable at the corporate level.'
+          }
+        : null,
+      form.hasRabbiTrust409AHazard()
+        ? {
+            code: 'RABBI_TRUST_409A_HAZARD',
+            severity: 'warning' as const,
+            description:
+              'The supplied rabbi trust facts indicate a Section 409A(b) hazard because assets are offshore, restricted by financial health, or not exposed to general creditors.'
+          }
+        : null,
+      form.hasSection83iExcludedEmployeeRisk()
+        ? {
+            code: 'SECTION_83I_EXCLUDED_EMPLOYEE',
+            severity: 'warning' as const,
+            description:
+              'A Section 83(i) deferral was flagged for an excluded employee. The current corporate model treats this as a review issue, not an automatic tax adjustment.'
+          }
+        : null
+    ].filter((item): item is NonNullable<typeof item> => item !== null)
+    const hazardFlags = complianceAlerts.map((alert) => alert.code)
 
     return {
       success: true,
@@ -3417,6 +3635,10 @@ export class TaxCalculationService {
       amountOwed,
       overpayment,
       effectiveTaxRate,
+      requiredForms,
+      hazardFlags,
+      corporateTaxAdjustments,
+      complianceAlerts,
       schedules: [form.tag]
     }
   }

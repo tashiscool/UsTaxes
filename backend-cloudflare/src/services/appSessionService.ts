@@ -396,6 +396,10 @@ const BUSINESS_RETURN_RECORD_KEYS = [
   'income',
   'deductions',
   'specialDeductions',
+  'employerOwnedLifeInsurance',
+  'corporateDeferredCompensation',
+  'rabbiTrust',
+  'form8925',
   'scheduleK',
   'liabilitiesAtYearEnd',
   'fiduciary',
@@ -4423,6 +4427,7 @@ const toFacts = (
 ): Record<string, unknown> => {
   const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
   const residency = requireScreen(snapshot, '/residency')
+  const efile = requireScreen(snapshot, '/efile-wizard')
   const w2 = requireScreen(snapshot, '/w2')
   const status = String(
     taxpayer.filingStatus ??
@@ -4583,6 +4588,10 @@ const toFacts = (
       schedule8812Fidelity.schedule8812EarnedIncomeAdjustments,
     otherFederalWithholdingCredits:
       schedule8812Fidelity.otherFederalWithholdingCredits,
+    appliedToNextYearEstimatedTax: toMoney(
+      efile.appliedToNextYearEstimatedTax ??
+        efile.refundAppliedToNextYearEstimatedTax
+    ),
     form8879,
     creditSummary: creditSummary.summary,
     // OBBBA 2025 fields
@@ -4772,6 +4781,10 @@ const toSubmissionPayload = (
               exemption: bizCalcResult.exemption,
               beneficiaryCount: bizCalcResult.beneficiaryCount,
               effectiveTaxRate: bizCalcResult.effectiveTaxRate,
+              requiredForms: bizCalcResult.requiredForms,
+              hazardFlags: bizCalcResult.hazardFlags,
+              corporateTaxAdjustments: bizCalcResult.corporateTaxAdjustments,
+              complianceAlerts: bizCalcResult.complianceAlerts,
               ownerAllocations: bizCalcResult.ownerAllocations,
               schedules: bizCalcResult.schedules
             }
@@ -7152,6 +7165,10 @@ export class AppSessionService {
               distributionDeduction: bizOutcome.distributionDeduction,
               exemption: bizOutcome.exemption,
               beneficiaryCount: bizOutcome.beneficiaryCount,
+              requiredForms: bizOutcome.requiredForms,
+              hazardFlags: bizOutcome.hazardFlags,
+              corporateTaxAdjustments: bizOutcome.corporateTaxAdjustments,
+              complianceAlerts: bizOutcome.complianceAlerts,
               schedules: bizOutcome.schedules,
               ownerAllocations: bizOutcome.ownerAllocations
             },

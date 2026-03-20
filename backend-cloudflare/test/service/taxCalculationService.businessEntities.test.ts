@@ -195,6 +195,95 @@ describe('C-Corp (Form 1120)', () => {
     expect(result.amountOwed).toBe(25_000)
     expect(result.overpayment).toBe(0)
   })
+
+  it('applies explicit COLI and deferred-comp timing adjustments and surfaces hazards', () => {
+    const result = svc.calculateBusinessEntity(
+      '1120',
+      baseBizFacts({
+        entityName: 'Policy Timing Corp',
+        income: {
+          grossReceiptsOrSales: 500_000,
+          otherIncome: 0
+        },
+        deductions: {
+          salariesAndWages: 200_000,
+          rents: 50_000,
+          taxesAndLicenses: 20_000,
+          interest: 15_000,
+          depreciation: 10_000,
+          advertising: 10_000,
+          employeeBenefits: 10_000,
+          otherDeductions: 52_000
+        },
+        employerOwnedLifeInsurance: {
+          premiumsPaid: 12_000,
+          claimedPremiumDeduction: 12_000,
+          interestExpenseDisallowance: 5_000,
+          deathBenefitReceived: 90_000,
+          investmentInContract: 25_000,
+          validNoticeAndConsent: false,
+          issuedAfterAugust172006: true
+        },
+        corporateDeferredCompensation: {
+          claimedCurrentYearDeduction: 40_000,
+          employeeIncomeInclusion: 10_000,
+          stockCompIncomeInclusion: 5_000,
+          section409AFailureInclusion: 5_000,
+          claimedSection83iDeferral: true,
+          excludedEmployeeForSection83i: true
+        },
+        rabbiTrust: {
+          contributions: 10_000,
+          contributionsClaimedAsDeduction: 10_000,
+          subjectToGeneralCreditors: false,
+          hasFinancialHealthTrigger: true
+        },
+        form8925: {
+          filed: false,
+          employeeCount: 40,
+          insuredCount: 3,
+          totalInsuranceInForce: 1_200_000
+        }
+      })
+    )
+
+    expect(result.success).toBe(true)
+    if (!result.success) return
+
+    expect(result.totalIncome).toBe(565_000)
+    expect(result.totalDeductions).toBe(320_000)
+    expect(result.taxableIncome).toBe(245_000)
+    expect(result.totalTax).toBe(51_450)
+    expect(result.requiredForms).toContain('8925')
+    expect(result.hazardFlags).toContain('FORM_8925_REQUIRED')
+    expect(result.hazardFlags).toContain('SECTION_101J_TAXABLE_PROCEEDS')
+    expect(result.hazardFlags).toContain('RABBI_TRUST_409A_HAZARD')
+    expect(result.hazardFlags).toContain('SECTION_83I_EXCLUDED_EMPLOYEE')
+    expect(result.corporateTaxAdjustments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'COLI_PREMIUM_DISALLOWANCE_264A1',
+          amount: 12_000
+        }),
+        expect.objectContaining({
+          code: 'INTEREST_DISALLOWANCE_264F',
+          amount: 5_000
+        }),
+        expect.objectContaining({
+          code: 'TAXABLE_DEATH_BENEFIT_101J',
+          amount: 65_000
+        }),
+        expect.objectContaining({
+          code: 'NQDC_DEDUCTION_DISALLOWANCE_404A5',
+          amount: 20_000
+        }),
+        expect.objectContaining({
+          code: 'RABBI_TRUST_FUNDING_DISALLOWANCE',
+          amount: 10_000
+        })
+      ])
+    )
+  })
 })
 
 // ---------------------------------------------------------------------------

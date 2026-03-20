@@ -409,6 +409,88 @@ describe('Business Entity Tax Calculations', () => {
       expect(result.overpayment).toBe(8000)
     })
 
+    it('treats COLI, 101(j), deferred comp, and rabbi trust adjustments as real 1120 tax inputs', () => {
+      const result = taxCalcService.calculateF1120(
+        cCorpFacts({
+          entityName: 'Policy Timing Corp',
+          income: {
+            grossReceiptsOrSales: 500000,
+            returnsAndAllowances: 0,
+            costOfGoodsSold: 0,
+            dividendIncome: 0,
+            interestIncome: 0,
+            grossRents: 0,
+            grossRoyalties: 0,
+            capitalGainNetIncome: 0,
+            netGainFromSaleOfAssets: 0,
+            otherIncome: 0
+          },
+          deductions: {
+            compensationOfOfficers: 0,
+            salariesAndWages: 200000,
+            repairsAndMaintenance: 0,
+            badDebts: 0,
+            rents: 50000,
+            taxesAndLicenses: 20000,
+            interest: 15000,
+            charitableContributions: 0,
+            depreciation: 10000,
+            depletion: 0,
+            advertising: 10000,
+            pensionPlans: 0,
+            employeeBenefits: 10000,
+            domesticProductionDeduction: 0,
+            otherDeductions: 52000
+          },
+          employerOwnedLifeInsurance: {
+            premiumsPaid: 12000,
+            claimedPremiumDeduction: 12000,
+            interestExpenseDisallowance: 5000,
+            deathBenefitReceived: 90000,
+            investmentInContract: 25000,
+            validNoticeAndConsent: false,
+            issuedAfterAugust172006: true
+          },
+          corporateDeferredCompensation: {
+            claimedCurrentYearDeduction: 40000,
+            employeeIncomeInclusion: 10000,
+            stockCompIncomeInclusion: 5000,
+            section409AFailureInclusion: 5000,
+            claimedSection83iDeferral: true,
+            excludedEmployeeForSection83i: true
+          },
+          rabbiTrust: {
+            contributions: 10000,
+            contributionsClaimedAsDeduction: 10000,
+            subjectToGeneralCreditors: false,
+            hasFinancialHealthTrigger: true
+          },
+          form8925: {
+            filed: false,
+            employeeCount: 40,
+            insuredCount: 3,
+            totalInsuranceInForce: 1200000
+          }
+        })
+      )
+
+      expect(result.success).toBe(true)
+      if (!result.success) return
+      expect(result.totalIncome).toBe(565000)
+      expect(result.totalDeductions).toBe(320000)
+      expect(result.taxableIncome).toBe(245000)
+      expect(result.totalTax).toBe(51450)
+      expect(result.requiredForms).toContain('8925')
+      expect(result.hazardFlags).toEqual(
+        expect.arrayContaining([
+          'FORM_8925_REQUIRED',
+          'SECTION_101J_TAXABLE_PROCEEDS',
+          'RABBI_TRUST_409A_HAZARD',
+          'SECTION_83I_EXCLUDED_EMPLOYEE'
+        ])
+      )
+    })
+
     it('applies special deductions, credits, other taxes, and payments for workbook-grade 1120 parity', () => {
       const result = taxCalcService.calculateF1120(
         cCorpFacts({

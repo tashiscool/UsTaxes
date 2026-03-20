@@ -1819,6 +1819,30 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
               interest: '8000',
               depreciation: '12000',
               otherDeductions: '10000'
+            },
+            employerOwnedLifeInsurance: {
+              premiumsPaid: '6000',
+              claimedPremiumDeduction: '6000',
+              interestExpenseDisallowance: '2000',
+              deathBenefitReceived: '40000',
+              investmentInContract: '10000',
+              validNoticeAndConsent: false,
+              issuedAfterAugust172006: true
+            },
+            corporateDeferredCompensation: {
+              claimedCurrentYearDeduction: '18000',
+              employeeIncomeInclusion: '12000'
+            },
+            rabbiTrust: {
+              contributionsClaimedAsDeduction: '3000',
+              subjectToGeneralCreditors: false,
+              hasFinancialHealthTrigger: true
+            },
+            form8925: {
+              filed: false,
+              employeeCount: '25',
+              insuredCount: '2',
+              totalInsuranceInForce: '750000'
             }
           }
         },
@@ -2094,6 +2118,18 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
         expect((taxSummary.schedules as string[]).includes(scenario.scheduleTag)).toBe(
           true
         )
+        if (scenario.formType === '1120') {
+          expect((taxSummary.requiredForms as string[] | undefined) ?? []).toContain(
+            '8925'
+          )
+          expect((taxSummary.hazardFlags as string[] | undefined) ?? []).toEqual(
+            expect.arrayContaining([
+              'FORM_8925_REQUIRED',
+              'SECTION_101J_TAXABLE_PROCEEDS',
+              'RABBI_TRUST_409A_HAZARD'
+            ])
+          )
+        }
         if (scenario.formType === '1120-S' || scenario.formType === '1065') {
           expect(Array.isArray(taxSummary.ownerAllocations)).toBe(true)
           const ownerAllocations = taxSummary.ownerAllocations as JsonObject[]

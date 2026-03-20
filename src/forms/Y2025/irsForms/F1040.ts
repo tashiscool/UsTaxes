@@ -1402,10 +1402,17 @@ export default class F1040 extends F1040Base {
 
   l34 = (): number => Math.max(0, this.l33() - this.l24())
 
-  // TODO: assuming user wants amount refunded
-  // rather than applied to estimated tax
-  l35a = (): number => this.l34()
-  l36 = (): number => Math.max(0, this.l34() - this.l35a())
+  appliedToNextYearEstimatedTax = (): number =>
+    Math.max(
+      0,
+      Math.min(
+        this.l34(),
+        this.info.appliedToNextYearEstimatedTax ?? 0
+      )
+    )
+
+  l35a = (): number => Math.max(0, this.l34() - this.appliedToNextYearEstimatedTax())
+  l36 = (): number => this.appliedToNextYearEstimatedTax()
 
   l37 = (): number => Math.max(0, this.l24() - this.l33())
 

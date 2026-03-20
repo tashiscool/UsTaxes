@@ -1,0 +1,88 @@
+{
+  "scenarioId": "1120-scenario-05-nqdc-stockcomp-timing",
+  "formType": "1120",
+  "description": "C-corporation with nonqualified deferred compensation timing limits, stock-comp deduction timing, and rabbi-trust hazard flags.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts"
+  ],
+  "facts": {
+    "entityName": "Equity Timing Holdings Inc",
+    "ein": "12-7778899",
+    "entityType": "C-Corporation",
+    "accountingMethod": "accrual",
+    "taxYear": 2025,
+    "totalAssets": 2400000,
+    "income": {
+      "grossReceiptsOrSales": 500000,
+      "returnsAndAllowances": 0,
+      "costOfGoodsSold": 0,
+      "dividendIncome": 0,
+      "interestIncome": 0,
+      "grossRents": 0,
+      "grossRoyalties": 0,
+      "capitalGainNetIncome": 0,
+      "netGainFromSaleOfAssets": 0,
+      "otherIncome": 0
+    },
+    "deductions": {
+      "compensationOfOfficers": 0,
+      "salariesAndWages": 200000,
+      "repairsAndMaintenance": 0,
+      "badDebts": 0,
+      "rents": 50000,
+      "taxesAndLicenses": 20000,
+      "interest": 15000,
+      "charitableContributions": 0,
+      "depreciation": 10000,
+      "depletion": 0,
+      "advertising": 10000,
+      "pensionPlans": 0,
+      "employeeBenefits": 10000,
+      "domesticProductionDeduction": 0,
+      "otherDeductions": 52000
+    },
+    "specialDeductions": {
+      "dividendsReceivedDeduction": 0,
+      "dividendsFromAffiliated": 0,
+      "dividendsOnDebtFinancedStock": 0,
+      "dividendsOnCertainPreferred": 0,
+      "foreignDividends": 0,
+      "nol": 0
+    },
+    "corporateDeferredCompensation": {
+      "claimedCurrentYearDeduction": 40000,
+      "employeeIncomeInclusion": 10000,
+      "stockCompIncomeInclusion": 5000,
+      "section409AFailureInclusion": 5000,
+      "claimedSection83iDeferral": true,
+      "excludedEmployeeForSection83i": true
+    },
+    "rabbiTrust": {
+      "contributions": 10000,
+      "contributionsClaimedAsDeduction": 10000,
+      "subjectToGeneralCreditors": false,
+      "hasFinancialHealthTrigger": true
+    },
+    "estimatedTaxPayments": 0,
+    "extensionPayment": 0,
+    "priorYearOverpayment": 0
+  },
+  "expected": {
+    "entityName": "Equity Timing Holdings Inc",
+    "totalIncome": 500000,
+    "totalDeductions": 337000,
+    "taxableIncome": 163000,
+    "totalTax": 34230,
+    "totalPayments": 0,
+    "amountOwed": 34230,
+    "overpayment": 0,
+    "effectiveTaxRate": 0.0685,
+    "hazardFlags": [
+      "RABBI_TRUST_409A_HAZARD",
+      "SECTION_83I_EXCLUDED_EMPLOYEE"
+    ],
+    "schedules": [
+      "f1120"
+    ]
+  }
+}

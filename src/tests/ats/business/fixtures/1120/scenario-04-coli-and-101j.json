@@ -1,0 +1,92 @@
+{
+  "scenarioId": "1120-scenario-04-coli-and-101j",
+  "formType": "1120",
+  "description": "C-corporation with nondeductible COLI premiums, Section 264(f) interest disallowance, taxable Section 101(j) death-benefit proceeds, and Form 8925 reporting exposure.",
+  "sourceTests": [
+    "/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts"
+  ],
+  "facts": {
+    "entityName": "Sentinel Life Benefits Corp",
+    "ein": "12-5556789",
+    "entityType": "C-Corporation",
+    "accountingMethod": "accrual",
+    "taxYear": 2025,
+    "totalAssets": 1800000,
+    "income": {
+      "grossReceiptsOrSales": 600000,
+      "returnsAndAllowances": 0,
+      "costOfGoodsSold": 0,
+      "dividendIncome": 0,
+      "interestIncome": 5000,
+      "grossRents": 0,
+      "grossRoyalties": 0,
+      "capitalGainNetIncome": 0,
+      "netGainFromSaleOfAssets": 0,
+      "otherIncome": 0
+    },
+    "deductions": {
+      "compensationOfOfficers": 0,
+      "salariesAndWages": 210000,
+      "repairsAndMaintenance": 0,
+      "badDebts": 0,
+      "rents": 40000,
+      "taxesAndLicenses": 15000,
+      "interest": 18000,
+      "charitableContributions": 0,
+      "depreciation": 12000,
+      "depletion": 0,
+      "advertising": 7000,
+      "pensionPlans": 0,
+      "employeeBenefits": 8000,
+      "domesticProductionDeduction": 0,
+      "otherDeductions": 20000
+    },
+    "specialDeductions": {
+      "dividendsReceivedDeduction": 0,
+      "dividendsFromAffiliated": 0,
+      "dividendsOnDebtFinancedStock": 0,
+      "dividendsOnCertainPreferred": 0,
+      "foreignDividends": 0,
+      "nol": 0
+    },
+    "employerOwnedLifeInsurance": {
+      "premiumsPaid": 12000,
+      "claimedPremiumDeduction": 12000,
+      "interestExpenseDisallowance": 4000,
+      "deathBenefitReceived": 50000,
+      "investmentInContract": 20000,
+      "validNoticeAndConsent": false,
+      "issuedAfterAugust172006": true
+    },
+    "form8925": {
+      "filed": false,
+      "employeeCount": 35,
+      "insuredCount": 2,
+      "totalInsuranceInForce": 900000
+    },
+    "estimatedTaxPayments": 0,
+    "extensionPayment": 0,
+    "priorYearOverpayment": 0
+  },
+  "expected": {
+    "entityName": "Sentinel Life Benefits Corp",
+    "totalIncome": 635000,
+    "totalDeductions": 314000,
+    "taxableIncome": 321000,
+    "totalTax": 67410,
+    "totalPayments": 0,
+    "amountOwed": 67410,
+    "overpayment": 0,
+    "effectiveTaxRate": 0.1062,
+    "requiredForms": [
+      "8925"
+    ],
+    "hazardFlags": [
+      "FORM_8925_REQUIRED",
+      "SECTION_101J_TAXABLE_PROCEEDS"
+    ],
+    "schedules": [
+      "f1120"
+    ]
+  }
+}

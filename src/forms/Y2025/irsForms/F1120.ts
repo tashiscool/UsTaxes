@@ -76,7 +76,10 @@ export default class F1120 extends CCorpForm {
   l9 = (): number => this.data.income.netGainFromSaleOfAssets
 
   // Line 10: Other income (attach statement)
-  l10 = (): number => this.data.income.otherIncome
+  l10 = (): number =>
+    this.data.income.otherIncome +
+    this.taxableEmployerOwnedLifeInsuranceDeathBenefit() +
+    this.lifeInsuranceSurrenderGain()
 
   // Line 11: Total income (add lines 3 through 10)
   l11 = (): number => {
@@ -115,7 +118,8 @@ export default class F1120 extends CCorpForm {
   l17 = (): number => this.data.deductions.taxesAndLicenses
 
   // Line 18: Interest
-  l18 = (): number => this.data.deductions.interest
+  l18 = (): number =>
+    Math.max(0, this.data.deductions.interest - this.section264fInterestDisallowance())
 
   // Line 19: Charitable contributions (limited to 10% of line 30)
   l19 = (): number => {
@@ -159,7 +163,14 @@ export default class F1120 extends CCorpForm {
   l25 = (): number => 0
 
   // Line 26: Other deductions (attach statement)
-  l26 = (): number => this.data.deductions.otherDeductions
+  l26 = (): number =>
+    Math.max(
+      0,
+      this.data.deductions.otherDeductions -
+        this.nondeductibleColiPremiums() -
+        this.disallowedDeferredCompensationDeduction() -
+        this.disallowedRabbiTrustFundingDeduction()
+    )
 
   // Line 27: Total deductions (add lines 12 through 26)
   l27 = (): number => {
@@ -269,6 +280,135 @@ export default class F1120 extends CCorpForm {
       this.data.specialDeductions.dividendsOnCertainPreferred,
       this.data.specialDeductions.foreignDividends
     ])
+  }
+
+  // =========================================================================
+  // Corporate timing/compliance adjustments
+  // =========================================================================
+
+  employerOwnedLifeInsurance = () => this.data.employerOwnedLifeInsurance
+
+  corporateDeferredCompensation = () => this.data.corporateDeferredCompensation
+
+  rabbiTrust = () => this.data.rabbiTrust
+
+  form8925 = () => this.data.form8925
+
+  isCorporationLifeInsuranceBeneficiary = (): boolean => {
+    const coli = this.employerOwnedLifeInsurance()
+    if (!coli) return false
+    return Boolean(
+      coli.corporationIsDirectOrIndirectBeneficiary ??
+        coli.isEmployerOwnedPolicy ??
+        false
+    )
+  }
+
+  nondeductibleColiPremiums = (): number => {
+    const coli = this.employerOwnedLifeInsurance()
+    if (!coli || !this.isCorporationLifeInsuranceBeneficiary()) {
+      return 0
+    }
+    return Math.max(0, coli.claimedPremiumDeduction ?? coli.premiumsPaid ?? 0)
+  }
+
+  section264fInterestDisallowance = (): number =>
+    Math.max(
+      0,
+      this.employerOwnedLifeInsurance()?.interestExpenseDisallowance ?? 0
+    )
+
+  hasSection101jException = (): boolean => {
+    const coli = this.employerOwnedLifeInsurance()
+    if (!coli) return false
+    return Boolean(
+      coli.insuredWasEmployeeWithin12MonthsOfDeath ||
+        coli.insuredWasDirectorOrHighlyCompedAtIssue ||
+        coli.proceedsPaidToFamilyOrUsedForEquityPurchase
+    )
+  }
+
+  taxableEmployerOwnedLifeInsuranceDeathBenefit = (): number => {
+    const coli = this.employerOwnedLifeInsurance()
+    if (
+      !coli ||
+      !this.isCorporationLifeInsuranceBeneficiary() ||
+      (coli.deathBenefitReceived ?? 0) <= 0
+    ) {
+      return 0
+    }
+
+    if (coli.validNoticeAndConsent && this.hasSection101jException()) {
+      return 0
+    }
+
+    const investmentInContract =
+      coli.investmentInContract ?? coli.premiumsPaid ?? 0
+    return Math.max(0, (coli.deathBenefitReceived ?? 0) - investmentInContract)
+  }
+
+  lifeInsuranceSurrenderGain = (): number => {
+    const coli = this.employerOwnedLifeInsurance()
+    if (!coli || !coli.surrenderedForCash) return 0
+    const investmentInContract =
+      coli.investmentInContract ?? coli.premiumsPaid ?? 0
+    return Math.max(0, (coli.cashSurrenderValue ?? 0) - investmentInContract)
+  }
+
+  allowedDeferredCompensationDeduction = (): number => {
+    const deferredComp = this.corporateDeferredCompensation()
+    if (!deferredComp) return 0
+
+    const claimed = Math.max(0, deferredComp.claimedCurrentYearDeduction ?? 0)
+    const currentlyIncludible = Math.max(
+      0,
+      (deferredComp.employeeIncomeInclusion ?? 0) +
+        (deferredComp.stockCompIncomeInclusion ?? 0) +
+        (deferredComp.section409AFailureInclusion ?? 0)
+    )
+
+    return Math.min(claimed, currentlyIncludible)
+  }
+
+  disallowedDeferredCompensationDeduction = (): number => {
+    const deferredComp = this.corporateDeferredCompensation()
+    if (!deferredComp) return 0
+    return Math.max(
+      0,
+      (deferredComp.claimedCurrentYearDeduction ?? 0) -
+        this.allowedDeferredCompensationDeduction()
+    )
+  }
+
+  disallowedRabbiTrustFundingDeduction = (): number =>
+    Math.max(0, this.rabbiTrust()?.contributionsClaimedAsDeduction ?? 0)
+
+  requiresForm8925 = (): boolean => {
+    const coli = this.employerOwnedLifeInsurance()
+    if (!coli) return false
+    return Boolean(
+      (coli.isEmployerOwnedPolicy ?? this.isCorporationLifeInsuranceBeneficiary()) &&
+        coli.issuedAfterAugust172006
+    )
+  }
+
+  hasRabbiTrust409AHazard = (): boolean => {
+    const rabbiTrust = this.rabbiTrust()
+    if (!rabbiTrust) return false
+    return Boolean(
+      rabbiTrust.isOffshore ||
+        rabbiTrust.hasFinancialHealthTrigger ||
+        rabbiTrust.subjectToGeneralCreditors === false
+    )
+  }
+
+  hasSection83iExcludedEmployeeRisk = (): boolean => {
+    const deferredComp = this.corporateDeferredCompensation()
+    if (!deferredComp) return false
+    return Boolean(
+      deferredComp.claimedSection83iDeferral &&
+        deferredComp.excludedEmployeeForSection83i
+    )
   }
 
   // =========================================================================

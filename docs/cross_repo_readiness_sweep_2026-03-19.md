@@ -55,22 +55,32 @@ This sweep covers the active filing stack:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
 - `Form 8879` is no longer a dead attachment stub:
   - consent and self-select PIN facts from the e-file flow now map into a real
-    `F8879` attachment with current-return totals
+  `F8879` attachment with current-return totals
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F8879.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/F8879Parity.test.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts`
+- `Form 1040` refund allocation now correctly splits line `35a` and line `36`:
+  - the engine and backend facts can now apply part or all of an overpayment to
+    next-year estimated tax instead of assuming everything is refunded
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1040.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/F1040RefundAllocationParity.test.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/appSessionService.ts`
 
 ### backend-cloudflare
 
-- Full backend gate passed:
-  - `npm run test:all`
-  - `25/25` test files
-  - `213/213` tests
-- Runtime smoke passed:
-  - `workbook`
-  - `advanced`
-  - `derivedFacts`
-  - `auth`
+- Backend typecheck passed:
+  - `npm run check`
+- Focused business/runtime proof passed for this slice:
+  - `test/service/businessEntityCalc.test.ts`
+  - `test/service/taxCalculationService.businessEntities.test.ts`
+  - `test/service/businessParityFixtures.test.ts`
+  - the `1120` runtime path inside `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
+- The umbrella backend gate still clears the heavy late suites such as:
+  - `test/service/taxCalculationService.excel1040Parity.test.ts`
+  - `test/service/businessEntityCalc.test.ts`
+  - `test/service/taxCalculationService.businessEntities.test.ts`
+  - `test/service/businessParityFixtures.test.ts`
+  - but in this branch it again went quiet late rather than exiting cleanly, so this sweep does not claim a fresh fully completed `npm run test:all` result
 - Business entity returns now expose richer sync outputs, not just readiness flags:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/appSessionService.ts`
@@ -79,6 +89,23 @@ This sweep covers the active filing stack:
 - Canonical business parity fixtures are now executable and green:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/business_fixture_manifest.json`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessParityFixtures.test.ts`
+- The `1120` path now models key corporate timing/compliance adjustments from
+  explicit facts:
+  - COLI premium disallowance under `§264(a)(1)`
+  - `§264(f)` interest disallowance when supplied
+  - taxable employer-owned life insurance proceeds under `§101(j)` when notice,
+    consent, and exception facts do not preserve the exclusion
+  - Form `8925` reporting requirements and review flags under `§6039I`
+  - NQDC deduction timing under `§404(a)(5)` / `§83(h)`
+  - rabbi-trust current-deduction disallowance and `§409A(b)` hazard flags
+  - evidence:
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1120.ts`
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts`
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts`
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/businessEntityCalc.test.ts`
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-04-coli-and-101j.json`
+    - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/tests/ats/business/fixtures/1120/scenario-05-nqdc-stockcomp-timing.json`
 - Nonprofit expert-route evidence is now fixture-backed too:
   - `990-N`-sized, `990-EZ`-sized, and full-`990` organizations all execute through the fixture harness and surface sized guidance instead of only generic expert routing
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/service/taxCalculationService.businessEntities.test.ts`
@@ -139,6 +166,10 @@ This sweep covers the active filing stack:
 
 - `1120`, `1120-S`, `1065`, and `1041` now have audited computed output surfaces in the Cloudflare path, not just capability flags.
 - They also now have canonical JSON parity-input fixtures that execute cleanly against the backend calculator.
+- `1120` is no longer only a basic flat-tax story: the audited output now
+  includes required forms, hazard flags, and explicit corporate tax adjustments
+  for COLI, Section `101(j)`, Form `8925`, NQDC timing, and rabbi-trust funding
+  when those facts are supplied.
 - `990` is still expert-routed, but it is no longer only a prose claim: the parity harness now proves honest `990-N`, `990-EZ`, and full-`990` sizing guidance in the service/runtime path, and the worker review now surfaces fuller rendered-package sections instead of just a couple of summary rows.
 - See:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/docs/business_entity_output_audit_2026-03-19.md`
@@ -208,10 +239,10 @@ Why this still blocks the claim:
 
 - `1120`, `1120-S`, `1065`, `1041`, and the expert-routed `990` family are no longer only `IRS-reference-led`; they are now fixture-backed and executable through the backend test harness
 - the expert-routed `990` family now also exposes richer rendered preview fields in checklist/review flows instead of only sizing prose
-- the `1120` family still does not model advanced corporate structures like
-  COLI premium disallowance, §101(j)/Form 8925 compliance, or rabbi-trust /
-  nonqualified deferred compensation timing, so those scenarios still block a
-  blanket corporate-readiness claim
+- the `1120` family now models key COLI, Section `101(j)`, Form `8925`, NQDC,
+  and rabbi-trust timing adjustments from explicit facts, but it still is not
+  backed by a private workbook and it still does not model every payroll,
+  public-company, or transaction-triggered corporate edge case
 - none of the business/nonprofit forms are backed by private workbook sources the way the `1040` family is
 - `990` remains expert-routed, not self-serve
 
@@ -240,9 +271,11 @@ Evidence:
 
 Why this still blocks the claim:
 
-- `test:all` is green and trustworthy for its intended gate
-- but it still intentionally uses smoke checks instead of always running the
-  heaviest full worker-runtime and comprehensive/manual parity suites
+- the scripted gate is still intentionally smoke-weighted at the top level
+- in this branch, the umbrella run again cleared the heaviest business and
+  Excel-parity suites but then went quiet late instead of exiting cleanly
+- even when that runner behaves, it still does not always execute the heaviest
+  full worker-runtime and comprehensive/manual parity suites on every pass
 - that is pragmatic, but it is not the same thing as continuously proving every
   strongest parity claim on every run
 
@@ -252,7 +285,7 @@ The stack is substantially stronger than it was:
 
 - workbook audit is green
 - cross-engine diff is green
-- backend gate is green
+- targeted backend business/runtime slices are green
 - TaxFlow build is green
 - Direct File advanced parity slice is green
 
