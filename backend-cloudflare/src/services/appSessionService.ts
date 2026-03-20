@@ -4403,6 +4403,16 @@ const getItemizedDeductions = (
         source.personalPropertyTaxes ??
         source.vehiclePropertyTaxes
     ),
+    otherTaxes: toMoney(
+      source.otherTaxes ??
+        source.scheduleAOtherTaxes ??
+        source.line6OtherTaxes
+    ),
+    otherTaxesDescription: toText(
+      source.otherTaxesDescription ??
+        source.otherTaxesLabel ??
+        source.scheduleAOtherTaxesDescription
+    ),
     interest8a: toMoney(
       source.interest8a ??
         source.mortgageInterest ??

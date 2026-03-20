@@ -47,6 +47,12 @@ This sweep covers the active filing stack:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/Schedule1.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/Schedule8812.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/F1040.ts`
+- `Schedule A line 6` is no longer a dead TODO:
+  - itemized-deduction facts now carry explicit other-taxes amounts and labels
+  - the `Y2025` Schedule A form now includes those values in line `6` and line `7`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/irsForms/ScheduleA.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/src/forms/Y2025/tests/ScheduleAParity.test.ts`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts`
 - The worker-backed `Schedule 8812` path is now more first-class instead of
   only generic facts:
   - dedicated `/schedule-8812-adjustments` facts now surface the earned-income
@@ -76,17 +82,23 @@ This sweep covers the active filing stack:
 
 - Backend typecheck passed:
   - `npm run check`
+- The backend umbrella gate no longer depends on the one-shot Vitest core run
+  that would linger late in teardown:
+  - `npm run test:all` now drives a stable sequential core runner plus runtime smokes
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/scripts/test-core-sequential.mjs`
+  - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/scripts/test-all.mjs`
 - Focused business/runtime proof passed for this slice:
   - `test/service/businessEntityCalc.test.ts`
   - `test/service/taxCalculationService.businessEntities.test.ts`
   - `test/service/businessParityFixtures.test.ts`
   - the `1120` runtime path inside `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/test/worker/cloudflareRuntime.e2e.test.ts`
-- The umbrella backend gate still clears the heavy late suites such as:
+- The umbrella backend gate now clears the heavy late suites through the stable
+  sequential runner shape, including:
   - `test/service/taxCalculationService.excel1040Parity.test.ts`
   - `test/service/businessEntityCalc.test.ts`
   - `test/service/taxCalculationService.businessEntities.test.ts`
   - `test/service/businessParityFixtures.test.ts`
-  - but in this branch it again went quiet late rather than exiting cleanly, so this sweep does not claim a fresh fully completed `npm run test:all` result
+  - plus runtime smoke coverage for `workbook`, `advanced`, `derivedFacts`, and `auth`
 - Business entity returns now expose richer sync outputs, not just readiness flags:
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/taxCalculationService.ts`
   - `/Users/tkhan/IdeaProjects/taxes/UsTaxes/backend-cloudflare/src/services/appSessionService.ts`

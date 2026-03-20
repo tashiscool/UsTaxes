@@ -12,5 +12,5 @@ const run = (command) => {
 }
 
 run('npm run check')
-run('npx vitest run --exclude test/worker/cloudflareRuntime.e2e.test.ts')
+run('npm run test:core')
 run('node ./scripts/runtime-smoke-checks.mjs')

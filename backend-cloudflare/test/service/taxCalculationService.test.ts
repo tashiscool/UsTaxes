@@ -460,7 +460,7 @@ describe('TaxCalculationService', () => {
       })
     })
 
-    it('maps casualty and miscellaneous itemized deduction rollups into Schedule A-sensitive fields', () => {
+    it('maps casualty, line 6 other taxes, and miscellaneous deduction rollups into Schedule A-sensitive fields', () => {
       const facts = baseFacts({
         itemizedDeductions: {
           medicalAndDental: 0,
@@ -468,6 +468,8 @@ describe('TaxCalculationService', () => {
           isSalesTax: false,
           stateAndLocalRealEstateTaxes: 3000,
           stateAndLocalPropertyTaxes: 0,
+          otherTaxes: 400,
+          otherTaxesDescription: 'Generation-skipping tax',
           interest8a: 10000,
           interest8b: 0,
           interest8c: 0,
@@ -484,9 +486,15 @@ describe('TaxCalculationService', () => {
       const f1040 = new F1040(info as ValidatedInformation, [])
 
       expect(info.itemizedDeductions).toMatchObject({
+        otherTaxes: 400,
+        otherTaxesDescription: 'Generation-skipping tax',
         casualtyLosses: 250,
         otherDeductions: 600
       })
+      expect(f1040.scheduleA.l6()).toBe(400)
+      expect(f1040.scheduleA.l6OtherTaxesTypeAndAmount1()).toBe(
+        'Generation-skipping tax'
+      )
       expect(f1040.scheduleA.l15()).toBe(250)
       expect(f1040.scheduleA.l16()).toBe(600)
     })

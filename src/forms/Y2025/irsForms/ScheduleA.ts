@@ -11,6 +11,8 @@ const blankItemizedDeductions = {
   isSalesTax: false,
   stateAndLocalRealEstateTaxes: 0,
   stateAndLocalPropertyTaxes: 0,
+  otherTaxes: 0,
+  otherTaxesDescription: '',
   interest8a: 0,
   interest8b: 0,
   interest8c: 0,
@@ -77,12 +79,13 @@ export default class ScheduleA extends F1040Attachment {
     return Math.min(effectiveCap, saltTotal)
   }
 
-  // TODO
-  l6OtherTaxesTypeAndAmount1 = (): string | undefined => undefined
+  l6OtherTaxesTypeAndAmount1 = (): string | undefined =>
+    this.l6() > 0
+      ? String(this.itemizedDeductions.otherTaxesDescription || 'Other taxes')
+      : undefined
   l6OtherTaxesTypeAndAmount2 = (): string | undefined => undefined
 
-  // TODO
-  l6 = (): number | undefined => undefined
+  l6 = (): number => Number(this.itemizedDeductions.otherTaxes ?? 0)
 
   l7 = (): number => this.l5e() + (this.l6() ?? 0)
 

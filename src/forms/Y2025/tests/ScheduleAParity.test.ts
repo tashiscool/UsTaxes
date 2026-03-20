@@ -15,6 +15,8 @@ const baseInformation: ValidatedInformation = {
     isSalesTax: false,
     stateAndLocalRealEstateTaxes: 3000,
     stateAndLocalPropertyTaxes: 0,
+    otherTaxes: 400,
+    otherTaxesDescription: 'Generation-skipping tax',
     interest8a: 10000,
     interest8b: 0,
     interest8c: 0,
@@ -86,15 +88,19 @@ const baseInformation: ValidatedInformation = {
 }
 
 describe('Schedule A parity', () => {
-  it('pulls casualty losses from Form 4684 and carries other deductions on line 16', () => {
+  it('pulls casualty losses from Form 4684, preserves Schedule A line 6 other taxes, and carries other deductions on line 16', () => {
     const information = cloneDeep(baseInformation)
     const f1040 = new F1040(information, [])
 
     expect(f1040.f4684?.personalCasualtyLossDeduction()).toBe(7900)
+    expect(f1040.scheduleA.l6()).toBe(400)
+    expect(f1040.scheduleA.l6OtherTaxesTypeAndAmount1()).toBe(
+      'Generation-skipping tax'
+    )
     expect(f1040.scheduleA.l15()).toBe(7900)
     expect(f1040.scheduleA.l16()).toBe(600)
     expect(f1040.scheduleA.l16Other1()).toBe('Other deductions')
-    expect(f1040.scheduleA.l17()).toBe(27500)
+    expect(f1040.scheduleA.l17()).toBe(27900)
   })
 
   it('falls back to imported casualty totals when no Form 4684 events are present', () => {

@@ -590,6 +590,8 @@ export interface ItemizedDeductions {
   isSalesTax: boolean
   stateAndLocalRealEstateTaxes: string | number
   stateAndLocalPropertyTaxes: string | number
+  otherTaxes?: string | number
+  otherTaxesDescription?: string
   interest8a: string | number
   interest8b: string | number
   interest8c: string | number

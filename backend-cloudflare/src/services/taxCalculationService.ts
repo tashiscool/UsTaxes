@@ -258,6 +258,19 @@ const buildRawItemizedDeductions = (facts: FactsRecord) => {
         d.personalPropertyTaxes ??
         facts.personalPropertyTaxes
     ),
+    otherTaxes: toNum(
+      d.otherTaxes ??
+        d.scheduleAOtherTaxes ??
+        d.line6OtherTaxes ??
+        facts.otherTaxes ??
+        facts.scheduleAOtherTaxes
+    ),
+    otherTaxesDescription: toStr(
+      d.otherTaxesDescription ??
+        d.otherTaxesLabel ??
+        d.scheduleAOtherTaxesDescription ??
+        facts.otherTaxesDescription
+    ),
     interest8a: toNum(
       d.interest8a ??
         d.mortgageInterest ??
@@ -1440,6 +1453,8 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
         rawItemizedDeductions.stateAndLocalRealEstateTaxes,
       stateAndLocalPropertyTaxes:
         rawItemizedDeductions.stateAndLocalPropertyTaxes,
+      otherTaxes: rawItemizedDeductions.otherTaxes,
+      otherTaxesDescription: rawItemizedDeductions.otherTaxesDescription,
       interest8a: rawItemizedDeductions.interest8a,
       interest8b: rawItemizedDeductions.interest8b,
       interest8c: rawItemizedDeductions.interest8c,
