@@ -37,7 +37,11 @@ export const getPdfs = async (
   // Insert the values from each field into the PDF
   const pdfFiles: Array<Promise<PDFDocument>> = formData.map(
     async ([data, f]) => {
-      fillPDF(f, data.renderedFields(), 'Not Set')
+      fillPDF(
+        f,
+        data.renderedFields(),
+        'tag' in data && typeof data.tag === 'string' ? data.tag : 'Not Set'
+      )
       const pageBytes = await f.save()
       return await PDFDocument.load(pageBytes)
     }

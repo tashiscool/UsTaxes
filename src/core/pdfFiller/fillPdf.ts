@@ -15,6 +15,46 @@ export function fillPDF(
   formName: string
 ): PDFDocument {
   const formFields = pdf.getForm().getFields()
+  const coerceCheckboxValue = (value: Field): boolean | undefined => {
+    if (value === undefined) {
+      return false
+    }
+    if (value === true || value === false) {
+      return value
+    }
+    if (typeof value === 'number') {
+      if (value === 1) return true
+      if (value === 0) return false
+      return undefined
+    }
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase()
+      if (
+        normalized === 'true' ||
+        normalized === 'yes' ||
+        normalized === 'y' ||
+        normalized === '1' ||
+        normalized === 'x' ||
+        normalized === 'checked' ||
+        normalized === 'on'
+      ) {
+        return true
+      }
+      if (
+        normalized === '' ||
+        normalized === 'false' ||
+        normalized === 'no' ||
+        normalized === 'n' ||
+        normalized === '0' ||
+        normalized === 'not set' ||
+        normalized === 'off' ||
+        normalized === 'unchecked'
+      ) {
+        return false
+      }
+    }
+    return undefined
+  }
 
   formFields.forEach((pdfField, index) => {
     const value: Field = fieldValues[index]
@@ -50,9 +90,10 @@ export function fillPDF(
         )
       }
     } else if (pdfField instanceof PDFCheckBox) {
-      if (value === true) {
+      const checkboxValue = coerceCheckboxValue(value)
+      if (checkboxValue === true) {
         pdfField.check()
-      } else if (value !== false && value !== undefined) {
+      } else if (checkboxValue === undefined) {
         throw error('boolean')
       }
     } else if (pdfField instanceof PDFTextField) {

@@ -665,7 +665,7 @@ const buildNonresidentAlienReturn = (
   }
 }
 
-const buildInvestmentAssets = (facts: FactsRecord): Asset<Date>[] => {
+export const buildInvestmentAssets = (facts: FactsRecord): Asset<Date>[] => {
   const taxLotAssets = asArray<Record<string, unknown>>(facts.taxLots).flatMap(
     (lot, index) => {
       const proceeds = toNum(lot.proceeds)
@@ -2491,6 +2491,27 @@ const adaptHomeOffice = (
   }
 }
 
+export const buildInformationAndAssetsFromFacts = (
+  facts: FactsRecord
+): {
+  info: Information
+  assets: Asset<Date>[]
+} => {
+  const assets = buildInvestmentAssets(facts)
+  const rawInfo = adaptFactsToInformation(facts)
+
+  return {
+    info: {
+      ...rawInfo,
+      f1099s:
+        assets.length > 0
+          ? rawInfo.f1099s.filter((entry) => entry.type !== Income1099Type.B)
+          : rawInfo.f1099s
+    },
+    assets
+  }
+}
+
 const adaptNoncashContributions = (
   facts: FactsRecord
 ): Record<string, unknown> | undefined => {
@@ -3309,16 +3330,7 @@ export class TaxCalculationService {
   /** Individual (1040-family) tax calculation with optional state returns */
   calculate(facts: FactsRecord): TaxCalcOutcome {
     try {
-      const detailedAssets = buildInvestmentAssets(facts)
-      const rawInfo = adaptFactsToInformation(facts)
-      const info: Information = {
-        ...rawInfo,
-        f1099s:
-          detailedAssets.length > 0
-            ? rawInfo.f1099s.filter((entry) => entry.type !== Income1099Type.B)
-            : rawInfo.f1099s
-      }
-      const assets: Asset<Date>[] = detailedAssets
+      const { info, assets } = buildInformationAndAssetsFromFacts(facts)
       const result = create1040(info, assets)
 
       if (isLeft(result)) {

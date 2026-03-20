@@ -631,6 +631,32 @@ app.get(
   }
 )
 
+app.get(
+  '/app/v1/filing-sessions/:sessionId/documents/:documentId/artifact',
+  async (c) => {
+    const user = await requireAppUser(c)
+    const { appSessionService } = buildServices(c)
+    const artifact = await appSessionService.getDocumentArtifact(
+      c.req.param('sessionId'),
+      c.req.param('documentId'),
+      user
+    )
+    setNoStoreHeaders(c)
+    c.header('content-type', artifact.mimeType || 'application/octet-stream')
+    c.header(
+      'content-disposition',
+      `inline; filename="${encodeURIComponent(artifact.filename)}"`
+    )
+    c.header('accept-ranges', 'bytes')
+    const artifactBody = new Uint8Array(artifact.bytes)
+    return new Response(new Blob([artifactBody], {
+      type: artifact.mimeType || 'application/octet-stream'
+    }), {
+      headers: c.res.headers
+    })
+  }
+)
+
 app.patch(
   '/app/v1/filing-sessions/:sessionId/documents/:documentId',
   async (c) => {
@@ -726,6 +752,28 @@ app.get('/app/v1/filing-sessions/:sessionId/print-mail', async (c) => {
     user
   )
   return c.json(result)
+})
+
+app.get('/app/v1/filing-sessions/:sessionId/print-mail/pdf', async (c) => {
+  const user = await requireAppUser(c)
+  const { appSessionService } = buildServices(c)
+  const pdf = await appSessionService.getPrintMailFilledPdf(
+    c.req.param('sessionId'),
+    user
+  )
+  setNoStoreHeaders(c)
+  c.header('content-type', 'application/pdf')
+  c.header(
+    'content-disposition',
+    `inline; filename="${encodeURIComponent(pdf.filename)}"`
+  )
+  c.header('accept-ranges', 'bytes')
+  const pdfBody = new Uint8Array(pdf.bytes)
+  return new Response(new Blob([pdfBody], {
+    type: 'application/pdf'
+  }), {
+    headers: c.res.headers
+  })
 })
 
 app.post('/app/v1/filing-sessions/:sessionId/print-mail', async (c) => {

@@ -65,6 +65,9 @@ const createWorkerHarness = async (
     persistTo,
     vars: {
       INTERNAL_API_TOKEN: internalToken,
+      ...(process.env.USTAXES_FRONTEND_URL
+        ? { USTAXES_FRONTEND_URL: process.env.USTAXES_FRONTEND_URL }
+        : {}),
       ...overrides.vars
     },
     experimental: {
@@ -1254,7 +1257,7 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
           cookie: sessionCookie
         },
         body: JSON.stringify({
-          taxYear: 2025,
+          taxYear: 2024,
           filingStatus: 'hoh',
           formType: '1040',
           screenData: {
@@ -1474,6 +1477,192 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
         )
       ).toBe(true)
       expect(String(officialPreview.renderedHtml)).toContain('Form 8863')
+    }
+  )
+
+  it(
+    'returns document guidance, serves source artifacts, and streams a filled IRS PDF',
+    { timeout: 20000 },
+    async () => {
+      let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sub: 'taxflow-user-guided-ocr',
+          email: 'guided-ocr@example.com',
+          displayName: 'Guided OCR User'
+        })
+      })
+      expect(response.status).toBe(201)
+      const sessionCookie = extractCookieHeader(response)
+
+      response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          taxYear: 2024,
+          filingStatus: 'hoh',
+          formType: '1040',
+          screenData: {
+            '/taxpayer-profile': {
+              firstName: 'Avery',
+              lastName: 'Guidance',
+              ssn: '400-01-7777',
+              address: {
+                line1: '800 Source Lane',
+                city: 'Boston',
+                state: 'MA',
+                zip: '02110'
+              }
+            },
+            '/household': {
+              dependents: [
+                {
+                  id: 'dep-guidance-1',
+                  name: 'Jordan Guidance',
+                  dob: '2005-08-11',
+                  relationship: 'child',
+                  ssn: '400-01-6666'
+                }
+              ]
+            },
+            '/review-confirm': {
+              totalTax: 3600,
+              totalPayments: 4700,
+              totalRefund: 1100
+            }
+          }
+        })
+      })
+      expect(response.status).toBe(201)
+      const created = await parseJsonResponse<JsonObject>(response)
+      const filingSessionId = String((created.filingSession as JsonObject).id)
+
+      const tuitionBytes = Buffer.from(
+        `
+          Form 1098-T
+          Filer's name: Monroe State University
+          Student's name: Jordan Guidance
+          Payments received for qualified tuition and related expenses 6,400.00
+          Scholarships or grants 1,000.00
+          Adjustments made for a prior year 0.00
+        `.trim()
+      ).toString('base64')
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            name: '1098-T.pdf',
+            mimeType: 'application/pdf',
+            status: 'processing',
+            cluster: 'education',
+            clusterConfidence: 0.95,
+            pages: 1,
+            contentBase64: tuitionBytes
+          })
+        }
+      )
+      expect(response.status).toBe(201)
+      const uploaded1098T = await parseJsonResponse<JsonObject>(response)
+      const educationDocument = (uploaded1098T.document as JsonObject) ?? {}
+      const educationMetadata = (educationDocument.metadata as JsonObject) ?? {}
+      const educationGuidance = (educationMetadata.interviewGuidance as JsonObject) ?? {}
+      expect(educationGuidance.actionPath).toBe('/education-care?tab=education')
+      expect(String(educationGuidance.title)).toContain('education credit')
+      expect(typeof educationDocument.artifactPath).toBe('string')
+
+      response = await worker.fetch(
+        `${baseUrl}${String(educationDocument.artifactPath)}`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      expect(response.headers.get('content-type')).toContain('application/pdf')
+      expect(await response.text()).toContain('Form 1098-T')
+
+      const trustK1Bytes = Buffer.from(
+        `
+          Schedule K-1
+          Estate or trust name: Beacon Family Trust
+          98-7654321
+          Interest income 55.00
+          Royalties 22.00
+          Qualified business income 100.00
+          Form 1041
+        `.trim()
+      ).toString('base64')
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            name: 'trust-k1.pdf',
+            mimeType: 'application/pdf',
+            status: 'processing',
+            cluster: 'business',
+            clusterConfidence: 0.91,
+            pages: 1,
+            contentBase64: trustK1Bytes
+          })
+        }
+      )
+      expect(response.status).toBe(201)
+      const uploadedK1 = await parseJsonResponse<JsonObject>(response)
+      const k1Metadata = ((uploadedK1.document as JsonObject).metadata as JsonObject) ?? {}
+      const k1Guidance = (k1Metadata.interviewGuidance as JsonObject) ?? {}
+      expect(k1Guidance.actionPath).toBe('/business-k1')
+      expect(k1Guidance.branch).toBe('k1-trust')
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+        {
+          method: 'POST',
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const syncResult = await parseJsonResponse<JsonObject>(response)
+      const facts = syncResult.facts as JsonObject
+      expect(
+        ((facts.k1Records as JsonObject[])[0] as JsonObject).k1Category
+      ).toBe('trust')
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/print-mail`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const printMail = await parseJsonResponse<JsonObject>(response)
+      const officialPreview = (printMail.printMail as JsonObject)
+        .officialFormPreview as JsonObject
+      expect(officialPreview.filledPdfAvailable).toBe(true)
+      const pdfPath = String(officialPreview.filledPdfPath)
+      expect(pdfPath).toContain('/app/v1/filing-sessions/')
+
+      response = await worker.fetch(`${baseUrl}${pdfPath}`, {
+        headers: { cookie: sessionCookie }
+      })
+      expect(response.status).toBe(200)
+      expect(response.headers.get('content-type')).toContain('application/pdf')
+      const pdfBytes = new Uint8Array(await response.arrayBuffer())
+      expect(new TextDecoder().decode(pdfBytes.slice(0, 4))).toBe('%PDF')
     }
   )
 

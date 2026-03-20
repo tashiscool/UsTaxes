@@ -7,6 +7,7 @@ export interface Env {
   SUBMISSION_QUEUE: Queue<SubmissionQueueMessage>
   SUBMISSION_ORCHESTRATOR: DurableObjectNamespace
   INTERNAL_API_TOKEN?: string
+  USTAXES_FRONTEND_URL?: string
   APP_AUTH_SECRET?: string
   APP_AUTH_CALLBACK_URL?: string
   APP_DEV_ALLOW_LOCAL_LOGIN?: string

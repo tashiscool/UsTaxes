@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { PDFDocument } from 'pdf-lib'
 
 import type { ArtifactStore } from '../adapters/artifactStore'
 import type { TaxRepository } from '../adapters/repository'
@@ -6,6 +7,9 @@ import type { Env } from '../domain/env'
 import type { AppUserClaims } from '../utils/appAuth'
 import type { ReturnFormType, SubmissionPayload } from '../domain/types'
 import { ApiService } from './apiService'
+import { create1040PDF as create1040PDF2024 } from 'ustaxes/forms/Y2024/irsForms'
+import { create1040PDF as create1040PDF2025 } from 'ustaxes/forms/Y2025/irsForms'
+import { isLeft } from 'ustaxes/core/util'
 import {
   applyFieldEditsToExtractedDocument,
   extractDocumentFromBytes,
@@ -15,6 +19,7 @@ import {
   type BusinessEntityResult,
   TaxCalculationService,
   type TaxCalculationResult,
+  buildInformationAndAssetsFromFacts,
   getBusinessFormCapability,
   isBusinessFormType
 } from './taxCalculationService'
@@ -134,6 +139,33 @@ interface CachedTaxComputation {
 type BusinessReturnCapabilityView = ReturnType<
   typeof getBusinessReturnCapabilityView
 >
+
+type FilledPdfGenerator = typeof create1040PDF2024
+
+const TAXFLOW_FRONTEND_URL = 'https://freetaxflow.com'
+
+const resolveFilledPdfGenerator = (
+  taxYear: number,
+  formType: ReturnFormType
+): FilledPdfGenerator | null => {
+  if (formType !== '1040') {
+    return null
+  }
+
+  switch (taxYear) {
+    case 2024:
+      return create1040PDF2024
+    case 2025:
+      return create1040PDF2025
+    default:
+      return null
+  }
+}
+
+const supportsPinnedIrsTemplates = (
+  taxYear: number,
+  formType: ReturnFormType
+): boolean => taxYear === 2024 && formType === '1040'
 
 const filingSessionCreateSchema = z.object({
   localSessionId: z.string().min(1).optional(),
@@ -2208,6 +2240,93 @@ type ImportedExtractedEntity = {
   data: Record<string, unknown>
 }
 
+type DocumentInterviewGuidance = {
+  title: string
+  summary: string
+  actionPath: string
+  actionLabel: string
+  bullets: string[]
+  branch?: string
+}
+
+const normalizeK1BusinessType = (
+  value: unknown
+): 'k1-partnership' | 'k1-scorp' | 'k1-trust' => {
+  const normalized = toText(value).toLowerCase()
+  if (
+    normalized.includes('s-corp') ||
+    normalized.includes('s_corp') ||
+    normalized.includes('k1-scorp')
+  ) {
+    return 'k1-scorp'
+  }
+  if (
+    normalized.includes('trust') ||
+    normalized.includes('estate') ||
+    normalized.includes('k1-trust')
+  ) {
+    return 'k1-trust'
+  }
+  return 'k1-partnership'
+}
+
+const buildDocumentInterviewGuidance = (
+  extracted: ExtractedDocument
+): DocumentInterviewGuidance | null => {
+  switch (extracted.documentType) {
+    case '1098-t': {
+      const studentName = toText(extracted.form1098T?.studentName || 'the student')
+      const institutionName = toText(
+        extracted.form1098T?.institutionName || 'the school'
+      )
+      return {
+        title: 'Finish the education credit interview',
+        summary:
+          'We imported the 1098-T amounts, but the credit still depends on the student profile and whether this should flow to AOTC or Lifetime Learning Credit.',
+        actionPath: '/education-care?tab=education',
+        actionLabel: 'Review education credit details',
+        branch: 'education-credit',
+        bullets: [
+          `Confirm whether ${studentName} is the taxpayer, spouse, or a dependent.`,
+          `Review ${institutionName} expenses against books, supplies, and scholarships before we finalize Form 8863.`,
+          'Answer the AOTC vs LLC eligibility questions, including first four years, half-time status, and any felony-drug-conviction disqualification.'
+        ]
+      }
+    }
+    case 'k-1': {
+      const normalizedType = normalizeK1BusinessType(
+        extracted.scheduleK1?.businessType
+      )
+      const branchLabel =
+        normalizedType === 'k1-scorp'
+          ? 'S-corp'
+          : normalizedType === 'k1-trust'
+          ? 'trust / estate'
+          : 'partnership'
+
+      return {
+        title: `Finish the ${branchLabel} K-1 interview`,
+        summary:
+          'We imported the headline K-1 amounts, but we still need the branch-specific questions that drive passive-loss, basis, QBI, and beneficiary/shareholder treatment.',
+        actionPath: '/business-k1',
+        actionLabel: `Review ${branchLabel} K-1 details`,
+        branch: normalizedType,
+        bullets: [
+          `Confirm that this is a ${branchLabel} K-1 so we route it through the right checklist and review package.`,
+          normalizedType === 'k1-scorp'
+            ? 'Review shareholder basis, distributions, and any officer-compensation or Section 199A wage details.'
+            : normalizedType === 'k1-trust'
+            ? 'Review beneficiary/trust items, DNI-style allocations, and any foreign or fiduciary detail that does not show up in the headline boxes.'
+            : 'Review passive-vs-nonpassive treatment, guaranteed payments, self-employment earnings, and any at-risk or prior-year loss carryovers.',
+          'Finish any QBI follow-up so Schedule E, Schedule SE, and the 199A worksheet stay aligned.'
+        ]
+      }
+    }
+    default:
+      return null
+  }
+}
+
 const buildEntitiesFromDocumentExtraction = (
   documentId: string,
   documentName: string,
@@ -2519,6 +2638,7 @@ const buildEntitiesFromDocumentExtraction = (
           qualifiedExpenses,
           scholarshipsReceived: scholarships,
           priorYearAdjustment: extracted.form1098T?.adjustmentsFromPriorYear,
+          importNeedsEducationInterview: true,
           creditType: 'AOTC',
           personRole: 'dependent',
           isHalfTimeStudent: true,
@@ -2705,7 +2825,10 @@ const buildEntitiesFromDocumentExtraction = (
           name: extracted.scheduleK1?.issuerName,
           entityName: extracted.scheduleK1?.issuerName,
           ein: extracted.scheduleK1?.issuerEin,
-          businessType: extracted.scheduleK1?.businessType ?? 'partnership',
+          businessType: normalizeK1BusinessType(
+            extracted.scheduleK1?.businessType
+          ),
+          sourceK1Type: extracted.scheduleK1?.businessType ?? 'partnership',
           ordinaryBusinessIncome: extracted.scheduleK1?.ordinaryBusinessIncome,
           rentalIncome: extracted.scheduleK1?.rentalRealEstateIncome,
           otherNetRentalIncome: extracted.scheduleK1?.otherRentalIncome,
@@ -2958,15 +3081,22 @@ const getK1Records = (entities: SessionEntitySnapshot[]) =>
     .filter((entity) => entity.entityType === 'k1_entity')
     .map((entity) => {
       const data = asRecord(entity.data)
-      const businessType = toText(data.businessType).toLowerCase()
+      const normalizedBusinessType = normalizeK1BusinessType(data.businessType)
       return {
         id: entity.id,
         partnershipName: toText(data.name ?? data.entityName ?? entity.label),
         partnershipEin: toText(data.ein),
         partnerOrSCorp:
-          businessType.includes('s-corp') || businessType.includes('s_corp')
+          normalizedBusinessType === 'k1-scorp'
             ? 'S'
             : 'P',
+        k1Category:
+          normalizedBusinessType === 'k1-scorp'
+            ? 's_corp'
+            : normalizedBusinessType === 'k1-trust'
+            ? 'trust'
+            : 'partnership',
+        businessType: normalizedBusinessType,
         isForeign: Boolean(data.isForeign),
         isPassive: Boolean(data.isPassive ?? true),
         ordinaryBusinessIncome: toMoney(
@@ -8082,6 +8212,7 @@ export class AppSessionService {
         body.name,
         extracted
       )
+      const interviewGuidance = buildDocumentInterviewGuidance(extracted)
       const extractedEntityRefs = importedEntities.map((entity) => ({
         entityType: entity.entityType,
         entityId: entity.entityId,
@@ -8097,6 +8228,7 @@ export class AppSessionService {
         importedEntities.length === 1
           ? extractedEntityRefs[0]
           : null
+      metadata.interviewGuidance = interviewGuidance
       metadata.ocrIssue =
         extracted.documentType === 'unknown'
           ? metadata.ocrIssue ??
@@ -8339,6 +8471,7 @@ export class AppSessionService {
       cluster: string
       clusterConfidence: number
       pages: number
+      artifactPath: string | null
       metadata: Record<string, unknown>
       createdAt: string
       updatedAt: string
@@ -8362,6 +8495,9 @@ export class AppSessionService {
         cluster: row.cluster,
         clusterConfidence: row.cluster_confidence,
         pages: row.pages,
+        artifactPath: row.artifact_key
+          ? `/app/v1/filing-sessions/${sessionId}/documents/${row.id}/artifact`
+          : null,
         metadata:
           (await this.artifacts.getJson<Record<string, unknown>>(
             row.metadata_key
@@ -8508,6 +8644,9 @@ export class AppSessionService {
         cluster: row.cluster,
         clusterConfidence: row.cluster_confidence,
         pages: row.pages,
+        artifactPath: row.artifact_key
+          ? `/app/v1/filing-sessions/${sessionId}/documents/${row.id}/artifact`
+          : null,
         metadata:
           (await this.artifacts.getJson<Record<string, unknown>>(
             row.metadata_key
@@ -8515,6 +8654,136 @@ export class AppSessionService {
         createdAt: row.created_at,
         updatedAt: row.updated_at
       }
+    }
+  }
+
+  async getDocumentArtifact(
+    sessionId: string,
+    documentId: string,
+    user: AppUserClaims
+  ) {
+    await this.requireSession(sessionId, user.sub)
+    const row = await this.env.USTAXES_DB.prepare(
+      `SELECT id, name, mime_type, artifact_key
+         FROM documents
+         WHERE filing_session_id = ?1 AND id = ?2`
+    )
+      .bind(sessionId, documentId)
+      .first<Pick<DocumentRow, 'id' | 'name' | 'mime_type' | 'artifact_key'>>()
+
+    if (!row) {
+      throw new HttpError(404, 'Document not found')
+    }
+    if (!row.artifact_key) {
+      throw new HttpError(404, 'Document source artifact not available')
+    }
+
+    if (row.artifact_key.endsWith('.json')) {
+      const stored =
+        (await this.artifacts.getJson<Record<string, unknown>>(row.artifact_key)) ??
+        {}
+      const bytes = decodeBase64Content(toText(stored.contentBase64))
+      if (!bytes) {
+        throw new HttpError(404, 'Document source artifact not available')
+      }
+      return {
+        filename: row.name,
+        mimeType: toText(stored.mimeType) || row.mime_type,
+        bytes
+      }
+    }
+
+    const object = await this.env.ARTIFACTS_BUCKET.get(row.artifact_key)
+    if (!object) {
+      throw new HttpError(404, 'Document source artifact not available')
+    }
+
+    return {
+      filename: row.name,
+      mimeType: object.httpMetadata?.contentType || row.mime_type,
+      bytes: new Uint8Array(await object.arrayBuffer())
+    }
+  }
+
+  async getPrintMailFilledPdf(sessionId: string, user: AppUserClaims) {
+    const row = await this.requireSession(sessionId, user.sub)
+    const snapshot = await this.getSnapshot(row)
+
+    const pdfGenerator = resolveFilledPdfGenerator(
+      snapshot.taxYear,
+      snapshot.formType
+    )
+    if (!pdfGenerator) {
+      throw new HttpError(
+        409,
+        `${snapshot.formType} filled PDF generation is not available for tax year ${snapshot.taxYear} yet`
+      )
+    }
+
+    const entities = await this.loadSessionEntities(row.id)
+    const facts = toFacts(row, snapshot, entities)
+    const factsHash = await hashPayload({
+      formType: snapshot.formType,
+      taxYear: snapshot.taxYear,
+      filingStatus: snapshot.filingStatus,
+      facts,
+      output: 'filled-irs-pdf'
+    })
+    const pdfKey = `filing-sessions/${sessionId}/print-mail/filled-${factsHash}.pdf`
+    const cached = await this.env.ARTIFACTS_BUCKET.get(pdfKey)
+    if (cached) {
+      return {
+        filename: `taxflow-${snapshot.taxYear}-${snapshot.formType.toLowerCase()}-filled-return.pdf`,
+        bytes: new Uint8Array(await cached.arrayBuffer())
+      }
+    }
+
+    const { info, assets } = buildInformationAndAssetsFromFacts(facts)
+    const downloader = async (url: string): Promise<PDFDocument> => {
+      const pdfName = url.split('/').pop()
+      if (!pdfName) {
+        throw new HttpError(500, 'Failed to resolve IRS form PDF filename')
+      }
+
+      const frontendBaseUrl =
+        this.env.USTAXES_FRONTEND_URL || TAXFLOW_FRONTEND_URL
+
+      if (supportsPinnedIrsTemplates(snapshot.taxYear, snapshot.formType)) {
+        const pinnedResponse = await fetch(
+          `${frontendBaseUrl}/forms/Y${snapshot.taxYear}/irs/${pdfName}`
+        )
+        if (pinnedResponse.ok) {
+          return PDFDocument.load(await pinnedResponse.arrayBuffer())
+        }
+      }
+
+      const response = await fetch(`https://www.irs.gov/pub/irs-pdf/${pdfName}`)
+      if (!response.ok) {
+        throw new HttpError(
+          502,
+          `Failed to download official IRS PDF template: ${pdfName}`
+        )
+      }
+      return PDFDocument.load(await response.arrayBuffer())
+    }
+
+    const pdfResult = await pdfGenerator(info, assets)(downloader)
+    if (isLeft(pdfResult)) {
+      throw new HttpError(
+        422,
+        `Could not build filled IRS PDF: ${pdfResult.left.map(String).join('; ')}`
+      )
+    }
+
+    await this.env.ARTIFACTS_BUCKET.put(pdfKey, pdfResult.right, {
+      httpMetadata: {
+        contentType: 'application/pdf'
+      }
+    })
+
+    return {
+      filename: `taxflow-${snapshot.taxYear}-${snapshot.formType.toLowerCase()}-filled-return.pdf`,
+      bytes: pdfResult.right
     }
   }
 
@@ -8559,6 +8828,8 @@ export class AppSessionService {
         metadata.extractedEntities = extractedEntityRefs
         metadata.extractedEntity =
           importedEntities.length === 1 ? extractedEntityRefs[0] : null
+        metadata.interviewGuidance =
+          buildDocumentInterviewGuidance(correctedExtraction)
       }
     }
     const row = await this.env.USTAXES_DB.prepare(
@@ -9177,6 +9448,12 @@ export class AppSessionService {
         ...derivedPreviewForms
       ])
     ).filter(Boolean)
+    const filledPdfPath = resolveFilledPdfGenerator(
+      snapshot.taxYear,
+      snapshot.formType
+    )
+      ? `/app/v1/filing-sessions/${sessionId}/print-mail/pdf`
+      : null
     const renderedForms = [
       {
         formName: normalizePreviewFormName(snapshot.formType),
@@ -9572,6 +9849,11 @@ export class AppSessionService {
         ).length,
         readyForPreview:
           includedForms.length > 0 && (computed.taxCalcErrors?.length ?? 0) === 0,
+        filledPdfAvailable: Boolean(filledPdfPath),
+        filledPdfPath,
+        filledPdfFilename: filledPdfPath
+          ? `taxflow-${snapshot.taxYear}-${snapshot.formType.toLowerCase()}-filled-return.pdf`
+          : null,
         renderedForms,
         renderedHtml,
         nextActions: compactRenderedRows([

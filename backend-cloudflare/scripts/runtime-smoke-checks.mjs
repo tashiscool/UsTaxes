@@ -52,7 +52,10 @@ const createWorkerHarness = async () => {
     local: true,
     persistTo,
     vars: {
-      INTERNAL_API_TOKEN: internalToken
+      INTERNAL_API_TOKEN: internalToken,
+      ...(process.env.USTAXES_FRONTEND_URL
+        ? { USTAXES_FRONTEND_URL: process.env.USTAXES_FRONTEND_URL }
+        : {})
     },
     experimental: {
       disableExperimentalWarning: true
