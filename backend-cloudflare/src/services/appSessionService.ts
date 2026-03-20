@@ -8,6 +8,7 @@ import type { AppUserClaims } from '../utils/appAuth'
 import type { ReturnFormType, SubmissionPayload } from '../domain/types'
 import { ApiService } from './apiService'
 import { create1040PDF as create1040PDF2024 } from 'ustaxes/forms/Y2024/irsForms'
+import { create1040PDF as create1040PDF2025 } from 'ustaxes/forms/Y2025/irsForms'
 import { isLeft } from 'ustaxes/core/util'
 import {
   applyFieldEditsToExtractedDocument,
@@ -142,6 +143,57 @@ type BusinessReturnCapabilityView = ReturnType<
 type FilledPdfGenerator = typeof create1040PDF2024
 
 const TAXFLOW_FRONTEND_URL = 'https://freetaxflow.com'
+const PINNED_IRS_FORM_TAGS_BY_YEAR: Record<number, readonly string[]> = {
+  2024: [
+    'f1040',
+    'f1040s1',
+    'f1040s2',
+    'f1040s3',
+    'f1040s8',
+    'f1040sa',
+    'f1040sb',
+    'f1040sd',
+    'f1040se',
+    'f1040sei',
+    'f1040sse',
+    'f1040v',
+    'f2441',
+    'f6251',
+    'f8863',
+    'f8889',
+    'f8949',
+    'f8959',
+    'f8960',
+    'f8962',
+    'f8995',
+    'f8995a'
+  ],
+  2025: [
+    'f1040',
+    'f1040s1',
+    'f1040s2',
+    'f1040s3',
+    'f1040s8',
+    'f1040sa',
+    'f1040sb',
+    'f1040sd',
+    'f1040se',
+    'f1040sei',
+    'f1040sse',
+    'f1040v',
+    'f2441',
+    'f6251',
+    'f8283',
+    'f8863',
+    'f8889',
+    'f8949',
+    'f8959',
+    'f8960',
+    'f8962',
+    'f8995',
+    'f8995a'
+  ]
+}
 
 const resolveFilledPdfGenerator = (
   taxYear: number,
@@ -151,13 +203,22 @@ const resolveFilledPdfGenerator = (
     return null
   }
 
-  return taxYear === 2024 ? create1040PDF2024 : null
+  if (taxYear === 2024) {
+    return create1040PDF2024
+  }
+  if (taxYear === 2025) {
+    return create1040PDF2025
+  }
+  return null
 }
 
 const supportsPinnedIrsTemplates = (
   taxYear: number,
   formType: ReturnFormType
-): boolean => taxYear === 2024 && formType === '1040'
+): boolean =>
+  formType === '1040' &&
+  Array.isArray(PINNED_IRS_FORM_TAGS_BY_YEAR[taxYear]) &&
+  PINNED_IRS_FORM_TAGS_BY_YEAR[taxYear].length > 0
 
 const filingSessionCreateSchema = z.object({
   localSessionId: z.string().min(1).optional(),
@@ -1727,6 +1788,170 @@ const toMoney = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+const uniqueStrings = (values: Array<string | null | undefined>): string[] =>
+  Array.from(
+    new Set(
+      values
+        .map((value) => toText(value).trim().toLowerCase())
+        .filter(Boolean)
+    )
+  )
+
+const baseFormTypeToPdfTag = (formType: ReturnFormType): string | null => {
+  if (formType === '1040') {
+    return 'f1040'
+  }
+  return null
+}
+
+const derivedPdfTagsFromFacts = (
+  facts: Record<string, unknown>,
+  computedSummary: Record<string, unknown>
+): string[] => {
+  const hasSchedule1Inputs =
+    asArray<Record<string, unknown>>(facts.studentLoanRecords).length > 0 ||
+    asArray<Record<string, unknown>>(facts.unemploymentRecords).length > 0
+  const hasScheduleAInputs =
+    Object.keys(asRecord(facts.itemizedDeductions)).length > 0
+  const hasScheduleEInputs =
+    asArray<Record<string, unknown>>(facts.rentalProperties).length > 0 ||
+    asArray<Record<string, unknown>>(facts.k1Records).length > 0 ||
+    asArray<Record<string, unknown>>(facts.form1099Records).some((record) => {
+      const type = toText(record.type).toUpperCase()
+      return (
+        (type === 'MISC' || type === '1099-MISC' || type === '1099_MISC') &&
+        (toMoney(record.rents) > 0 || toMoney(record.royalties) > 0)
+      )
+    })
+  const hasScheduleDInputs = asArray<Record<string, unknown>>(facts.taxLots).length > 0
+
+  return uniqueStrings([
+    ...asArray<string>(computedSummary.schedules),
+    hasSchedule1Inputs ? 'f1040s1' : null,
+    hasScheduleAInputs ? 'f1040sa' : null,
+    Object.keys(asRecord(facts.noncashContributions)).length > 0 ? 'f8283' : null,
+    asArray<Record<string, unknown>>(facts.marketplaceInsurance).length > 0 ||
+    asArray<Record<string, unknown>>(facts.aca1095a).length > 0
+      ? 'f8962'
+      : null,
+    asArray<Record<string, unknown>>(facts.educationExpenses).length > 0
+      ? 'f8863'
+      : null,
+    asArray<Record<string, unknown>>(facts.dependentCareProviders).length > 0 ||
+    toMoney(facts.dependentCareExpenses) > 0
+      ? 'f2441'
+      : null,
+    hasScheduleEInputs ? 'f1040se' : null,
+    hasScheduleDInputs ? 'f1040sd' : null,
+    hasScheduleDInputs ? 'f8949' : null
+  ])
+}
+
+const buildRequiredPinnedPdfTags = (
+  snapshot: FilingSessionSnapshot,
+  computedSummary: Record<string, unknown>,
+  facts: Record<string, unknown>
+): string[] =>
+  uniqueStrings([
+    baseFormTypeToPdfTag(snapshot.formType),
+    ...derivedPdfTagsFromFacts(facts, computedSummary)
+  ])
+
+const missingPinnedPdfTags = (
+  taxYear: number,
+  formType: ReturnFormType,
+  requiredTags: string[]
+): string[] => {
+  if (!supportsPinnedIrsTemplates(taxYear, formType)) {
+    return requiredTags
+  }
+  const supported = new Set(PINNED_IRS_FORM_TAGS_BY_YEAR[taxYear] ?? [])
+  return requiredTags.filter((tag) => !supported.has(tag))
+}
+
+const supportsFilledPdfTemplateSet = (
+  taxYear: number,
+  formType: ReturnFormType,
+  requiredTags: string[]
+): boolean =>
+  resolveFilledPdfGenerator(taxYear, formType) != null &&
+  missingPinnedPdfTags(taxYear, formType, requiredTags).length === 0
+
+const normalizeSearchCandidate = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[^\p{L}\p{N}.$%-]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+const buildSearchCandidates = (label: string, value: unknown): string[] => {
+  const valueText = toText(value).trim()
+  const numericCandidate = valueText.replace(/[^0-9.-]/g, '')
+  const labelCandidate = label
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\b(box|line|page)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  return uniqueStrings([
+    valueText,
+    numericCandidate.length >= 2 ? numericCandidate : null,
+    labelCandidate
+  ]).filter((candidate) => candidate.length >= 2)
+}
+
+const buildSourceSnippet = (
+  sourceText: string,
+  label: string,
+  value: unknown
+): {
+  sourceSnippet?: string
+  sourceMatchText?: string
+} => {
+  if (!sourceText.trim()) {
+    return {}
+  }
+
+  const lines = sourceText
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+  const candidates = buildSearchCandidates(label, value)
+
+  for (const candidate of candidates) {
+    const normalizedCandidate = normalizeSearchCandidate(candidate)
+    if (!normalizedCandidate) {
+      continue
+    }
+    const lineIndex = lines.findIndex((line) =>
+      normalizeSearchCandidate(line).includes(normalizedCandidate)
+    )
+    if (lineIndex >= 0) {
+      return {
+        sourceSnippet: lines
+          .slice(Math.max(0, lineIndex - 1), Math.min(lines.length, lineIndex + 2))
+          .join('\n'),
+        sourceMatchText: candidate
+      }
+    }
+  }
+
+  return {}
+}
+
+const extractDocumentSourceTextSample = (
+  extracted: ExtractedDocument
+): string => {
+  const raw = asRecord(extracted.raw)
+  return (
+    toText(raw.textSample) ||
+    toText(raw.rawText) ||
+    toText(raw.text) ||
+    ''
+  ).trim()
+}
+
 const countCompleted = (items: Array<{ isComplete: boolean }>): number =>
   items.filter((item) => item.isComplete).length
 
@@ -1827,6 +2052,7 @@ const inferDocumentClusterFromExtraction = (
 const buildDocumentFieldsFromExtraction = (
   extracted: ExtractedDocument
 ): Array<Record<string, unknown>> => {
+  const sourceTextSample = extractDocumentSourceTextSample(extracted)
   const makeField = (
     label: string,
     value: unknown,
@@ -1838,11 +2064,16 @@ const buildDocumentFieldsFromExtraction = (
     }
     const showValue =
       typeof value === 'number' ? formatCurrency(value) : toText(value)
+    const snippet = buildSourceSnippet(sourceTextSample, label, showValue)
     return {
       label,
       value: showValue,
       confidence,
       source: 'AI extraction',
+      ...(snippet.sourceSnippet ? { sourceSnippet: snippet.sourceSnippet } : {}),
+      ...(snippet.sourceMatchText
+        ? { sourceMatchText: snippet.sourceMatchText }
+        : {}),
       ...(flagReason ? { flagged: true, flagReason } : {})
     }
   }
@@ -8199,6 +8430,7 @@ export class AppSessionService {
 
     if (extracted) {
       const fields = buildDocumentFieldsFromExtraction(extracted)
+      const sourceTextSample = extractDocumentSourceTextSample(extracted)
       const importedEntities = buildEntitiesFromDocumentExtraction(
         documentId,
         body.name,
@@ -8213,6 +8445,7 @@ export class AppSessionService {
       }))
       metadata.extraction = extracted
       metadata.fields = fields
+      metadata.sourceTextSample = sourceTextSample || metadata.sourceTextSample
       metadata.documentType = extracted.documentType
       metadata.extractedAt = nowIso()
       metadata.extractedEntities = extractedEntityRefs
@@ -8714,11 +8947,31 @@ export class AppSessionService {
 
     const entities = await this.loadSessionEntities(row.id)
     const facts = toFacts(row, snapshot, entities)
+    const computed = await this.computeTaxSummary(sessionId, snapshot, facts)
+    const requiredPdfTags = buildRequiredPinnedPdfTags(
+      snapshot,
+      asRecord(computed.taxSummary),
+      facts
+    )
+    const missingTags = missingPinnedPdfTags(
+      snapshot.taxYear,
+      snapshot.formType,
+      requiredPdfTags
+    )
+    if (missingTags.length > 0) {
+      throw new HttpError(
+        409,
+        `Filled IRS PDF generation is not available for this return yet. Missing pinned templates: ${missingTags.join(
+          ', '
+        )}`
+      )
+    }
     const factsHash = await hashPayload({
       formType: snapshot.formType,
       taxYear: snapshot.taxYear,
       filingStatus: snapshot.filingStatus,
       facts,
+      requiredPdfTags,
       output: 'filled-irs-pdf'
     })
     const pdfKey = `filing-sessions/${sessionId}/print-mail/filled-${factsHash}.pdf`
@@ -8747,16 +9000,15 @@ export class AppSessionService {
         if (pinnedResponse.ok) {
           return PDFDocument.load(await pinnedResponse.arrayBuffer())
         }
-      }
-
-      const response = await fetch(`https://www.irs.gov/pub/irs-pdf/${pdfName}`)
-      if (!response.ok) {
         throw new HttpError(
           502,
-          `Failed to download official IRS PDF template: ${pdfName}`
+          `Pinned IRS PDF template is missing for tax year ${snapshot.taxYear}: ${pdfName}`
         )
       }
-      return PDFDocument.load(await response.arrayBuffer())
+      throw new HttpError(
+        409,
+        `Filled IRS PDF generation is not available for tax year ${snapshot.taxYear} yet`
+      )
     }
 
     const pdfResult = await pdfGenerator(info, assets)(downloader)
@@ -8802,6 +9054,8 @@ export class AppSessionService {
           fieldEdits
         )
         const fields = buildDocumentFieldsFromExtraction(correctedExtraction)
+        const sourceTextSample =
+          extractDocumentSourceTextSample(correctedExtraction)
         const importedEntities = buildEntitiesFromDocumentExtraction(
           documentId,
           current.document.name,
@@ -8815,6 +9069,7 @@ export class AppSessionService {
         }))
         metadata.extraction = correctedExtraction
         metadata.fields = fields
+        metadata.sourceTextSample = sourceTextSample || metadata.sourceTextSample
         metadata.documentType = correctedExtraction.documentType
         metadata.extractedAt = nowIso()
         metadata.extractedEntities = extractedEntityRefs
@@ -9440,9 +9695,15 @@ export class AppSessionService {
         ...derivedPreviewForms
       ])
     ).filter(Boolean)
-    const filledPdfPath = resolveFilledPdfGenerator(
+    const requiredPdfTags = buildRequiredPinnedPdfTags(
+      snapshot,
+      computedSummary,
+      facts
+    )
+    const filledPdfPath = supportsFilledPdfTemplateSet(
       snapshot.taxYear,
-      snapshot.formType
+      snapshot.formType,
+      requiredPdfTags
     )
       ? `/app/v1/filing-sessions/${sessionId}/print-mail/pdf`
       : null

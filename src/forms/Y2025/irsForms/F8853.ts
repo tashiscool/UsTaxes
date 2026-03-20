@@ -6,6 +6,7 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 export default class F8853 extends F1040Attachment {
   tag: FormTag = 'f8853'
   sequenceIndex = 999
+  isNeeded = (): boolean => false
 
   l1 = (): number | undefined => undefined
   l2 = (): number | undefined => undefined

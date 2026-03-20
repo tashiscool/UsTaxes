@@ -1579,6 +1579,13 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       expect(educationGuidance.actionPath).toBe('/education-care?tab=education')
       expect(String(educationGuidance.title)).toContain('education credit')
       expect(typeof educationDocument.artifactPath).toBe('string')
+      expect(String(educationMetadata.sourceTextSample)).toContain('Form 1098-T')
+      const educationFields = (educationMetadata.fields as JsonObject[]) ?? []
+      const tuitionField = educationFields.find(
+        (field) => String((field as JsonObject).label) === 'Qualified tuition (Box 1)'
+      ) as JsonObject | undefined
+      expect(String(tuitionField?.sourceSnippet ?? '')).toContain('qualified tuition')
+      expect(String(tuitionField?.sourceSnippet ?? '')).toContain('6,400.00')
 
       response = await worker.fetch(
         `${baseUrl}${String(educationDocument.artifactPath)}`,
@@ -1652,6 +1659,204 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
       const printMail = await parseJsonResponse<JsonObject>(response)
       const officialPreview = (printMail.printMail as JsonObject)
         .officialFormPreview as JsonObject
+      expect(officialPreview.filledPdfAvailable).toBe(true)
+      const pdfPath = String(officialPreview.filledPdfPath)
+      expect(pdfPath).toContain('/app/v1/filing-sessions/')
+
+      response = await worker.fetch(`${baseUrl}${pdfPath}`, {
+        headers: { cookie: sessionCookie }
+      })
+      expect(response.status).toBe(200)
+      expect(response.headers.get('content-type')).toContain('application/pdf')
+      const pdfBytes = new Uint8Array(await response.arrayBuffer())
+      expect(new TextDecoder().decode(pdfBytes.slice(0, 4))).toBe('%PDF')
+    }
+  )
+
+  it(
+    'streams a template-backed 2025 filled IRS PDF when high-volume attached forms are pinned',
+    { timeout: 30000 },
+    async () => {
+      let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sub: 'taxflow-user-filled-pdf-2025',
+          email: 'filled-pdf-2025@example.com',
+          displayName: 'Filled PDF 2025 User'
+        })
+      })
+      expect(response.status).toBe(201)
+      const sessionCookie = extractCookieHeader(response)
+
+      response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          taxYear: 2025,
+          filingStatus: 'hoh',
+          formType: '1040',
+          screenData: {
+            '/taxpayer-profile': {
+              firstName: 'Avery',
+              lastName: 'Preview',
+              ssn: '400-01-7878',
+              address: {
+                line1: '500 Template Ave',
+                city: 'Denver',
+                state: 'CO',
+                zip: '80202'
+              }
+            },
+            '/household': {
+              dependents: [
+                {
+                  id: 'dep-student-1',
+                  name: 'Jordan Preview',
+                  dob: '2006-09-08',
+                  relationship: 'child',
+                  ssn: '400-01-1111'
+                },
+                {
+                  id: 'dep-care-1',
+                  name: 'Morgan Preview',
+                  dob: '2018-05-14',
+                  relationship: 'child',
+                  ssn: '400-01-2222'
+                }
+              ]
+            }
+          }
+        })
+      })
+      expect(response.status).toBe(201)
+      const created = await parseJsonResponse<JsonObject>(response)
+      const filingSessionId = String((created.filingSession as JsonObject).id)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/entities/w2/w2-primary-${filingSessionId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json',
+            cookie: sessionCookie
+          },
+          body: JSON.stringify({
+            status: 'complete',
+            label: 'Northwind Labs',
+            data: {
+              employerName: 'Northwind Labs',
+              ein: '12-3456789',
+              box1Wages: 48000,
+              box2FederalWithheld: 5200,
+              owner: 'taxpayer'
+            }
+          })
+        }
+      )
+      expect(response.status).toBe(200)
+
+      const uploadDocument = async (
+        name: string,
+        mimeType: string,
+        cluster: string,
+        confidence: number,
+        bodyText: string
+      ) => {
+        const uploadResponse = await worker.fetch(
+          `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/documents`,
+          {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              cookie: sessionCookie
+            },
+            body: JSON.stringify({
+              name,
+              mimeType,
+              status: 'processing',
+              cluster,
+              clusterConfidence: confidence,
+              pages: 1,
+              contentBase64: Buffer.from(bodyText.trim()).toString('base64')
+            })
+          }
+        )
+        expect(uploadResponse.status).toBe(201)
+        return parseJsonResponse<JsonObject>(uploadResponse)
+      }
+
+      await uploadDocument(
+        '1098-T-2025.pdf',
+        'application/pdf',
+        'education',
+        0.95,
+        `
+          Form 1098-T
+          Filer's name: Monroe State University
+          Student's name: Jordan Preview
+          Payments received for qualified tuition and related expenses 6,800.00
+          Scholarships or grants 1,200.00
+          Adjustments made for a prior year 0.00
+        `
+      )
+
+      await uploadDocument(
+        '1095-A-2025.pdf',
+        'application/pdf',
+        'health',
+        0.94,
+        `
+          Form 1095-A
+          Policy number AXA-2025-7788
+          Covered persons 3
+          Annual enrollment premiums 9,600.00
+          Annual SLCSP 8,400.00
+          Advance payment of premium tax credit 4,200.00
+        `
+      )
+
+      await uploadDocument(
+        'childcare-2025.pdf',
+        'application/pdf',
+        'care',
+        0.92,
+        `
+          Childcare provider statement
+          Provider name Little Sprouts Daycare
+          Provider TIN 12-3456788
+          Amount paid 4,400.00
+          Address 75 Elm St, Denver CO 80203
+        `
+      )
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/returns/sync`,
+        {
+          method: 'POST',
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const syncResult = await parseJsonResponse<JsonObject>(response)
+
+      response = await worker.fetch(
+        `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/print-mail`,
+        {
+          headers: { cookie: sessionCookie }
+        }
+      )
+      expect(response.status).toBe(200)
+      const printMail = await parseJsonResponse<JsonObject>(response)
+      const officialPreview = (printMail.printMail as JsonObject)
+        .officialFormPreview as JsonObject
+      const includedForms = (officialPreview.includedForms as string[]) ?? []
+      expect(includedForms).toContain('Form 8863')
+      expect(includedForms).toContain('Form 8962')
+      expect(includedForms).toContain('Form 2441')
       expect(officialPreview.filledPdfAvailable).toBe(true)
       const pdfPath = String(officialPreview.filledPdfPath)
       expect(pdfPath).toContain('/app/v1/filing-sessions/')

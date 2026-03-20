@@ -319,6 +319,13 @@ const detectDocumentTypeFromText = (
   if (/1098\s*-?\s*e|student loan interest/.test(search)) return '1098-e'
   if (/1095\s*-?\s*a|health insurance marketplace/.test(search))
     return '1095-a'
+  if (
+    /child\s*care|childcare|daycare|dependent care|care provider|provider statement/.test(
+      search
+    )
+  ) {
+    return 'childcare'
+  }
   if (/mortgage interest statement|form 1098/.test(search))
     return '1098-mortgage'
   if (/1099\s*-?\s*g|unemployment compensation/.test(search))
@@ -334,6 +341,13 @@ const detectDocumentTypeFromText = (
     return '1099-r'
   if (/1098\s*-?\s*c|contributions of motor vehicles/.test(search))
     return '1098-c'
+  if (
+    /charity|charitable|donation receipt|contribution receipt|goodwill|salvation army/.test(
+      search
+    )
+  ) {
+    return 'charity-receipt'
+  }
   return 'unknown'
 }
 
@@ -593,6 +607,22 @@ const parseTextDocumentToRecord = (
         ]),
         points: firstNumberMatch(text, [/(?:points paid on purchase of principal residence|points|box\s*6)\D{0,25}([-$]?[\d,]+(?:\.\d{2})?)/i]),
         propertyTaxes: firstNumberMatch(text, [/(?:property taxes|box\s*10)\D{0,25}([-$]?[\d,]+(?:\.\d{2})?)/i])
+      }
+    case 'childcare':
+      return {
+        documentType,
+        providerName: firstTextMatch(text, [
+          /(?:provider(?:'s)? name)\s*[:\-]?\s*([A-Za-z0-9&.,' -]{4,})/i
+        ], fallbackName),
+        providerTin: firstTextMatch(text, [
+          /(?:provider tin|provider tax id|provider tax identification number|tin|ein|ssn)\s*[:\-]?\s*([0-9-]{9,11})/i
+        ]),
+        amountPaid: firstNumberMatch(text, [
+          /(?:amount paid|total paid|payments)\D{0,25}([-$]?[\d,]+(?:\.\d{2})?)/i
+        ]),
+        address: firstTextMatch(text, [
+          /(?:address)\s*[:\-]?\s*([A-Za-z0-9#.,' -]{6,})/i
+        ])
       }
     case '1099-g':
       return {

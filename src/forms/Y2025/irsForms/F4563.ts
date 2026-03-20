@@ -9,6 +9,7 @@ import { FormTag } from 'ustaxes/core/irsForms/Form'
 export default class F4563 extends F1040Attachment {
   sequenceIndex = 563
   tag: FormTag = 'f4563'
+  isNeeded = (): boolean => false
 
   // TODO - required from 8812
   l15 = (): number => 0

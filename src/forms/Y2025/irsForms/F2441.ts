@@ -242,13 +242,14 @@ export default class F2441 extends F1040Attachment {
   fields = (): Field[] => {
     // Provider information (up to 3 providers)
     const providerFields: Field[] = []
+    const providers = this.providers()
     for (let i = 0; i < 3; i++) {
-      const provider = this.providers()[i]
+      const provider = providers[i]
       providerFields.push(
-        provider.name ?? '',
-        provider.address ?? '',
-        provider.tin ?? '',
-        provider.amountPaid ?? 0
+        provider?.name ?? '',
+        provider?.address ?? '',
+        provider?.tin ?? '',
+        provider?.amountPaid ?? 0
       )
     }
 
