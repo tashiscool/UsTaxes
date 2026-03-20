@@ -8,7 +8,6 @@ import type { AppUserClaims } from '../utils/appAuth'
 import type { ReturnFormType, SubmissionPayload } from '../domain/types'
 import { ApiService } from './apiService'
 import { create1040PDF as create1040PDF2024 } from 'ustaxes/forms/Y2024/irsForms'
-import { create1040PDF as create1040PDF2025 } from 'ustaxes/forms/Y2025/irsForms'
 import { isLeft } from 'ustaxes/core/util'
 import {
   applyFieldEditsToExtractedDocument,
@@ -152,14 +151,7 @@ const resolveFilledPdfGenerator = (
     return null
   }
 
-  switch (taxYear) {
-    case 2024:
-      return create1040PDF2024
-    case 2025:
-      return create1040PDF2025
-    default:
-      return null
-  }
+  return taxYear === 2024 ? create1040PDF2024 : null
 }
 
 const supportsPinnedIrsTemplates = (
