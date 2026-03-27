@@ -703,6 +703,37 @@ app.get('/app/v1/filing-sessions/:sessionId/review', async (c) => {
   return c.json(result)
 })
 
+app.get('/app/v1/filing-sessions/:sessionId/review-issues', async (c) => {
+  const user = await requireAppUser(c)
+  const { appSessionService } = buildServices(c)
+  const result = await appSessionService.getReviewIssues(
+    c.req.param('sessionId'),
+    user
+  )
+  return c.json(result)
+})
+
+app.post('/app/v1/filing-sessions/:sessionId/preview-diff', async (c) => {
+  const user = await requireAppUser(c)
+  const { appSessionService } = buildServices(c)
+  const result = await appSessionService.getPreviewDiff(
+    c.req.param('sessionId'),
+    await c.req.json().catch(() => ({})),
+    user
+  )
+  return c.json(result)
+})
+
+app.get('/app/v1/filing-sessions/:sessionId/business-package', async (c) => {
+  const user = await requireAppUser(c)
+  const { appSessionService } = buildServices(c)
+  const result = await appSessionService.getBusinessPackage(
+    c.req.param('sessionId'),
+    user
+  )
+  return c.json(result)
+})
+
 app.post('/app/v1/filing-sessions/:sessionId/returns/sync', async (c) => {
   const user = await requireAppUser(c)
   const { appSessionService } = buildServices(c)
@@ -822,6 +853,14 @@ app.post(
   }
 )
 
+app.get('/app/v1/state-capabilities', async (c) => {
+  const user = await requireAppUser(c)
+  void user
+  const { appSessionService } = buildServices(c)
+  const result = await appSessionService.getStateCapabilities(c.req.query())
+  return c.json(result)
+})
+
 registerDirectFileRoute('GET', '/users/me', async (c) => {
   const user = getDirectFileUserContext(c)
   return c.json({
@@ -859,6 +898,12 @@ registerDirectFileRoute('GET', '/taxreturns/:id/populate', async (c) => {
     getDirectFileUserContext(c)
   )
   return c.json(response)
+})
+
+registerDirectFileRoute('GET', '/state-capabilities', async (c) => {
+  const { appSessionService } = buildServices(c)
+  const result = await appSessionService.getStateCapabilities(c.req.query())
+  return c.json(result)
 })
 
 registerDirectFileRoute('POST', '/taxreturns', async (c) => {

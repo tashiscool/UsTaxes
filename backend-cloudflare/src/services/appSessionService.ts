@@ -24,6 +24,11 @@ import {
   isBusinessFormType
 } from './taxCalculationService'
 import { resolveStateProfile } from '../data/stateProfiles'
+import {
+  listStateCapabilities,
+  resolveStateCapability,
+  type StateCapabilityRecord
+} from '../data/stateCapabilities'
 import { HttpError } from '../utils/http'
 import { hashPayload } from '../utils/hash'
 import { nowIso } from '../utils/time'
@@ -349,6 +354,89 @@ const printMailSchema = z.object({
   reason: z.string().min(2).optional(),
   markMailed: z.boolean().optional()
 })
+
+const stateCapabilitiesQuerySchema = z.object({
+  taxYear: z.coerce.number().int().min(2024).max(2050).optional(),
+  stateCode: z.string().length(2).optional()
+})
+
+const previewCalculationSchema = z.object({
+  id: z.string().min(1),
+  family: z.string().min(1),
+  label: z.string().optional(),
+  summary: z.string().optional(),
+  metrics: z
+    .record(
+      z.union([z.string(), z.number(), z.boolean(), z.null(), z.undefined()])
+    )
+    .default({}),
+  editPath: z.string().optional(),
+  sourceScreen: z.string().optional(),
+  updatedAt: z.string().optional()
+})
+
+const previewDiffSchema = z.object({
+  calculations: z.array(previewCalculationSchema).max(50).default([])
+})
+
+interface ReviewIssue {
+  id: string
+  code: string
+  form: string
+  lineFamily: string
+  authority: 'backend' | 'ustaxes'
+  severity: 'warning' | 'error'
+  blocking: boolean
+  message: string
+  editPath: string | null
+  editLabel: string | null
+}
+
+interface PreviewCalculationInput {
+  id: string
+  family: string
+  label?: string
+  summary?: string
+  metrics: Record<string, string | number | boolean | null | undefined>
+  editPath?: string
+  sourceScreen?: string
+  updatedAt?: string
+}
+
+interface PreviewDiffEntry {
+  id: string
+  family: string
+  key: string
+  localValue: string | number | boolean | null
+  authoritativeValue: string | number | boolean | null
+  severity: 'warning' | 'error'
+  blocking: boolean
+  message: string
+  editPath: string | null
+}
+
+interface BusinessExpertPackage {
+  entityType: string
+  supportLevel: string
+  readiness: string
+  reasonCodes: string[]
+  requiredForms: string[]
+  renderedArtifacts: Array<Record<string, unknown>>
+  filledPdfAvailability: {
+    available: boolean
+    reason: string
+  }
+  handoffStatus: string
+  missingFacts: string[]
+  sourceDocuments: Array<{
+    id: string
+    name: string
+    cluster: string
+    status: string
+    artifactPath: string | null
+  }>
+  reviewIssues: ReviewIssue[]
+}
 
 const PRINT_MAIL_ADDRESS_GROUPS: Array<{
   states: string[]
@@ -9055,6 +9143,282 @@ const toFindingRows = (
   return findings
 }
 
+const inferReviewIssueForm = (
+  snapshot: FilingSessionSnapshot,
+  fixPath: string | null | undefined
+) => {
+  if (!fixPath) return snapshot.formType
+  if (fixPath.includes('/marketplace-insurance')) return '8962'
+  if (fixPath.includes('/schedule-8812-adjustments')) return '8812'
+  if (fixPath.includes('/credits-v2') || fixPath.includes('/household'))
+    return '8812'
+  if (fixPath.includes('/underpayment')) return '2210'
+  if (fixPath.includes('/education-care')) return '8863'
+  if (fixPath.includes('/tax-lots') || fixPath.includes('/investments'))
+    return '8949'
+  if (fixPath.includes('/qbi')) return '8995'
+  if (fixPath.includes('/state')) return 'STATE'
+  return snapshot.formType
+}
+
+const inferReviewIssueLineFamily = (
+  code: string,
+  fixPath: string | null | undefined
+) => {
+  const normalizedCode = code.toLowerCase()
+  const normalizedPath = (fixPath ?? '').toLowerCase()
+  if (normalizedCode.includes('agi') || normalizedPath.includes('identity')) {
+    return 'identity_verification'
+  }
+  if (normalizedPath.includes('marketplace') || normalizedCode.includes('8962')) {
+    return 'marketplace_reconciliation'
+  }
+  if (normalizedPath.includes('schedule-8812') || normalizedCode.includes('8812')) {
+    return 'family_credits'
+  }
+  if (normalizedPath.includes('underpayment') || normalizedCode.includes('2210')) {
+    return 'underpayment_penalty'
+  }
+  if (normalizedPath.includes('household')) {
+    return 'dependent_eligibility'
+  }
+  if (normalizedPath.includes('qbi')) {
+    return 'qbi'
+  }
+  if (normalizedPath.includes('tax-lots') || normalizedPath.includes('investments')) {
+    return 'capital_gains'
+  }
+  if (normalizedPath.includes('education')) {
+    return 'education_credits'
+  }
+  if (normalizedPath.includes('state')) {
+    return 'state_filing'
+  }
+  return 'return_review'
+}
+
+const toReviewIssues = (
+  snapshot: FilingSessionSnapshot,
+  findings: ReviewFindingRow[],
+  taxCalcErrors: string[]
+): ReviewIssue[] => {
+  const findingIssues = findings.map((finding) => ({
+    id: finding.id,
+    code: finding.code,
+    form: inferReviewIssueForm(snapshot, finding.fix_path),
+    lineFamily: inferReviewIssueLineFamily(finding.code, finding.fix_path),
+    authority: 'backend' as const,
+    severity: finding.severity,
+    blocking: finding.severity === 'error',
+    message: finding.message,
+    editPath: finding.fix_path,
+    editLabel: finding.fix_label
+  }))
+
+  const calcIssues = taxCalcErrors.map((message, index) => ({
+    id: `tax-calc-${index + 1}`,
+    code: 'TAX-CALC',
+    form: snapshot.formType,
+    lineFamily: 'tax_calculation',
+    authority: 'ustaxes' as const,
+    severity: 'error' as const,
+    blocking: true,
+    message,
+    editPath: '/review-confirm',
+    editLabel: 'Review tax calculation'
+  }))
+
+  return [...findingIssues, ...calcIssues]
+}
+
+const sumRecordMoney = (value: unknown) =>
+  Object.values(asRecord(value)).reduce<number>(
+    (sum, current) => sum + toMoney(current),
+    0
+  )
+
+const buildAuthoritativePreviewMetrics = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[],
+  taxSummary: Record<string, unknown> | undefined
+) => {
+  const dependents = getDependents(snapshot, entities)
+  const stateScreen = requireScreen(snapshot, '/state-tax')
+  const stateEntries = asArray<Record<string, unknown>>(stateScreen.states)
+  const stateWithholdingTotal = stateEntries.reduce(
+    (sum, state) => sum + toMoney(state.stateWithheld),
+    0
+  )
+  const schedule8812Fidelity = getSchedule8812CollectionFidelityData(
+    snapshot,
+    entities
+  )
+  const underpaymentEntity = entities.find(
+    (entity) => entity.entityType === 'underpayment_data'
+  )
+  const underpaymentData = asRecord(underpaymentEntity?.data)
+  const underpaymentScreen = requireScreen(snapshot, '/underpayment')
+  const underpaymentRecord =
+    Object.keys(underpaymentData).length > 0
+      ? underpaymentData
+      : asRecord(underpaymentScreen)
+  const estimatedPaymentTotal = Object.values(
+    asRecord(underpaymentRecord.estimatedPayments)
+  ).reduce<number>((sum, value) => sum + toMoney(value), 0)
+  const marketplaceScreen = requireScreen(snapshot, '/marketplace-insurance')
+  const importedPolicies = entities
+    .filter((entity) => entity.entityType === 'aca_1095a')
+    .map((entity) => entity.data)
+  const marketplacePolicies: Record<string, unknown>[] =
+    importedPolicies.length > 0
+      ? importedPolicies.map((policy) => asRecord(policy))
+      : asArray<Record<string, unknown>>(marketplaceScreen.policies)
+  const marketplacePremiumTotal = marketplacePolicies.reduce(
+    (sum, policy) =>
+      sum +
+      toMoney(policy.totalPremiums) +
+      sumRecordMoney(policy.monthlyPremiums) +
+      sumRecordMoney(policy.premiums),
+    0
+  )
+  const marketplaceAptcTotal = marketplacePolicies.reduce(
+    (sum, policy) =>
+      sum +
+      toMoney(policy.totalAdvancePayment) +
+      sumRecordMoney(policy.monthlyAdvancePayment) +
+      sumRecordMoney(policy.advancePaymentOfPTC),
+    0
+  )
+  const creditSummary = getCreditSummary(snapshot, dependents)
+  const educationCreditEntities = creditSummary.creditEntities.filter(
+    (entity) => entity.creditId === 'education'
+  )
+  const careCreditEntities = creditSummary.creditEntities.filter(
+    (entity) => entity.creditId === 'care'
+  )
+  const qbiEntities = getQBIWorksheetEntities(snapshot)
+  const taxLots = getTaxLots(snapshot, entities)
+
+  return {
+    global: {
+      filingStatus: snapshot.filingStatus,
+      formType: snapshot.formType,
+      completionPct: snapshot.completionPct,
+      estimatedRefund: Number(snapshot.estimatedRefund ?? 0),
+      refund: Number(taxSummary?.refund ?? taxSummary?.overpayment ?? 0),
+      amountOwed: Number(taxSummary?.amountOwed ?? 0),
+      totalTax: Number(taxSummary?.totalTax ?? 0),
+      totalPayments: Number(taxSummary?.totalPayments ?? 0),
+      dependentCount: dependents.length,
+      stateCount: stateEntries.length
+    },
+    filing_status: {
+      filingStatus: snapshot.filingStatus,
+      dependentCount: dependents.length
+    },
+    schedule_8812: {
+      dependentCount: dependents.length,
+      adjustmentTotal: sumRecordMoney(
+        schedule8812Fidelity.schedule8812EarnedIncomeAdjustments
+      ),
+      otherWithholdingCount:
+        schedule8812Fidelity.otherFederalWithholdingCredits?.length ?? 0
+    },
+    eic: {
+      dependentCount: dependents.length,
+      qualifyingChildCount: dependents.filter((dependent) =>
+        Boolean(dependent.isComplete)
+      ).length
+    },
+    form_8962: {
+      marketplacePolicyCount: marketplacePolicies.length,
+      annualPremiums: marketplacePremiumTotal,
+      annualAptc: marketplaceAptcTotal
+    },
+    form_8863: {
+      educationStudentCount: educationCreditEntities.length
+    },
+    form_2441: {
+      careProviderCount: careCreditEntities.length
+    },
+    form_2210: {
+      priorYearTax: getPriorYearTax(snapshot, entities) ?? null,
+      currentYearWithholding:
+        underpaymentRecord.currentYearWithholding != null
+          ? toMoney(underpaymentRecord.currentYearWithholding)
+          : null,
+      estimatedPaymentTotal,
+      currentYearTaxLiability:
+        underpaymentRecord.currentYearTaxLiability != null
+          ? toMoney(underpaymentRecord.currentYearTaxLiability)
+          : null,
+      requestWaiver: Boolean(underpaymentRecord.requestWaiver),
+      useAnnualizedMethod: Boolean(underpaymentRecord.useAnnualizedMethod)
+    },
+    schedule_d: {
+      taxLotCount: taxLots.length
+    },
+    qbi: {
+      qbiEntityCount: qbiEntities.length
+    },
+    state: {
+      stateCount: stateEntries.length,
+      stateWithholdingTotal
+    }
+  } as Record<string, Record<string, string | number | boolean | null>>
+}
+
+const valuesDiffer = (
+  localValue: string | number | boolean | null,
+  authoritativeValue: string | number | boolean | null
+) => {
+  if (typeof localValue === 'number' && typeof authoritativeValue === 'number') {
+    return Math.abs(localValue - authoritativeValue) > 1
+  }
+  return localValue !== authoritativeValue
+}
+
+const comparePreviewCalculations = (
+  calculations: PreviewCalculationInput[],
+  authoritativeMetrics: Record<
+    string,
+    Record<string, string | number | boolean | null>
+  >
+) => {
+  const diffs: PreviewDiffEntry[] = []
+
+  for (const calculation of calculations) {
+    const authoritative =
+      authoritativeMetrics[calculation.family] ?? authoritativeMetrics.global
+    for (const [key, rawValue] of Object.entries(calculation.metrics ?? {})) {
+      if (!(key in authoritative)) continue
+      const localValue =
+        rawValue === undefined ? null : (rawValue as string | number | boolean | null)
+      const authoritativeValue = authoritative[key] ?? null
+      if (!valuesDiffer(localValue, authoritativeValue)) continue
+
+      const blocking =
+        key === 'filingStatus' ||
+        key === 'refund' ||
+        key === 'amountOwed' ||
+        key === 'totalTax'
+      diffs.push({
+        id: `${calculation.id}:${key}`,
+        family: calculation.family,
+        key,
+        localValue,
+        authoritativeValue,
+        severity: blocking ? 'error' : 'warning',
+        blocking,
+        message: `${calculation.label ?? calculation.family} differs from the authoritative backend result for ${key}.`,
+        editPath: calculation.editPath ?? null
+      })
+    }
+  }
+
+  return diffs
+}
+
 export class AppSessionService {
   constructor(
     private readonly env: Env,
@@ -10043,6 +10407,158 @@ export class AppSessionService {
     }
   }
 
+  async getReviewIssues(sessionId: string, user: AppUserClaims) {
+    const row = await this.requireSession(sessionId, user.sub)
+    const snapshot = await this.getSnapshot(row)
+    const entities = await this.loadSessionEntities(row.id)
+    const findings = await this.syncReviewFindings(row.id, snapshot, entities)
+    const facts = toFacts(row, snapshot, entities)
+    const computed = await this.computeTaxSummary(sessionId, snapshot, facts)
+
+    return {
+      reviewIssues: toReviewIssues(
+        snapshot,
+        findings,
+        computed.taxCalcErrors ?? []
+      )
+    }
+  }
+
+  async getPreviewDiff(
+    sessionId: string,
+    rawBody: unknown,
+    user: AppUserClaims
+  ) {
+    const row = await this.requireSession(sessionId, user.sub)
+    const snapshot = await this.getSnapshot(row)
+    const entities = await this.loadSessionEntities(row.id)
+    const facts = toFacts(row, snapshot, entities)
+    const computed = await this.computeTaxSummary(sessionId, snapshot, facts)
+    const body = previewDiffSchema.parse(rawBody ?? {})
+    const authoritativeMetrics = buildAuthoritativePreviewMetrics(
+      snapshot,
+      entities,
+      computed.taxSummary
+    )
+    const calculations = body.calculations as PreviewCalculationInput[]
+    const mismatches = comparePreviewCalculations(
+      calculations,
+      authoritativeMetrics
+    )
+
+    return {
+      previewDiff: {
+        calculations,
+        authoritativeMetrics,
+        mismatches,
+        hasBlockingDiffs: mismatches.some((mismatch) => mismatch.blocking)
+      }
+    }
+  }
+
+  async getBusinessPackage(sessionId: string, user: AppUserClaims) {
+    const row = await this.requireSession(sessionId, user.sub)
+    const snapshot = await this.getSnapshot(row)
+    if (!isBusinessFormType(snapshot.formType)) {
+      throw new HttpError(
+        409,
+        `${snapshot.formType} does not use the business/nonprofit package flow`
+      )
+    }
+
+    const entities = await this.loadSessionEntities(row.id)
+    const documents = await this.loadSessionDocuments(row.id)
+    const findings = await this.syncReviewFindings(row.id, snapshot, entities)
+    const facts = toFacts(row, snapshot, entities)
+    const computed = await this.computeTaxSummary(sessionId, snapshot, facts)
+    const capability =
+      computed.businessFormCapability ?? getBusinessReturnCapabilityView(snapshot)
+    const reviewIssues = toReviewIssues(
+      snapshot,
+      findings,
+      computed.taxCalcErrors ?? []
+    )
+    const requiredForms = Array.from(
+      new Set(
+        [
+          snapshot.formType,
+          ...asArray<unknown>(computed.taxSummary?.schedules)
+            .map((schedule) => toText(schedule))
+            .filter(Boolean)
+        ].filter(Boolean)
+      )
+    )
+    const renderedArtifacts = [
+      {
+        type: 'review',
+        label: 'Review packet',
+        path: `/app/v1/filing-sessions/${row.id}/review`
+      },
+      {
+        type: 'checklist',
+        label: 'Checklist',
+        path: `/app/v1/filing-sessions/${row.id}/checklist`
+      }
+    ]
+
+    const businessPackage: BusinessExpertPackage = {
+      entityType: snapshot.formType,
+      supportLevel: toText(asRecord(capability).supportLevel) || 'unknown',
+      readiness: toText(asRecord(capability).readiness) || 'needs_input',
+      reasonCodes: [
+        toText(asRecord(capability).supportLevel) || 'unknown_support_level',
+        ...asArray<unknown>(asRecord(capability).missingInputs).map(
+          (input) => `missing:${toText(input)}`
+        )
+      ].filter(Boolean),
+      requiredForms,
+      renderedArtifacts,
+      filledPdfAvailability: {
+        available: supportsPinnedIrsTemplates(snapshot.taxYear, snapshot.formType),
+        reason: supportsPinnedIrsTemplates(snapshot.taxYear, snapshot.formType)
+          ? 'Template-backed filled PDFs are available for this packet.'
+          : 'This packet currently uses rendered previews and expert handoff artifacts.'
+      },
+      handoffStatus:
+        toText(asRecord(capability).supportLevel) === 'expert_required'
+          ? 'expert_required'
+          : toText(asRecord(capability).readiness) === 'ready'
+          ? 'ready_for_review'
+          : 'needs_input',
+      missingFacts: asArray<unknown>(asRecord(capability).missingInputs).map(
+        (input) => toText(input)
+      ),
+      sourceDocuments: documents.map((document) => ({
+        id: document.id,
+        name: document.name,
+        cluster: document.cluster,
+        status: document.status,
+        artifactPath: document.artifactPath
+      })),
+      reviewIssues
+    }
+
+    return { businessPackage }
+  }
+
+  async getStateCapabilities(rawQuery: unknown) {
+    const query = stateCapabilitiesQuerySchema.parse(rawQuery ?? {})
+    const taxYear = query.taxYear ?? 2025
+    const capability = query.stateCode
+      ? resolveStateCapability(this.env, query.stateCode, taxYear)
+      : null
+
+    return {
+      stateCapabilities: capability
+        ? [capability]
+        : listStateCapabilities(this.env, taxYear),
+      supportTargets: {
+        implementedTaxYears: [2024, 2025],
+        forecastOnlyTaxYears: [2026]
+      }
+    }
+  }
+
   async syncReturn(sessionId: string, user: AppUserClaims) {
     const row = await this.requireSession(sessionId, user.sub)
     const snapshot = await this.getSnapshot(row)
@@ -11013,10 +11529,12 @@ export class AppSessionService {
         'CA'
     ).toUpperCase()
     const profile = resolveStateProfile(this.env, stateCode)
+    const capability = resolveStateCapability(this.env, stateCode, snapshot.taxYear)
     return {
       stateTransfer: {
         stateCode,
         profile,
+        capability,
         taxReturnId: row.tax_return_id,
         latestSubmissionId: row.latest_submission_id,
         acceptedOnly: profile?.acceptedOnly ?? false
@@ -11030,7 +11548,28 @@ export class AppSessionService {
     user: AppUserClaims
   ) {
     const row = await this.requireSession(sessionId, user.sub)
+    const snapshot = await this.getSnapshot(row)
     const body = stateTransferSchema.parse(rawBody ?? {})
+    const capability = resolveStateCapability(
+      this.env,
+      body.stateCode.toUpperCase(),
+      snapshot.taxYear
+    )
+    if (!capability) {
+      throw new HttpError(404, 'State capability not found')
+    }
+    if (capability.noIncomeTax) {
+      throw new HttpError(
+        409,
+        `${capability.stateName} does not require a state income tax return in this flow`
+      )
+    }
+    if (capability.lane !== 'transfer_export') {
+      throw new HttpError(
+        409,
+        `${capability.stateName} is currently routed through expert handoff instead of direct transfer`
+      )
+    }
     const id = crypto.randomUUID()
     const authorizationCode = crypto.randomUUID()
     const metadataKey = `filing-sessions/${sessionId}/state-transfer/${authorizationCode}.json`
