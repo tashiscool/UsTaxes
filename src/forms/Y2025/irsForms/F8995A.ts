@@ -20,6 +20,65 @@ export default class F8995A extends F8995 {
   tag: FormTag = 'f8995a'
   sequenceIndex = 55.5
 
+  aggregationElectionEntries = (): QBIEntry[] => {
+    const groupedEntries = new Map<string, QBIEntry>()
+    const orderedEntries: Array<QBIEntry | { kind: 'aggregation'; group: string }> = []
+
+    for (const entry of this.sourceQbiEntries()) {
+      if (!entry.hasAggregationElection || !entry.aggregationGroup) {
+        orderedEntries.push(entry)
+        continue
+      }
+
+      const existing = groupedEntries.get(entry.aggregationGroup)
+      if (existing === undefined) {
+        orderedEntries.push({
+          kind: 'aggregation',
+          group: entry.aggregationGroup
+        })
+        groupedEntries.set(entry.aggregationGroup, {
+          ...entry,
+          name: `Aggregation ${entry.aggregationGroup}: ${entry.name}`,
+          ein: entry.ein,
+          isSSTB: entry.isSSTB ?? false,
+          isCooperative: entry.isCooperative ?? false
+        })
+        continue
+      }
+
+      groupedEntries.set(entry.aggregationGroup, {
+        ...existing,
+        name: `${existing.name}; ${entry.name}`,
+        ein:
+          existing.ein === entry.ein || entry.ein === undefined
+            ? existing.ein
+            : undefined,
+        qbi: existing.qbi + entry.qbi,
+        w2Wages: existing.w2Wages + entry.w2Wages,
+        ubia: existing.ubia + entry.ubia,
+        patronReduction: existing.patronReduction + entry.patronReduction,
+        isSSTB: Boolean(existing.isSSTB || entry.isSSTB),
+        isCooperative: Boolean(existing.isCooperative || entry.isCooperative)
+      })
+    }
+
+    return orderedEntries.map((entry) =>
+      'kind' in entry
+        ? groupedEntries.get(entry.group) ?? {
+            name: `Aggregation ${entry.group}`,
+            qbi: 0,
+            w2Wages: 0,
+            ubia: 0,
+            patronReduction: 0,
+            aggregationGroup: entry.group,
+            hasAggregationElection: true
+          }
+        : entry
+    )
+  }
+
+  qbiEntries = (): QBIEntry[] => this.aggregationElectionEntries()
+
   reductionPercentage = (): number =>
     clamp(this.l22() / this.l23(), 0, 1)
 
@@ -117,11 +176,12 @@ export default class F8995A extends F8995 {
       this.currentYearPtpIncome() > 0 ||
       this.ptpLossCarryforward() > 0 ||
       this.l38() > 0
-    const sstbCount = this.qbiEntries().filter((entry) => entry.isSSTB).length
-    const aggregationElectionCount = this.qbiEntries().filter(
+    const rawEntries = this.sourceQbiEntries()
+    const sstbCount = rawEntries.filter((entry) => entry.isSSTB).length
+    const aggregationElectionCount = rawEntries.filter(
       (entry) => entry.hasAggregationElection
     ).length
-    const cooperativeCount = this.qbiEntries().filter(
+    const cooperativeCount = rawEntries.filter(
       (entry) => entry.isCooperative
     ).length
 

@@ -142,7 +142,7 @@ export default class ScheduleK1_1041 extends F1040Attachment {
       excessDeductions: 0,
       unusedCapitalLossCarryover: 0,
       netOperatingLossCarryover: 0,
-      amtAdjustment: 0,
+      amtAdjustment: (ben.amtAdjustment as number) ?? 0,
       foreignTaxCredit: (ben.credits as number) ?? 0,
       otherCredits: 0,
       taxExemptInterest: 0,

@@ -5197,6 +5197,191 @@ const getSpouse = (
   }
 }
 
+const parseDateInput = (value: unknown) => {
+  const text = toText(value)
+  if (!text) return null
+  const date = new Date(text)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+const isAgeAtLeastByYearEnd = (
+  value: unknown,
+  minimumAge: number,
+  taxYear: number
+) => {
+  const dateOfBirth = parseDateInput(value)
+  if (!dateOfBirth) return false
+
+  const yearEnd = new Date(Date.UTC(taxYear, 11, 31))
+  let age = yearEnd.getUTCFullYear() - dateOfBirth.getUTCFullYear()
+  const hasBirthdayPassed =
+    yearEnd.getUTCMonth() > dateOfBirth.getUTCMonth() ||
+    (yearEnd.getUTCMonth() === dateOfBirth.getUTCMonth() &&
+      yearEnd.getUTCDate() >= dateOfBirth.getUTCDate())
+  if (!hasBirthdayPassed) {
+    age -= 1
+  }
+  return age >= minimumAge
+}
+
+const get1040SrEligibility = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[]
+) => {
+  const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
+  const spouse = getSpouse(snapshot, entities)
+  const primaryEligible = isAgeAtLeastByYearEnd(taxpayer.dob, 65, snapshot.taxYear)
+  const spouseEligible =
+    spouse !== null && isAgeAtLeastByYearEnd(spouse.dob, 65, snapshot.taxYear)
+  return {
+    primaryEligible,
+    spouseEligible,
+    eligibleFilerCount: Number(primaryEligible) + Number(spouseEligible),
+    taxpayerDobKnown: Boolean(parseDateInput(taxpayer.dob)),
+    spouseDobKnown: spouse ? Boolean(parseDateInput(spouse.dob)) : true
+  }
+}
+
+const calcSchedule1APhaseoutDeduction = (
+  amount: number,
+  agi: number,
+  isMFJ: boolean,
+  cap: number,
+  thresholdSingle: number,
+  thresholdMFJ: number,
+  reductionPerThousand: number
+) => {
+  const capped = Math.min(amount, cap)
+  const threshold = isMFJ ? thresholdMFJ : thresholdSingle
+  if (agi <= threshold) return capped
+  const excess = agi - threshold
+  const reduction = Math.floor(excess / 1000) * reductionPerThousand
+  return Math.max(0, capped - reduction)
+}
+
+const calcSchedule1ASeniorDeduction = (
+  qualifyingSeniorCount: number,
+  agi: number,
+  isMFJ: boolean
+) => {
+  if (qualifyingSeniorCount <= 0) return 0
+  const baseAmount = qualifyingSeniorCount * 6000
+  const threshold = isMFJ ? 150000 : 75000
+  if (agi <= threshold) return baseAmount
+  return Math.max(0, baseAmount - (agi - threshold) * 0.06)
+}
+
+const getSchedule1AData = (
+  snapshot: FilingSessionSnapshot,
+  entities: SessionEntitySnapshot[],
+  authoritativeAgi?: number | null
+) => {
+  const screen = requireScreen(snapshot, '/schedule-1a')
+  const entity = entities.find((e) => e.entityType === 'schedule_1a')
+  const source = asRecord(entity?.data ?? screen)
+  const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
+  const spouse = getSpouse(snapshot, entities)
+  const isMFJ = snapshot.filingStatus === 'mfj'
+  const enteredAgi =
+    source.estimatedAGI != null && source.estimatedAGI !== ''
+      ? toMoney(source.estimatedAGI)
+      : undefined
+  const agi = toMoney(authoritativeAgi ?? enteredAgi ?? 0)
+  const tipAmount =
+    toMoney(source.employeeTipAmount) + toMoney(source.selfEmployedTipAmount)
+  const overtimeAmount = toMoney(source.overtimeAmount)
+  const autoLoanInterestPaid = toMoney(source.autoLoanInterestPaid)
+  const vehicleAssembledInUS =
+    source.vehicleAssembledInUS === true ||
+    source.vehicleAssembledInUS === 'yes'
+  const vehiclePersonalUse =
+    source.vehiclePersonalUse === true || source.vehiclePersonalUse === 'yes'
+  const taxpayerSenior =
+    isAgeAtLeastByYearEnd(taxpayer.dob, 65, snapshot.taxYear) ||
+    source.taxpayerAge65 === true
+  const spouseSenior =
+    (spouse !== null &&
+      isAgeAtLeastByYearEnd(spouse.dob, 65, snapshot.taxYear)) ||
+    source.spouseAge65 === true
+  const qualifyingSeniorCount = Number(taxpayerSenior) + Number(spouseSenior)
+  const tipsDeduction =
+    source.hasTips === true
+      ? calcSchedule1APhaseoutDeduction(
+          tipAmount,
+          agi,
+          isMFJ,
+          25000,
+          150000,
+          300000,
+          100
+        )
+      : 0
+  const overtimeDeduction =
+    source.hasOvertime === true
+      ? calcSchedule1APhaseoutDeduction(
+          overtimeAmount,
+          agi,
+          isMFJ,
+          isMFJ ? 25000 : 12500,
+          150000,
+          300000,
+          100
+        )
+      : 0
+  const autoLoanDeduction =
+    source.hasAutoLoan === true && vehicleAssembledInUS && vehiclePersonalUse
+      ? calcSchedule1APhaseoutDeduction(
+          autoLoanInterestPaid,
+          agi,
+          isMFJ,
+          10000,
+          100000,
+          200000,
+          200
+        )
+      : 0
+  const seniorDeduction = calcSchedule1ASeniorDeduction(
+    qualifyingSeniorCount,
+    agi,
+    isMFJ
+  )
+  const hasResponse =
+    source.hasTips != null ||
+    source.hasOvertime != null ||
+    source.hasAutoLoan != null ||
+    source.taxpayerAge65 != null ||
+    source.spouseAge65 != null ||
+    enteredAgi != null ||
+    tipAmount > 0 ||
+    overtimeAmount > 0 ||
+    autoLoanInterestPaid > 0
+  const isComplete =
+    hasResponse &&
+    (source.hasTips !== true || tipAmount > 0) &&
+    (source.hasOvertime !== true || overtimeAmount > 0) &&
+    (source.hasAutoLoan !== true ||
+      (autoLoanInterestPaid > 0 &&
+        source.vehicleAssembledInUS != null &&
+        source.vehiclePersonalUse != null))
+
+  return {
+    hasResponse,
+    isComplete,
+    tipAmount,
+    overtimeAmount,
+    autoLoanInterestPaid,
+    tipsDeduction,
+    overtimeDeduction,
+    autoLoanDeduction,
+    seniorDeduction,
+    totalDeduction:
+      tipsDeduction + overtimeDeduction + autoLoanDeduction + seniorDeduction,
+    qualifyingSeniorCount,
+    isMFJ,
+    agi
+  }
+}
+
 const getUnemploymentRecords = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
@@ -7515,6 +7700,8 @@ const buildChecklist = (
   const form4137Screen = requireScreen(snapshot, '/form-4137')
   const form8919Screen = requireScreen(snapshot, '/form-8919')
   const form8801Screen = requireScreen(snapshot, '/form-8801')
+  const schedule1AData = getSchedule1AData(snapshot, entities)
+  const form1040SrEligibility = get1040SrEligibility(snapshot, entities)
   const form8919TotalWages = uncollectedSSTaxWages.reduce(
     (sum, record) => sum + toMoney(record.wagesReceived),
     0
@@ -7592,6 +7779,25 @@ const buildChecklist = (
         '/residency',
         'Residency information saved'
       ),
+      'form-1040-sr': {
+        status:
+          form1040SrEligibility.eligibleFilerCount > 0
+            ? 'complete'
+            : form1040SrEligibility.taxpayerDobKnown &&
+              form1040SrEligibility.spouseDobKnown
+            ? 'skipped'
+            : 'in_progress',
+        sublabel:
+          form1040SrEligibility.eligibleFilerCount > 0
+            ? `${form1040SrEligibility.eligibleFilerCount} filer${
+                form1040SrEligibility.eligibleFilerCount === 1 ? '' : 's'
+              } qualify for Form 1040-SR`
+            : form1040SrEligibility.taxpayerDobKnown &&
+              form1040SrEligibility.spouseDobKnown
+            ? 'Standard Form 1040 remains appropriate'
+            : 'Add date of birth details to confirm senior-form eligibility',
+        warnings: []
+      },
       w2s: {
         status: buildStatusFromCollection(w2Records, true),
         sublabel:
@@ -7698,6 +7904,25 @@ const buildChecklist = (
         'Retirement income reviewed',
         { optional: true }
       ),
+      'schedule-1a': {
+        status: schedule1AData.isComplete
+          ? 'complete'
+          : schedule1AData.hasResponse
+          ? 'in_progress'
+          : 'skipped',
+        sublabel:
+          schedule1AData.totalDeduction > 0
+            ? `$${schedule1AData.totalDeduction.toLocaleString()} tracked`
+            : schedule1AData.hasResponse
+            ? 'No Schedule 1-A deductions claimed'
+            : undefined,
+        warnings: findings
+          .filter((finding) => finding.code === 'SCHEDULE1A-INCOMPLETE')
+          .map((finding) => ({
+            message: finding.message,
+            level: finding.severity
+          }))
+      },
       'form-4137': {
         status:
           form4137Screen.hasUnreportedTips === false
@@ -8710,6 +8935,7 @@ const toFindingRows = (
   const form4137Screen = requireScreen(snapshot, '/form-4137')
   const form8919Screen = requireScreen(snapshot, '/form-8919')
   const form8801Screen = requireScreen(snapshot, '/form-8801')
+  const schedule1AData = getSchedule1AData(snapshot, entities)
   const unreportedTipIncome = getUnreportedTipIncome(snapshot, entities) ?? 0
   const uncollectedSSTaxWages = getUncollectedSSTaxWages(snapshot, entities)
   const amtCreditData = getAmtCreditData(snapshot, entities)
@@ -8917,6 +9143,24 @@ const toFindingRows = (
         'You marked that you have prior-year AMT credit, but the credit or carryforward amount is still missing.',
       fix_path: '/form-8801',
       fix_label: 'Complete Form 8801',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (schedule1AData.hasResponse && !schedule1AData.isComplete) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'SCHEDULE1A-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish Schedule 1-A details',
+      message:
+        'One or more Schedule 1-A deductions is missing the amount or eligibility detail needed to calculate the deduction.',
+      fix_path: '/schedule-1a',
+      fix_label: 'Complete Schedule 1-A',
       acknowledged: 0,
       metadata_key: null,
       created_at: now,
@@ -9233,12 +9477,17 @@ const inferReviewIssueForm = (
   fixPath: string | null | undefined
 ) => {
   if (!fixPath) return snapshot.formType
+  if (fixPath.includes('/form-1040-sr')) return '1040-SR'
   if (fixPath.includes('/marketplace-insurance')) return '8962'
   if (fixPath.includes('/deductions') || fixPath.includes('/schedule-a'))
     return 'Schedule A'
+  if (fixPath.includes('/schedule-1a')) return 'Schedule 1-A'
   if (fixPath.includes('/schedule-8812-adjustments')) return '8812'
   if (fixPath.includes('/credits-v2') || fixPath.includes('/household'))
     return '8812'
+  if (fixPath.includes('/form-4137')) return '4137'
+  if (fixPath.includes('/form-8919')) return '8919'
+  if (fixPath.includes('/form-8801')) return '8801'
   if (fixPath.includes('/underpayment')) return '2210'
   if (fixPath.includes('/your-taxes')) return '6251'
   if (fixPath.includes('/education-care')) return '8863'
@@ -9258,8 +9507,14 @@ const inferReviewIssueLineFamily = (
   if (normalizedCode.includes('agi') || normalizedPath.includes('identity')) {
     return 'identity_verification'
   }
+  if (normalizedPath.includes('form-1040-sr')) {
+    return 'senior_return'
+  }
   if (normalizedPath.includes('marketplace') || normalizedCode.includes('8962')) {
     return 'marketplace_reconciliation'
+  }
+  if (normalizedPath.includes('schedule-1a')) {
+    return 'obbba_deductions'
   }
   if (
     normalizedPath.includes('/deductions') ||
@@ -9275,6 +9530,15 @@ const inferReviewIssueLineFamily = (
   }
   if (normalizedPath.includes('underpayment') || normalizedCode.includes('2210')) {
     return 'underpayment_penalty'
+  }
+  if (normalizedPath.includes('form-4137')) {
+    return 'unreported_tips'
+  }
+  if (normalizedPath.includes('form-8919')) {
+    return 'uncollected_payroll_tax'
+  }
+  if (normalizedPath.includes('form-8801')) {
+    return 'amt_credit'
   }
   if (
     normalizedPath.includes('/your-taxes') ||
@@ -9409,7 +9673,18 @@ const buildAuthoritativePreviewMetrics = (
   const qbiDetail = getQbiDetail(snapshot, qbiEntities, qbiDeductionData)
   const taxLots = getTaxLots(snapshot, entities)
   const yourTaxesScreen = requireScreen(snapshot, '/your-taxes')
+  const form4137Screen = requireScreen(snapshot, '/form-4137')
+  const form8919Screen = requireScreen(snapshot, '/form-8919')
   const form8801Screen = requireScreen(snapshot, '/form-8801')
+  const schedule1AData = getSchedule1AData(
+    snapshot,
+    entities,
+    Number(taxSummary?.agi ?? 0)
+  )
+  const form1040SrEligibility = get1040SrEligibility(snapshot, entities)
+  const unreportedTipIncome = getUnreportedTipIncome(snapshot, entities) ?? 0
+  const uncollectedSSTaxWages = getUncollectedSSTaxWages(snapshot, entities)
+  const amtCreditData = getAmtCreditData(snapshot, entities)
   const scheduleATotal =
     toMoney(itemizedDeductions.medicalAndDental) +
     toMoney(itemizedDeductions.stateAndLocalTaxes) +
@@ -9447,6 +9722,13 @@ const buildAuthoritativePreviewMetrics = (
       filingStatus: snapshot.filingStatus,
       dependentCount: dependents.length
     },
+    form_1040_sr: {
+      eligibleFilerCount: form1040SrEligibility.eligibleFilerCount,
+      primaryEligible: form1040SrEligibility.primaryEligible,
+      spouseEligible: form1040SrEligibility.spouseEligible,
+      taxpayerDobKnown: form1040SrEligibility.taxpayerDobKnown,
+      spouseDobKnown: form1040SrEligibility.spouseDobKnown
+    },
     schedule_a: {
       medicalAndDental: toMoney(itemizedDeductions.medicalAndDental),
       saltEntered:
@@ -9479,6 +9761,17 @@ const buildAuthoritativePreviewMetrics = (
         Boolean(dependent.isComplete)
       ).length
     },
+    schedule_1a: {
+      tipAmount: schedule1AData.tipAmount,
+      overtimeAmount: schedule1AData.overtimeAmount,
+      autoLoanInterestPaid: schedule1AData.autoLoanInterestPaid,
+      tipDeduction: schedule1AData.tipsDeduction,
+      overtimeDeduction: schedule1AData.overtimeDeduction,
+      autoLoanDeduction: schedule1AData.autoLoanDeduction,
+      seniorDeduction: schedule1AData.seniorDeduction,
+      totalDeduction: schedule1AData.totalDeduction,
+      qualifyingSeniorCount: schedule1AData.qualifyingSeniorCount
+    },
     form_8962: {
       marketplacePolicyCount: marketplacePolicies.length,
       annualPremiums: marketplacePremiumTotal,
@@ -9498,6 +9791,28 @@ const buildAuthoritativePreviewMetrics = (
         form8801Screen.priorYearAmtCreditCarryforward != null
           ? toMoney(form8801Screen.priorYearAmtCreditCarryforward)
           : null
+    },
+    form_4137: {
+      hasUnreportedTips: form4137Screen.hasUnreportedTips === true,
+      unreportedTips: unreportedTipIncome,
+      estimatedPayrollTax: Math.round(unreportedTipIncome * 7.65) / 100
+    },
+    form_8919: {
+      employerCount: uncollectedSSTaxWages.length,
+      totalWages: uncollectedSSTaxWages.reduce(
+        (sum, record) => sum + toMoney(record.wagesReceived),
+        0
+      ),
+      hasUncollectedWages: form8919Screen.hasUncollectedWages === true
+    },
+    form_8801: {
+      priorYearAmtCredit: toMoney(amtCreditData.priorYearAmtCredit),
+      priorYearAmtCreditCarryforward: toMoney(
+        amtCreditData.priorYearAmtCreditCarryforward
+      ),
+      trackedTotal:
+        toMoney(amtCreditData.priorYearAmtCredit) +
+        toMoney(amtCreditData.priorYearAmtCreditCarryforward)
     },
     form_2210: {
       priorYearTax: getPriorYearTax(snapshot, entities) ?? null,

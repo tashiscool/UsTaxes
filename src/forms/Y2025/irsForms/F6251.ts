@@ -3,6 +3,7 @@ import { FilingStatus, PersonRole } from 'ustaxes/core/data'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { Field } from 'ustaxes/core/pdfFiller'
 import federalBrackets, { amt } from '../data/federal'
+import ScheduleK1_1041 from './ScheduleK1_1041'
 
 type Part3 = Partial<{
   l12: number
@@ -39,6 +40,16 @@ type Part3 = Partial<{
 export default class F6251 extends F1040Attachment {
   tag: FormTag = 'f6251'
   sequenceIndex = 32
+
+  scheduleK1_1041Forms = (): ScheduleK1_1041[] => {
+    const fiduciaryReturn = this.f1040.info.fiduciaryReturn as
+      | { beneficiaries?: unknown[] }
+      | undefined
+    const beneficiaryCount = fiduciaryReturn?.beneficiaries?.length ?? 0
+    return Array.from({ length: beneficiaryCount }, (_, index) => {
+      return new ScheduleK1_1041(this.f1040, index)
+    }).filter((form) => form.isNeeded())
+  }
 
   isNeeded = (): boolean => {
     // See https://www.irs.gov/instructions/i6251
@@ -133,8 +144,14 @@ export default class F6251 extends F1040Attachment {
     )
   }
 
-  // TODO: Estates and trusts (amount from Schedule K-1 (Form 1041), box 12, code A)
-  l2j = (): number | undefined => undefined
+  // Estates and trusts (amount from Schedule K-1 (Form 1041), box 12, code A)
+  l2j = (): number | undefined => {
+    const totalAmtAdjustment = this.scheduleK1_1041Forms().reduce(
+      (sum, schedule) => sum + schedule.l12(),
+      0
+    )
+    return totalAmtAdjustment === 0 ? undefined : totalAmtAdjustment
+  }
   // TODO: Disposition of property (difference between AMT and regular tax gain or loss)
   l2k = (): number | undefined => undefined
   // TODO: Depreciation on assets placed in service after 1986 (difference between regular tax and AMT)
@@ -238,8 +255,14 @@ export default class F6251 extends F1040Attachment {
     )
   }
 
-  // TODO: Alternative minimum tax foreign tax credit
-  l8 = (): number | undefined => undefined
+  // Approximate the AMT foreign tax credit from the currently modeled Form 1116 FTC.
+  l8 = (): number | undefined => {
+    const regularForeignTaxCredit = this.f1040.f1116?.credit() ?? 0
+    if (regularForeignTaxCredit <= 0) {
+      return undefined
+    }
+    return Math.min(regularForeignTaxCredit, this.l7() ?? 0)
+  }
 
   l9 = (additionalAmount = 0): number => {
     const l6 = this.l6(additionalAmount)

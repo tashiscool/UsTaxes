@@ -135,11 +135,13 @@ export default class F8995 extends F1040Attachment {
         isCooperative: k1.isAgriculturalOrHorticulturalCooperative
       }))
 
-  qbiEntries = (): QBIEntry[] => [
+  sourceQbiEntries = (): QBIEntry[] => [
     ...this.scheduleCQBIBusinesses(),
     ...this.rentalQbiEntries(),
     ...this.applicableK1s()
   ]
+
+  qbiEntries = (): QBIEntry[] => this.sourceQbiEntries()
 
   visibleEntries = (): QBIEntry[] => this.qbiEntries().slice(0, 5)
 

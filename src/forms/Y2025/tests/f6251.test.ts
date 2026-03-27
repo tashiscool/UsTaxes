@@ -225,6 +225,69 @@ describe('AMT', () => {
     expect(f6251.isNeeded()).toBe(true)
   })
 
+  it('pulls AMT adjustments from Schedule K-1 (Form 1041) box 12 code A', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.fiduciaryReturn = {
+      beneficiaries: [
+        {
+          name: 'Alex Beneficiary',
+          tin: '333333333',
+          percentageShare: 50,
+          ordinaryIncome: 0,
+          deductions: 0,
+          amtAdjustment: 1800
+        },
+        {
+          name: 'Jordan Beneficiary',
+          tin: '444444444',
+          percentageShare: 50,
+          ordinaryIncome: 0,
+          deductions: 0,
+          amtAdjustment: -300
+        }
+      ]
+    }
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+
+    expect(f1040.scheduleK1_1041?.isNeeded()).toBe(true)
+    expect(f6251.l2j()).toBe(1500)
+    expect((f6251.l4() ?? 0) > (f6251.l1() ?? 0)).toBe(true)
+  })
+
+  it('uses the modeled foreign tax credit as an AMT foreign tax credit proxy when present', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.w2s[0].income = 180000
+    information.w2s[0].medicareIncome = 180000
+    information.w2s[0].ssWages = 176100
+    information.w2s[0].stateWages = 180000
+    information.f1099s = [
+      {
+        payer: 'Global Equity Fund',
+        type: Income1099Type.DIV,
+        personRole: PersonRole.PRIMARY,
+        form: {
+          dividends: 8000,
+          qualifiedDividends: 5000,
+          totalCapitalGainsDistributions: 0,
+          foreignTaxPaid: 600,
+          foreignSourceIncome: 4000
+        }
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+
+    expect(f1040.f1116?.isNeeded()).toBe(true)
+    expect(f1040.f1116?.credit()).toBeGreaterThan(0)
+    expect(f6251.l8()).toBe(Math.min(f1040.f1116?.credit() ?? 0, f6251.l7() ?? 0))
+    expect(f6251.l9()).toBe((f6251.l7() ?? 0) - (f6251.l8() ?? 0))
+  })
+
   it('does not require Part III when there are no qualified dividends or capital gains', () => {
     const information = cloneDeep(baseInformation)
     information.f3921s = []

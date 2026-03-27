@@ -363,7 +363,7 @@ describe('2025 federal law updates', () => {
     const f1040 = new F1040(cloneDeep(baseInformation), [])
     const f8995A = new F8995A(f1040)
 
-    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+    jest.spyOn(f8995A, 'sourceQbiEntries').mockReturnValue([
       {
         name: 'Alpha Consulting',
         ein: '111111111',
@@ -491,7 +491,7 @@ describe('2025 federal law updates', () => {
     const f1040 = new F1040(cloneDeep(baseInformation), [])
     const f8995A = new F8995A(f1040)
 
-    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+    jest.spyOn(f8995A, 'sourceQbiEntries').mockReturnValue([
       {
         name: 'Alpha Consulting',
         ein: '111111111',
@@ -536,7 +536,7 @@ describe('2025 federal law updates', () => {
     const f1040 = new F1040(cloneDeep(baseInformation), [])
     const f8995A = new F8995A(f1040)
 
-    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+    jest.spyOn(f8995A, 'sourceQbiEntries').mockReturnValue([
       {
         name: 'Alpha Consulting',
         ein: '111111111',
@@ -585,7 +585,7 @@ describe('2025 federal law updates', () => {
     ])
 
     expect(f8995A.visibleEntries()).toHaveLength(3)
-    expect(f8995A.overflowEntries()).toHaveLength(2)
+    expect(f8995A.overflowEntries()).toHaveLength(1)
     expect(f8995A.needsAdditionalStatement()).toBe(true)
     expect(f8995A.overflowTotals()).toEqual({
       qbi: 70000,
@@ -593,20 +593,24 @@ describe('2025 federal law updates', () => {
       ubia: 90000,
       patronReduction: 5000
     })
+    expect(f8995A.qbiEntries()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'Aggregation Group A: Delta Holdings; Echo Foods',
+          qbi: 70000,
+          w2Wages: 70000,
+          ubia: 90000,
+          patronReduction: 5000,
+          aggregationGroup: 'Group A',
+          hasAggregationElection: true,
+          isCooperative: true
+        })
+      ])
+    )
     expect(f8995A.overflowStatementEntries()).toEqual([
       expect.objectContaining({
-        name: 'Delta Holdings',
+        name: 'Aggregation Group A: Delta Holdings; Echo Foods',
         statementRowNumber: 1,
-        statementSection: 'Form 8995-A additional statement',
-        isAttachmentRow: true,
-        aggregationGroup: 'Group A',
-        hasAggregationElection: true,
-        deductionBeforePatronReduction: expect.any(Number),
-        deductionAfterPatronReduction: expect.any(Number)
-      }),
-      expect.objectContaining({
-        name: 'Echo Foods',
-        statementRowNumber: 2,
         statementSection: 'Form 8995-A additional statement',
         isAttachmentRow: true,
         aggregationGroup: 'Group A',
@@ -621,8 +625,8 @@ describe('2025 federal law updates', () => {
       expect.objectContaining({
         requiresAttachment: true,
         visibleBusinessCount: 3,
-        overflowBusinessCount: 2,
-        totalBusinessCount: 5,
+        overflowBusinessCount: 1,
+        totalBusinessCount: 4,
         aggregationElectionCount: 2,
         cooperativeCount: 1,
         thresholdStart: expect.any(Number),
@@ -708,7 +712,7 @@ describe('2025 federal law updates', () => {
     const f1040 = new F1040(cloneDeep(baseInformation), [])
     const f8995A = new F8995A(f1040)
 
-    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+    jest.spyOn(f8995A, 'sourceQbiEntries').mockReturnValue([
       {
         name: 'Coop Alpha',
         ein: '111111111',
@@ -743,7 +747,7 @@ describe('2025 federal law updates', () => {
     const f1040 = new F1040(cloneDeep(baseInformation), [])
     const f8995A = new F8995A(f1040)
 
-    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+    jest.spyOn(f8995A, 'sourceQbiEntries').mockReturnValue([
       {
         name: 'SSTB Alpha',
         ein: '111111111',
@@ -790,7 +794,7 @@ describe('2025 federal law updates', () => {
     const f1040 = new F1040(cloneDeep(baseInformation), [])
     const f8995A = new F8995A(f1040)
 
-    jest.spyOn(f8995A, 'qbiEntries').mockReturnValue([
+    jest.spyOn(f8995A, 'sourceQbiEntries').mockReturnValue([
       {
         name: 'SSTB Alpha',
         ein: '111111111',
