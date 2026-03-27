@@ -890,6 +890,38 @@ describe('2025 federal law updates', () => {
     )
   })
 
+  it('pulls prior-year K-1 unallowed losses into the QBI carryforward total', () => {
+    const information = cloneDeep(baseInformation)
+    information.scheduleK1Form1065s = [
+      {
+        partnershipName: 'Legacy Partnership LP',
+        partnershipEin: '919191919',
+        partnerOrSCorp: 'P',
+        isForeign: false,
+        isPassive: false,
+        ordinaryBusinessIncome: 0,
+        interestIncome: 0,
+        guaranteedPaymentsForServices: 0,
+        guaranteedPaymentsForCapital: 0,
+        selfEmploymentEarningsA: 0,
+        selfEmploymentEarningsB: 0,
+        selfEmploymentEarningsC: 0,
+        distributionsCodeAAmount: 0,
+        section199AQBI: 12000,
+        priorYearUnallowedLoss: 1800
+      } as never
+    ]
+    information.qbiDeductionData = {
+      priorYearQualifiedBusinessLossCarryforward: 700
+    }
+
+    const f1040 = new F1040(information, [])
+    const f8995 = new F8995(f1040)
+
+    expect(f8995.priorYearQualifiedBusinessLossCarryforward()).toBe(2500)
+    expect(f8995.l3()).toBe(-2500)
+  })
+
   it('treats qualified disaster losses differently from other casualty losses in 2025', () => {
     const information = cloneDeep(baseInformation)
     information.casualtyEvents = [

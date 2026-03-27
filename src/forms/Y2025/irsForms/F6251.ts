@@ -127,8 +127,16 @@ export default class F6251 extends F1040Attachment {
 
   // TODO: Alternative tax net operating loss deduction
   l2f = (): number | undefined => undefined
-  // TODO: Interest from specified private activity bonds exempt from the regular tax
-  l2g = (): number | undefined => undefined
+  // Interest from specified private activity bonds exempt from the regular tax
+  l2g = (): number | undefined => {
+    const total = this.f1040
+      .f1099Ints()
+      .reduce(
+        (sum, record) => sum + (record.form.privateActivityBondInterest ?? 0),
+        0
+      )
+    return total === 0 ? undefined : total
+  }
   // TODO: Qualified small business stock, see instructions
   l2h = (): number | undefined => undefined
 

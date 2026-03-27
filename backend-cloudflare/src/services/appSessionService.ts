@@ -5130,6 +5130,7 @@ const getDependents = (
     relationship: toText(dependent.relationship),
     ssn: toText(dependent.ssn),
     months: toText(dependent.months),
+    isStudent: Boolean(dependent.isStudent),
     isComplete: Boolean(
       dependent.name && dependent.dob && dependent.relationship && dependent.ssn
     )
@@ -5146,6 +5147,7 @@ const getDependents = (
       relationship: toText(entity.data.relationship),
       ssn: toText(entity.data.ssn),
       months: toText(entity.data.monthsLivedWithYou),
+      isStudent: Boolean(entity.data.isStudent),
       isComplete: Boolean(
         entity.data.firstName &&
           entity.data.lastName &&
@@ -5202,6 +5204,149 @@ const parseDateInput = (value: unknown) => {
   if (!text) return null
   const date = new Date(text)
   return Number.isNaN(date.getTime()) ? null : date
+}
+
+const digitsOnly = (value: unknown) => toText(value).replace(/\D/g, '')
+
+const isLikelyItin = (value: unknown) => {
+  const digits = digitsOnly(value)
+  if (digits.length !== 9 || !digits.startsWith('9')) return false
+  const middle = Number(digits.slice(3, 5))
+  return (
+    (middle >= 70 && middle <= 88) ||
+    (middle >= 90 && middle <= 92) ||
+    (middle >= 94 && middle <= 99)
+  )
+}
+
+const getAgeAtYearEnd = (value: unknown, taxYear: number) => {
+  const dateOfBirth = parseDateInput(value)
+  if (!dateOfBirth) return null
+
+  const yearEnd = new Date(Date.UTC(taxYear, 11, 31))
+  let age = yearEnd.getUTCFullYear() - dateOfBirth.getUTCFullYear()
+  const hasBirthdayPassed =
+    yearEnd.getUTCMonth() > dateOfBirth.getUTCMonth() ||
+    (yearEnd.getUTCMonth() === dateOfBirth.getUTCMonth() &&
+      yearEnd.getUTCDate() >= dateOfBirth.getUTCDate())
+  if (!hasBirthdayPassed) {
+    age -= 1
+  }
+
+  return age >= 0 ? age : null
+}
+
+const normalizeDependentRelationship = (value: unknown) =>
+  toText(value).toLowerCase().replace(/_/g, ' ')
+
+const isChildRelationship = (value: unknown) => {
+  const relationship = normalizeDependentRelationship(value)
+  return (
+    relationship.includes('child') ||
+    relationship.includes('stepchild') ||
+    relationship.includes('foster')
+  )
+}
+
+const resolveFilingStatusFromSession = (
+  snapshot: FilingSessionSnapshot
+): string => {
+  const household = requireScreen(snapshot, '/household')
+  const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
+  const spouse = requireScreen(snapshot, '/spouse')
+  const situation = requireScreen(snapshot, '/situation')
+  const answers = asRecord(situation.answers)
+  return (
+    toText(
+      household.filingStatus ??
+        taxpayer.filingStatus ??
+        answers.filing_status ??
+        spouse.filingStatus ??
+        snapshot.filingStatus ??
+        'single'
+    ).toLowerCase() || 'single'
+  )
+}
+
+const getDependentEligibilityMetrics = (
+  snapshot: FilingSessionSnapshot,
+  dependents: Array<Record<string, unknown>>
+) => {
+  const taxpayer = requireScreen(snapshot, '/taxpayer-profile')
+  const spouse = requireScreen(snapshot, '/spouse')
+  const filingStatus = resolveFilingStatusFromSession(snapshot)
+  const completeDependents = dependents.filter((dependent) =>
+    Boolean(dependent.isComplete)
+  )
+
+  const hohQualifyingPersonCount = completeDependents.filter((dependent) => {
+    const relationship = normalizeDependentRelationship(dependent.relationship)
+    const months = toMoney(dependent.months)
+    return (
+      relationship.includes('parent') ||
+      relationship.includes('grandparent') ||
+      months >= 6
+    )
+  }).length
+
+  const qwQualifyingChildCount = completeDependents.filter((dependent) => {
+    if (!isChildRelationship(dependent.relationship) || isLikelyItin(dependent.ssn)) {
+      return false
+    }
+    const age = getAgeAtYearEnd(dependent.dob, snapshot.taxYear)
+    return age === null || age < 19 || (age < 24 && dependent.isStudent === true)
+  }).length
+
+  const schedule8812QualifyingChildCount = completeDependents.filter(
+    (dependent) => {
+      const age = getAgeAtYearEnd(dependent.dob, snapshot.taxYear)
+      return age !== null && age < 17 && !isLikelyItin(dependent.ssn)
+    }
+  ).length
+
+  const eicQualifyingChildCount = completeDependents.filter((dependent) => {
+    if (!isChildRelationship(dependent.relationship) || isLikelyItin(dependent.ssn)) {
+      return false
+    }
+    const age = getAgeAtYearEnd(dependent.dob, snapshot.taxYear)
+    const months = toMoney(dependent.months)
+    return (
+      months >= 6 &&
+      age !== null &&
+      (age < 19 || (age < 24 && dependent.isStudent === true))
+    )
+  }).length
+
+  const taxpayerAge = getAgeAtYearEnd(taxpayer.dob, snapshot.taxYear)
+  const spouseAge = getAgeAtYearEnd(spouse.dob, snapshot.taxYear)
+  const primaryChildlessAgeEligible =
+    taxpayerAge !== null && taxpayerAge >= 25 && taxpayerAge < 65
+  const spouseChildlessAgeEligible =
+    filingStatus !== 'mfj' ||
+    (spouseAge !== null && spouseAge >= 25 && spouseAge < 65)
+
+  return {
+    filingStatus,
+    completeDependentCount: completeDependents.length,
+    hohQualifyingPersonCount,
+    qwQualifyingChildCount,
+    schedule8812QualifyingChildCount,
+    otherDependentCount: Math.max(
+      0,
+      completeDependents.length - schedule8812QualifyingChildCount
+    ),
+    eicQualifyingChildCount,
+    itinDependentCount: completeDependents.filter((dependent) =>
+      isLikelyItin(dependent.ssn)
+    ).length,
+    studentDependentCount: completeDependents.filter((dependent) =>
+      Boolean(dependent.isStudent)
+    ).length,
+    childlessAgeEligible:
+      eicQualifyingChildCount === 0 &&
+      primaryChildlessAgeEligible &&
+      spouseChildlessAgeEligible
+  }
 }
 
 const isAgeAtLeastByYearEnd = (
@@ -8939,6 +9084,26 @@ const toFindingRows = (
   const unreportedTipIncome = getUnreportedTipIncome(snapshot, entities) ?? 0
   const uncollectedSSTaxWages = getUncollectedSSTaxWages(snapshot, entities)
   const amtCreditData = getAmtCreditData(snapshot, entities)
+  const resolvedFilingStatus = resolveFilingStatusFromSession(snapshot)
+  const dependentEligibility = getDependentEligibilityMetrics(
+    snapshot,
+    dependents
+  )
+  const marketplacePolicies = getMarketplaceInsuranceData(snapshot, entities) ?? []
+  const marketplaceScreen = requireScreen(snapshot, '/marketplace-insurance')
+  const hasMarketplaceSharedPolicy =
+    marketplaceScreen.hasSharedPolicy === true ||
+    entities.some(
+      (entity) =>
+        entity.entityType === 'aca_1095a' && entity.data.hasSharedPolicy === true
+    )
+  const hasMarketplaceSharedAllocation =
+    toText(marketplaceScreen.sharedAllocationPct).trim().length > 0 ||
+    entities.some(
+      (entity) =>
+        entity.entityType === 'aca_1095a' &&
+        toText(entity.data.sharedAllocationPct).trim().length > 0
+    )
   const noncashContributions = getNoncashContributions(snapshot, entities)
   const itemizedDeductions = getItemizedDeductions(
     snapshot,
@@ -9012,6 +9177,48 @@ const toFindingRows = (
       message: 'You must sign the return before we can transmit it to the IRS.',
       fix_path: '/efile-wizard',
       fix_label: 'Sign return',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (
+    resolvedFilingStatus === 'hoh' &&
+    dependentEligibility.hohQualifyingPersonCount === 0
+  ) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'FILING-HOH-INCOMPLETE',
+      severity: 'warning',
+      title: 'Review Head of Household support',
+      message:
+        'Head of Household usually requires a qualifying person and household-support facts. Add or review that household detail before filing.',
+      fix_path: '/household',
+      fix_label: 'Review filing status',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (
+    resolvedFilingStatus === 'qw' &&
+    dependentEligibility.qwQualifyingChildCount === 0
+  ) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'FILING-QW-INCOMPLETE',
+      severity: 'warning',
+      title: 'Review Qualifying Widow(er) support',
+      message:
+        'Qualifying Widow(er) usually requires a qualifying child. Review your household facts before filing with that status.',
+      fix_path: '/household',
+      fix_label: 'Review filing status',
       acknowledged: 0,
       metadata_key: null,
       created_at: now,
@@ -9161,6 +9368,48 @@ const toFindingRows = (
         'One or more Schedule 1-A deductions is missing the amount or eligibility detail needed to calculate the deduction.',
       fix_path: '/schedule-1a',
       fix_label: 'Complete Schedule 1-A',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (
+    marketplacePolicies.some(
+      (policy) =>
+        policy.advancePayments.some((value) => value > 0) &&
+        policy.slcsp.every((value) => value <= 0)
+    )
+  ) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'FORM8962-SLCSP-INCOMPLETE',
+      severity: 'warning',
+      title: 'Add the SLCSP amount for Form 8962',
+      message:
+        'A Marketplace policy has advance credit payments but no SLCSP benchmark yet. Form 8962 needs that amount to reconcile the Premium Tax Credit.',
+      fix_path: '/marketplace-insurance',
+      fix_label: 'Complete Form 8962 details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (hasMarketplaceSharedPolicy && !hasMarketplaceSharedAllocation) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'FORM8962-SHARED-ALLOCATION',
+      severity: 'warning',
+      title: 'Add shared policy allocation details',
+      message:
+        'You marked the Marketplace policy as shared with another tax household. Form 8962 needs the allocation percentage before the reconciliation is final.',
+      fix_path: '/marketplace-insurance',
+      fix_label: 'Complete Form 8962 details',
       acknowledged: 0,
       metadata_key: null,
       created_at: now,
@@ -9477,6 +9726,7 @@ const inferReviewIssueForm = (
   fixPath: string | null | undefined
 ) => {
   if (!fixPath) return snapshot.formType
+  if (fixPath.includes('/household')) return '1040'
   if (fixPath.includes('/form-1040-sr')) return '1040-SR'
   if (fixPath.includes('/marketplace-insurance')) return '8962'
   if (fixPath.includes('/deductions') || fixPath.includes('/schedule-a'))
@@ -9506,6 +9756,9 @@ const inferReviewIssueLineFamily = (
   const normalizedPath = (fixPath ?? '').toLowerCase()
   if (normalizedCode.includes('agi') || normalizedPath.includes('identity')) {
     return 'identity_verification'
+  }
+  if (normalizedCode.includes('filing-')) {
+    return 'filing_status'
   }
   if (normalizedPath.includes('form-1040-sr')) {
     return 'senior_return'
@@ -9605,12 +9858,20 @@ const sumRecordMoney = (value: unknown) =>
     0
   )
 
+const sumArrayMoney = (value: unknown) =>
+  asArray<unknown>(value).reduce<number>((sum, current) => sum + toMoney(current), 0)
+
 const buildAuthoritativePreviewMetrics = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[],
   taxSummary: Record<string, unknown> | undefined
 ) => {
   const dependents = getDependents(snapshot, entities)
+  const dependentEligibility = getDependentEligibilityMetrics(
+    snapshot,
+    dependents
+  )
+  const resolvedFilingStatus = dependentEligibility.filingStatus
   const stateScreen = requireScreen(snapshot, '/state-tax')
   const stateEntries = asArray<Record<string, unknown>>(stateScreen.states)
   const stateWithholdingTotal = stateEntries.reduce(
@@ -9649,18 +9910,55 @@ const buildAuthoritativePreviewMetrics = (
     (sum, policy) =>
       sum +
       toMoney(policy.totalPremiums) +
+      toMoney(policy.annualEnrollmentPremium ?? policy.enrollmentPremiums) +
       sumRecordMoney(policy.monthlyPremiums) +
-      sumRecordMoney(policy.premiums),
+      sumRecordMoney(policy.premiums) +
+      sumArrayMoney(policy.monthlyEnrollment),
     0
   )
   const marketplaceAptcTotal = marketplacePolicies.reduce(
     (sum, policy) =>
       sum +
       toMoney(policy.totalAdvancePayment) +
+      toMoney(policy.annualAPTC ?? policy.advancePayments) +
       sumRecordMoney(policy.monthlyAdvancePayment) +
-      sumRecordMoney(policy.advancePaymentOfPTC),
+      sumRecordMoney(policy.advancePaymentOfPTC) +
+      sumArrayMoney(policy.monthlyAPTC),
     0
   )
+  const marketplaceSlcspTotal = marketplacePolicies.reduce(
+    (sum, policy) =>
+      sum +
+      toMoney(
+        policy.totalSlcsp ??
+          policy.totalSLCSP ??
+          policy.annualSLCSP ??
+          policy.slcsp
+      ) +
+      sumRecordMoney(policy.slcsp) +
+      sumArrayMoney(policy.monthlySLCSP),
+    0
+  )
+  const marketplaceCoveredPersonCount = marketplacePolicies.reduce(
+    (sum, policy) => sum + toMoney(policy.coverageFamily),
+    0
+  )
+  const marketplaceSharedPolicyCount = marketplacePolicies.filter((policy) => {
+    const allocation = toMoney(policy.sharedPolicyAllocation)
+    return allocation > 0 && allocation < 100
+  }).length
+  const marketplaceMissingSlcspCount = marketplacePolicies.filter((policy) => {
+    const slcspTotal =
+      toMoney(
+        policy.totalSlcsp ??
+          policy.totalSLCSP ??
+          policy.annualSLCSP ??
+          policy.slcsp
+      ) +
+      sumRecordMoney(policy.slcsp) +
+      sumArrayMoney(policy.monthlySLCSP)
+    return slcspTotal <= 0
+  }).length
   const creditSummary = getCreditSummary(snapshot, dependents)
   const educationCreditEntities = creditSummary.creditEntities.filter(
     (entity) => entity.creditId === 'education'
@@ -9707,7 +10005,7 @@ const buildAuthoritativePreviewMetrics = (
 
   return {
     global: {
-      filingStatus: snapshot.filingStatus,
+      filingStatus: resolvedFilingStatus,
       formType: snapshot.formType,
       completionPct: snapshot.completionPct,
       estimatedRefund: Number(snapshot.estimatedRefund ?? 0),
@@ -9719,8 +10017,11 @@ const buildAuthoritativePreviewMetrics = (
       stateCount: stateEntries.length
     },
     filing_status: {
-      filingStatus: snapshot.filingStatus,
-      dependentCount: dependents.length
+      filingStatus: resolvedFilingStatus,
+      dependentCount: dependents.length,
+      completeDependentCount: dependentEligibility.completeDependentCount,
+      hohQualifyingPersonCount: dependentEligibility.hohQualifyingPersonCount,
+      qwQualifyingChildCount: dependentEligibility.qwQualifyingChildCount
     },
     form_1040_sr: {
       eligibleFilerCount: form1040SrEligibility.eligibleFilerCount,
@@ -9749,6 +10050,9 @@ const buildAuthoritativePreviewMetrics = (
     },
     schedule_8812: {
       dependentCount: dependents.length,
+      qualifyingChildCount: dependentEligibility.schedule8812QualifyingChildCount,
+      otherDependentCount: dependentEligibility.otherDependentCount,
+      studentDependentCount: dependentEligibility.studentDependentCount,
       adjustmentTotal: sumRecordMoney(
         schedule8812Fidelity.schedule8812EarnedIncomeAdjustments
       ),
@@ -9757,9 +10061,9 @@ const buildAuthoritativePreviewMetrics = (
     },
     eic: {
       dependentCount: dependents.length,
-      qualifyingChildCount: dependents.filter((dependent) =>
-        Boolean(dependent.isComplete)
-      ).length
+      qualifyingChildCount: dependentEligibility.eicQualifyingChildCount,
+      childlessAgeEligible: dependentEligibility.childlessAgeEligible,
+      itinDependentCount: dependentEligibility.itinDependentCount
     },
     schedule_1a: {
       tipAmount: schedule1AData.tipAmount,
@@ -9775,7 +10079,11 @@ const buildAuthoritativePreviewMetrics = (
     form_8962: {
       marketplacePolicyCount: marketplacePolicies.length,
       annualPremiums: marketplacePremiumTotal,
-      annualAptc: marketplaceAptcTotal
+      annualSlcsp: marketplaceSlcspTotal,
+      annualAptc: marketplaceAptcTotal,
+      coveredPersonCount: marketplaceCoveredPersonCount,
+      sharedPolicyCount: marketplaceSharedPolicyCount,
+      slcspMissingCount: marketplaceMissingSlcspCount
     },
     form_8863: {
       educationStudentCount: educationCreditEntities.length
@@ -9838,7 +10146,14 @@ const buildAuthoritativePreviewMetrics = (
       wageLimitedCount: qbiEntities.filter(
         (entity) => entity.w2Limitation > 0
       ).length,
-      formPreference: qbiDetail.formPreference
+      formPreference: qbiDetail.formPreference,
+      carryforwardTotal:
+        toMoney(qbiDetail.attachmentStatement?.carryforwards?.priorYearQualifiedBusinessLossCarryforward) +
+        toMoney(qbiDetail.attachmentStatement?.carryforwards?.ptpLossCarryforward),
+      aggregationElectionCount: toMoney(
+        qbiDetail.attachmentStatement?.aggregationElectionCount
+      ),
+      attachmentRequired: Boolean(qbiDetail.attachmentStatement)
     },
     state: {
       stateCount: stateEntries.length,

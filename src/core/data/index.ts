@@ -149,6 +149,7 @@ export interface F1099IntData {
   income: number
   taxExemptInterest?: number
   foreignTaxPaid?: number
+  privateActivityBondInterest?: number
 }
 
 export interface F1099DivData {

@@ -257,6 +257,29 @@ describe('AMT', () => {
     expect((f6251.l4() ?? 0) > (f6251.l1() ?? 0)).toBe(true)
   })
 
+  it('includes private activity bond interest from 1099-INT on line 2g', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.f1099s = [
+      {
+        payer: 'Municipal Bond Fund',
+        type: Income1099Type.INT,
+        personRole: PersonRole.PRIMARY,
+        form: {
+          income: 0,
+          taxExemptInterest: 1800,
+          privateActivityBondInterest: 425
+        }
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+
+    expect(f6251.l2g()).toBe(425)
+    expect(f6251.l4()).toBe((f6251.l1() ?? 0) + (f6251.l2a() ?? 0) + 425)
+  })
+
   it('uses the modeled foreign tax credit as an AMT foreign tax credit proxy when present', () => {
     const information = cloneDeep(baseInformation)
     information.f3921s = []

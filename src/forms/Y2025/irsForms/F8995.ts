@@ -154,11 +154,17 @@ export default class F8995 extends F1040Attachment {
   overflowStatementQbiTotal = (): number =>
     this.overflowStatementEntries().reduce((sum, entry) => sum + entry.qbi, 0)
 
-  priorYearQualifiedBusinessLossCarryforward = (): number =>
-    Math.abs(
+  priorYearQualifiedBusinessLossCarryforward = (): number => {
+    const worksheetCarryforward =
       this.f1040.info.qbiDeductionData
         ?.priorYearQualifiedBusinessLossCarryforward ?? 0
+    const k1Carryforward = this.f1040.info.scheduleK1Form1065s.reduce(
+      (sum, k1) => sum + Math.abs(k1.priorYearUnallowedLoss ?? 0),
+      0
     )
+
+    return Math.abs(worksheetCarryforward) + k1Carryforward
+  }
 
   reitDividends = (): number =>
     this.f1040.f1099Divs().reduce((total, form) => {
