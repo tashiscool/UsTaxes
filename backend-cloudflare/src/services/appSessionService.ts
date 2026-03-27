@@ -10,6 +10,7 @@ import { ApiService } from './apiService'
 import { create1040PDF as create1040PDF2024 } from 'ustaxes/forms/Y2024/irsForms'
 import { create1040PDF as create1040PDF2025 } from 'ustaxes/forms/Y2025/irsForms'
 import { isLeft } from 'ustaxes/core/util'
+import type { ItemizedDeductions } from 'ustaxes/core/data'
 import {
   applyFieldEditsToExtractedDocument,
   extractDocumentFromBytes,
@@ -6908,7 +6909,7 @@ const getItemizedDeductions = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[],
   noncashContributions?: Record<string, unknown>
-) => {
+): ItemizedDeductions | undefined => {
   const entityDataList = entities
     .filter(
       (item) =>
@@ -7048,6 +7049,25 @@ const getItemizedDeductions = (
     )
 
   return hasAnyValue ? deductions : undefined
+}
+
+const EMPTY_ITEMIZED_DEDUCTIONS: ItemizedDeductions = {
+  medicalAndDental: 0,
+  stateAndLocalTaxes: 0,
+  isSalesTax: false,
+  stateAndLocalRealEstateTaxes: 0,
+  stateAndLocalPropertyTaxes: 0,
+  otherTaxes: 0,
+  otherTaxesDescription: '',
+  interest8a: 0,
+  interest8b: 0,
+  interest8c: 0,
+  interest8d: 0,
+  investmentInterest: 0,
+  charityCashCheck: 0,
+  charityOther: 0,
+  casualtyLosses: 0,
+  otherDeductions: 0
 }
 
 const toFacts = (
@@ -8693,6 +8713,13 @@ const toFindingRows = (
   const unreportedTipIncome = getUnreportedTipIncome(snapshot, entities) ?? 0
   const uncollectedSSTaxWages = getUncollectedSSTaxWages(snapshot, entities)
   const amtCreditData = getAmtCreditData(snapshot, entities)
+  const noncashContributions = getNoncashContributions(snapshot, entities)
+  const itemizedDeductions = getItemizedDeductions(
+    snapshot,
+    entities,
+    noncashContributions
+  )
+  const yourTaxesScreen = requireScreen(snapshot, '/your-taxes')
   const now = nowIso()
   const findings: ReviewFindingRow[] = []
 
@@ -8958,6 +8985,64 @@ const toFindingRows = (
     })
   }
 
+  if (
+    qbiWorksheetEntities.some(
+      (entity) => !entity.isComplete || entity.warnings.length > 0
+    )
+  ) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'QBI-INCOMPLETE',
+      severity: 'warning',
+      title: 'Finish QBI limitation details',
+      message:
+        'At least one QBI business still needs SSTB, wage, or UBIA review before the Section 199A deduction is final.',
+      fix_path: '/qbi-worksheet',
+      fix_label: 'Review QBI details',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (itemizedDeductions && Object.values(itemizedDeductions).some(Boolean)) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'SCHEDULEA-REVIEW',
+      severity: 'warning',
+      title: 'Review itemized deductions',
+      message:
+        'Mortgage interest, SALT, charity, or other itemized deductions are present. Review Schedule A before filing.',
+      fix_path: '/deductions',
+      fix_label: 'Review deductions',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
+  if (toMoney(yourTaxesScreen.amtIncome) > 0) {
+    findings.push({
+      id: crypto.randomUUID(),
+      filing_session_id: sessionId,
+      code: 'FORM6251-REVIEW',
+      severity: 'warning',
+      title: 'Review AMT exposure',
+      message:
+        'You entered potential AMT preference income. Review Form 6251 before filing.',
+      fix_path: '/your-taxes',
+      fix_label: 'Review AMT',
+      acknowledged: 0,
+      metadata_key: null,
+      created_at: now,
+      updated_at: now
+    })
+  }
+
   if (businessReturnCapability?.supportLevel === 'expert_required') {
     findings.push({
       id: crypto.randomUUID(),
@@ -9149,10 +9234,13 @@ const inferReviewIssueForm = (
 ) => {
   if (!fixPath) return snapshot.formType
   if (fixPath.includes('/marketplace-insurance')) return '8962'
+  if (fixPath.includes('/deductions') || fixPath.includes('/schedule-a'))
+    return 'Schedule A'
   if (fixPath.includes('/schedule-8812-adjustments')) return '8812'
   if (fixPath.includes('/credits-v2') || fixPath.includes('/household'))
     return '8812'
   if (fixPath.includes('/underpayment')) return '2210'
+  if (fixPath.includes('/your-taxes')) return '6251'
   if (fixPath.includes('/education-care')) return '8863'
   if (fixPath.includes('/tax-lots') || fixPath.includes('/investments'))
     return '8949'
@@ -9173,11 +9261,27 @@ const inferReviewIssueLineFamily = (
   if (normalizedPath.includes('marketplace') || normalizedCode.includes('8962')) {
     return 'marketplace_reconciliation'
   }
+  if (
+    normalizedPath.includes('/deductions') ||
+    normalizedPath.includes('/schedule-a') ||
+    normalizedCode.includes('schedulea') ||
+    normalizedCode.includes('itemized') ||
+    normalizedCode.includes('salt')
+  ) {
+    return 'itemized_deductions'
+  }
   if (normalizedPath.includes('schedule-8812') || normalizedCode.includes('8812')) {
     return 'family_credits'
   }
   if (normalizedPath.includes('underpayment') || normalizedCode.includes('2210')) {
     return 'underpayment_penalty'
+  }
+  if (
+    normalizedPath.includes('/your-taxes') ||
+    normalizedCode.includes('6251') ||
+    normalizedCode.includes('amt')
+  ) {
+    return 'amt'
   }
   if (normalizedPath.includes('household')) {
     return 'dependent_eligibility'
@@ -9253,6 +9357,10 @@ const buildAuthoritativePreviewMetrics = (
     snapshot,
     entities
   )
+  const noncashContributions = getNoncashContributions(snapshot, entities)
+  const itemizedDeductions =
+    getItemizedDeductions(snapshot, entities, noncashContributions) ??
+    EMPTY_ITEMIZED_DEDUCTIONS
   const underpaymentEntity = entities.find(
     (entity) => entity.entityType === 'underpayment_data'
   )
@@ -9297,7 +9405,30 @@ const buildAuthoritativePreviewMetrics = (
     (entity) => entity.creditId === 'care'
   )
   const qbiEntities = getQBIWorksheetEntities(snapshot)
+  const qbiDeductionData = getQbiDeductionData(snapshot)
+  const qbiDetail = getQbiDetail(snapshot, qbiEntities, qbiDeductionData)
   const taxLots = getTaxLots(snapshot, entities)
+  const yourTaxesScreen = requireScreen(snapshot, '/your-taxes')
+  const form8801Screen = requireScreen(snapshot, '/form-8801')
+  const scheduleATotal =
+    toMoney(itemizedDeductions.medicalAndDental) +
+    toMoney(itemizedDeductions.stateAndLocalTaxes) +
+    toMoney(itemizedDeductions.stateAndLocalRealEstateTaxes) +
+    toMoney(itemizedDeductions.stateAndLocalPropertyTaxes) +
+    toMoney(itemizedDeductions.otherTaxes) +
+    toMoney(itemizedDeductions.interest8a) +
+    toMoney(itemizedDeductions.interest8b) +
+    toMoney(itemizedDeductions.interest8c) +
+    toMoney(itemizedDeductions.interest8d) +
+    toMoney(itemizedDeductions.investmentInterest) +
+    toMoney(itemizedDeductions.charityCashCheck) +
+    toMoney(itemizedDeductions.charityOther) +
+    toMoney(itemizedDeductions.casualtyLosses) +
+    toMoney(itemizedDeductions.otherDeductions)
+  const qbiFinalDeduction = qbiEntities.reduce(
+    (sum, entity) => sum + toMoney(entity.finalDeduction),
+    0
+  )
 
   return {
     global: {
@@ -9315,6 +9446,24 @@ const buildAuthoritativePreviewMetrics = (
     filing_status: {
       filingStatus: snapshot.filingStatus,
       dependentCount: dependents.length
+    },
+    schedule_a: {
+      medicalAndDental: toMoney(itemizedDeductions.medicalAndDental),
+      saltEntered:
+        toMoney(itemizedDeductions.stateAndLocalTaxes) +
+        toMoney(itemizedDeductions.stateAndLocalRealEstateTaxes) +
+        toMoney(itemizedDeductions.stateAndLocalPropertyTaxes) +
+        toMoney(itemizedDeductions.otherTaxes),
+      mortgageInterest:
+        toMoney(itemizedDeductions.interest8a) +
+        toMoney(itemizedDeductions.interest8b) +
+        toMoney(itemizedDeductions.interest8c),
+      charityCashCheck: toMoney(itemizedDeductions.charityCashCheck),
+      charityOther: toMoney(itemizedDeductions.charityOther),
+      casualtyLosses: toMoney(itemizedDeductions.casualtyLosses),
+      otherDeductions: toMoney(itemizedDeductions.otherDeductions),
+      itemizedTotal: scheduleATotal,
+      useSalesTax: Boolean(itemizedDeductions.isSalesTax)
     },
     schedule_8812: {
       dependentCount: dependents.length,
@@ -9341,6 +9490,15 @@ const buildAuthoritativePreviewMetrics = (
     form_2441: {
       careProviderCount: careCreditEntities.length
     },
+    form_6251: {
+      amtIncome:
+        yourTaxesScreen.amtIncome != null ? toMoney(yourTaxesScreen.amtIncome) : null,
+      currentTaxableIncome: Number(taxSummary?.taxableIncome ?? 0),
+      priorYearAmtCreditCarryforward:
+        form8801Screen.priorYearAmtCreditCarryforward != null
+          ? toMoney(form8801Screen.priorYearAmtCreditCarryforward)
+          : null
+    },
     form_2210: {
       priorYearTax: getPriorYearTax(snapshot, entities) ?? null,
       currentYearWithholding:
@@ -9359,7 +9517,13 @@ const buildAuthoritativePreviewMetrics = (
       taxLotCount: taxLots.length
     },
     qbi: {
-      qbiEntityCount: qbiEntities.length
+      qbiEntityCount: qbiEntities.length,
+      finalQBIDeduction: qbiFinalDeduction,
+      sstbCount: qbiEntities.filter((entity) => entity.isSSTB).length,
+      wageLimitedCount: qbiEntities.filter(
+        (entity) => entity.w2Limitation > 0
+      ).length,
+      formPreference: qbiDetail.formPreference
     },
     state: {
       stateCount: stateEntries.length,
