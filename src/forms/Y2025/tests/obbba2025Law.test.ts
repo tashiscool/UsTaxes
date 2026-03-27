@@ -615,11 +615,11 @@ describe('2025 federal law updates', () => {
         isAttachmentRow: true,
         aggregationGroup: 'Group A',
         hasAggregationElection: true,
-        isCooperative: true,
-        deductionBeforePatronReduction: expect.any(Number),
-        deductionAfterPatronReduction: expect.any(Number)
+        isCooperative: true
       })
     ])
+    expect(f8995A.overflowStatementEntries()[0].deductionBeforePatronReduction).toBeGreaterThan(0)
+    expect(f8995A.overflowStatementEntries()[0].deductionAfterPatronReduction).toBeGreaterThan(0)
     expect(f8995A.overflowStatementDeduction()).toBeGreaterThan(0)
     expect(f8995A.statementSummary()).toEqual(
       expect.objectContaining({
@@ -629,8 +629,6 @@ describe('2025 federal law updates', () => {
         totalBusinessCount: 4,
         aggregationElectionCount: 2,
         cooperativeCount: 1,
-        thresholdStart: expect.any(Number),
-        thresholdEnd: expect.any(Number),
         overflowTotals: {
           qbi: 70000,
           w2Wages: 70000,
@@ -638,6 +636,10 @@ describe('2025 federal law updates', () => {
           patronReduction: 5000
         }
       })
+    )
+    expect(f8995A.statementSummary().thresholdStart).toBeGreaterThan(0)
+    expect(f8995A.statementSummary().thresholdEnd).toBeGreaterThan(
+      f8995A.statementSummary().thresholdStart
     )
   })
 
