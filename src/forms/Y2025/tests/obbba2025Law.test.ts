@@ -596,7 +596,7 @@ describe('2025 federal law updates', () => {
     expect(f8995A.qbiEntries()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          name: 'Aggregation Group A',
+          name: 'Aggregation 1',
           qbi: 70000,
           w2Wages: 70000,
           ubia: 90000,
@@ -610,7 +610,7 @@ describe('2025 federal law updates', () => {
     )
     expect(f8995A.overflowStatementEntries()).toEqual([
       expect.objectContaining({
-        name: 'Aggregation Group A',
+        name: 'Aggregation 1',
         statementRowNumber: 1,
         statementSection: 'Form 8995-A additional statement',
         isAttachmentRow: true,
@@ -691,7 +691,7 @@ describe('2025 federal law updates', () => {
 
     const fields = f8995A.fields()
 
-    expect(fields[2]).toBe('Aggregation Group A')
+    expect(fields[2]).toBe('Aggregation 1')
     expect(fields[3]).toBe(false)
     expect(fields[4]).toBe(true)
     expect(fields[5]).toBeUndefined()

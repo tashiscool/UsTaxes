@@ -342,7 +342,6 @@ describe('AMT', () => {
 
   it('uses the modeled foreign tax credit as an AMT foreign tax credit proxy when present', () => {
     const information = cloneDeep(baseInformation)
-    information.f3921s = []
     information.w2s[0].income = 180000
     information.w2s[0].medicareIncome = 180000
     information.w2s[0].ssWages = 176100
@@ -367,8 +366,40 @@ describe('AMT', () => {
 
     expect(f1040.f1116?.isNeeded()).toBe(true)
     expect(f1040.f1116?.credit()).toBeGreaterThan(0)
+    expect(f6251.l10()).toBeLessThan(f6251.l7() ?? Infinity)
     expect(f6251.l8()).toBe(Math.min(f1040.f1116?.credit() ?? 0, f6251.l7() ?? 0))
     expect(f6251.l9()).toBe((f6251.l7() ?? 0) - (f6251.l8() ?? 0))
+  })
+
+  it('leaves the AMT foreign tax credit blank when regular tax already exceeds tentative minimum tax', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.w2s[0].income = 70000
+    information.w2s[0].medicareIncome = 70000
+    information.w2s[0].ssWages = 70000
+    information.w2s[0].stateWages = 70000
+    information.f1099s = [
+      {
+        payer: 'Global Equity Fund',
+        type: Income1099Type.DIV,
+        personRole: PersonRole.PRIMARY,
+        form: {
+          dividends: 3000,
+          qualifiedDividends: 1000,
+          totalCapitalGainsDistributions: 0,
+          foreignTaxPaid: 400,
+          foreignSourceIncome: 2500
+        }
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+
+    expect(f1040.f1116?.credit()).toBeGreaterThan(0)
+    expect(f6251.l10()).toBeGreaterThanOrEqual(f6251.l7() ?? 0)
+    expect(f6251.l8()).toBeUndefined()
+    expect(f6251.l11()).toBe(0)
   })
 
   it('uses the foreign earned income AMT worksheet when Form 2555 is present', () => {
@@ -410,6 +441,68 @@ describe('AMT', () => {
     expect(f6251.requiresPartIII()).toBe(false)
     expect(f6251.foreignEarnedIncomeWorksheetLine2c()).toBe(worksheetLine2c)
     expect(f6251.l7()).toBe(amtTax(line3) - amtTax(worksheetLine2c))
+  })
+
+  it('uses regular-tax worksheet amounts for Part III lines 20 and 27 while refiguring line 13 for Form 2555 AMT capital gain excess', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.w2s[0].income = 10000
+    information.w2s[0].medicareIncome = 10000
+    information.w2s[0].ssWages = 10000
+    information.w2s[0].stateWages = 10000
+    information.foreignEarnedIncome = {
+      foreignCountry: 'Canada',
+      foreignAddress: '123 Maple Rd',
+      employerName: 'Northwind Global',
+      employerAddress: '456 King St',
+      employerIsForeign: true,
+      foreignEarnedWages: 70000,
+      foreignEarnedSelfEmployment: 0,
+      foreignHousingAmount: 0,
+      qualifyingTest: 'physicalPresence',
+      taxHomeCountry: 'Canada',
+      physicalPresenceDays: 365,
+      relatedExcludedIncomeDeductions: 500
+    }
+    information.f1099s = [
+      {
+        payer: 'Growth Fund',
+        type: Income1099Type.DIV,
+        personRole: PersonRole.PRIMARY,
+        form: {
+          dividends: 100000,
+          qualifiedDividends: 100000,
+          totalCapitalGainsDistributions: 0,
+          section199ADividends: 0
+        }
+      } as never
+    ]
+
+    const f1040 = new F1040(information, [])
+    void f1040.l16()
+    const f6251 = new F6251(f1040)
+    const qdivWorksheet = f1040.qualifiedAndCapGainsWorksheet
+    const amtCapitalGainExcess = f6251.form2555AmtCapitalGainExcess()
+    const adjustedLine3 = Math.max(
+      0,
+      (qdivWorksheet?.l3() ?? 0) - amtCapitalGainExcess
+    )
+    const remainingExcess = Math.max(
+      0,
+      amtCapitalGainExcess - (qdivWorksheet?.l3() ?? 0)
+    )
+    const adjustedLine2 = Math.max(
+      0,
+      (qdivWorksheet?.l2() ?? 0) - remainingExcess
+    )
+    const p3 = f6251.part3()
+
+    expect(f1040.f2555?.l3()).toBe(qdivWorksheet?.l1())
+    expect(amtCapitalGainExcess).toBeGreaterThan(0)
+    expect(p3.l13).toBe(adjustedLine2 + adjustedLine3)
+    expect(p3.l15).toBe(adjustedLine2 + adjustedLine3)
+    expect(p3.l20).toBe(qdivWorksheet?.l5())
+    expect(p3.l27).toBe(qdivWorksheet?.l5())
   })
 
   it('subtracts a negative Form 8978 adjustment from line 10 when one is supplied', () => {

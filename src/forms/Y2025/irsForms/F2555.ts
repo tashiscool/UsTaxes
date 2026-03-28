@@ -45,6 +45,7 @@ export interface ForeignEarnedIncomeData {
   physicalPresenceDays?: number
   physicalPresenceStartDate?: Date
   physicalPresenceEndDate?: Date
+  relatedExcludedIncomeDeductions?: number
 }
 
 export default class F2555 extends F1040Attachment {
@@ -131,8 +132,20 @@ export default class F2555 extends F1040Attachment {
 
   // Line 2: Reserved
 
-  // Line 3: Reserved (used by Capital Gain Worksheet)
-  l3 = (): number | undefined => undefined
+  foreignEarnedIncomeTaxWorksheetLine2c = (): number => {
+    const excludedIncomeAndHousing = this.l33() + this.l36() + this.l42()
+    const relatedDeductions =
+      this.foreignEarnedIncomeData()?.relatedExcludedIncomeDeductions ?? 0
+    return Math.max(0, excludedIncomeAndHousing - relatedDeductions)
+  }
+
+  // Line 3 of the Foreign Earned Income Tax Worksheet in the Form 1040 instructions.
+  l3 = (): number | undefined => {
+    if (!this.isNeeded()) {
+      return undefined
+    }
+    return this.f1040.l15() + this.foreignEarnedIncomeTaxWorksheetLine2c()
+  }
 
   // Line 19: Total foreign earned income
   l19 = (): number => {

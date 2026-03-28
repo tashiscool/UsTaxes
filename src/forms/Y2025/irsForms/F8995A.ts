@@ -20,9 +20,28 @@ export default class F8995A extends F8995 {
   tag: FormTag = 'f8995a'
   sequenceIndex = 55.5
 
+  aggregationDisplayNames = (): Map<string, string> => {
+    const displayNames = new Map<string, string>()
+    let aggregationIndex = 0
+
+    for (const entry of this.sourceQbiEntries()) {
+      if (!entry.hasAggregationElection || !entry.aggregationGroup) {
+        continue
+      }
+
+      if (!displayNames.has(entry.aggregationGroup)) {
+        aggregationIndex += 1
+        displayNames.set(entry.aggregationGroup, `Aggregation ${aggregationIndex}`)
+      }
+    }
+
+    return displayNames
+  }
+
   aggregationElectionEntries = (): QBIEntry[] => {
     const groupedEntries = new Map<string, QBIEntry>()
     const orderedEntries: Array<QBIEntry | { kind: 'aggregation'; group: string }> = []
+    const aggregationDisplayNames = this.aggregationDisplayNames()
 
     for (const entry of this.sourceQbiEntries()) {
       if (!entry.hasAggregationElection || !entry.aggregationGroup) {
@@ -38,7 +57,9 @@ export default class F8995A extends F8995 {
         })
         groupedEntries.set(entry.aggregationGroup, {
           ...entry,
-          name: `Aggregation ${entry.aggregationGroup}`,
+          name:
+            aggregationDisplayNames.get(entry.aggregationGroup) ??
+            `Aggregation ${entry.aggregationGroup}`,
           ein: undefined,
           isSSTB: entry.isSSTB ?? false,
           isCooperative: entry.isCooperative ?? false,
@@ -49,7 +70,9 @@ export default class F8995A extends F8995 {
 
       groupedEntries.set(entry.aggregationGroup, {
         ...existing,
-        name: `Aggregation ${entry.aggregationGroup}`,
+        name:
+          aggregationDisplayNames.get(entry.aggregationGroup) ??
+          `Aggregation ${entry.aggregationGroup}`,
         ein: undefined,
         qbi: existing.qbi + entry.qbi,
         w2Wages: existing.w2Wages + entry.w2Wages,
@@ -67,7 +90,9 @@ export default class F8995A extends F8995 {
     return orderedEntries.map((entry) =>
       'kind' in entry
         ? groupedEntries.get(entry.group) ?? {
-            name: `Aggregation ${entry.group}`,
+            name:
+              aggregationDisplayNames.get(entry.group) ??
+              `Aggregation ${entry.group}`,
             qbi: 0,
             w2Wages: 0,
             ubia: 0,
@@ -299,7 +324,7 @@ export default class F8995A extends F8995 {
       return undefined
     }
     if (this.isAggregationDisplayEntry(entry)) {
-      return `Aggregation ${entry.aggregationGroup}`
+      return this.aggregationDisplayNames().get(entry.aggregationGroup ?? '')
     }
     return entry.name
   }

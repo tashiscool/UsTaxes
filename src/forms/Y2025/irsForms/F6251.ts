@@ -264,11 +264,7 @@ export default class F6251 extends F1040Attachment {
       return 0
     }
 
-    const excludedIncomeAndHousing =
-      f2555.l33() + f2555.l36() + f2555.l42()
-    const relatedDeductions =
-      this.f1040.info.foreignEarnedIncome?.relatedExcludedIncomeDeductions ?? 0
-    return Math.max(0, excludedIncomeAndHousing - relatedDeductions)
+    return f2555.foreignEarnedIncomeTaxWorksheetLine2c()
   }
 
   l7 = (additionalAmount = 0): number | undefined => {
@@ -302,6 +298,10 @@ export default class F6251 extends F1040Attachment {
 
   // Approximate the AMT foreign tax credit from the currently modeled Form 1116 FTC.
   l8 = (): number | undefined => {
+    if ((this.l10() ?? 0) >= (this.l7() ?? 0)) {
+      return undefined
+    }
+
     const regularForeignTaxCredit = this.f1040.f1116?.credit() ?? 0
     if (regularForeignTaxCredit <= 0) {
       return undefined
@@ -341,14 +341,132 @@ export default class F6251 extends F1040Attachment {
     return Math.max(0, this.l9() - this.l10())
   }
 
+  regularTaxPart3FallbackAmount = (): number => {
+    if (this.f1040.f2555?.isNeeded()) {
+      return Math.max(0, this.f1040.f2555.l3() ?? 0)
+    }
+    return Math.max(0, this.f1040.l15())
+  }
+
+  form2555AmtCapitalGainExcess = (): number => {
+    const f2555 = this.f1040.f2555
+    if (
+      f2555 === undefined ||
+      !f2555.isNeeded() ||
+      !this.requiresPartIII()
+    ) {
+      return 0
+    }
+
+    const qdivWorksheet = this.f1040.qualifiedAndCapGainsWorksheet
+    const schDWksht = this.f1040.scheduleD.taxWorksheet
+    const worksheetBase = schDWksht.isNeeded()
+      ? (schDWksht.l10() ?? 0)
+      : (qdivWorksheet?.l4() ?? 0)
+
+    return Math.max(0, worksheetBase - this.l6())
+  }
+
+  part3WorksheetValues = (): {
+    usingTaxWorksheet: boolean
+    line13: number
+    line15Cap: number
+    line20: number
+    line27: number
+  } => {
+    const qdivWorksheet = this.f1040.qualifiedAndCapGainsWorksheet
+    const schDWksht = this.f1040.scheduleD.taxWorksheet
+    const usingTaxWorksheet = schDWksht.isNeeded()
+    const regularTaxFallback = this.regularTaxPart3FallbackAmount()
+
+    const regularLine20 = (() => {
+      if (usingTaxWorksheet) {
+        return schDWksht.l14() ?? regularTaxFallback
+      }
+
+      if (qdivWorksheet !== undefined) {
+        return qdivWorksheet.l5()
+      }
+
+      return regularTaxFallback
+    })()
+
+    const regularLine27 = (() => {
+      if (usingTaxWorksheet) {
+        return schDWksht.l21() ?? regularLine20
+      }
+
+      if (qdivWorksheet !== undefined) {
+        return qdivWorksheet.l5()
+      }
+
+      return regularLine20
+    })()
+
+    const amtCapitalGainExcess = this.form2555AmtCapitalGainExcess()
+    if (amtCapitalGainExcess <= 0) {
+      return {
+        usingTaxWorksheet,
+        line13: usingTaxWorksheet
+          ? (schDWksht.l13() ?? 0)
+          : (qdivWorksheet?.l4() ?? 0),
+        line15Cap: usingTaxWorksheet
+          ? (schDWksht.l10() ?? 0)
+          : (qdivWorksheet?.l4() ?? 0),
+        line20: regularLine20,
+        line27: regularLine27
+      }
+    }
+
+    if (usingTaxWorksheet) {
+      const scheduleD = this.f1040.scheduleD
+      const taxWorksheetReference = schDWksht.reference()
+      const regularLine6 = taxWorksheetReference.l6()
+      const regularLine9 = taxWorksheetReference.l9()
+      const adjustedLine9 = Math.max(0, regularLine9 - amtCapitalGainExcess)
+      const remainingExcess = Math.max(0, amtCapitalGainExcess - regularLine9)
+      const adjustedLine6 = Math.max(0, regularLine6 - remainingExcess)
+      const adjustedLine10 = adjustedLine6 + adjustedLine9
+      const adjustedScheduleDLine18 = Math.max(
+        0,
+        (scheduleD.l18() ?? 0) - amtCapitalGainExcess
+      )
+      const adjustedLine11 = adjustedScheduleDLine18 + (scheduleD.l19() ?? 0)
+      const adjustedLine12 = Math.min(adjustedLine9, adjustedLine11)
+      const adjustedLine13 = adjustedLine10 - adjustedLine12
+
+      return {
+        usingTaxWorksheet,
+        line13: adjustedLine13,
+        line15Cap: adjustedLine10,
+        line20: regularLine20,
+        line27: regularLine27
+      }
+    }
+
+    const regularLine2 = qdivWorksheet?.l2() ?? 0
+    const regularLine3 = qdivWorksheet?.l3() ?? 0
+    const adjustedLine3 = Math.max(0, regularLine3 - amtCapitalGainExcess)
+    const remainingExcess = Math.max(0, amtCapitalGainExcess - regularLine3)
+    const adjustedLine2 = Math.max(0, regularLine2 - remainingExcess)
+    const adjustedLine4 = adjustedLine2 + adjustedLine3
+
+    return {
+      usingTaxWorksheet,
+      line13: adjustedLine4,
+      line15Cap: adjustedLine4,
+      line20: regularLine20,
+      line27: regularLine27
+    }
+  }
+
   part3 = (line12Base = this.l6()): Part3 => {
     if (!this.requiresPartIII()) {
       return {}
     }
     const fs = this.f1040.info.taxPayer.filingStatus
-    const qdivWorksheet = this.f1040.qualifiedAndCapGainsWorksheet
-    const schDWksht = this.f1040.scheduleD.taxWorksheet
-    const usingTaxWorksheet = schDWksht.isNeeded()
+    const worksheetValues = this.part3WorksheetValues()
+    const usingTaxWorksheet = worksheetValues.usingTaxWorksheet
 
     const l18Consts: [number, number] = (() => {
       const breakpoint = amt.cap(fs)
@@ -359,14 +477,7 @@ export default class F6251 extends F1040Attachment {
 
     const l12 = line12Base
 
-    // TODO - for F2555, see the instructions for amount
-    const l13: number = (() => {
-      if (usingTaxWorksheet) {
-        return schDWksht.l13() ?? 0
-      }
-
-      return qdivWorksheet?.l4() ?? 0
-    })()
+    const l13 = worksheetValues.line13
 
     const l14 = this.f1040.scheduleD.l19() ?? 0
 
@@ -374,7 +485,7 @@ export default class F6251 extends F1040Attachment {
       if (!usingTaxWorksheet) {
         return l13
       }
-      return Math.min(l13 + l14, schDWksht.l10() ?? 0)
+      return Math.min(l13 + l14, worksheetValues.line15Cap)
     })()
 
     const l16 = Math.min(l12, l15)
@@ -390,17 +501,7 @@ export default class F6251 extends F1040Attachment {
       return l17 * 0.28 - c2
     })()
 
-    const l20 = (() => {
-      if (usingTaxWorksheet) {
-        return schDWksht.l14() ?? 0
-      }
-
-      if (qdivWorksheet !== undefined) {
-        return qdivWorksheet.l5()
-      }
-
-      return Math.max(0, this.f1040.l15())
-    })()
+    const l20 = worksheetValues.line20
 
     const l21 = Math.max(0, l19 - l20)
 
@@ -412,18 +513,7 @@ export default class F6251 extends F1040Attachment {
 
     const l26 = l21
 
-    // TODO - see instructions for F2555
-    const l27 = (() => {
-      if (usingTaxWorksheet) {
-        return schDWksht.l21() ?? 0
-      }
-
-      if (qdivWorksheet !== undefined) {
-        return qdivWorksheet.l5()
-      }
-
-      return Math.max(0, this.f1040.l15())
-    })()
+    const l27 = worksheetValues.line27
 
     const l28 = l26 + l27
 
