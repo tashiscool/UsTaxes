@@ -38,27 +38,29 @@ export default class F8995A extends F8995 {
         })
         groupedEntries.set(entry.aggregationGroup, {
           ...entry,
-          name: `Aggregation ${entry.aggregationGroup}: ${entry.name}`,
-          ein: entry.ein,
+          name: `Aggregation ${entry.aggregationGroup}`,
+          ein: undefined,
           isSSTB: entry.isSSTB ?? false,
-          isCooperative: entry.isCooperative ?? false
+          isCooperative: entry.isCooperative ?? false,
+          aggregationMembers: [entry.name]
         })
         continue
       }
 
       groupedEntries.set(entry.aggregationGroup, {
         ...existing,
-        name: `${existing.name}; ${entry.name}`,
-        ein:
-          existing.ein === entry.ein || entry.ein === undefined
-            ? existing.ein
-            : undefined,
+        name: `Aggregation ${entry.aggregationGroup}`,
+        ein: undefined,
         qbi: existing.qbi + entry.qbi,
         w2Wages: existing.w2Wages + entry.w2Wages,
         ubia: existing.ubia + entry.ubia,
         patronReduction: existing.patronReduction + entry.patronReduction,
         isSSTB: Boolean(existing.isSSTB || entry.isSSTB),
-        isCooperative: Boolean(existing.isCooperative || entry.isCooperative)
+        isCooperative: Boolean(existing.isCooperative || entry.isCooperative),
+        aggregationMembers: [
+          ...(existing.aggregationMembers ?? []),
+          entry.name
+        ]
       })
     }
 
@@ -71,7 +73,8 @@ export default class F8995A extends F8995 {
             ubia: 0,
             patronReduction: 0,
             aggregationGroup: entry.group,
-            hasAggregationElection: true
+            hasAggregationElection: true,
+            aggregationMembers: []
           }
         : entry
     )
@@ -288,6 +291,31 @@ export default class F8995A extends F8995 {
   ): number =>
     Math.max(0, this.deductionForEntry(entry) - entry.patronReduction)
 
+  isAggregationDisplayEntry = (entry?: QBIEntry): boolean =>
+    Boolean(entry?.hasAggregationElection && entry?.aggregationGroup)
+
+  displayEntryName = (entry?: QBIEntry): string | undefined => {
+    if (entry === undefined) {
+      return undefined
+    }
+    if (this.isAggregationDisplayEntry(entry)) {
+      return `Aggregation ${entry.aggregationGroup}`
+    }
+    return entry.name
+  }
+
+  displayEntryEin = (entry?: QBIEntry): string | undefined =>
+    this.isAggregationDisplayEntry(entry) ? undefined : entry?.ein
+
+  line1bSstbCheckbox = (entry?: QBIEntry): boolean =>
+    Boolean(entry?.isSSTB)
+
+  line1cAggregationCheckbox = (entry?: QBIEntry): boolean =>
+    this.isAggregationDisplayEntry(entry)
+
+  line1eCooperativeCheckbox = (entry?: QBIEntry): boolean =>
+    Boolean(entry?.isCooperative)
+
   allQualifiedBusinessDeductions = (): number[] =>
     this.adjustedEntries()
       .filter((entry) => entry.qbi > 0)
@@ -440,23 +468,23 @@ export default class F8995A extends F8995 {
   l40 = (): number => Math.min(0, this.l28() + this.l29())
 
   fields = (): Field[] => [
-    this.f1040.namesString(),
-    this.f1040.info.taxPayer.primaryPerson.ssid,
-    this.visibleEntries()[0]?.name,
-    false, // 1Ab
-    false, // 1Ac
-    this.visibleEntries()[0]?.ein,
-    false, // 1Ae
-    this.visibleEntries()[1]?.name,
-    false, // 1Bb
-    false, // 1Bc
-    this.visibleEntries()[1]?.ein,
-    false, // 1Be
-    this.visibleEntries()[2]?.name,
-    false, // 1Cb
-    false, // 1Cc
-    this.visibleEntries()[2]?.ein,
-    false, // 1Ce
+      this.f1040.namesString(),
+      this.f1040.info.taxPayer.primaryPerson.ssid,
+      this.displayEntryName(this.visibleEntries()[0]),
+      this.line1bSstbCheckbox(this.visibleEntries()[0]), // 1Ab
+      this.line1cAggregationCheckbox(this.visibleEntries()[0]), // 1Ac
+      this.displayEntryEin(this.visibleEntries()[0]),
+      this.line1eCooperativeCheckbox(this.visibleEntries()[0]), // 1Ae
+      this.displayEntryName(this.visibleEntries()[1]),
+      this.line1bSstbCheckbox(this.visibleEntries()[1]), // 1Bb
+      this.line1cAggregationCheckbox(this.visibleEntries()[1]), // 1Bc
+      this.displayEntryEin(this.visibleEntries()[1]),
+      this.line1eCooperativeCheckbox(this.visibleEntries()[1]), // 1Be
+      this.displayEntryName(this.visibleEntries()[2]),
+      this.line1bSstbCheckbox(this.visibleEntries()[2]), // 1Cb
+      this.line1cAggregationCheckbox(this.visibleEntries()[2]), // 1Cc
+      this.displayEntryEin(this.visibleEntries()[2]),
+      this.line1eCooperativeCheckbox(this.visibleEntries()[2]), // 1Ce
     this.l2a(),
     this.l2b(),
     this.l2c(),

@@ -371,6 +371,47 @@ describe('AMT', () => {
     expect(f6251.l9()).toBe((f6251.l7() ?? 0) - (f6251.l8() ?? 0))
   })
 
+  it('uses the foreign earned income AMT worksheet when Form 2555 is present', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.w2s[0].income = 220000
+    information.w2s[0].medicareIncome = 220000
+    information.w2s[0].ssWages = 176100
+    information.w2s[0].stateWages = 220000
+    information.foreignEarnedIncome = {
+      foreignCountry: 'Canada',
+      foreignAddress: '123 Maple Rd',
+      employerName: 'Northwind Global',
+      employerAddress: '456 King St',
+      employerIsForeign: true,
+      foreignEarnedWages: 42000,
+      foreignEarnedSelfEmployment: 0,
+      foreignHousingAmount: 0,
+      qualifyingTest: 'physicalPresence',
+      taxHomeCountry: 'Canada',
+      physicalPresenceDays: 365,
+      relatedExcludedIncomeDeductions: 500
+    }
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+    const line6 = f6251.l6()
+    const worksheetLine2c = Math.max(
+      0,
+      (f1040.f2555?.l33() ?? 0) +
+        (f1040.f2555?.l36() ?? 0) +
+        (f1040.f2555?.l42() ?? 0) -
+        500
+    )
+    const line3 = line6 + worksheetLine2c
+    const amtTax = (amount: number) =>
+      amount <= amt.cap(FilingStatus.S) ? amount * 0.26 : amount * 0.28 - 4414
+
+    expect(f6251.requiresPartIII()).toBe(false)
+    expect(f6251.foreignEarnedIncomeWorksheetLine2c()).toBe(worksheetLine2c)
+    expect(f6251.l7()).toBe(amtTax(line3) - amtTax(worksheetLine2c))
+  })
+
   it('subtracts a negative Form 8978 adjustment from line 10 when one is supplied', () => {
     const information = cloneDeep(baseInformation)
     information.f3921s = []

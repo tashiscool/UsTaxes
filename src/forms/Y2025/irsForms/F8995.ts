@@ -16,6 +16,7 @@ export type QBIEntry = {
   aggregationGroup?: string
   hasAggregationElection?: boolean
   isCooperative?: boolean
+  aggregationMembers?: string[]
 }
 
 export function getF8995PhaseOutIncome(filingStatus: FilingStatus): number {

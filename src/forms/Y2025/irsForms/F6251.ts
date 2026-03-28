@@ -244,6 +244,33 @@ export default class F6251 extends F1040Attachment {
     )
   }
 
+  amtFlatTax = (amount: number): number => {
+    const cap = amt.cap(this.f1040.info.taxPayer.filingStatus)
+    if (amount <= cap) {
+      return amount * 0.26
+    }
+    return (
+      amount * 0.28 -
+      (this.f1040.info.taxPayer.filingStatus === FilingStatus.MFS ? 2207 : 4414)
+    )
+  }
+
+  foreignEarnedIncomeWorksheetLine2c = (): number => {
+    const f2555 = this.f1040.f2555
+    if (
+      f2555 === undefined ||
+      (f2555.l36() <= 0 && f2555.l33() <= 0 && f2555.l42() <= 0)
+    ) {
+      return 0
+    }
+
+    const excludedIncomeAndHousing =
+      f2555.l33() + f2555.l36() + f2555.l42()
+    const relatedDeductions =
+      this.f1040.info.foreignEarnedIncome?.relatedExcludedIncomeDeductions ?? 0
+    return Math.max(0, excludedIncomeAndHousing - relatedDeductions)
+  }
+
   l7 = (additionalAmount = 0): number | undefined => {
     const l6 = this.l6(additionalAmount)
     if (l6 === 0) {
@@ -256,7 +283,13 @@ export default class F6251 extends F1040Attachment {
       f2555 !== undefined &&
       (f2555.l36() > 0 || f2555.l42() > 0 || f2555.l50() > 0)
     ) {
-      // TODO: Foreign Earned Income Tax Worksheet—Line 7
+      const line2c = this.foreignEarnedIncomeWorksheetLine2c()
+      const line3 = l6 + line2c
+      const line4 = this.requiresPartIII()
+        ? (this.part3(line3).l40 ?? 0)
+        : this.amtFlatTax(line3)
+      const line5 = this.amtFlatTax(line2c)
+      return Math.max(0, line4 - line5)
     }
 
     // Use line 40 if Part III is required
@@ -264,15 +297,7 @@ export default class F6251 extends F1040Attachment {
       return this.part3().l40
     }
 
-    const cap = amt.cap(this.f1040.info.taxPayer.filingStatus)
-
-    if (l6 <= cap) {
-      return l6 * 0.26
-    }
-    return (
-      l6 * 0.28 -
-      (this.f1040.info.taxPayer.filingStatus === FilingStatus.MFS ? 2207 : 4414)
-    )
+    return this.amtFlatTax(l6)
   }
 
   // Approximate the AMT foreign tax credit from the currently modeled Form 1116 FTC.
@@ -316,7 +341,7 @@ export default class F6251 extends F1040Attachment {
     return Math.max(0, this.l9() - this.l10())
   }
 
-  part3 = (): Part3 => {
+  part3 = (line12Base = this.l6()): Part3 => {
     if (!this.requiresPartIII()) {
       return {}
     }
@@ -332,7 +357,7 @@ export default class F6251 extends F1040Attachment {
 
     const [l19, l25] = federalBrackets.longTermCapGains.status[fs].brackets
 
-    const l12 = this.l6()
+    const l12 = line12Base
 
     // TODO - for F2555, see the instructions for amount
     const l13: number = (() => {

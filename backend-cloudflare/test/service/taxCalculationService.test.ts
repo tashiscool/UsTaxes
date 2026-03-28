@@ -1622,10 +1622,10 @@ describe('TaxCalculationService', () => {
       )
 
       expect(information.businesses?.[0]?.priorYearUnallowedLoss).toBe(1800)
-      expect(information.amtAdjustmentData).toEqual({
-        line2cInvestmentInterestExpense: 125,
-        line2dDepletion: 0,
-        line2fAlternativeTaxNetOperatingLossDeduction: 0,
+    expect(information.amtAdjustmentData).toEqual({
+      line2cInvestmentInterestExpense: 125,
+      line2dDepletion: 0,
+      line2fAlternativeTaxNetOperatingLossDeduction: 0,
         line2hQualifiedSmallBusinessStock: 0,
         line2kPropertyDisposition: 0,
         line2lPost1986Depreciation: 450,
@@ -1637,9 +1637,37 @@ describe('TaxCalculationService', () => {
         line2rResearchExperimentalCosts: 0,
         line2sPre1987InstallmentSales: 0,
         line2tIntangibleDrillingCosts: 0,
-        line3OtherAdjustments: 90,
-        line10Form8978NegativeAdjustment: 0
-      })
+      line3OtherAdjustments: 90,
+      line10Form8978NegativeAdjustment: 0
+    })
+  })
+
+    it('maps foreign earned income worksheet deductions related to excluded income', () => {
+      const information = adaptFactsToInformation(
+        baseFacts({
+          foreignEarnedIncome: {
+            foreignCountry: 'Canada',
+            foreignAddress: '123 Maple Rd',
+            employerName: 'Northwind Global',
+            employerAddress: '456 King St',
+            employerIsForeign: true,
+            foreignEarnedWages: 42000,
+            foreignHousingAmount: 0,
+            qualifyingTest: 'physicalPresence',
+            taxHomeCountry: 'Canada',
+            physicalPresenceDays: 365,
+            disallowedDeductionsRelatedToExcludedIncome: 725
+          }
+        })
+      )
+
+      expect(information.foreignEarnedIncome).toEqual(
+        expect.objectContaining({
+          foreignCountry: 'Canada',
+          foreignEarnedWages: 42000,
+          relatedExcludedIncomeDeductions: 725
+        })
+      )
     })
 
     it('maps page-2 Schedule E K-1 facts into partnership records for the form engine', () => {

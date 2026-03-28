@@ -2357,7 +2357,13 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
         toNum(raw.physicalPresenceDays ?? raw.daysAbroad) || undefined,
       physicalPresenceStartDate:
         toDate(raw.physicalPresenceStartDate) || undefined,
-      physicalPresenceEndDate: toDate(raw.physicalPresenceEndDate) || undefined
+      physicalPresenceEndDate: toDate(raw.physicalPresenceEndDate) || undefined,
+      relatedExcludedIncomeDeductions:
+        toNum(
+          raw.relatedExcludedIncomeDeductions ??
+            raw.disallowedDeductionsRelatedToExcludedIncome ??
+            raw.foreignEarnedIncomeWorksheetLine2b
+        ) || undefined
     }
   })()
 

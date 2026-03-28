@@ -1199,6 +1199,7 @@ export interface ForeignEarnedIncomeInfo<D = Date> {
   physicalPresenceDays?: number // Days in foreign countries
   physicalPresenceStartDate?: D
   physicalPresenceEndDate?: D
+  relatedExcludedIncomeDeductions?: number
 }
 
 // =============================================================================

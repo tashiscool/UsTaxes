@@ -596,26 +596,28 @@ describe('2025 federal law updates', () => {
     expect(f8995A.qbiEntries()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          name: 'Aggregation Group A: Delta Holdings; Echo Foods',
+          name: 'Aggregation Group A',
           qbi: 70000,
           w2Wages: 70000,
           ubia: 90000,
           patronReduction: 5000,
           aggregationGroup: 'Group A',
           hasAggregationElection: true,
-          isCooperative: true
+          isCooperative: true,
+          aggregationMembers: ['Delta Holdings', 'Echo Foods']
         })
       ])
     )
     expect(f8995A.overflowStatementEntries()).toEqual([
       expect.objectContaining({
-        name: 'Aggregation Group A: Delta Holdings; Echo Foods',
+        name: 'Aggregation Group A',
         statementRowNumber: 1,
         statementSection: 'Form 8995-A additional statement',
         isAttachmentRow: true,
         aggregationGroup: 'Group A',
         hasAggregationElection: true,
-        isCooperative: true
+        isCooperative: true,
+        aggregationMembers: ['Delta Holdings', 'Echo Foods']
       })
     ])
     expect(f8995A.overflowStatementEntries()[0].deductionBeforePatronReduction).toBeGreaterThan(0)
@@ -641,6 +643,63 @@ describe('2025 federal law updates', () => {
     expect(f8995A.statementSummary().thresholdEnd).toBeGreaterThan(
       f8995A.statementSummary().thresholdStart
     )
+    expect(f8995A.displayEntryEin(f8995A.overflowEntries()[0])).toBeUndefined()
+    expect(f8995A.line1cAggregationCheckbox(f8995A.overflowEntries()[0])).toBe(
+      true
+    )
+    expect(f8995A.line1eCooperativeCheckbox(f8995A.overflowEntries()[0])).toBe(
+      true
+    )
+  })
+
+  it('renders aggregation entries on Form 8995-A with the aggregation checkbox and blank EIN', () => {
+    const f1040 = new F1040(cloneDeep(baseInformation), [])
+    const f8995A = new F8995A(f1040)
+
+    jest.spyOn(f8995A, 'sourceQbiEntries').mockReturnValue([
+      {
+        name: 'Delta Holdings',
+        ein: '444444444',
+        qbi: 40000,
+        w2Wages: 40000,
+        ubia: 40000,
+        patronReduction: 2000,
+        aggregationGroup: 'Group A',
+        hasAggregationElection: true
+      },
+      {
+        name: 'Echo Foods',
+        ein: '555555555',
+        qbi: 30000,
+        w2Wages: 30000,
+        ubia: 50000,
+        patronReduction: 3000,
+        aggregationGroup: 'Group A',
+        hasAggregationElection: true,
+        isCooperative: true
+      },
+      {
+        name: 'SSTB Alpha',
+        ein: '111111111',
+        qbi: 10000,
+        w2Wages: 6000,
+        ubia: 0,
+        patronReduction: 0,
+        isSSTB: true
+      }
+    ])
+
+    const fields = f8995A.fields()
+
+    expect(fields[2]).toBe('Aggregation Group A')
+    expect(fields[3]).toBe(false)
+    expect(fields[4]).toBe(true)
+    expect(fields[5]).toBeUndefined()
+    expect(fields[6]).toBe(true)
+    expect(fields[7]).toBe('SSTB Alpha')
+    expect(fields[8]).toBe(true)
+    expect(fields[9]).toBe(false)
+    expect(fields[10]).toBe('111111111')
   })
 
   it('tracks simplified-form overflow businesses for attachment parity', () => {
