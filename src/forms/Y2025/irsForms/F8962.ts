@@ -67,11 +67,18 @@ interface MarketplacePolicyData {
   enrollmentPremiums?: number[]
   slcsp?: number[]
   advancePayments?: number[]
+  sharedPolicyAllocation?: number
 }
 
 export default class F8962 extends F1040Attachment {
   tag: FormTag = 'f8962'
   sequenceIndex = 73
+
+  private allocationRatio = (policy: MarketplacePolicyData): number => {
+    const allocation = policy.sharedPolicyAllocation
+    if (allocation === undefined) return 1
+    return Math.max(0, Math.min(1, allocation / 100))
+  }
 
   isNeeded = (): boolean => {
     return this.hasMarketplaceCoverage()
@@ -91,13 +98,17 @@ export default class F8962 extends F1040Attachment {
       const enrollmentPremiums = policy.enrollmentPremiums ?? []
       const slcspValues = policy.slcsp ?? []
       const advancePayments = policy.advancePayments ?? []
+      const allocationRatio = this.allocationRatio(policy)
       for (let month = 0; month < 12; month++) {
-        if ((enrollmentPremiums[month] ?? 0) > 0) {
+        const enrollmentPremium = (enrollmentPremiums[month] ?? 0) * allocationRatio
+        const slcsp = (slcspValues[month] ?? 0) * allocationRatio
+        const advancePayment = (advancePayments[month] ?? 0) * allocationRatio
+        if (enrollmentPremium > 0 || slcsp > 0 || advancePayment > 0) {
           coverage.push({
             month: month + 1,
-            enrollmentPremium: enrollmentPremiums[month] ?? 0,
-            slcsp: slcspValues[month] ?? 0,
-            advancePayment: advancePayments[month] ?? 0,
+            enrollmentPremium,
+            slcsp,
+            advancePayment,
             coverageMonths: 1
           })
         }
@@ -191,12 +202,11 @@ export default class F8962 extends F1040Attachment {
   getMonthlyData = (
     month: number
   ): { premium: number; slcsp: number; advance: number } => {
-    const coverage = this.marketplaceCoverage()
-    const monthData = coverage.find((c) => c.month === month)
+    const monthData = this.marketplaceCoverage().filter((c) => c.month === month)
     return {
-      premium: monthData?.enrollmentPremium ?? 0,
-      slcsp: monthData?.slcsp ?? 0,
-      advance: monthData?.advancePayment ?? 0
+      premium: monthData.reduce((sum, coverage) => sum + coverage.enrollmentPremium, 0),
+      slcsp: monthData.reduce((sum, coverage) => sum + coverage.slcsp, 0),
+      advance: monthData.reduce((sum, coverage) => sum + coverage.advancePayment, 0)
     }
   }
 

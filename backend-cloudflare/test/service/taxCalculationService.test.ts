@@ -370,7 +370,8 @@ describe('TaxCalculationService', () => {
             enrollmentPremiums: Array(12).fill(600),
             slcsp: Array(12).fill(565),
             advancePayments: Array(12).fill(450),
-            coverageFamily: 2
+            coverageFamily: 2,
+            sharedPolicyAllocation: 50
           }
         ],
         dependentCareProviders: [
@@ -425,6 +426,7 @@ describe('TaxCalculationService', () => {
       expect(info.healthInsuranceMarketplace?.[0].policyNumber).toBe(
         'APTC-2025-01'
       )
+      expect(info.healthInsuranceMarketplace?.[0].sharedPolicyAllocation).toBe(50)
       expect(info.dependentCareProviders).toHaveLength(1)
       expect(info.dependentCareProviders?.[0].name).toBe(
         'Sunshine Daycare Center'
@@ -439,6 +441,9 @@ describe('TaxCalculationService', () => {
       expect(f1040.scheduleA.isNeeded()).toBe(true)
       expect(f1040.f8962?.isNeeded()).toBe(true)
       expect(f1040.f8962?.marketplaceCoverage()).toHaveLength(12)
+      expect(f1040.f8962?.l11(1)).toBe(300)
+      expect(f1040.f8962?.l12(1)).toBe(282.5)
+      expect(f1040.f8962?.l16(1)).toBe(225)
       expect(f1040.f2441?.providers()).toHaveLength(1)
       expect(f1040.f2441?.isNeeded()).toBe(true)
       expect(calcResult.success).toBe(true)
@@ -1632,7 +1637,8 @@ describe('TaxCalculationService', () => {
         line2rResearchExperimentalCosts: 0,
         line2sPre1987InstallmentSales: 0,
         line2tIntangibleDrillingCosts: 0,
-        line3OtherAdjustments: 90
+        line3OtherAdjustments: 90,
+        line10Form8978NegativeAdjustment: 0
       })
     })
 

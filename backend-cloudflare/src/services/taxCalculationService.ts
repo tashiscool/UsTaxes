@@ -1523,6 +1523,13 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
             amtAdjustmentRecord.line3OtherAdjustments ??
               amtAdjustmentRecord.otherAdjustments ??
               amtAdjustmentRecord.line3
+          ),
+          line10Form8978NegativeAdjustment: toNum(
+            amtAdjustmentRecord.line10Form8978NegativeAdjustment ??
+              amtAdjustmentRecord.form8978NegativeAdjustment ??
+              amtAdjustmentRecord.negativeForm8978Adjustment ??
+              amtAdjustmentRecord.line10Form8978 ??
+              amtAdjustmentRecord.line10
           )
         }
       : undefined

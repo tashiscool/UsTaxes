@@ -225,31 +225,41 @@ export default class ScheduleEIC extends F1040Attachment {
   //
   // TODO: ('5.1.2: Not checking scholarship, grants') 5.1
   taxableScholarshipIncome = (): number => {
-    return 0
+    return (
+      this.f1040.info.schedule8812EarnedIncomeAdjustments
+        ?.scholarshipGrantsNotOnW2 ?? 0
+    )
   }
 
   //
   // TODO: ('5.1.3: Not checking prison income') 5.1
   prisonIncome = (): number => {
-    return 0
+    return this.f1040.info.schedule8812EarnedIncomeAdjustments?.penalIncome ?? 0
   }
 
   //
   // TODO: ('5.1.4: Not checking pension income') 5.1
   pensionPlanIncome = (): number => {
-    return 0
+    return (
+      this.f1040.info.schedule8812EarnedIncomeAdjustments
+        ?.nonqualifiedDeferredCompensation ?? 0
+    )
   }
 
   //
   // TODO: ('5.1.5: Not checking medicaid waiver') 5.1
   medicaidWaiverPayment = (): number => {
-    return 0
+    const adjustments = this.f1040.info.schedule8812EarnedIncomeAdjustments
+    if (!adjustments?.includeMedicaidWaiverInEarnedIncome) {
+      return 0
+    }
+    return adjustments.medicaidWaiverPaymentsExcludedFromIncome ?? 0
   }
 
   //
   // TODO: ('5.1.8: Not checking nontaxable combat pay') 5.1
   nontaxableCombatPay = (): number => {
-    return 0
+    return this.f1040.nonTaxableCombatPay() ?? 0
   }
 
   // 5.1 - Earned income

@@ -601,6 +601,7 @@ export interface AmtAdjustmentData {
   line2sPre1987InstallmentSales?: number
   line2tIntangibleDrillingCosts?: number
   line3OtherAdjustments?: number
+  line10Form8978NegativeAdjustment?: number
 }
 
 export interface ItemizedDeductions {

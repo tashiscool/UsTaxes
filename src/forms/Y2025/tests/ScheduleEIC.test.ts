@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash'
-import { FilingStatus, PersonRole } from 'ustaxes/core/data'
+import { FilingStatus, PersonRole, W2Box12Code } from 'ustaxes/core/data'
 import { ValidatedInformation } from 'ustaxes/forms/F1040Base'
 import F1040 from '../irsForms/F1040'
 import * as federal from '../data/federal'
@@ -237,5 +237,41 @@ describe('ScheduleEIC', () => {
 
     expect(f1040.scheduleEIC.mainHomeInsideUsBothPeople()).toBe(false)
     expect(f1040.scheduleEIC.allowed()).toBe(false)
+  })
+
+  it('uses Schedule 8812 earned-income adjustments and combat pay in the EIC earned income calculation', () => {
+    const information = cloneDeep(baseInformation)
+    information.schedule8812EarnedIncomeAdjustments = {
+      scholarshipGrantsNotOnW2: 1200,
+      penalIncome: 300,
+      nonqualifiedDeferredCompensation: 400,
+      medicaidWaiverPaymentsExcludedFromIncome: 500,
+      includeMedicaidWaiverInEarnedIncome: true
+    }
+    information.w2s[0].box12 = {
+      [W2Box12Code.Q]: 600
+    }
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.scheduleEIC.taxableScholarshipIncome()).toBe(1200)
+    expect(f1040.scheduleEIC.prisonIncome()).toBe(300)
+    expect(f1040.scheduleEIC.pensionPlanIncome()).toBe(400)
+    expect(f1040.scheduleEIC.medicaidWaiverPayment()).toBe(500)
+    expect(f1040.scheduleEIC.nontaxableCombatPay()).toBe(600)
+    expect(f1040.scheduleEIC.earnedIncome()).toBe(10200)
+  })
+
+  it('does not add medicaid waiver payments back into EIC earned income unless elected', () => {
+    const information = cloneDeep(baseInformation)
+    information.schedule8812EarnedIncomeAdjustments = {
+      medicaidWaiverPaymentsExcludedFromIncome: 900,
+      includeMedicaidWaiverInEarnedIncome: false
+    }
+
+    const f1040 = new F1040(information, [])
+
+    expect(f1040.scheduleEIC.medicaidWaiverPayment()).toBe(0)
+    expect(f1040.scheduleEIC.earnedIncome()).toBe(12000)
   })
 })

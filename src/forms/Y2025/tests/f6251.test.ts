@@ -371,6 +371,31 @@ describe('AMT', () => {
     expect(f6251.l9()).toBe((f6251.l7() ?? 0) - (f6251.l8() ?? 0))
   })
 
+  it('subtracts a negative Form 8978 adjustment from line 10 when one is supplied', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.w2s[0].income = 220000
+    information.w2s[0].medicareIncome = 220000
+    information.w2s[0].ssWages = 176100
+    information.w2s[0].stateWages = 220000
+    information.amtAdjustmentData = {
+      line10Form8978NegativeAdjustment: -1350
+    }
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+    const expected = Math.max(
+      0,
+      (f1040.incomeTaxBeforeScheduleJ() ?? 0) -
+        (f1040.f4972?.tax() ?? 0) +
+        f1040.schedule2.l1z() -
+        (f1040.schedule3.l1() ?? 0) -
+        1350
+    )
+
+    expect(f6251.l10()).toBe(expected)
+  })
+
   it('does not require Part III when there are no qualified dividends or capital gains', () => {
     const information = cloneDeep(baseInformation)
     information.f3921s = []
