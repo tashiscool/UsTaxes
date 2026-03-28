@@ -99,8 +99,64 @@ export default class F8995A extends F8995 {
     }
   }
 
-  adjustedEntries = (): ReturnType<F8995['qbiEntries']> =>
+  phaseAdjustedEntries = (): ReturnType<F8995['qbiEntries']> =>
     this.qbiEntries().map((entry) => this.adjustedEntry(entry))
+
+  currentYearQualifiedBusinessLoss = (): number =>
+    Math.abs(
+      this.phaseAdjustedEntries()
+        .filter((entry) => entry.qbi < 0)
+        .reduce((sum, entry) => sum + entry.qbi, 0)
+    )
+
+  totalLossNettingAmount = (): number =>
+    this.priorYearQualifiedBusinessLossCarryforward() +
+    this.currentYearQualifiedBusinessLoss()
+
+  adjustedEntries = (): ReturnType<F8995['qbiEntries']> => {
+    const entries = this.phaseAdjustedEntries()
+    const nonnegativeEntries = entries.filter((entry) => entry.qbi >= 0)
+    const positiveEntries = entries.filter((entry) => entry.qbi > 0)
+    const totalPositiveQbi = positiveEntries.reduce(
+      (sum, entry) => sum + entry.qbi,
+      0
+    )
+    const reductionBase = Math.min(
+      totalPositiveQbi,
+      this.totalLossNettingAmount()
+    )
+
+    if (reductionBase <= 0 || totalPositiveQbi <= 0) {
+      return nonnegativeEntries
+    }
+
+    let remainingReduction = reductionBase
+    return positiveEntries
+      .map((entry, index) => {
+        const proportionalReduction =
+          index === positiveEntries.length - 1
+            ? remainingReduction
+            : Math.min(
+                remainingReduction,
+                reductionBase * (entry.qbi / totalPositiveQbi)
+              )
+        const qbiAfterReduction = Math.max(0, entry.qbi - proportionalReduction)
+        remainingReduction = Math.max(0, remainingReduction - proportionalReduction)
+
+        return qbiAfterReduction > 0
+          ? {
+              ...entry,
+              qbi: qbiAfterReduction
+            }
+          : {
+              ...entry,
+              qbi: 0,
+              w2Wages: 0,
+              ubia: 0,
+              patronReduction: 0
+            }
+      })
+  }
 
   visibleEntries = (): ReturnType<F8995['qbiEntries']> =>
     this.adjustedEntries().slice(0, 3)
@@ -172,6 +228,7 @@ export default class F8995A extends F8995 {
   } => {
     const hasCarryforwardOrAdjustmentData =
       this.priorYearQualifiedBusinessLossCarryforward() > 0 ||
+      this.currentYearQualifiedBusinessLoss() > 0 ||
       this.reitDividends() > 0 ||
       this.currentYearPtpIncome() > 0 ||
       this.ptpLossCarryforward() > 0 ||

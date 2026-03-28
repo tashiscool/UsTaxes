@@ -196,11 +196,9 @@ export default class ScheduleE extends F1040Attachment {
   // Deductible real estate loss from 8582, as positive number
   l22 = (): MatrixRow =>
     this.f1040.info.realEstate.length > 0
-      ? (
-          this.f1040.f8582?.deductibleRealEstateLossAfterLimitation()?.map(
-            (value) => (value !== undefined && value < 0 ? Math.abs(value) : 0)
-          ) as MatrixRow
-        )
+      ? ((this.f1040.f8582?.deductibleRealEstateLossAfterLimitation()?.map(
+          (value) => (value !== undefined && value < 0 ? Math.abs(value) : 0)
+        ) as MatrixRow | undefined) ?? [0, 0, 0])
       : [undefined, undefined, undefined]
 
   l23a = (): number => sumFields(this.l3())

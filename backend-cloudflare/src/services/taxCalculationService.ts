@@ -36,6 +36,7 @@ import {
   type AutoLoanInterest,
   type TrumpSavingsAccount,
   type QbiDeductionData,
+  type AmtAdjustmentData,
   type DependentCareProvider,
   type EducationExpense,
   type EnergyImprovement,
@@ -1442,6 +1443,90 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
         }
       : undefined
 
+  const amtAdjustmentRecord = asRecord(
+    facts.amtAdjustmentData ?? facts.form6251Adjustments ?? facts.amtAdjustments
+  )
+  const amtAdjustmentData: AmtAdjustmentData | undefined =
+    amtAdjustmentRecord && Object.keys(amtAdjustmentRecord).length > 0
+      ? {
+          line2cInvestmentInterestExpense: toNum(
+            amtAdjustmentRecord.line2cInvestmentInterestExpense ??
+              amtAdjustmentRecord.investmentInterestExpenseAdjustment ??
+              amtAdjustmentRecord.line2c
+          ),
+          line2dDepletion: toNum(
+            amtAdjustmentRecord.line2dDepletion ??
+              amtAdjustmentRecord.depletionAdjustment ??
+              amtAdjustmentRecord.line2d
+          ),
+          line2fAlternativeTaxNetOperatingLossDeduction: toNum(
+            amtAdjustmentRecord.line2fAlternativeTaxNetOperatingLossDeduction ??
+              amtAdjustmentRecord.alternativeTaxNetOperatingLossDeduction ??
+              amtAdjustmentRecord.line2f
+          ),
+          line2hQualifiedSmallBusinessStock: toNum(
+            amtAdjustmentRecord.line2hQualifiedSmallBusinessStock ??
+              amtAdjustmentRecord.qualifiedSmallBusinessStockAdjustment ??
+              amtAdjustmentRecord.line2h
+          ),
+          line2kPropertyDisposition: toNum(
+            amtAdjustmentRecord.line2kPropertyDisposition ??
+              amtAdjustmentRecord.propertyDispositionAdjustment ??
+              amtAdjustmentRecord.line2k
+          ),
+          line2lPost1986Depreciation: toNum(
+            amtAdjustmentRecord.line2lPost1986Depreciation ??
+              amtAdjustmentRecord.post1986DepreciationAdjustment ??
+              amtAdjustmentRecord.line2l
+          ),
+          line2mPassiveActivities: toNum(
+            amtAdjustmentRecord.line2mPassiveActivities ??
+              amtAdjustmentRecord.passiveActivitiesAdjustment ??
+              amtAdjustmentRecord.line2m
+          ),
+          line2nLossLimitations: toNum(
+            amtAdjustmentRecord.line2nLossLimitations ??
+              amtAdjustmentRecord.lossLimitationsAdjustment ??
+              amtAdjustmentRecord.line2n
+          ),
+          line2oCirculationCosts: toNum(
+            amtAdjustmentRecord.line2oCirculationCosts ??
+              amtAdjustmentRecord.circulationCostsAdjustment ??
+              amtAdjustmentRecord.line2o
+          ),
+          line2pLongTermContracts: toNum(
+            amtAdjustmentRecord.line2pLongTermContracts ??
+              amtAdjustmentRecord.longTermContractsAdjustment ??
+              amtAdjustmentRecord.line2p
+          ),
+          line2qMiningCosts: toNum(
+            amtAdjustmentRecord.line2qMiningCosts ??
+              amtAdjustmentRecord.miningCostsAdjustment ??
+              amtAdjustmentRecord.line2q
+          ),
+          line2rResearchExperimentalCosts: toNum(
+            amtAdjustmentRecord.line2rResearchExperimentalCosts ??
+              amtAdjustmentRecord.researchExperimentalCostsAdjustment ??
+              amtAdjustmentRecord.line2r
+          ),
+          line2sPre1987InstallmentSales: toNum(
+            amtAdjustmentRecord.line2sPre1987InstallmentSales ??
+              amtAdjustmentRecord.pre1987InstallmentSalesAdjustment ??
+              amtAdjustmentRecord.line2s
+          ),
+          line2tIntangibleDrillingCosts: toNum(
+            amtAdjustmentRecord.line2tIntangibleDrillingCosts ??
+              amtAdjustmentRecord.intangibleDrillingCostsAdjustment ??
+              amtAdjustmentRecord.line2t
+          ),
+          line3OtherAdjustments: toNum(
+            amtAdjustmentRecord.line3OtherAdjustments ??
+              amtAdjustmentRecord.otherAdjustments ??
+              amtAdjustmentRecord.line3
+          )
+        }
+      : undefined
+
   // Adapt itemized deductions (Schedule A — SALT, mortgage interest, charity, etc.)
   // SALT cap ($40,000 for TY2025, $20,000 MFS) is enforced by the engine via ScheduleA.ts
   const rawItemizedDeductions = buildRawItemizedDeductions(facts)
@@ -1552,6 +1637,9 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
                 b.isAgriculturalOrHorticulturalCooperative ??
                 false
             ) || undefined,
+          priorYearUnallowedLoss:
+            toNum(b.priorYearUnallowedLoss ?? b.passiveLossCarryover ?? 0) ||
+            undefined,
           isSpecifiedServiceTradeOrBusiness: toBool(
             b.isSpecifiedServiceTradeOrBusiness ?? b.isSSTB ?? false
           ),
@@ -2360,6 +2448,7 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     trumpSavingsAccounts,
     // QBI
     qbiDeductionData,
+    amtAdjustmentData,
     scheduleEPage2,
     // Schedule C / Schedule F / Schedule H
     businesses,

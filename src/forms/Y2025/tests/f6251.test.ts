@@ -280,6 +280,66 @@ describe('AMT', () => {
     expect(f6251.l4()).toBe((f6251.l1() ?? 0) + (f6251.l2a() ?? 0) + 425)
   })
 
+  it('uses explicit advanced AMT adjustment inputs on lines 2c through 3', () => {
+    const information = cloneDeep(baseInformation)
+    information.f3921s = []
+    information.amtAdjustmentData = {
+      line2cInvestmentInterestExpense: 120,
+      line2dDepletion: 80,
+      line2fAlternativeTaxNetOperatingLossDeduction: 500,
+      line2hQualifiedSmallBusinessStock: 250,
+      line2kPropertyDisposition: -300,
+      line2lPost1986Depreciation: 175,
+      line2mPassiveActivities: 90,
+      line2nLossLimitations: -40,
+      line2oCirculationCosts: 35,
+      line2pLongTermContracts: 60,
+      line2qMiningCosts: 45,
+      line2rResearchExperimentalCosts: 55,
+      line2sPre1987InstallmentSales: 70,
+      line2tIntangibleDrillingCosts: 25,
+      line3OtherAdjustments: 110
+    }
+
+    const f1040 = new F1040(information, [])
+    const f6251 = new F6251(f1040)
+
+    expect(f6251.l2c()).toBe(120)
+    expect(f6251.l2d()).toBe(80)
+    expect(f6251.l2f()).toBe(500)
+    expect(f6251.l2h()).toBe(250)
+    expect(f6251.l2k()).toBe(-300)
+    expect(f6251.l2l()).toBe(175)
+    expect(f6251.l2m()).toBe(90)
+    expect(f6251.l2n()).toBe(-40)
+    expect(f6251.l2o()).toBe(35)
+    expect(f6251.l2p()).toBe(60)
+    expect(f6251.l2q()).toBe(45)
+    expect(f6251.l2r()).toBe(55)
+    expect(f6251.l2s()).toBe(70)
+    expect(f6251.l2t()).toBe(25)
+    expect(f6251.l3()).toBe(110)
+    expect(f6251.l4()).toBe(
+      (f6251.l1() ?? 0) +
+        (f6251.l2a() ?? 0) +
+        120 +
+        80 +
+        250 -
+        300 +
+        175 +
+        90 -
+        40 +
+        35 +
+        60 +
+        45 +
+        55 -
+        500 -
+        70 +
+        25 +
+        110
+    )
+  })
+
   it('uses the modeled foreign tax credit as an AMT foreign tax credit proxy when present', () => {
     const information = cloneDeep(baseInformation)
     information.f3921s = []

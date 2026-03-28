@@ -924,6 +924,175 @@ describe('2025 federal law updates', () => {
     expect(f8995.l3()).toBe(-2500)
   })
 
+  it('includes Schedule C and qualified rental carryforwards in detailed QBI loss netting', () => {
+    const information = cloneDeep(baseInformation)
+    information.businesses = [
+      {
+        name: 'Harbor Analytics',
+        principalBusinessCode: '541511',
+        businessDescription: 'Analytics consulting',
+        accountingMethod: 'cash',
+        materialParticipation: true,
+        startedOrAcquired: false,
+        madePaymentsRequiring1099: false,
+        filed1099s: false,
+        personRole: PersonRole.PRIMARY,
+        priorYearUnallowedLoss: 800,
+        income: {
+          grossReceipts: 90000,
+          returns: 0,
+          otherIncome: 0
+        },
+        expenses: {
+          advertising: 0,
+          carAndTruck: 0,
+          commissions: 0,
+          contractLabor: 0,
+          depletion: 0,
+          depreciation: 0,
+          employeeBenefits: 0,
+          insurance: 0,
+          interestMortgage: 0,
+          interestOther: 0,
+          legal: 0,
+          office: 0,
+          pensionPlans: 0,
+          rentVehicles: 0,
+          rentOther: 0,
+          repairs: 0,
+          supplies: 0,
+          taxes: 0,
+          travel: 0,
+          deductibleMeals: 0,
+          utilities: 0,
+          wages: 20000,
+          otherExpenses: 0
+        }
+      }
+    ] as never
+    information.realEstate = [
+      {
+        address: {
+          address: '200 Market St',
+          aptNo: '',
+          city: 'Portland',
+          state: 'OR',
+          zip: '97201'
+        },
+        rentalDays: 365,
+        personalUseDays: 0,
+        rentReceived: 24000,
+        propertyType: 'singleFamily',
+        qualifiedJointVenture: false,
+        qualifiesForQbi: true,
+        priorYearPassiveLossCarryover: 1200,
+        expenses: {
+          advertising: 0,
+          auto: 0,
+          cleaning: 0,
+          commissions: 0,
+          insurance: 0,
+          legal: 0,
+          management: 0,
+          mortgage: 4000,
+          otherInterest: 0,
+          repairs: 0,
+          supplies: 0,
+          taxes: 2000,
+          utilities: 0,
+          depreciation: 0,
+          other: 0
+        }
+      }
+    ]
+    information.scheduleK1Form1065s = [
+      {
+        partnershipName: 'Legacy Partnership LP',
+        partnershipEin: '919191919',
+        partnerOrSCorp: 'P',
+        isForeign: false,
+        isPassive: false,
+        ordinaryBusinessIncome: 0,
+        interestIncome: 0,
+        guaranteedPaymentsForServices: 0,
+        guaranteedPaymentsForCapital: 0,
+        selfEmploymentEarningsA: 0,
+        selfEmploymentEarningsB: 0,
+        selfEmploymentEarningsC: 0,
+        distributionsCodeAAmount: 0,
+        section199AQBI: 10000,
+        priorYearUnallowedLoss: 500
+      } as never
+    ]
+    information.qbiDeductionData = {
+      priorYearQualifiedBusinessLossCarryforward: 300
+    }
+
+    const f1040 = new F1040(information, [])
+    const f8995 = new F8995(f1040)
+    const f8995A = new F8995A(f1040)
+
+    expect(f8995.priorYearQualifiedBusinessLossCarryforward()).toBe(2800)
+    expect(f8995.l3()).toBe(-2800)
+    expect(f8995A.totalLossNettingAmount()).toBe(2800)
+    expect(f8995A.statementSummary()).toEqual(
+      expect.objectContaining({
+        requiresAttachment: true
+      })
+    )
+  })
+
+  it('apportions QBI losses across profitable businesses before detailed wage limits apply', () => {
+    const f1040 = new F1040(cloneDeep(baseInformation), [])
+    const f8995A = new F8995A(f1040)
+
+    jest.spyOn(f8995A, 'sourceQbiEntries').mockReturnValue([
+      {
+        name: 'Positive Alpha',
+        ein: '111111111',
+        qbi: 100000,
+        w2Wages: 10000,
+        ubia: 5000,
+        patronReduction: 0
+      },
+      {
+        name: 'Positive Bravo',
+        ein: '222222222',
+        qbi: 50000,
+        w2Wages: 25000,
+        ubia: 10000,
+        patronReduction: 0
+      },
+      {
+        name: 'Loss Charlie',
+        ein: '333333333',
+        qbi: -30000,
+        w2Wages: 0,
+        ubia: 0,
+        patronReduction: 0
+      }
+    ])
+    jest.spyOn(f8995A, 'l20').mockReturnValue(f8995A.l21())
+    jest.spyOn(f8995A, 'l34').mockReturnValue(0)
+
+    const entries = f8995A.adjustedEntries()
+
+    expect(f8995A.currentYearQualifiedBusinessLoss()).toBe(30000)
+    expect(entries).toEqual([
+      expect.objectContaining({
+        name: 'Positive Alpha',
+        qbi: 80000
+      }),
+      expect.objectContaining({
+        name: 'Positive Bravo',
+        qbi: 40000
+      })
+    ])
+    expect(f8995A.l2a()).toBe(80000)
+    expect(f8995A.l2b()).toBe(40000)
+    expect(f8995A.l16()).toBe(24000)
+  })
+
   it('treats qualified disaster losses differently from other casualty losses in 2025', () => {
     const information = cloneDeep(baseInformation)
     information.casualtyEvents = [

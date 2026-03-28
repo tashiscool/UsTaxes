@@ -86,6 +86,7 @@ export interface BusinessInfo {
   qbiAggregationGroup?: string
   qbiHasAggregationElection?: boolean
   qbiIsCooperative?: boolean
+  priorYearUnallowedLoss?: number
   personRole: PersonRole
 }
 

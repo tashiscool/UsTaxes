@@ -1,5 +1,5 @@
 import F1040Attachment from './F1040Attachment'
-import { FilingStatus, PersonRole } from 'ustaxes/core/data'
+import { FilingStatus, PersonRole, type AmtAdjustmentData } from 'ustaxes/core/data'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
 import { Field } from 'ustaxes/core/pdfFiller'
 import federalBrackets, { amt } from '../data/federal'
@@ -40,6 +40,11 @@ type Part3 = Partial<{
 export default class F6251 extends F1040Attachment {
   tag: FormTag = 'f6251'
   sequenceIndex = 32
+
+  amtAdjustment = (line: keyof AmtAdjustmentData): number | undefined => {
+    const amount = this.f1040.info.amtAdjustmentData?.[line] ?? 0
+    return amount === 0 ? undefined : amount
+  }
 
   scheduleK1_1041Forms = (): ScheduleK1_1041[] => {
     const fiduciaryReturn = this.f1040.info.fiduciaryReturn as
@@ -115,18 +120,17 @@ export default class F6251 extends F1040Attachment {
     return (this.f1040.schedule1.l1() ?? 0) + this.f1040.schedule1.l8z()
   }
 
-  // TODO: Investment interest expense (difference between regular tax and AMT)
-  l2c = (): number | undefined => undefined
+  l2c = (): number | undefined =>
+    this.amtAdjustment('line2cInvestmentInterestExpense')
 
-  // TODO: Depletion (difference between regular tax and AMT)
-  l2d = (): number | undefined => undefined
+  l2d = (): number | undefined => this.amtAdjustment('line2dDepletion')
 
   l2e = (): number | undefined => {
     return Math.abs(this.f1040.schedule1.l8a() ?? 0)
   }
 
-  // TODO: Alternative tax net operating loss deduction
-  l2f = (): number | undefined => undefined
+  l2f = (): number | undefined =>
+    this.amtAdjustment('line2fAlternativeTaxNetOperatingLossDeduction')
   // Interest from specified private activity bonds exempt from the regular tax
   l2g = (): number | undefined => {
     const total = this.f1040
@@ -137,8 +141,8 @@ export default class F6251 extends F1040Attachment {
       )
     return total === 0 ? undefined : total
   }
-  // TODO: Qualified small business stock, see instructions
-  l2h = (): number | undefined => undefined
+  l2h = (): number | undefined =>
+    this.amtAdjustment('line2hQualifiedSmallBusinessStock')
 
   // Exercise of incentive stock options (excess of AMT income over regular tax income)
   l2i = (): number | undefined => {
@@ -160,29 +164,37 @@ export default class F6251 extends F1040Attachment {
     )
     return totalAmtAdjustment === 0 ? undefined : totalAmtAdjustment
   }
-  // TODO: Disposition of property (difference between AMT and regular tax gain or loss)
-  l2k = (): number | undefined => undefined
-  // TODO: Depreciation on assets placed in service after 1986 (difference between regular tax and AMT)
-  l2l = (): number | undefined => undefined
+  l2k = (): number | undefined =>
+    this.amtAdjustment('line2kPropertyDisposition')
+  l2l = (): number | undefined =>
+    this.amtAdjustment('line2lPost1986Depreciation')
   // TODO: Passive activities (difference between AMT and regular tax income or loss)
-  l2m = (): number | undefined => undefined
+  l2m = (): number | undefined =>
+    this.amtAdjustment('line2mPassiveActivities')
   // TODO: Loss limitations (difference between AMT and regular tax income or loss)
-  l2n = (): number | undefined => undefined
+  l2n = (): number | undefined =>
+    this.amtAdjustment('line2nLossLimitations')
   // TODO: Circulation costs (difference between regular tax and AMT)
-  l2o = (): number | undefined => undefined
+  l2o = (): number | undefined =>
+    this.amtAdjustment('line2oCirculationCosts')
   // TODO: Long-term contracts (difference between AMT and regular tax income)
-  l2p = (): number | undefined => undefined
+  l2p = (): number | undefined =>
+    this.amtAdjustment('line2pLongTermContracts')
   // TODO: Mining costs (difference between regular tax and AMT)
-  l2q = (): number | undefined => undefined
+  l2q = (): number | undefined =>
+    this.amtAdjustment('line2qMiningCosts')
   // TODO: Research and experimental costs (difference between regular tax and AMT)
-  l2r = (): number | undefined => undefined
+  l2r = (): number | undefined =>
+    this.amtAdjustment('line2rResearchExperimentalCosts')
   // TODO: Income from certain installment sales before January 1, 1987
-  l2s = (): number | undefined => undefined
+  l2s = (): number | undefined =>
+    this.amtAdjustment('line2sPre1987InstallmentSales')
   // TODO: Intangible drilling costs preference
-  l2t = (): number | undefined => undefined
+  l2t = (): number | undefined =>
+    this.amtAdjustment('line2tIntangibleDrillingCosts')
 
   // TODO: Other adjustments, including income-based related adjustments
-  l3 = (): number | undefined => undefined
+  l3 = (): number | undefined => this.amtAdjustment('line3OtherAdjustments')
 
   l4 = (additionalAmount = 0): number | undefined =>
     additionalAmount +

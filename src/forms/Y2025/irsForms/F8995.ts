@@ -59,7 +59,7 @@ export default class F8995 extends F1040Attachment {
           isCooperative: property.qbiIsCooperative
         }
       })
-      .filter((property) => property.qbi > 0)
+      .filter((property) => property.qbi !== 0)
 
   scheduleCQBIBusinesses = (): QBIEntry[] =>
     ((this.f1040.info.businesses as BusinessInfo[] | undefined) ?? [])
@@ -117,11 +117,11 @@ export default class F8995 extends F1040Attachment {
           isCooperative: business.qbiIsCooperative
         }
       })
-      .filter((business) => business.qbi > 0) as QBIEntry[]
+      .filter((business) => business.qbi !== 0) as QBIEntry[]
 
   applicableK1s = (): QBIEntry[] =>
     this.f1040.info.scheduleK1Form1065s
-      .filter((k1) => k1.section199AQBI > 0)
+      .filter((k1) => k1.section199AQBI !== 0)
       .map((k1) => ({
         name: k1.partnershipName,
         ein: k1.partnershipEin,
@@ -158,12 +158,31 @@ export default class F8995 extends F1040Attachment {
     const worksheetCarryforward =
       this.f1040.info.qbiDeductionData
         ?.priorYearQualifiedBusinessLossCarryforward ?? 0
+    const businessCarryforward = (
+      (this.f1040.info.businesses as BusinessInfo[] | undefined) ?? []
+    ).reduce(
+      (sum, business) =>
+        sum + Math.abs(business.priorYearUnallowedLoss ?? 0),
+      0
+    )
+    const rentalCarryforward = this.f1040.info.realEstate
+      .filter((property) => property.qualifiesForQbi)
+      .reduce(
+        (sum, property) =>
+          sum + Math.abs(property.priorYearPassiveLossCarryover ?? 0),
+        0
+      )
     const k1Carryforward = this.f1040.info.scheduleK1Form1065s.reduce(
       (sum, k1) => sum + Math.abs(k1.priorYearUnallowedLoss ?? 0),
       0
     )
 
-    return Math.abs(worksheetCarryforward) + k1Carryforward
+    return (
+      Math.abs(worksheetCarryforward) +
+      businessCarryforward +
+      rentalCarryforward +
+      k1Carryforward
+    )
   }
 
   reitDividends = (): number =>

@@ -585,6 +585,24 @@ export interface QbiDeductionData {
   dpadReduction?: number
 }
 
+export interface AmtAdjustmentData {
+  line2cInvestmentInterestExpense?: number
+  line2dDepletion?: number
+  line2fAlternativeTaxNetOperatingLossDeduction?: number
+  line2hQualifiedSmallBusinessStock?: number
+  line2kPropertyDisposition?: number
+  line2lPost1986Depreciation?: number
+  line2mPassiveActivities?: number
+  line2nLossLimitations?: number
+  line2oCirculationCosts?: number
+  line2pLongTermContracts?: number
+  line2qMiningCosts?: number
+  line2rResearchExperimentalCosts?: number
+  line2sPre1987InstallmentSales?: number
+  line2tIntangibleDrillingCosts?: number
+  line3OtherAdjustments?: number
+}
+
 export interface ItemizedDeductions {
   medicalAndDental: string | number
   stateAndLocalTaxes: string | number
@@ -2886,6 +2904,7 @@ export interface Information<D = Date> {
   // Schedule C - Business Income
   businesses?: Record<string, unknown>[] // Schedule C (cast in form)
   qbiDeductionData?: QbiDeductionData
+  amtAdjustmentData?: AmtAdjustmentData
   // Schedule E supplemental entries not captured elsewhere
   scheduleEPage2?: ScheduleEPage2Data
   // Form 2441 - Child Care

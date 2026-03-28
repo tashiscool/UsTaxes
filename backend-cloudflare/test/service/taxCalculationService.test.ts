@@ -1563,6 +1563,79 @@ describe('TaxCalculationService', () => {
       expect(information.businesses?.[0]?.qbiIsCooperative).toBe(true)
     })
 
+    it('maps business QBI carryforwards and explicit AMT adjustment inputs into the engine info surface', () => {
+      const information = adaptFactsToInformation(
+        baseFacts({
+          businessRecords: [
+            {
+              id: 'biz-qbi-carryforward',
+              entityType: 'schedule_c',
+              name: 'Delta Advisory',
+              grossReceipts: 90000,
+              cogs: 0,
+              totalExpenses: 10000,
+              expenses: {},
+              ordinaryIncome: 0,
+              rentalIncome: 0,
+              interestIncome: 0,
+              dividendIncome: 0,
+              capitalGainLoss: 0,
+              guaranteedPayments: 0,
+              section179: 0,
+              qbiEligible: true,
+              priorYearUnallowedLoss: 1800,
+              homeOffice: false,
+              homeOfficeMethod: 'simplified',
+              homeOfficePct: 0,
+              homeOfficeSqFt: 0,
+              homeSqFt: 0,
+              homeOfficeMortgageInterest: 0,
+              homeOfficeRealEstateTaxes: 0,
+              homeOfficeInsurance: 0,
+              homeOfficeUtilities: 0,
+              homeOfficeRepairs: 0,
+              homeOfficeOther: 0,
+              homeOfficeHomeValue: 0,
+              homeOfficeLandValue: 0,
+              homeOfficePurchaseDate: '',
+              homeOfficePriorDepreciation: 0,
+              homeOfficeDeduction: 0,
+              netBusinessIncome: 80000,
+              selfEmploymentIncome: 80000,
+              qbiBaseIncome: 80000,
+              passiveLoss: 0,
+              atRiskBasis: 0,
+              isComplete: true
+            }
+          ],
+          amtAdjustmentData: {
+            line2cInvestmentInterestExpense: 125,
+            line2lPost1986Depreciation: 450,
+            line3OtherAdjustments: 90
+          }
+        })
+      )
+
+      expect(information.businesses?.[0]?.priorYearUnallowedLoss).toBe(1800)
+      expect(information.amtAdjustmentData).toEqual({
+        line2cInvestmentInterestExpense: 125,
+        line2dDepletion: 0,
+        line2fAlternativeTaxNetOperatingLossDeduction: 0,
+        line2hQualifiedSmallBusinessStock: 0,
+        line2kPropertyDisposition: 0,
+        line2lPost1986Depreciation: 450,
+        line2mPassiveActivities: 0,
+        line2nLossLimitations: 0,
+        line2oCirculationCosts: 0,
+        line2pLongTermContracts: 0,
+        line2qMiningCosts: 0,
+        line2rResearchExperimentalCosts: 0,
+        line2sPre1987InstallmentSales: 0,
+        line2tIntangibleDrillingCosts: 0,
+        line3OtherAdjustments: 90
+      })
+    })
+
     it('maps page-2 Schedule E K-1 facts into partnership records for the form engine', () => {
       const information = adaptFactsToInformation(
         baseFacts({
