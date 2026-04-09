@@ -21,6 +21,16 @@ export interface Env {
   APP_OIDC_CLIENT_SECRET?: string
   APP_OIDC_SCOPES?: string
   TAXFLOW_STATE_PROFILE_BASE_URL?: string
+  EMAIL_PROVIDER?: string
+  EMAIL_FROM?: string
+  EMAIL_FROM_NAME?: string
+  EMAIL_TIMEOUT_SECONDS?: string
+  EMAIL_MAILCHANNELS_URL?: string
+  EMAIL_MAILCHANNELS_API_KEY?: string
+  MAILCHANNELS_API_KEY?: string
+  EMAIL_DKIM_DOMAIN?: string
+  EMAIL_DKIM_SELECTOR?: string
+  EMAIL_DKIM_PRIVATE_KEY?: string
   // Production config
   ENVIRONMENT?: string
   CORS_ORIGIN?: string

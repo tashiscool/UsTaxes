@@ -758,10 +758,22 @@ app.post('/app/v1/filing-sessions/:sessionId/sign', async (c) => {
 app.post('/app/v1/filing-sessions/:sessionId/submit', async (c) => {
   const user = await requireAppUser(c)
   const { appSessionService } = buildServices(c)
-  const result = await appSessionService.submit(
-    c.req.param('sessionId'),
-    await c.req.json().catch(() => ({})),
-    user
+  const sessionId = c.req.param('sessionId')
+  const body = await c.req.json().catch(() => ({}))
+  const result = await appSessionService.submit(sessionId, body, user)
+  c.executionCtx.waitUntil(
+    appSessionService
+      .sendSubmissionReceiptEmail(sessionId, {}, user)
+      .catch((error) => {
+        console.error(
+          JSON.stringify({
+            event: 'submission_receipt_email_background_failed',
+            sessionId,
+            userId: user.sub,
+            message: error instanceof Error ? error.message : 'unknown_error'
+          })
+        )
+      })
   )
   return c.json(result, 202)
 })
@@ -785,6 +797,20 @@ app.post('/app/v1/filing-sessions/:sessionId/submission/retry', async (c) => {
   )
   return c.json(result, 202)
 })
+
+app.post(
+  '/app/v1/filing-sessions/:sessionId/submission/receipt-email',
+  async (c) => {
+    const user = await requireAppUser(c)
+    const { appSessionService } = buildServices(c)
+    const result = await appSessionService.sendSubmissionReceiptEmail(
+      c.req.param('sessionId'),
+      await c.req.json().catch(() => ({})),
+      user
+    )
+    return c.json(result, 202)
+  }
+)
 
 app.get('/app/v1/filing-sessions/:sessionId/print-mail', async (c) => {
   const user = await requireAppUser(c)

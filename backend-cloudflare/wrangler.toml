@@ -8,9 +8,14 @@ enabled = true
 [vars]
 ENVIRONMENT = "development"
 CORS_ORIGIN = "http://localhost:5173"
+USTAXES_FRONTEND_URL = "http://localhost:5173"
 LOCAL_DEV_AUTH_ENABLED = "true"
 APP_DEV_ALLOW_LOCAL_LOGIN = "true"
 LOG_LEVEL = "debug"
+EMAIL_PROVIDER = "none"
+EMAIL_FROM = "noreply@freetaxflow.com"
+EMAIL_FROM_NAME = "FreeTaxFlow"
+EMAIL_TIMEOUT_SECONDS = "10"
 
 [[d1_databases]]
 binding = "USTAXES_DB"
@@ -51,9 +56,14 @@ name = "ustaxes-backend-staging"
 [env.staging.vars]
 ENVIRONMENT = "staging"
 CORS_ORIGIN = "https://staging.freetaxflow.com"
+USTAXES_FRONTEND_URL = "https://staging.freetaxflow.com"
 LOCAL_DEV_AUTH_ENABLED = "false"
 APP_DEV_ALLOW_LOCAL_LOGIN = "false"
 LOG_LEVEL = "info"
+EMAIL_PROVIDER = "none"
+EMAIL_FROM = "noreply@freetaxflow.com"
+EMAIL_FROM_NAME = "FreeTaxFlow"
+EMAIL_TIMEOUT_SECONDS = "10"
 
 [[env.staging.d1_databases]]
 binding = "USTAXES_DB"
@@ -94,9 +104,14 @@ routes = [{ pattern = "api.freetaxflow.com", custom_domain = true }]
 [env.production.vars]
 ENVIRONMENT = "production"
 CORS_ORIGIN = "https://freetaxflow.com"
+USTAXES_FRONTEND_URL = "https://freetaxflow.com"
 LOCAL_DEV_AUTH_ENABLED = "false"
 APP_DEV_ALLOW_LOCAL_LOGIN = "false"
 LOG_LEVEL = "warn"
+EMAIL_PROVIDER = "mailchannels"
+EMAIL_FROM = "noreply@freetaxflow.com"
+EMAIL_FROM_NAME = "FreeTaxFlow"
+EMAIL_TIMEOUT_SECONDS = "10"
 # Production secrets must be injected with `wrangler secret put`, not committed here:
 # - APP_OIDC_ISSUER_URL
 # - APP_OIDC_CLIENT_ID
@@ -105,6 +120,8 @@ LOG_LEVEL = "warn"
 # - APP_AUTH_SECRET
 # - SESSION_SECRET_HMAC_KEY
 # - INTERNAL_API_TOKEN
+# - EMAIL_MAILCHANNELS_API_KEY (recommended when your MailChannels plan requires auth)
+# - EMAIL_DKIM_PRIVATE_KEY (optional if you configure DKIM signing directly)
 
 [[env.production.d1_databases]]
 binding = "USTAXES_DB"

@@ -3577,6 +3577,116 @@ describe('Cloudflare runtime integration (Worker + D1 + R2 + DO)', () => {
     expect(retryResult.retried).toBe(true)
   })
 
+  it('exposes a submission receipt email endpoint for filed sessions', async () => {
+    let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        sub: 'taxflow-user-receipt-email',
+        email: 'receipt-email@example.com',
+        displayName: 'Receipt Email User'
+      })
+    })
+    expect(response.status).toBe(201)
+    const sessionCookie = extractCookieHeader(response)
+
+    response = await worker.fetch(`${baseUrl}/app/v1/filing-sessions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: sessionCookie
+      },
+      body: JSON.stringify({
+        name: 'Receipt Email Session',
+        taxYear: 2025,
+        filingStatus: 'single',
+        formType: '1040',
+        currentPhase: 'file',
+        completionPct: 100,
+        completedScreens: [
+          '/taxpayer-profile',
+          '/review-confirm',
+          '/efile-wizard'
+        ],
+        screenData: {
+          '/taxpayer-profile': {
+            firstName: 'Rita',
+            lastName: 'Receipt',
+            filingStatus: 'single',
+            address: {
+              line1: '44 Filing Way',
+              city: 'Boston',
+              state: 'MA',
+              zip: '02110'
+            }
+          },
+          '/review-confirm': {
+            totalRefund: 471,
+            totalTax: 2242,
+            totalPayments: 2713
+          },
+          '/efile-wizard': {
+            signatureText: 'Rita Receipt',
+            agreed8879: true
+          }
+        }
+      })
+    })
+    expect(response.status).toBe(201)
+    const created = await parseJsonResponse<JsonObject>(response)
+    const filingSessionId = String((created.filingSession as JsonObject).id)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/submit`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({
+          idempotencyKey: crypto.randomUUID()
+        })
+      }
+    )
+    expect(response.status).toBe(202)
+    const submitted = await parseJsonResponse<JsonObject>(response)
+    expect(submitted.receiptEmailEndpoint).toBe(
+      `/app/v1/filing-sessions/${filingSessionId}/submission/receipt-email`
+    )
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/submission`,
+      {
+        headers: { cookie: sessionCookie }
+      }
+    )
+    expect(response.status).toBe(200)
+    const submissionStatus = await parseJsonResponse<JsonObject>(response)
+    expect(
+      (submissionStatus.submission as JsonObject).receiptEmailEndpoint
+    ).toBe(`/app/v1/filing-sessions/${filingSessionId}/submission/receipt-email`)
+
+    response = await worker.fetch(
+      `${baseUrl}/app/v1/filing-sessions/${filingSessionId}/submission/receipt-email`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: sessionCookie
+        },
+        body: JSON.stringify({})
+      }
+    )
+    expect(response.status).toBe(202)
+    const resend = await parseJsonResponse<JsonObject>(response)
+    expect(resend.submissionId).toBe(
+      String((submitted.submission as JsonObject).id)
+    )
+    expect((resend.email as JsonObject).skipped).toBe(true)
+    expect((resend.email as JsonObject).providerStatus).toBe('disabled')
+  })
+
   it('round-trips advanced TaxFlow entity families through app CRUD', async () => {
     let response = await worker.fetch(`${baseUrl}/app/v1/auth/dev-login`, {
       method: 'POST',

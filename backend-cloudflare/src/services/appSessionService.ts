@@ -7,6 +7,7 @@ import type { Env } from '../domain/env'
 import type { AppUserClaims } from '../utils/appAuth'
 import type { ReturnFormType, SubmissionPayload } from '../domain/types'
 import { ApiService } from './apiService'
+import { TransactionalEmailService } from './transactionalEmailService'
 import { create1040PDF as create1040PDF2024 } from 'ustaxes/forms/Y2024/irsForms'
 import { create1040PDF as create1040PDF2025 } from 'ustaxes/forms/Y2025/irsForms'
 import { isLeft } from 'ustaxes/core/util'
@@ -344,6 +345,10 @@ const submitSchema = z.object({
   idempotencyKey: z.string().uuid().optional(),
   factsOverride: z.record(z.string(), z.unknown()).optional(),
   payloadOverride: z.record(z.string(), z.unknown()).optional()
+})
+
+const submissionReceiptEmailSchema = z.object({
+  force: z.boolean().optional().default(false)
 })
 
 const stateTransferSchema = z.object({
@@ -11523,8 +11528,18 @@ export class AppSessionService {
 
     return {
       submission: result.submission,
-      taxReturnId: syncResult.taxReturnId
+      taxReturnId: syncResult.taxReturnId,
+      receiptEmailEndpoint: this.getSubmissionReceiptEmailEndpoint(sessionId)
     }
+  }
+
+  async sendSubmissionReceiptEmail(
+    sessionId: string,
+    rawBody: unknown,
+    user: AppUserClaims
+  ) {
+    const body = submissionReceiptEmailSchema.parse(rawBody ?? {})
+    return this.deliverSubmissionReceiptEmail(sessionId, user, body.force)
   }
 
   async getSubmission(sessionId: string, user: AppUserClaims) {
@@ -11569,7 +11584,8 @@ export class AppSessionService {
         canRetry:
           submission.submission.status === 'rejected' ||
           submission.submission.status === 'failed',
-        retryEndpoint: `/app/v1/filing-sessions/${sessionId}/submission/retry`
+        retryEndpoint: `/app/v1/filing-sessions/${sessionId}/submission/retry`,
+        receiptEmailEndpoint: this.getSubmissionReceiptEmailEndpoint(sessionId)
       }
     }
   }
@@ -11669,6 +11685,48 @@ export class AppSessionService {
     return {
       ...result,
       lifecycleStatus: 'retrying' as const
+    }
+  }
+
+  private getSubmissionReceiptEmailEndpoint(sessionId: string): string {
+    return `/app/v1/filing-sessions/${sessionId}/submission/receipt-email`
+  }
+
+  private async deliverSubmissionReceiptEmail(
+    sessionId: string,
+    user: AppUserClaims,
+    force = false
+  ) {
+    const row = await this.requireSession(sessionId, user.sub)
+    if (!row.latest_submission_id) {
+      throw new HttpError(409, 'No submission is available for a receipt email')
+    }
+
+    const snapshot = await this.getSnapshot(row)
+    const submissionResult = await this.apiService.getSubmission(
+      row.latest_submission_id
+    )
+    const payloadResult = await this.apiService.getSubmissionPayload(
+      row.latest_submission_id
+    )
+    const emailService = new TransactionalEmailService(this.env)
+    const email = await emailService.sendSubmissionReceiptEmail({
+      user,
+      sessionId,
+      taxYear: snapshot.taxYear,
+      filingStatus: snapshot.filingStatus,
+      formType: snapshot.formType,
+      submissionId: submissionResult.submission.id,
+      submissionStatus: submissionResult.submission.status,
+      submittedAt: submissionResult.submission.createdAt,
+      payload: payloadResult.payload ?? null,
+      force
+    })
+
+    return {
+      submissionId: submissionResult.submission.id,
+      receiptEmailEndpoint: this.getSubmissionReceiptEmailEndpoint(sessionId),
+      email
     }
   }
 
