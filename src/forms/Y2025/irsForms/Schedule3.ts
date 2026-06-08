@@ -56,7 +56,9 @@ export default class Schedule3 extends F1040Attachment {
     (this.f1040.f5695?.isNeeded() ?? false) || // Residential Energy Credits
     (this.f1040.f8801?.isNeeded() ?? false) || // Prior Year AMT Credit
     (this.f1040.f8839?.isNeeded() ?? false) || // Adoption Credit
-    (this.f1040.scheduleR?.isNeeded() ?? false) // Schedule R: Credit for Elderly/Disabled
+    (this.f1040.scheduleR?.isNeeded() ?? false) || // Schedule R: Credit for Elderly/Disabled
+    (this.f1040.f8936?.isNeeded() ?? false) ||
+    (this.f1040.info.extensionPayment ?? 0) > 0
 
   deductions = (): number => 0
   // Part I: Nonrefundable credits
@@ -70,7 +72,7 @@ export default class Schedule3 extends F1040Attachment {
   l6c = (): number | undefined => undefined // Credit for prior year minimum tax (Form 8801) - already in 6a
   l6d = (): number | undefined => this.f1040.f8839?.nonrefundableCredit() // Form 8839: Adoption Credit
   l6e = (): number | undefined => this.f1040.scheduleR?.credit() // Schedule R: Credit for Elderly/Disabled
-  l6f = (): number | undefined => undefined // TODO: other credits
+  l6f = (): number | undefined => this.f1040.f8936?.nonrefundableCredit()
   l6g = (): number | undefined => undefined // TODO: other credits
   l6h = (): number | undefined => undefined // TODO: other credits
   l6i = (): number | undefined => undefined // TODO: other credits
@@ -111,8 +113,10 @@ export default class Schedule3 extends F1040Attachment {
   // Part II: Other payments and refundable credits
   l9 = (): number | undefined => this.f1040.f8962?.credit()
 
-  // TODO: Amount paid with extension for time to file
-  l10 = (): number | undefined => undefined
+  l10 = (): number | undefined =>
+    (this.f1040.info.extensionPayment ?? 0) > 0
+      ? this.f1040.info.extensionPayment
+      : undefined
 
   l11 = (): number =>
     // TODO: also applies to RRTA tax

@@ -53,6 +53,14 @@ export default class ScheduleB extends F1040Attachment {
         amount: v.form.income
       }))
       .concat(
+        this.f1040.f1099Oids().map((v) => ({
+          payer: v.payer,
+          amount:
+            v.form.originalIssueDiscount +
+            (v.form.otherPeriodicInterest ?? 0)
+        }))
+      )
+      .concat(
         this.f1040.k1sWithInterest().map((v) => ({
           payer: v.partnershipName,
           amount: v.interestIncome
@@ -72,7 +80,17 @@ export default class ScheduleB extends F1040Attachment {
       .concat(Array(rightPad).fill(undefined))
   }
 
-  l2 = (): number => sumFields(this.f1040.f1099Ints().map((f) => f.form.income))
+  l2 = (): number =>
+    sumFields([
+      ...this.f1040.f1099Ints().map((f) => f.form.income),
+      ...this.f1040
+        .f1099Oids()
+        .map(
+          (f) =>
+            f.form.originalIssueDiscount +
+            (f.form.otherPeriodicInterest ?? 0)
+        )
+    ])
 
   // TODO: Interest from tax exempt savings bonds
   l3 = (): number | undefined => undefined

@@ -1,6 +1,7 @@
 import F1040Attachment from './F1040Attachment'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
+import { LongTermCareBenefitRecord } from 'ustaxes/core/data'
 
 /**
  * Form 1099-LTC - Long-Term Care and Accelerated Death Benefits
@@ -38,6 +39,7 @@ export interface F1099LTCData {
   qualifiedContract: boolean // Box 4 checkbox
   statusOfInsured: 'chronically_ill' | 'terminally_ill' // Box 5
   dateInsuredCertified?: Date // Date status certified
+  daysInPeriod?: number
 }
 
 // 2025 per diem limitation
@@ -52,21 +54,56 @@ export default class F1099LTC extends F1040Attachment {
   }
 
   hasF1099LTCData = (): boolean => {
-    return false
+    return this.f1099LTCRecords().length > 0
   }
 
   f1099LTCData = (): F1099LTCData | undefined => {
-    return undefined
+    return this.f1099LTCRecords()[0]
   }
+
+  f1099LTCRecords = (): F1099LTCData[] =>
+    (this.f1040.info.longTermCareBenefitRecords ?? []).map(
+      (record: LongTermCareBenefitRecord): F1099LTCData => ({
+        payerName: record.payerName ?? '',
+        payerAddress: record.payerAddress ?? '',
+        payerTIN: record.payerTIN ?? '',
+        policyholderName: record.policyholderName ?? this.f1040.namesString(),
+        policyholderAddress: record.policyholderAddress ?? '',
+        policyholderSSN:
+          record.policyholderSSN ??
+          this.f1040.info.taxPayer.primaryPerson.ssid,
+        insuredName: record.insuredName ?? record.policyholderName ?? '',
+        insuredAddress: record.insuredAddress ?? '',
+        insuredSSN: record.insuredSSN ?? '',
+        accountNumber: record.accountNumber,
+        grossBenefitsPaid: record.grossBenefitsPaid,
+        acceleratedDeathBenefits: record.acceleratedDeathBenefits ?? 0,
+        benefitsPaidOnPerDiemBasis:
+          record.benefitsPaidOnPerDiemBasis ?? false,
+        qualifiedContract: record.qualifiedContract ?? false,
+        statusOfInsured: record.statusOfInsured ?? 'chronically_ill',
+        dateInsuredCertified:
+          record.dateInsuredCertified instanceof Date
+            ? record.dateInsuredCertified
+            : undefined,
+        daysInPeriod: record.daysInPeriod
+      })
+    )
 
   // Box 1: Gross long-term care benefits paid
   grossBenefitsPaid = (): number => {
-    return this.f1099LTCData()?.grossBenefitsPaid ?? 0
+    return this.f1099LTCRecords().reduce(
+      (sum, record) => sum + record.grossBenefitsPaid,
+      0
+    )
   }
 
   // Box 2: Accelerated death benefits paid
   acceleratedDeathBenefits = (): number => {
-    return this.f1099LTCData()?.acceleratedDeathBenefits ?? 0
+    return this.f1099LTCRecords().reduce(
+      (sum, record) => sum + record.acceleratedDeathBenefits,
+      0
+    )
   }
 
   // Box 3: Benefits paid on per diem or other periodic basis
@@ -97,9 +134,12 @@ export default class F1099LTC extends F1040Attachment {
   // Calculate potentially taxable amount for per diem payments
   // Taxable if per diem exceeds daily limit and exceeds actual costs
   perDiemLimitExcess = (daysInYear = 365): number => {
-    if (!this.isPaidOnPerDiemBasis()) return 0
-    const annualLimit = PER_DIEM_LIMIT_2025 * daysInYear
-    return Math.max(0, this.grossBenefitsPaid() - annualLimit)
+    return this.f1099LTCRecords().reduce((sum, record) => {
+      if (!record.benefitsPaidOnPerDiemBasis) return sum
+      const days = record.daysInPeriod ?? daysInYear
+      const annualLimit = PER_DIEM_LIMIT_2025 * days
+      return sum + Math.max(0, record.grossBenefitsPaid - annualLimit)
+    }, 0)
   }
 
   // Are benefits potentially tax-free?

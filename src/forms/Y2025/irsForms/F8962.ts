@@ -137,8 +137,16 @@ export default class F8962 extends F1040Attachment {
     return agi + taxExemptInterest + foreignExclusion
   }
 
-  // Line 2b: Dependents' modified AGI (simplified - usually 0)
-  l2b = (): number => 0
+  // Line 2b: Dependents' modified AGI
+  l2b = (): number => {
+    const dependentIncome = this.f1040.info.acaHouseholdIncome
+    return (
+      (dependentIncome?.dependentAgi ?? 0) +
+      (dependentIncome?.dependentTaxExemptInterest ?? 0) +
+      (dependentIncome?.dependentForeignIncomeAdjustment ?? 0) +
+      (dependentIncome?.dependentLine6Difference ?? 0)
+    )
+  }
 
   // Line 3: Household income (line 2a + line 2b)
   l3 = (): number => this.l2a() + this.l2b()

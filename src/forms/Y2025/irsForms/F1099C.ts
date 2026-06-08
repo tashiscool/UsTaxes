@@ -2,6 +2,7 @@
 import F1040Attachment from './F1040Attachment'
 import { Field } from 'ustaxes/core/pdfFiller'
 import { FormTag } from 'ustaxes/core/irsForms/Form'
+import { CancellationOfDebtRecord } from 'ustaxes/core/data'
 
 /**
  * Form 1099-C - Cancellation of Debt
@@ -39,6 +40,8 @@ export interface F1099CData {
   personallyLiable: boolean // Box 5 checkbox
   identifiableEventCode: string // Box 6
   fairMarketValueOfProperty: number // Box 7
+  totalExcludedFromGrossIncome?: number
+  exclusionReason?: string
 }
 
 // Identifiable event codes
@@ -62,16 +65,52 @@ export default class F1099C extends F1040Attachment {
   }
 
   hasF1099CData = (): boolean => {
-    return false
+    return this.f1099CRecords().length > 0
   }
 
   f1099CData = (): F1099CData | undefined => {
-    return undefined
+    return this.f1099CRecords()[0]
   }
+
+  f1099CRecords = (): F1099CData[] =>
+    (this.f1040.info.cancellationOfDebtRecords ?? []).map(
+      (record: CancellationOfDebtRecord): F1099CData => ({
+        creditorName: record.creditorName ?? '',
+        creditorAddress: record.creditorAddress ?? '',
+        creditorTIN: record.creditorTIN ?? '',
+        creditorPhone: record.creditorPhone ?? '',
+        debtorName: record.debtorName ?? this.f1040.namesString(),
+        debtorAddress: record.debtorAddress ?? '',
+        debtorTIN: record.debtorTIN ?? this.f1040.info.taxPayer.primaryPerson.ssid,
+        accountNumber: record.accountNumber,
+        dateOfIdentifiableEvent:
+          record.dateOfIdentifiableEvent instanceof Date
+            ? record.dateOfIdentifiableEvent
+            : new Date('2025-12-31'),
+        amountOfDebtCancelled: record.amountOfDebtCancelled,
+        interestIncludedInBox2: record.interestIncludedInBox2 ?? 0,
+        debtDescription: record.debtDescription ?? '',
+        personallyLiable: record.personallyLiable ?? false,
+        identifiableEventCode: record.identifiableEventCode ?? '',
+        fairMarketValueOfProperty: record.fairMarketValueOfProperty ?? 0,
+        totalExcludedFromGrossIncome: record.totalExcludedFromGrossIncome,
+        exclusionReason: record.exclusionReason
+      })
+    )
 
   // Box 2: Amount of debt cancelled
   amountOfDebtCancelled = (): number => {
-    return this.f1099CData()?.amountOfDebtCancelled ?? 0
+    return this.f1099CRecords().reduce(
+      (sum, record) => sum + record.amountOfDebtCancelled,
+      0
+    )
+  }
+
+  excludedFromGrossIncome = (): number => {
+    return this.f1099CRecords().reduce(
+      (sum, record) => sum + (record.totalExcludedFromGrossIncome ?? 0),
+      0
+    )
   }
 
   // Box 3: Interest included
@@ -106,7 +145,8 @@ export default class F1099C extends F1040Attachment {
   }
 
   // To Schedule 1 Line 8c (unless excluded)
-  toSchedule1Line8c = (): number => this.amountOfDebtCancelled()
+  toSchedule1Line8c = (): number =>
+    Math.max(0, this.amountOfDebtCancelled() - this.excludedFromGrossIncome())
 
   fields = (): Field[] => {
     const data = this.f1099CData()

@@ -51,6 +51,7 @@ import {
   IraPlanType,
   type Asset,
   type F1099IntData,
+  type F1099OidData,
   type F1099DivData,
   type F1099BData,
   type F1099RData,
@@ -903,12 +904,52 @@ const adapt1099s = (facts: FactsRecord): Supported1099[] => {
               income: amount,
               taxExemptInterest:
                 taxExemptInterest > 0 ? taxExemptInterest : undefined,
-              foreignTaxPaid: foreignTaxPaid > 0 ? foreignTaxPaid : undefined
+              foreignTaxPaid: foreignTaxPaid > 0 ? foreignTaxPaid : undefined,
+              federalIncomeTaxWithheld:
+                toNum(r.federalWithheld ?? r.federalTaxWithheld) || undefined
             } as F1099IntData,
             personRole
           }
         ]
         }
+      case 'OID':
+      case '1099OID':
+        return [
+          {
+            payer,
+            type: Income1099Type.OID,
+            form: {
+              originalIssueDiscount: toNum(
+                r.originalIssueDiscount ??
+                  r.oid ??
+                  r.box1 ??
+                  amounts.originalIssueDiscount ??
+                  amounts.oid ??
+                  amounts.amount ??
+                  amount
+              ),
+              otherPeriodicInterest:
+                toNum(
+                  r.otherPeriodicInterest ??
+                    r.interest ??
+                    r.secondaryAmount ??
+                    amounts.otherPeriodicInterest ??
+                    amounts.secondaryAmount
+                ) || undefined,
+              earlyWithdrawalPenalty:
+                toNum(
+                  r.earlyWithdrawalPenalty ??
+                    r.penalty ??
+                    r.tertiaryAmount ??
+                    amounts.earlyWithdrawalPenalty ??
+                    amounts.tertiaryAmount
+                ) || undefined,
+              federalIncomeTaxWithheld:
+                toNum(r.federalWithheld ?? r.federalTaxWithheld) || undefined
+            } as F1099OidData,
+            personRole
+          }
+        ]
       case 'DIV':
       case '1099DIV':
         {
@@ -2263,6 +2304,164 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     facts.homeImprovements
   ).filter((p) => toNum(p.cost) > 0)
 
+  const cleanVehicleCredits = asArray<Record<string, unknown>>(
+    facts.cleanVehicleCredits ?? facts.cleanVehicles
+  )
+    .map((vehicle) => {
+      const purchasePrice = toNum(
+        vehicle.purchasePrice ?? vehicle.vehicleCost ?? vehicle.cost
+      )
+      const estimatedCredit = toNum(
+        vehicle.estimatedCredit ?? vehicle.credit ?? vehicle.certifiedCredit
+      )
+      const newOrUsed = toStr(vehicle.newOrUsed ?? vehicle.vehicleType)
+        .toLowerCase()
+        .includes('used')
+        ? 'used'
+        : 'new'
+      return {
+        vin: toStr(vehicle.vin ?? vehicle.VIN),
+        make: toStr(vehicle.make) || undefined,
+        model: toStr(vehicle.model) || undefined,
+        year: toNum(vehicle.year) || undefined,
+        purchaseDate: toDate(
+          vehicle.purchaseDate ?? vehicle.datePlacedInService
+        ),
+        purchasePrice: purchasePrice || undefined,
+        newOrUsed: newOrUsed as 'new' | 'used',
+        dealerTransfer: toBool(vehicle.dealerTransfer),
+        dealerName: toStr(vehicle.dealerName) || undefined,
+        batteryKwh: toNum(vehicle.batteryKwh) || undefined,
+        estimatedCredit: estimatedCredit || undefined,
+        businessUsePercentage:
+          toNum(vehicle.businessUsePercentage ?? vehicle.businessUsePct) ||
+          undefined
+      }
+    })
+    .filter((vehicle) => vehicle.vin || (vehicle.estimatedCredit ?? 0) > 0)
+
+  const cancellationOfDebtRecords = [
+    ...asArray<Record<string, unknown>>(facts.cancellationOfDebtRecords),
+    ...asArray<Record<string, unknown>>(facts.form1099Records).filter((record) =>
+      ['C', '1099C'].includes(toStr(record.type).toUpperCase().replace('-', ''))
+    )
+  ]
+    .map((record) => {
+      const amounts = asRecord(record.amounts)
+      const amountOfDebtCancelled = toNum(
+        record.amountOfDebtCancelled ??
+          record.amountCancelled ??
+          record.amount ??
+          record.box2 ??
+          amounts.amountOfDebtCancelled ??
+          amounts.amountCancelled ??
+          amounts.amount
+      )
+      return {
+        creditorName: toStr(record.creditorName ?? record.payerName ?? record.payer) || undefined,
+        creditorAddress: toStr(record.creditorAddress) || undefined,
+        creditorTIN: toStr(record.creditorTIN ?? record.creditorFederalId) || undefined,
+        creditorPhone: toStr(record.creditorPhone) || undefined,
+        debtorName: toStr(record.debtorName) || undefined,
+        debtorAddress: toStr(record.debtorAddress) || undefined,
+        debtorTIN: toStr(record.debtorTIN) || undefined,
+        accountNumber: toStr(record.accountNumber) || undefined,
+        dateOfIdentifiableEvent: toDate(
+          record.dateOfIdentifiableEvent ?? record.eventDate ?? record.box1
+        ),
+        amountOfDebtCancelled,
+        interestIncludedInBox2: toNum(
+          record.interestIncludedInBox2 ?? record.interestIncluded ?? record.box3
+        ),
+        debtDescription: toStr(record.debtDescription ?? record.description) || undefined,
+        personallyLiable: toBool(record.personallyLiable),
+        identifiableEventCode: toStr(record.identifiableEventCode ?? record.eventCode) || undefined,
+        fairMarketValueOfProperty: toNum(
+          record.fairMarketValueOfProperty ?? record.fmvProperty ?? record.box7
+        ),
+        totalExcludedFromGrossIncome: toNum(
+          record.totalExcludedFromGrossIncome ??
+            record.excludedFromGrossIncome ??
+            amounts.totalExcludedFromGrossIncome
+        ),
+        exclusionReason: toStr(record.exclusionReason) || undefined
+      }
+    })
+    .filter((record) => record.amountOfDebtCancelled > 0)
+
+  const longTermCareBenefitRecords = [
+    ...asArray<Record<string, unknown>>(facts.longTermCareBenefitRecords),
+    ...asArray<Record<string, unknown>>(facts.form1099Records).filter((record) =>
+      ['LTC', '1099LTC'].includes(toStr(record.type).toUpperCase().replace('-', ''))
+    )
+  ]
+    .map((record) => {
+      const amounts = asRecord(record.amounts)
+      const grossBenefitsPaid = toNum(
+        record.grossBenefitsPaid ??
+          record.amount ??
+          record.box1 ??
+          amounts.grossBenefitsPaid ??
+          amounts.amount
+      )
+      const statusOfInsured: 'chronically_ill' | 'terminally_ill' =
+        toStr(record.statusOfInsured).toLowerCase() === 'terminally_ill'
+          ? 'terminally_ill'
+          : 'chronically_ill'
+      return {
+        payerName: toStr(record.payerName ?? record.payer) || undefined,
+        payerAddress: toStr(record.payerAddress) || undefined,
+        payerTIN: toStr(record.payerTIN) || undefined,
+        policyholderName: toStr(record.policyholderName) || undefined,
+        policyholderAddress: toStr(record.policyholderAddress) || undefined,
+        policyholderSSN: toStr(record.policyholderSSN) || undefined,
+        insuredName: toStr(record.insuredName) || undefined,
+        insuredAddress: toStr(record.insuredAddress) || undefined,
+        insuredSSN: toStr(record.insuredSSN) || undefined,
+        accountNumber: toStr(record.accountNumber) || undefined,
+        grossBenefitsPaid,
+        acceleratedDeathBenefits: toNum(
+          record.acceleratedDeathBenefits ??
+            record.secondaryAmount ??
+            record.box2 ??
+            amounts.acceleratedDeathBenefits ??
+            amounts.secondaryAmount
+        ),
+        benefitsPaidOnPerDiemBasis: toBool(
+          record.benefitsPaidOnPerDiemBasis ?? record.perDiemBasis
+        ),
+        qualifiedContract: toBool(record.qualifiedContract ?? true),
+        statusOfInsured,
+        dateInsuredCertified: toDate(record.dateInsuredCertified),
+        daysInPeriod: toNum(record.daysInPeriod ?? record.days) || undefined
+      }
+    })
+    .filter((record) => record.grossBenefitsPaid > 0)
+
+  const otherIncomeItems = asArray<Record<string, unknown>>(
+    facts.otherIncomeItems
+  )
+    .map((item) => ({
+      description: toStr(item.description ?? item.label ?? item.source),
+      amount: toNum(item.amount)
+    }))
+    .filter((item) => item.amount > 0)
+
+  const acaHouseholdIncome = (() => {
+    const raw = asRecord(facts.acaHouseholdIncome)
+    const result = {
+      dependentAgi: toNum(raw.dependentAgi),
+      dependentTaxExemptInterest: toNum(raw.dependentTaxExemptInterest),
+      dependentForeignIncomeAdjustment: toNum(
+        raw.dependentForeignIncomeAdjustment
+      ),
+      dependentLine6Difference: toNum(raw.dependentLine6Difference)
+    }
+    return Object.values(result).some((amount) => amount > 0)
+      ? result
+      : undefined
+  })()
+
   // ─── Form 8839 adopted children ─────────────────────────────────────────
   const adoptedChildren: AdoptedChild[] | undefined = (() => {
     const children = asArray<Record<string, unknown>>(facts.adoptedChildren)
@@ -2442,6 +2641,20 @@ export const adaptFactsToInformation = (facts: FactsRecord): Information => {
     individualRetirementArrangements,
     schedule8812EarnedIncomeAdjustments,
     otherFederalWithholdingCredits,
+    otherIncomeItems: otherIncomeItems.length > 0 ? otherIncomeItems : undefined,
+    cleanVehicleCredits:
+      cleanVehicleCredits.length > 0 ? cleanVehicleCredits : undefined,
+    cancellationOfDebtRecords:
+      cancellationOfDebtRecords.length > 0
+        ? cancellationOfDebtRecords
+        : undefined,
+    longTermCareBenefitRecords:
+      longTermCareBenefitRecords.length > 0
+        ? longTermCareBenefitRecords
+        : undefined,
+    acaHouseholdIncome,
+    extensionPayment: toNum(facts.extensionPayment) || undefined,
+    requestExtension: toBool(facts.requestExtension) || undefined,
     appliedToNextYearEstimatedTax:
       toNum(
         facts.appliedToNextYearEstimatedTax ??
@@ -3473,7 +3686,7 @@ export class TaxCalculationService {
           : f1040.l33()
         const refund = useNonresidentBranch
           ? Math.max(0, f1040nr!.refund())
-          : Math.max(0, f1040.l34() ?? 0)
+          : Math.max(0, f1040.l35a() ?? 0)
         const amountOwed = useNonresidentBranch
           ? Math.max(0, f1040nr!.amountOwed())
           : Math.max(0, f1040.l37() ?? 0)

@@ -5,6 +5,7 @@ import {
   Income1099Div,
   Income1099G,
   Income1099Int,
+  Income1099OID,
   Income1099R,
   Income1099SSA,
   Income1099Type,
@@ -141,6 +142,9 @@ export default abstract class F1040Base extends Form {
 
   f1099Ints = (): Income1099Int[] =>
     this.f1099sByType(Income1099Type.INT) as Income1099Int[]
+
+  f1099Oids = (): Income1099OID[] =>
+    this.f1099sByType(Income1099Type.OID) as Income1099OID[]
 
   f1099Divs = (): Income1099Div[] =>
     this.f1099sByType(Income1099Type.DIV) as Income1099Div[]

@@ -32,6 +32,8 @@ export default class Schedule1 extends F1040Attachment {
       this.f1040.studentLoanInterestWorksheet.isNotDependent()) ||
     this.f1040.f8889.isNeeded() ||
     (this.f1040.f8889Spouse?.isNeeded() ?? false) ||
+    (this.l8c() ?? 0) > 0 ||
+    this.l8z() > 0 ||
     (this.f1040.scheduleF?.isNeeded() ?? false) || // Farm income
     (this.f1040.f3903?.isNeeded() ?? false) || // Moving expenses (military)
     (this.f1040.info.educatorExpenses ?? 0) > 0 ||
@@ -63,7 +65,10 @@ export default class Schedule1 extends F1040Attachment {
   }
   l8a = (): number | undefined => undefined
   l8b = (): number | undefined => undefined
-  l8c = (): number | undefined => undefined
+  l8c = (): number | undefined => {
+    const amount = this.f1040.f1099c?.toSchedule1Line8c() ?? 0
+    return amount > 0 ? amount : undefined
+  }
   l8d = (): number | undefined => undefined
   l8e = (): number | undefined => undefined
   l8f = (): number | undefined =>
@@ -140,7 +145,24 @@ export default class Schedule1 extends F1040Attachment {
       this.otherIncomeStrings.add('HSA')
     }
 
-    return sumFields([this.f1040.f8889.l20(), this.f1040.f8889Spouse?.l20()])
+    const otherIncomeItems = this.f1040.info.otherIncomeItems ?? []
+    for (const item of otherIncomeItems) {
+      if (item.amount > 0 && item.description) {
+        this.otherIncomeStrings.add(item.description)
+      }
+    }
+
+    const longTermCareExcess = this.f1040.f8853?.taxableLongTermCareBenefits()
+    if ((longTermCareExcess ?? 0) > 0) {
+      this.otherIncomeStrings.add('LTC')
+    }
+
+    return sumFields([
+      this.f1040.f8889.l20(),
+      this.f1040.f8889Spouse?.l20(),
+      ...otherIncomeItems.map((item) => item.amount),
+      longTermCareExcess
+    ])
   }
 
   l9 = (): number =>

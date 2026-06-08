@@ -1355,6 +1355,10 @@ export default class F1040 extends F1040Base {
     this.f1099ssas().reduce(
       (res, f1099) => res + f1099.form.federalIncomeTaxWithheld,
       0
+    ) +
+    this.f1099Oids().reduce(
+      (res, f1099) => res + (f1099.form.federalIncomeTaxWithheld ?? 0),
+      0
     )
 
   l25c = (): number | undefined => {

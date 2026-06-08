@@ -1832,6 +1832,7 @@ const makeSessionEntityRowId = (
 
 const FORM_1099_TYPES = new Set([
   '1099_int',
+  '1099_oid',
   '1099_div',
   '1099_misc',
   '1099_r',
@@ -1839,7 +1840,9 @@ const FORM_1099_TYPES = new Set([
   '1099_nec',
   '1099_k',
   '1099_g',
-  '1099_ssa'
+  '1099_ssa',
+  '1099_c',
+  '1099_ltc'
 ])
 
 const FEIE_LIMITS: Record<number, number> = {
@@ -5022,6 +5025,31 @@ const get1099Records = (
         record.nonqualifiedDeferredComp ??
         record.box15
     )
+    const originalIssueDiscount = toMoney(
+      rawAmounts.originalIssueDiscount ??
+        rawAmounts.oid ??
+        record.originalIssueDiscount ??
+        record.oid ??
+        record.box1
+    )
+    const secondaryAmount = toMoney(
+      rawAmounts.secondaryAmount ?? record.secondaryAmount
+    )
+    const tertiaryAmount = toMoney(
+      rawAmounts.tertiaryAmount ?? record.tertiaryAmount
+    )
+    const amountCancelled = toMoney(
+      rawAmounts.amountCancelled ??
+        rawAmounts.amountOfDebtCancelled ??
+        record.amountCancelled ??
+        record.amountOfDebtCancelled ??
+        record.box2
+    )
+    const grossBenefitsPaid = toMoney(
+      rawAmounts.grossBenefitsPaid ??
+        record.grossBenefitsPaid ??
+        record.box1
+    )
     const scalarAmount = toMoney(rawAmounts.amount ?? record.amount)
     const amount =
       normalizedType === '1099-DIV' || normalizedType === 'DIV'
@@ -5030,6 +5058,12 @@ const get1099Records = (
         ? shortTermProceeds + longTermProceeds || scalarAmount
         : normalizedType === '1099-MISC' || normalizedType === 'MISC'
         ? rents + royalties + otherIncome || scalarAmount
+        : normalizedType === '1099-OID' || normalizedType === 'OID'
+        ? originalIssueDiscount + secondaryAmount || scalarAmount
+        : normalizedType === '1099-C' || normalizedType === 'C'
+        ? amountCancelled || scalarAmount
+        : normalizedType === '1099-LTC' || normalizedType === 'LTC'
+        ? grossBenefitsPaid || scalarAmount
         : scalarAmount
     // 1099-B gross proceeds are useful for detail review, but they should not
     // inflate generic "total 1099 income" summaries that are meant to reflect
@@ -5066,6 +5100,31 @@ const get1099Records = (
       otherIncome,
       section409ADeferrals,
       nonqualifiedDeferredComp,
+      originalIssueDiscount,
+      secondaryAmount,
+      tertiaryAmount,
+      amountCancelled,
+      amountOfDebtCancelled: amountCancelled,
+      totalExcludedFromGrossIncome: toMoney(
+        rawAmounts.totalExcludedFromGrossIncome ??
+          record.totalExcludedFromGrossIncome ??
+          record.excludedFromGrossIncome
+      ),
+      grossBenefitsPaid,
+      acceleratedDeathBenefits: toMoney(
+        rawAmounts.acceleratedDeathBenefits ??
+          record.acceleratedDeathBenefits ??
+          secondaryAmount
+      ),
+      benefitsPaidOnPerDiemBasis: Boolean(
+        record.benefitsPaidOnPerDiemBasis ?? rawAmounts.benefitsPaidOnPerDiemBasis
+      ),
+      qualifiedContract: Boolean(
+        record.qualifiedContract ?? rawAmounts.qualifiedContract
+      ),
+      statusOfInsured: toText(
+        record.statusOfInsured ?? rawAmounts.statusOfInsured
+      ),
       shortTermProceeds,
       shortTermCostBasis,
       longTermProceeds,
@@ -5111,6 +5170,17 @@ const get1099Records = (
         otherIncome: entity.data.otherIncome,
         section409ADeferrals: entity.data.section409ADeferrals,
         nonqualifiedDeferredComp: entity.data.nonqualifiedDeferredComp,
+        originalIssueDiscount: entity.data.originalIssueDiscount,
+        secondaryAmount: entity.data.secondaryAmount,
+        tertiaryAmount: entity.data.tertiaryAmount,
+        amountCancelled: entity.data.amountCancelled,
+        amountOfDebtCancelled: entity.data.amountOfDebtCancelled,
+        totalExcludedFromGrossIncome: entity.data.totalExcludedFromGrossIncome,
+        grossBenefitsPaid: entity.data.grossBenefitsPaid,
+        acceleratedDeathBenefits: entity.data.acceleratedDeathBenefits,
+        benefitsPaidOnPerDiemBasis: entity.data.benefitsPaidOnPerDiemBasis,
+        qualifiedContract: entity.data.qualifiedContract,
+        statusOfInsured: entity.data.statusOfInsured,
         shortTermProceeds: entity.data.shortTermProceeds,
         shortTermCostBasis: entity.data.shortTermCostBasis,
         longTermProceeds: entity.data.longTermProceeds,
@@ -6445,6 +6515,185 @@ const getIRAAccountsData = (
   return mergeCollectionById(screenAccounts, entityAccounts)
 }
 
+const getHsaAccountsData = (entities: SessionEntitySnapshot[]) =>
+  entities
+    .filter((entity) => entity.entityType === 'hsa_account')
+    .map((entity) => {
+      const data = asRecord(entity.data)
+      const taxpayerContributions = toMoney(
+        data.yourContributions ??
+          data.taxpayerContributions ??
+          data.contributions ??
+          data.contributionAmount
+      )
+      return {
+        id: entity.id,
+        label:
+          toText(data.label ?? entity.label ?? 'Primary HSA') || 'Primary HSA',
+        coverageType:
+          toText(data.coverageType).toLowerCase() === 'family'
+            ? 'family'
+            : 'self-only',
+        owner: toText(data.owner ?? 'primary'),
+        contributions: taxpayerContributions,
+        employerContributions: toMoney(data.employerContributions),
+        totalDistributions: toMoney(
+          data.totalDistributions ?? data.distributions
+        ),
+        qualifiedDistributions: toMoney(
+          data.qualifiedDistributions ?? data.qualifiedAmount
+        ),
+        nonqualifiedDistributions: toMoney(data.nonqualifiedDistributions),
+        rolloverAmount: toMoney(data.rolloverAmount),
+        age55: Boolean(data.age55),
+        hasFSA: Boolean(data.hasFSA),
+        hasHRA: Boolean(data.hasHRA)
+      }
+    })
+    .filter(
+      (account) =>
+        account.contributions > 0 ||
+        account.employerContributions > 0 ||
+        account.totalDistributions > 0 ||
+        account.qualifiedDistributions > 0 ||
+        account.nonqualifiedDistributions > 0
+    )
+
+const getFarmBusinessData = (entities: SessionEntitySnapshot[]) => {
+  const entity = entities.find((item) => item.entityType === 'farm_income')
+  if (!entity) return undefined
+
+  const data = asRecord(entity.data)
+  const expenses = asRecord(data.expenses)
+  const grossIncome = toMoney(data.grossIncome)
+  const cooperativeDistributions = toMoney(data.cooperativeDistributions)
+  const agriculturalPrograms = toMoney(data.agriculturalPrograms)
+  const crpPayments = toMoney(data.crpPayments)
+  const mappedExpenses = {
+    chemicals: toMoney(expenses.chemicals),
+    depreciation: toMoney(expenses.depreciation),
+    fertilizers: toMoney(expenses.fertilizer ?? expenses.fertilizers),
+    fuel: toMoney(expenses.fuelOil ?? expenses.fuel),
+    insurance: toMoney(expenses.insurance),
+    labor: toMoney(expenses.labor),
+    rentLease: toMoney(expenses.rent ?? expenses.rentLease),
+    repairs: toMoney(expenses.repairs),
+    seeds: toMoney(expenses.seeds),
+    otherExpenses: toMoney(expenses.otherExpenses)
+  }
+  const totalExpenses = Object.values(mappedExpenses).reduce(
+    (sum, value) => sum + value,
+    0
+  )
+
+  if (
+    grossIncome <= 0 &&
+    cooperativeDistributions <= 0 &&
+    agriculturalPrograms <= 0 &&
+    crpPayments <= 0 &&
+    totalExpenses <= 0
+  ) {
+    return undefined
+  }
+
+  return {
+    id: entity.id,
+    name: toText(data.farmName ?? data.name) || 'Farm',
+    farmName: toText(data.farmName ?? data.name) || 'Farm',
+    ein: toText(data.farmEIN ?? data.ein).replace(/\D/g, ''),
+    accountingMethod:
+      toText(data.accountingMethod).toLowerCase() === 'accrual'
+        ? 'accrual'
+        : 'cash',
+    principalProduct: toText(data.principalProduct),
+    businessCode: toText(data.businessCode),
+    materialParticipation: Boolean(data.materiallyParticipated),
+    allInvestmentAtRisk: data.allInvestmentAtRisk !== false,
+    income: {
+      salesCrops: grossIncome,
+      cooperativeDistributions,
+      agriculturalPayments: agriculturalPrograms,
+      otherIncome: crpPayments
+    },
+    expenses: mappedExpenses,
+    priorYearUnallowedLoss: toMoney(data.priorYearUnallowedLoss),
+    netFarmIncome: toMoney(data.netFarmIncome)
+  }
+}
+
+const getHouseholdEmployeesData = (entities: SessionEntitySnapshot[]) =>
+  entities
+    .filter((entity) => entity.entityType === 'household_employee')
+    .map((entity) => {
+      const data = asRecord(entity.data)
+      return {
+        id: entity.id,
+        name: toText(data.name ?? data.employeeName),
+        ssn: toText(data.ssn ?? data.employeeSsn).replace(/\D/g, ''),
+        cashWages: toMoney(data.cashWages ?? data.wages),
+        federalWithholding: toMoney(
+          data.federalWithholding ?? data.federalWithheld
+        ),
+        stateWithholding: toMoney(data.stateWithholding ?? data.stateWithheld),
+        socialSecurityWithheld: toMoney(
+          data.socialSecurityWithheld ?? data.socialSecurityTax
+        ),
+        medicareWithheld: toMoney(data.medicareWithheld ?? data.medicareTax),
+        futa: toMoney(data.futa)
+      }
+    })
+    .filter((employee) => employee.name || employee.cashWages > 0)
+
+const getAdoptedChildrenData = (entities: SessionEntitySnapshot[]) =>
+  entities
+    .filter((entity) => entity.entityType === 'adoption_record')
+    .map((entity) => {
+      const data = asRecord(entity.data)
+      const firstName = toText(data.childFirstName ?? data.firstName)
+      const lastName = toText(data.childLastName ?? data.lastName)
+      const childDob = toText(data.childDob ?? data.dob)
+      const finalizedYear = toMoney(data.finalizedYear)
+      return {
+        id: entity.id,
+        name: `${firstName} ${lastName}`.trim(),
+        ssn: toText(
+          data.identifyingNumber ?? data.ssn ?? data.childSsn
+        ).replace(/\D/g, ''),
+        birthYear:
+          toMoney(data.birthYear ?? data.yearOfBirth) ||
+          toMoney(childDob.slice(0, 4)),
+        disabledChild: Boolean(data.disabledChild ?? data.disabled),
+        foreignChild: Boolean(data.foreignChild ?? data.foreignAdoption),
+        specialNeedsChild: Boolean(data.specialNeedsChild ?? data.specialNeeds),
+        qualifiedExpenses: toMoney(
+          data.qualifiedExpenses ?? data.expenses ?? data.totalExpenses
+        ),
+        priorYearExpenses: toMoney(
+          data.priorYearExpenses ?? data.priorYearAmount
+        ),
+        adoptionFinalized: Boolean(
+          data.adoptionFinalized ?? data.finalized ?? finalizedYear
+        ),
+        yearAdoptionBegan:
+          toMoney(data.yearAdoptionBegan ?? data.adoptionYear) ||
+          finalizedYear ||
+          undefined,
+        employerBenefitsAmount: toMoney(
+          data.employerBenefitsAmount ?? data.benefitsThisYear
+        ),
+        priorYearEmployerBenefitsAmount: toMoney(
+          data.priorYearEmployerBenefitsAmount ?? data.priorYearBenefitsAmount
+        )
+      }
+    })
+    .filter(
+      (child) =>
+        child.name ||
+        child.qualifiedExpenses > 0 ||
+        child.specialNeedsChild ||
+        child.priorYearExpenses > 0
+    )
+
 /** Form 5695: clean energy + home improvements from form_5695 entity or /residential-energy screen */
 const getForm5695Data = (
   snapshot: FilingSessionSnapshot,
@@ -6887,7 +7136,11 @@ const getAmtCreditData = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
 ): { priorYearAmtCredit?: number; priorYearAmtCreditCarryforward?: number } => {
-  const entity = entities.find((e) => e.entityType === 'form_8801')
+  const entity = entities.find(
+    (e) =>
+      e.entityType === 'form_8801' ||
+      e.entityType === 'amt_credit_carryforward'
+  )
   const fromEntity = entity?.data as Record<string, unknown> | undefined
   if (fromEntity) {
     if (fromEntity.hasAmtCredit === false) return {}
@@ -7044,6 +7297,213 @@ const getSchedule8812CollectionFidelityData = (
   }
 }
 
+const getPaymentsEstimatesData = (entities: SessionEntitySnapshot[]) => {
+  const entity = entities.find(
+    (candidate) => candidate.entityType === 'payments_estimates_hub'
+  )
+  const data = asRecord(entity?.data)
+  const federalEstimatedTaxPayments = toMoney(data.federalEstimatedTaxPayments)
+  const otherFederalWithholdingCredits = asArray<Record<string, unknown>>(
+    data.otherFederalWithholdings
+  )
+    .map((record) =>
+      normalizeOtherFederalWithholdingCredit({
+        source: record.source,
+        amount: record.amount,
+        description: record.source
+      })
+    )
+    .filter(
+      (record): record is Record<string, unknown> => record !== undefined
+    )
+
+  return {
+    estimatedTaxPayments:
+      federalEstimatedTaxPayments > 0
+        ? [
+            {
+              label: 'Federal estimated tax payments',
+              payment: federalEstimatedTaxPayments
+            }
+          ]
+        : undefined,
+    extensionPayment: toMoney(data.amountPaidWithExtension),
+    otherFederalWithholdingCredits:
+      otherFederalWithholdingCredits.length > 0
+        ? otherFederalWithholdingCredits
+        : undefined,
+    appliedToNextYearEstimatedTax:
+      data.applyFederalOverpayment === true
+        ? toMoney(data.applyFederalOverpaymentAmount)
+        : undefined,
+    stateEstimatedTaxPayments: toMoney(data.stateEstimatedTaxPayments),
+    otherStateWithholdings: asArray<Record<string, unknown>>(
+      data.otherStateWithholdings
+    ).map((record) => ({
+      state: toText(record.state).toUpperCase(),
+      source: toText(record.source),
+      amount: toMoney(record.amount)
+    }))
+  }
+}
+
+const getCleanVehicleCreditsData = (entities: SessionEntitySnapshot[]) =>
+  entities
+    .filter((entity) => entity.entityType === 'clean_vehicle_credit')
+    .map((entity) => {
+      const data = asRecord(entity.data)
+      return {
+        vin: toText(data.vin),
+        make: toText(data.make) || undefined,
+        model: toText(data.model) || undefined,
+        year: toMoney(data.year),
+        purchaseDate: toText(data.purchaseDate),
+        purchasePrice: toMoney(data.purchasePrice),
+        newOrUsed: toText(data.newOrUsed),
+        dealerTransfer: Boolean(data.dealerTransfer),
+        dealerName: toText(data.dealerName) || undefined,
+        batteryKwh: toMoney(data.batteryKwh),
+        estimatedCredit: toMoney(data.estimatedCredit)
+      }
+    })
+    .filter((record) => record.vin || record.estimatedCredit > 0)
+
+const getAlaskaPfdData = (entities: SessionEntitySnapshot[]) => {
+  const entity = entities.find(
+    (candidate) => candidate.entityType === 'alaska_pfd'
+  )
+  const data = asRecord(entity?.data)
+  const amount = toMoney(
+    data.totalPFDIncome ??
+      toMoney(data.pfdAmount) * toMoney(data.numberOfRecipients)
+  )
+  return amount > 0
+    ? [{ description: 'Alaska Permanent Fund Dividend', amount }]
+    : []
+}
+
+const getAcaHouseholdIncomeData = (entities: SessionEntitySnapshot[]) => {
+  const entity = entities.find(
+    (candidate) => candidate.entityType === 'aca_household_income'
+  )
+  const data = asRecord(entity?.data)
+  const result = {
+    dependentAgi: toMoney(data.dependentAgi),
+    dependentTaxExemptInterest: toMoney(data.dependentTaxExemptInterest),
+    dependentForeignIncomeAdjustment: toMoney(
+      data.dependentForeignIncomeAdjustment
+    ),
+    dependentLine6Difference: toMoney(data.dependentLine6Difference)
+  }
+  return Object.values(result).some((amount) => amount > 0) ? result : undefined
+}
+
+const getStateAndLocalEntityData = (entities: SessionEntitySnapshot[]) => {
+  const vaClassic = entities.find(
+    (candidate) => candidate.entityType === 'state_va_classic'
+  )
+  const localTax = entities.find(
+    (candidate) => candidate.entityType === 'local_tax_obligation'
+  )
+  const localData = asRecord(localTax?.data)
+  const state = vaClassic ? 'VA' : toText(localData.state).toUpperCase()
+  const localTaxInfo =
+    state || toMoney(localData.stateWithheld) > 0
+      ? {
+          residenceState: state,
+          isResident:
+            toText(localData.residencyType) === 'part-year' ? false : true,
+          worksInDifferentCity: false,
+          localWithholding: toMoney(localData.stateWithheld),
+          estimatedPayments: toMoney(localData.estimatedPayments) || undefined
+        }
+      : undefined
+
+  return {
+    primaryState: state || undefined,
+    localTaxInfo
+  }
+}
+
+const buildHubSupportReport = (entities: SessionEntitySnapshot[]) => {
+  const report: Array<{
+    entityType: string
+    item: string
+    status: 'computed' | 'dedicated_screen_required' | 'metadata_only' | 'unsupported'
+    notes?: string
+  }> = []
+
+  const misc = asRecord(
+    entities.find((entity) => entity.entityType === 'misc_forms_hub')?.data
+  )
+  const otherTaxes = asRecord(
+    entities.find((entity) => entity.entityType === 'other_taxes_hub')?.data
+  )
+
+  const addBoolean = (
+    source: Record<string, unknown>,
+    key: string,
+    item: string,
+    status: 'computed' | 'dedicated_screen_required' | 'metadata_only' | 'unsupported',
+    notes?: string
+  ) => {
+    if (source[key] === true) {
+      report.push({ entityType: key, item, status, notes })
+    }
+  }
+
+  addBoolean(otherTaxes, 'hasForm5329', 'Form 5329', 'computed')
+  addBoolean(otherTaxes, 'hasForm6251', 'Form 6251', 'computed')
+  addBoolean(otherTaxes, 'hasScheduleH', 'Schedule H', 'computed')
+  addBoolean(otherTaxes, 'hasForm8960', 'Form 8960', 'computed')
+  addBoolean(otherTaxes, 'hasForm4255', 'Form 4255', 'computed')
+  addBoolean(otherTaxes, 'hasForm8814', 'Form 8814', 'computed')
+  addBoolean(otherTaxes, 'hasForm8828', 'Form 8828', 'metadata_only')
+  addBoolean(otherTaxes, 'hasScheduleSE', 'Schedule SE', 'computed')
+  addBoolean(otherTaxes, 'hasForm4137', 'Form 4137', 'computed')
+  addBoolean(otherTaxes, 'hasForm8615', 'Form 8615', 'computed')
+  addBoolean(otherTaxes, 'hasForm8611', 'Form 8611', 'metadata_only')
+
+  addBoolean(misc, 'filed4868', 'Form 4868', 'dedicated_screen_required')
+  addBoolean(misc, 'hasTrumpAccountElection', 'Trump account election', 'dedicated_screen_required')
+  addBoolean(misc, 'hasForm8379', 'Form 8379', 'dedicated_screen_required')
+  addBoolean(misc, 'hasForm8857', 'Form 8857', 'metadata_only')
+  addBoolean(misc, 'hasForm9465', 'Form 9465', 'computed')
+  addBoolean(misc, 'hasIrsIdentityPin', 'IP PIN', 'dedicated_screen_required')
+  addBoolean(misc, 'hasForm1310', 'Form 1310', 'metadata_only')
+  addBoolean(misc, 'hasForm8938', 'Form 8938', 'computed')
+  addBoolean(misc, 'hasNol', 'Net operating loss', 'metadata_only')
+  addBoolean(misc, 'hasForm965A', 'Form 965-A', 'metadata_only')
+
+  for (const row of asArray<Record<string, unknown>>(
+    otherTaxes.otherAdditionalTaxes
+  )) {
+    if (toText(row.description) || toMoney(row.amount) > 0) {
+      report.push({
+        entityType: 'other_taxes_hub',
+        item: toText(row.description) || 'Other additional tax',
+        status: 'unsupported',
+        notes: 'Catch-all hub entry does not have line-level computation support.'
+      })
+    }
+  }
+
+  for (const row of asArray<Record<string, unknown>>(
+    misc.otherMiscellaneousItems
+  )) {
+    if (toText(row.formName)) {
+      report.push({
+        entityType: 'misc_forms_hub',
+        item: toText(row.formName),
+        status: 'unsupported',
+        notes: toText(row.notes) || undefined
+      })
+    }
+  }
+
+  return report
+}
+
 const getForm8879Data = (
   snapshot: FilingSessionSnapshot,
   taxpayer: Record<string, unknown>,
@@ -7146,7 +7606,10 @@ const getScheduleRData = (
   snapshot: FilingSessionSnapshot,
   entities: SessionEntitySnapshot[]
 ): { disabilityIncome?: number; nontaxablePensionIncome?: number } => {
-  const entity = entities.find((e) => e.entityType === 'schedule_r')
+  const entity = entities.find(
+    (e) =>
+      e.entityType === 'schedule_r' || e.entityType === 'schedule_r_credit'
+  )
   const fromEntity = entity?.data as Record<string, unknown> | undefined
   if (fromEntity) {
     const disabilityIncome =
@@ -7420,6 +7883,7 @@ const toFacts = (
       row.filing_status ??
       'single'
   )
+  const stateAndLocalEntityData = getStateAndLocalEntityData(entities)
 
   const primaryTin = String(
     taxpayer.ssn ??
@@ -7429,7 +7893,8 @@ const toFacts = (
   ).replace(/\D/g, '')
 
   const residenceState = String(
-    (taxpayer.address as Record<string, unknown> | undefined)?.state ??
+    stateAndLocalEntityData.primaryState ??
+      (taxpayer.address as Record<string, unknown> | undefined)?.state ??
       residency.state ??
       'CA'
   ).toLowerCase()
@@ -7487,9 +7952,18 @@ const toFacts = (
     dependents,
     taxpayer
   )
+  const hsaAccounts = getHsaAccountsData(entities)
   const iraContributionsData = getIRAContributionsData(snapshot, entities)
   const iraAccountsData = getIRAAccountsData(snapshot, entities)
   const form5695Data = getForm5695Data(snapshot, entities)
+  const farmBusiness = getFarmBusinessData(entities)
+  const householdEmployees = getHouseholdEmployeesData(entities)
+  const adoptedChildren = getAdoptedChildrenData(entities)
+  const paymentsEstimates = getPaymentsEstimatesData(entities)
+  const cleanVehicleCredits = getCleanVehicleCreditsData(entities)
+  const otherIncomeItems = getAlaskaPfdData(entities)
+  const acaHouseholdIncome = getAcaHouseholdIncomeData(entities)
+  const computationSupportReport = buildHubSupportReport(entities)
   const creditSummary = getCreditSummary(snapshot, dependents)
   const incomeSummary = getIncomeSummary(
     w2Records,
@@ -7581,11 +8055,23 @@ const toFacts = (
     schedule8812EarnedIncomeAdjustments:
       schedule8812Fidelity.schedule8812EarnedIncomeAdjustments,
     otherFederalWithholdingCredits:
-      schedule8812Fidelity.otherFederalWithholdingCredits,
-    appliedToNextYearEstimatedTax: toMoney(
-      efile.appliedToNextYearEstimatedTax ??
-        efile.refundAppliedToNextYearEstimatedTax
-    ),
+      [
+        ...(schedule8812Fidelity.otherFederalWithholdingCredits ?? []),
+        ...(paymentsEstimates.otherFederalWithholdingCredits ?? [])
+      ].length > 0
+        ? [
+            ...(schedule8812Fidelity.otherFederalWithholdingCredits ?? []),
+            ...(paymentsEstimates.otherFederalWithholdingCredits ?? [])
+          ]
+        : undefined,
+    estimatedTaxPayments: paymentsEstimates.estimatedTaxPayments,
+    extensionPayment: paymentsEstimates.extensionPayment,
+    appliedToNextYearEstimatedTax:
+      paymentsEstimates.appliedToNextYearEstimatedTax ??
+      toMoney(
+        efile.appliedToNextYearEstimatedTax ??
+          efile.refundAppliedToNextYearEstimatedTax
+      ),
     thirdPartyDesignee,
     form8879,
     creditSummary: creditSummary.summary,
@@ -7601,10 +8087,17 @@ const toFacts = (
     educationExpenses,
     dependentCareProviders: dependentCareData.providers,
     dependentCareExpenses: dependentCareData.expenses,
+    hsaAccounts,
     iraContributions: iraContributionsData,
     iraAccounts: iraAccountsData,
     cleanEnergyProperties: form5695Data?.cleanEnergyProperties,
     homeImprovements: form5695Data?.homeImprovements,
+    cleanVehicleCredits,
+    otherIncomeItems,
+    acaHouseholdIncome,
+    farmBusiness,
+    householdEmployees,
+    adoptedChildren,
     educatorExpenses,
     alimonyReceived: alimonyData?.alimonyReceived,
     alimonyPaid: alimonyData?.alimonyPaid,
@@ -7623,6 +8116,8 @@ const toFacts = (
     noncashContributions,
     disabilityIncome: scheduleRData.disabilityIncome,
     nontaxablePensionIncome: scheduleRData.nontaxablePensionIncome,
+    localTaxInfo: stateAndLocalEntityData.localTaxInfo,
+    computationSupportReport,
     '/taxYear': {
       $type: 'gov.irs.factgraph.persisters.IntWrapper',
       item: snapshot.taxYear
@@ -7806,6 +8301,7 @@ const toSubmissionPayload = (
       rentalSummary,
       foreignSummary,
       creditSummary,
+      computationSupportReport: facts.computationSupportReport,
       dependentCount: dependents.length,
       spouse,
       unemploymentCount: asArray(facts.unemploymentRecords).length,

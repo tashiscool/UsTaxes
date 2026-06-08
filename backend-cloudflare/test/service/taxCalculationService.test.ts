@@ -135,6 +135,87 @@ describe('TaxCalculationService', () => {
       expect(info.taxPayer.spouse!.ssid).toBe('987654321')
     })
 
+    it('maps frontend-aligned HSA, farm, household employee, and adoption facts', () => {
+      const info = adaptFactsToInformation(
+        baseFacts({
+          hsaAccounts: [
+            {
+              label: 'Primary HSA',
+              coverageType: 'family',
+              owner: 'primary',
+              contributions: 1800,
+              employerContributions: 2500,
+              totalDistributions: 600,
+              qualifiedDistributions: 600
+            }
+          ],
+          farmBusiness: {
+            name: 'River Farm',
+            ein: '12-3456789',
+            accountingMethod: 'cash',
+            income: {
+              salesCrops: 12000,
+              cooperativeDistributions: 500,
+              agriculturalPayments: 300,
+              otherIncome: 200
+            },
+            expenses: {
+              seeds: 450,
+              fertilizers: 700,
+              chemicals: 100,
+              fuel: 250,
+              insurance: 300,
+              labor: 900,
+              repairs: 150,
+              rentLease: 400,
+              depreciation: 800,
+              otherExpenses: 50
+            }
+          },
+          householdEmployees: [
+            {
+              name: 'Casey Care',
+              ssn: '111-22-3333',
+              cashWages: 8000,
+              federalWithholding: 500,
+              socialSecurityWithheld: 496,
+              medicareWithheld: 116
+            }
+          ],
+          adoptedChildren: [
+            {
+              name: 'Alex Child',
+              ssn: '222-33-4444',
+              birthYear: 2018,
+              specialNeedsChild: true,
+              foreignChild: false,
+              qualifiedExpenses: 6000,
+              priorYearExpenses: 1000,
+              adoptionFinalized: true,
+              yearAdoptionBegan: 2025
+            }
+          ]
+        })
+      )
+
+      expect(info.healthSavingsAccounts).toHaveLength(1)
+      expect(info.healthSavingsAccounts[0].coverageType).toBe('family')
+      expect(info.healthSavingsAccounts[0].contributions).toBe(1800)
+      expect((info.farmBusiness as Record<string, unknown>).name).toBe(
+        'River Farm'
+      )
+      expect(
+        ((info.farmBusiness as Record<string, unknown>).income as Record<
+          string,
+          number
+        >).salesCrops
+      ).toBe(12000)
+      expect(info.householdEmployees).toHaveLength(1)
+      expect(info.householdEmployees?.[0].cashWages).toBe(8000)
+      expect(info.adoptedChildren).toHaveLength(1)
+      expect(info.adoptedChildren?.[0].qualifiedExpenses).toBe(6000)
+    })
+
     it('maps 1099-INT records', () => {
       const facts = baseFacts({
         form1099Records: [
@@ -193,6 +274,112 @@ describe('TaxCalculationService', () => {
       expect(f1040.l2b()).toBe(1500)
       expect(f1040.l3a()).toBe(1800)
       expect(f1040.l3b()).toBe(3200)
+    })
+
+    it('maps remaining frontend computation gaps into active engine forms and lines', () => {
+      const info = adaptFactsToInformation(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-gap-base',
+              employerName: 'Employer Inc',
+              ein: '12-3456789',
+              box1Wages: 90000,
+              box2FederalWithheld: 9000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          form1099Records: [
+            {
+              id: '1099-oid-1',
+              type: 'OID',
+              payer: 'Bond Trustee',
+              amount: 1200,
+              federalWithheld: 120,
+              isComplete: true
+            },
+            {
+              id: '1099-c-1',
+              type: 'C',
+              payer: 'Credit Bank',
+              amountCancelled: 3000,
+              totalExcludedFromGrossIncome: 500,
+              isComplete: true
+            },
+            {
+              id: '1099-ltc-1',
+              type: 'LTC',
+              payer: 'Care Insurer',
+              grossBenefitsPaid: 200000,
+              benefitsPaidOnPerDiemBasis: true,
+              qualifiedContract: true,
+              statusOfInsured: 'chronically_ill',
+              daysInPeriod: 365,
+              isComplete: true
+            }
+          ],
+          cleanVehicleCredits: [
+            {
+              vin: '1FTVW1EL1NWG00001',
+              make: 'Ford',
+              model: 'F-150 Lightning',
+              year: 2025,
+              purchaseDate: '2025-04-01',
+              purchasePrice: 55000,
+              newOrUsed: 'new',
+              estimatedCredit: 7500
+            }
+          ],
+          otherIncomeItems: [
+            {
+              description: 'Alaska Permanent Fund Dividend',
+              amount: 3404
+            }
+          ],
+          acaHouseholdIncome: {
+            dependentAgi: 1000,
+            dependentTaxExemptInterest: 100,
+            dependentForeignIncomeAdjustment: 50,
+            dependentLine6Difference: 25
+          },
+          marketplaceInsurance: [
+            {
+              id: 'aca-gap-1',
+              policyNumber: 'ACA-GAP',
+              enrollmentPremiums: Array(12).fill(600),
+              slcsp: Array(12).fill(600),
+              advancePayments: Array(12).fill(300),
+              coverageFamily: 1
+            }
+          ]
+        })
+      )
+      const f1040 = new F1040(info as ValidatedInformation, [])
+
+      expect(info.f1099s.some((entry) => entry.type === 'OID')).toBe(true)
+      expect(f1040.l2b()).toBe(1200)
+      expect(f1040.l25b()).toBe(120)
+      expect(info.cancellationOfDebtRecords).toHaveLength(1)
+      expect(f1040.f1099c?.isNeeded()).toBe(true)
+      expect(f1040.schedule1.l8c()).toBe(2500)
+      expect(info.longTermCareBenefitRecords).toHaveLength(1)
+      expect(f1040.f1099ltc?.isNeeded()).toBe(true)
+      expect(f1040.f8853?.isNeeded()).toBe(true)
+      expect(f1040.f8853?.taxableLongTermCareBenefits()).toBe(46700)
+      expect(f1040.schedule1.l8z()).toBe(50104)
+      expect(info.cleanVehicleCredits).toHaveLength(1)
+      expect(f1040.f8936?.isNeeded()).toBe(true)
+      expect(f1040.f8936?.l15()).toBe(7500)
+      expect(f1040.schedule3.l6f()).toBe(7500)
+      expect(info.acaHouseholdIncome).toEqual({
+        dependentAgi: 1000,
+        dependentTaxExemptInterest: 100,
+        dependentForeignIncomeAdjustment: 50,
+        dependentLine6Difference: 25
+      })
+      expect(f1040.f8962?.l2b()).toBe(1175)
+      expect(f1040.f8962?.l3()).toBe(f1040.f8962!.l2a() + 1175)
     })
 
     it('maps richer 1099-DIV and 1099-B detail for workbook parity', () => {
@@ -452,6 +639,88 @@ describe('TaxCalculationService', () => {
         expect(calcResult.schedules).toContain('f8962')
         expect(calcResult.schedules).toContain('f2441')
         expect(calcResult.schedules).toContain('f1040sd')
+      }
+    })
+
+    it('includes existing-engine forms for aligned frontend entity fact families', () => {
+      const result = taxCalcService.calculate(
+        baseFacts({
+          w2Records: [
+            {
+              id: 'w2-advanced-frontend-facts',
+              employerName: 'Employer Inc',
+              ein: '12-3456789',
+              box1Wages: 85000,
+              box2FederalWithheld: 10000,
+              socialSecurityWages: 85000,
+              medicareWages: 85000,
+              owner: 'taxpayer',
+              isComplete: true
+            }
+          ],
+          hsaAccounts: [
+            {
+              label: 'Primary HSA',
+              coverageType: 'family',
+              contributions: 1800,
+              totalDistributions: 600,
+              qualifiedDistributions: 600
+            }
+          ],
+          farmBusiness: {
+            name: 'River Farm',
+            accountingMethod: 'cash',
+            income: {
+              salesCrops: 12000,
+              cooperativeDistributions: 500,
+              agriculturalPayments: 300,
+              otherIncome: 200
+            },
+            expenses: {
+              seeds: 450,
+              fertilizers: 700,
+              chemicals: 100,
+              fuel: 250,
+              insurance: 300,
+              labor: 900,
+              repairs: 150,
+              rentLease: 400,
+              depreciation: 800,
+              otherExpenses: 50
+            }
+          },
+          householdEmployees: [
+            {
+              name: 'Casey Care',
+              ssn: '111223333',
+              cashWages: 8000,
+              federalWithholding: 500,
+              socialSecurityWithheld: 496,
+              medicareWithheld: 116
+            }
+          ],
+          adoptedChildren: [
+            {
+              name: 'Alex Child',
+              ssn: '222334444',
+              birthYear: 2018,
+              specialNeedsChild: true,
+              foreignChild: false,
+              qualifiedExpenses: 6000,
+              priorYearExpenses: 1000,
+              adoptionFinalized: true,
+              yearAdoptionBegan: 2025
+            }
+          ]
+        })
+      )
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.schedules).toContain('f8889')
+        expect(result.schedules).toContain('f1040sf')
+        expect(result.schedules).toContain('f1040sh')
+        expect(result.schedules).toContain('f8839')
       }
     })
 
@@ -739,6 +1008,49 @@ describe('TaxCalculationService', () => {
         expect(result.totalTax).toBe(0)
         expect(result.refund).toBe(0)
         expect(result.amountOwed).toBe(0)
+      }
+    })
+
+    it('includes frontend payments hub values in public payment and refund totals', () => {
+      const facts = baseFacts({
+        w2Records: [
+          {
+            id: 'w2-payments-hub',
+            employerName: 'Employer Inc',
+            ein: '12-3456789',
+            box1Wages: 45000,
+            box2FederalWithheld: 2000,
+            owner: 'taxpayer',
+            isComplete: true
+          }
+        ],
+        estimatedTaxPayments: [
+          { label: 'Federal estimated tax payments', payment: 1500 }
+        ],
+        extensionPayment: 700,
+        otherFederalWithholdingCredits: [
+          {
+            source: 'other',
+            amount: 300,
+            description: 'Other federal withholding'
+          }
+        ],
+        appliedToNextYearEstimatedTax: 250
+      })
+
+      const info = adaptFactsToInformation(facts)
+      const f1040 = new F1040(info as ValidatedInformation, [])
+      const result = taxCalcService.calculate(facts)
+
+      expect(f1040.l25d()).toBe(2300)
+      expect(f1040.l26()).toBe(1500)
+      expect(f1040.schedule3.l10()).toBe(700)
+      expect(f1040.l33()).toBe(4500)
+      expect(f1040.l36()).toBe(Math.min(250, f1040.l34()))
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.totalPayments).toBe(f1040.l33())
+        expect(result.refund).toBe(f1040.l35a())
       }
     })
 

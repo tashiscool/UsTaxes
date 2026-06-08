@@ -130,6 +130,7 @@ export interface EstimatedTaxPayments {
 export enum Income1099Type {
   B = 'B',
   INT = 'INT',
+  OID = 'OID',
   DIV = 'DIV',
   R = 'R',
   SSA = 'SSA',
@@ -150,6 +151,14 @@ export interface F1099IntData {
   taxExemptInterest?: number
   foreignTaxPaid?: number
   privateActivityBondInterest?: number
+  federalIncomeTaxWithheld?: number
+}
+
+export interface F1099OidData {
+  originalIssueDiscount: number
+  otherPeriodicInterest?: number
+  earlyWithdrawalPenalty?: number
+  federalIncomeTaxWithheld?: number
 }
 
 export interface F1099DivData {
@@ -449,6 +458,7 @@ export interface TaxPayer<D = Date> extends ContactInfo {
 export type TaxPayerDateString = TaxPayer<string>
 
 export type Income1099Int = Income1099<Income1099Type.INT, F1099IntData>
+export type Income1099OID = Income1099<Income1099Type.OID, F1099OidData>
 export type Income1099B = Income1099<Income1099Type.B, F1099BData>
 export type Income1099Div = Income1099<Income1099Type.DIV, F1099DivData>
 export type Income1099R = Income1099<Income1099Type.R, F1099RData>
@@ -459,6 +469,7 @@ export type Income1099G = Income1099<Income1099Type.G, F1099GData>
 
 export type Supported1099 =
   | Income1099Int
+  | Income1099OID
   | Income1099B
   | Income1099Div
   | Income1099R
@@ -768,6 +779,73 @@ export interface LocalTaxInfo {
 
   // Philadelphia-specific fields
   philadelphiaWageTaxAccountNumber?: string
+}
+
+export interface OtherIncomeItem {
+  description: string
+  amount: number
+}
+
+export interface CleanVehicleCreditRecord<D = Date> {
+  vin: string
+  make?: string
+  model?: string
+  year?: number
+  purchaseDate?: D
+  purchasePrice?: number
+  newOrUsed?: 'new' | 'used'
+  dealerTransfer?: boolean
+  dealerName?: string
+  batteryKwh?: number
+  estimatedCredit?: number
+  businessUsePercentage?: number
+}
+
+export interface CancellationOfDebtRecord<D = Date> {
+  creditorName?: string
+  creditorAddress?: string
+  creditorTIN?: string
+  creditorPhone?: string
+  debtorName?: string
+  debtorAddress?: string
+  debtorTIN?: string
+  accountNumber?: string
+  dateOfIdentifiableEvent?: D
+  amountOfDebtCancelled: number
+  interestIncludedInBox2?: number
+  debtDescription?: string
+  personallyLiable?: boolean
+  identifiableEventCode?: string
+  fairMarketValueOfProperty?: number
+  totalExcludedFromGrossIncome?: number
+  exclusionReason?: string
+}
+
+export interface LongTermCareBenefitRecord<D = Date> {
+  payerName?: string
+  payerAddress?: string
+  payerTIN?: string
+  policyholderName?: string
+  policyholderAddress?: string
+  policyholderSSN?: string
+  insuredName?: string
+  insuredAddress?: string
+  insuredSSN?: string
+  accountNumber?: string
+  grossBenefitsPaid: number
+  acceleratedDeathBenefits?: number
+  benefitsPaidOnPerDiemBasis?: boolean
+  qualifiedContract?: boolean
+  statusOfInsured?: 'chronically_ill' | 'terminally_ill'
+  dateInsuredCertified?: D
+  daysInPeriod?: number
+}
+
+export interface AcaHouseholdIncome {
+  dependentAgi?: number
+  dependentTaxExemptInterest?: number
+  dependentForeignIncomeAdjustment?: number
+  dependentLine6Difference?: number
 }
 
 /**
@@ -2857,6 +2935,11 @@ export interface Information<D = Date> {
     amount: number
     description?: string
   }[]
+  otherIncomeItems?: OtherIncomeItem[]
+  cleanVehicleCredits?: CleanVehicleCreditRecord<D>[]
+  cancellationOfDebtRecords?: CancellationOfDebtRecord<D>[]
+  longTermCareBenefitRecords?: LongTermCareBenefitRecord<D>[]
+  acaHouseholdIncome?: AcaHouseholdIncome
   // Local Tax Information (city/municipal taxes)
   localTaxInfo?: LocalTaxInfo
   // OBBBA 2025 new fields
